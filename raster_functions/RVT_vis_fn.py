@@ -9,7 +9,6 @@ PURPOSE:
 # python libraries
 import numpy as np
 
-
 """
 NAME:
     Analytical hillshading
@@ -59,8 +58,7 @@ def analytical_hillshading(input_DEM_arr, resolution_x, resolution_y, sun_azimut
     slope, aspect = slope_aspect(input_DEM_arr=input_DEM_arr, resolution_x=resolution_x, resolution_y=resolution_y,
                                  ve_factor=ve_factor, is_padding_applied=is_padding_applied, output_units="radian")
 
-    hillshading = np.cos(sun_zenith_rad) * np.cos(slope) + np.sin(sun_zenith_rad) * np.sin(slope) * \
-                  np.cos(aspect - sun_azimuth_rad)
+    hillshading = np.cos(sun_zenith_rad) * np.cos(slope) + np.sin(sun_zenith_rad) * np.sin(slope) * np.cos(aspect - sun_azimuth_rad)
 
     return hillshading
 
@@ -118,7 +116,7 @@ def slope_aspect(input_DEM_arr, resolution_x, resolution_y, ve_factor, is_paddin
     # Derivates in X and Y direction
     dzdx = ((np.roll(dem, 1, axis=1) - np.roll(dem, -1, axis=1)) / 2) / resolution_x
     dzdy = ((np.roll(dem, -1, axis=0) - np.roll(dem, 1, axis=0)) / 2) / resolution_y
-    tan_slope = np.sqrt(dzdx**2 + dzdy**2)
+    tan_slope = np.sqrt(dzdx ** 2 + dzdy ** 2)
 
     # Compute slope
     if output_units == "percent":
