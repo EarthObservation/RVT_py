@@ -1,27 +1,33 @@
 """
 NAME:
-    RVT Analytical hillshading, ESRI ArcGis Pro
+    RVT Slope, ESRI ArcGis Pro python function
 
 DESCRIPTION:
     https://github.com/Esri/raster-functions/wiki/PythonRasterFunction#anatomy-of-a-python-raster-function
-    Python raster function for ESRI ArcGis which computes hillshade.
+    Python raster function for ESRI ArcGis Pro which computes Slope.
+    Slope is defined as 0 for Hz plane and pi/2 for vertical plane.
 
 INPUTS:
-    input_DEM_arr   - input DEM numpy array
-    resolution_x    - DEM resolution in X direction
-    resolution_y    - DEM resolution in Y direction
-    sun_azimuth     - solar azimuth angle (clockwise from North) in degrees
-    sun_elevation   - solar vertical angle (above the horizon) in degrees
+    input_DEM_arr       - input DEM numpy array
+    resolution          - DEM resolution
+    ve_factor           - vertical exaggeration factor (must be greater than 0)
+    output_units        - percent, degree, radians
+    is_padding_applied  - is padding already applied on input array (needed for ArcGIS Pro which applies padding)
+
 
 OUTPUTS:
-    hillshade
+    slope
 
 KEYWORDS:
-    /
+    DEM_slope       - output terrain slope
+    DEM_aspect      - output terrain aspect
+    output_units    - percent, degree, radians
+        percent         - output terrain slope in percent (0% for HZ surface, 100% for 45 degree tilted plane)
+        degree          - output terrain slope and aspect in degrees
+        radian          - output terrain slope and aspect in radians
 
 DEPENDENCIES:
     RVT_vis_fn.slope_aspect
-    RVT_vis_fn.analytical_hillshading
 
 AUTHOR:
     Žiga Maroh (ziga.maroh@icloud.com)
@@ -30,15 +36,16 @@ MODIFICATION HISTORY:
     1.0 Written by Žiga Maroh, 2020.
 """
 
+
 import numpy as np
 import RVT_vis_fn
 
 
-class RVT_Hillshade():
+class RVT_Slope():
 
     def __init(self):
-        self.name = "RVT analytical hillshading"
-        self.description = "Calculates hillshade."
+        self.name = "RVT Slope"
+        self.description = "Calculates Slope in selected unit."
         self.prepare()
 
     def getParameterInfo(self):
@@ -49,23 +56,24 @@ class RVT_Hillshade():
                 'value': None,
                 'required': True,
                 'displayName': "Input Raster",
-                'description': "Input raster for which to create the hillshade map."
+                'description': "Input raster for which to create the slope map."
             },
             {
-                'name': 'sun_azimuth',
+                'name': 've_factor',
                 'dataType': 'numeric',
-                'value': 315.,
-                'required': True,
-                'displayName': "Sun azimuth",
-                'description': "Solar azimuth angle (clockwise from North) in degrees."
+                'value': 1.,
+                'required': False,
+                'displayName': "Ve-factor",
+                'description': ("Vertical exaggeration factor (must be greater than 0).")
             },
             {
-                'name': 'sun_elevation',
-                'dataType': 'numeric',
-                'value': 35.,
-                'required': True,
-                'displayName': "Sun elevation",
-                'description': "Solar vertical angle (above the horizon) in degrees."
+                'name': 'output_unit',
+                'dataType': 'string',
+                'value': "degree",
+                'required': False,
+                'displayName': "Output unit",
+                'domain': ('degree', 'radian', 'percent'),
+                'description': ("Unit of the output raster.")
             }
         ]
 
@@ -85,7 +93,7 @@ class RVT_Hillshade():
         kwargs['output_info']['noData'] = self.assignNoData(r['pixelType']) if not(r['noData']) else r['noData']
         kwargs['output_info']['pixelType'] = 'f4'
         kwargs['output_info']['histogram'] = ()
-        self.prepare(azimuth=kwargs.get('sun_azimuth'), elevation=kwargs.get("sun_elevation"))
+        self.prepare(ve_factor=kwargs.get('ve_factor'), output_unit=kwargs.get("output_unit"))
         return kwargs
 
     def updatePixels(self, tlc, shape, props, **pixelBlocks):
@@ -98,11 +106,11 @@ class RVT_Hillshade():
         if (pixel_size[0] <= 0) | (pixel_size[1] <= 0):
             raise Exception("Input raster cell size is invalid.")
 
-        hillshade = RVT_vis_fn.analytical_hillshading(input_DEM_arr=dem, resolution_x=pixel_size[0],
-                                         resolution_y=pixel_size[1], sun_azimuth=self.azimuth,
-                                         sun_elevation=self.elevation, is_padding_applied=True)
+        slope, aspect = RVT_vis_fn.slope_aspect(input_DEM_arr=dem, resolution_x=pixel_size[0],
+                                                resolution_y=pixel_size[1], ve_factor=self.ve_factor,
+                                                is_padding_applied=True, output_units=self.output_unit)
 
-        pixelBlocks['output_pixels'] = hillshade.astype(props['pixelType'])
+        pixelBlocks['output_pixels'] = slope.astype(props['pixelType'])
         pixelBlocks['output_mask'] = \
             m[:-2, :-2]  & m[1:-1, :-2]  & m[2:, :-2]  \
             & m[:-2, 1:-1] & m[1:-1, 1:-1] & m[2:, 1:-1] \
@@ -127,6 +135,6 @@ class RVT_Hillshade():
         elif pixelType == 'u1':
             return np.array([255, ])                    # unsigned integer 8 bit
 
-    def prepare(self, azimuth=315, elevation=35):
-        self.azimuth = azimuth
-        self.elevation = elevation
+    def prepare(self, ve_factor=1, output_unit="degree"):
+        self.ve_factor = ve_factor
+        self.output_unit = output_unit
