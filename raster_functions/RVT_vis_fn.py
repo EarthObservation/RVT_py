@@ -9,66 +9,6 @@ PURPOSE:
 # python libraries
 import numpy as np
 
-"""
-NAME:
-    Analytical hillshading
-
-DESCRIPTION:
-    Compute hillshade.
-
-INPUTS:
-    input_DEM_arr   - input DEM numpy array
-    resolution_x      - DEM resolution in X direction
-    resolution_y      - DEM resolution in Y direction
-    sun_azimuth     - solar azimuth angle (clockwise from North) in degrees
-    sun_elevation   - solar vertical angle (above the horizon) in degrees
-    is_padding_applied  - is padding already applied on input array (needed for ArcGIS Pro which applies padding)
-
-OUTPUTS:
-    hillshade - result numpy array
-    
-KEYWORDS:
-    /
-
-DEPENDENCIES:
-    slope_aspect
-
-AUTHOR:
-    RVT:
-        Klemen Zaksek (klemen.zaksek@zmaw.de)
-    RVT_py:
-        Žiga Maroh (ziga.maroh@icloud.com)
-
-MODIFICATION HISTORY:
-    RVT:
-        1.0     Written by Klemen Zaksek, 2013.
-        1.1     September 2014: Suppress_output and cosi keywords added to the procedure
-    RVT_py:
-        1.0     Written by Žiga Maroh, 2020.
-"""
-
-
-def analytical_hillshading(input_DEM_arr, resolution_x, resolution_y, sun_azimuth=315, sun_elevation=35,
-                           is_padding_applied=False):
-    ve_factor = 1
-    if sun_azimuth > 360 or sun_elevation > 90 or sun_azimuth < 0 or sun_elevation < 0:
-        raise Exception("RVT analytical_hillshading: sun_azimuth must be [0-360] and sun_elevation [0-90]")
-
-    # Convert solar position (degrees) to radians
-    sun_azimuth_rad = np.deg2rad(sun_azimuth)
-    sun_elevation_rad = np.deg2rad(sun_elevation)
-
-    # Convert to solar zenith angle
-    sun_zenith_rad = np.pi / 2 - sun_elevation_rad
-
-    # Compute solar incidence angle, hillshading
-    slope, aspect = slope_aspect(input_DEM_arr=input_DEM_arr, resolution_x=resolution_x, resolution_y=resolution_y,
-                                 ve_factor=ve_factor, is_padding_applied=is_padding_applied, output_units="radian")
-
-    hillshading = np.cos(sun_zenith_rad) * np.cos(slope) + np.sin(sun_zenith_rad) * np.sin(slope) * np.cos(aspect - sun_azimuth_rad)
-
-    return hillshading
-
 
 """
 NAME:
@@ -81,7 +21,7 @@ DESCRIPTION:
     Currently applied finite difference method.
 
 INPUTS:
-    input_DEM_arr       - input DEM numpy array
+    input_DEM_arr       - input DEM 2D numpy array
     resolution_x      - DEM resolution in X direction
     resolution_y      - DEM resolution in Y direction
     ve_factor           - vertical exaggeration factor (must be greater than 0)
@@ -124,7 +64,7 @@ def slope_aspect(input_DEM_arr, resolution_x, resolution_y, ve_factor, is_paddin
     dem = input_DEM_arr * ve_factor
     # add frame of 0 (additional row up bottom and column left right)
     if not is_padding_applied:
-        dem = np.pad(dem, pad_width=1, mode="constant", constant_values=1)
+        dem = np.pad(dem, pad_width=1, mode="constant", constant_values=0)
 
     # Derivates in X and Y direction
     dzdx = ((np.roll(dem, 1, axis=1) - np.roll(dem, -1, axis=1)) / 2) / resolution_x
@@ -156,8 +96,150 @@ def slope_aspect(input_DEM_arr, resolution_x, resolution_y, ve_factor, is_paddin
     slope = slope[1:-1, 1:-1]
     aspect = aspect[1:-1, 1:-1]
 
-    # change no data to -1
-    slope[slope == np.NaN] = -1
-    aspect[aspect == np.NaN] = -1
+    # edges to -1
+    slope[:,0] = -1
+    slope[0,:] = -1
+    slope[:,-1] = -1
+    slope[-1,:] = -1
+    aspect[:,0] = -1
+    aspect[0,:] = -1
+    aspect[:,-1] = -1
+    aspect[-1,:] = -1
 
     return slope, aspect
+
+
+"""
+NAME:
+    Analytical hillshading
+
+DESCRIPTION:
+    Compute hillshade.
+
+INPUTS:
+    input_DEM_arr   - input DEM 2D numpy array
+    resolution_x      - DEM resolution in X direction
+    resolution_y      - DEM resolution in Y direction
+    sun_azimuth     - solar azimuth angle (clockwise from North) in degrees
+    sun_elevation   - solar vertical angle (above the horizon) in degrees
+    is_padding_applied  - is padding already applied on input array (needed for ArcGIS Pro which applies padding)
+    slope               - slope in radians if you don't input it, it is calculated
+    aspect              - aspect in radians if you don't input it, it is calculated
+
+OUTPUTS:
+    hillshade - result numpy array
+
+KEYWORDS:
+    /
+
+DEPENDENCIES:
+    slope_aspect
+
+AUTHOR:
+    RVT:
+        Klemen Zaksek (klemen.zaksek@zmaw.de)
+    RVT_py:
+        Žiga Maroh (ziga.maroh@icloud.com)
+
+MODIFICATION HISTORY:
+    RVT:
+        1.0     Written by Klemen Zaksek, 2013.
+        1.1     September 2014: Suppress_output and cosi keywords added to the procedure
+    RVT_py:
+        1.0     Written by Žiga Maroh, 2020.
+"""
+
+
+def analytical_hillshading(input_DEM_arr, resolution_x, resolution_y, sun_azimuth=315, sun_elevation=35,
+                           is_padding_applied=False, slope=None, aspect=None):
+    ve_factor = 1
+    if sun_azimuth > 360 or sun_elevation > 90 or sun_azimuth < 0 or sun_elevation < 0:
+        raise Exception("RVT analytical_hillshading: sun_azimuth must be [0-360] and sun_elevation [0-90]!")
+
+    # Convert solar position (degrees) to radians
+    sun_azimuth_rad = np.deg2rad(sun_azimuth)
+    sun_elevation_rad = np.deg2rad(sun_elevation)
+
+    # Convert to solar zenith angle
+    sun_zenith_rad = np.pi / 2 - sun_elevation_rad
+
+    # are slope and aspect already calculated and presented
+    if slope is None or aspect is None:
+        # calculates slope and aspect
+        slope, aspect = slope_aspect(input_DEM_arr=input_DEM_arr, resolution_x=resolution_x, resolution_y=resolution_y,
+                                     ve_factor=ve_factor, is_padding_applied=is_padding_applied, output_units="radian")
+
+    # Compute solar incidence angle, hillshading
+    hillshading = np.cos(sun_zenith_rad) * np.cos(slope) + np.sin(sun_zenith_rad) * np.sin(slope) * np.cos(
+        aspect - sun_azimuth_rad)
+
+    return hillshading
+
+
+"""
+NAME:
+    Multiple directions hillshading
+
+DESCRIPTION:
+    Calculates hillshades from multiple directions.
+
+INPUTS:
+    input_DEM_arr           - input DEM 2D numpy array
+    resolution_x            - DEM resolution in X direction
+    resolution_y            - DEM resolution in Y direction
+    nr_directions           - number of solar azimuth angles (clockwise from North)
+    sun_elevation           - solar vertical angle (above the horizon) in degrees
+    is_padding_applied      - is padding already applied on input array (needed for ArcGIS Pro which applies padding)
+    slope               - slope in radians if you don't input it, it is calculated
+    aspect              - aspect in radians if you don't input it, it is calculated
+
+OUTPUTS:
+    multi_hillshade - numpy array containing numpy_arrays of hillshades in different directions
+
+KEYWORDS:
+    /
+
+DEPENDENCIES:
+    slope_aspect
+    analytical_hillshade
+
+AUTHOR:
+    RVT:
+        Klemen Zaksek (klemen.zaksek@zmaw.de)
+    RVT_py:
+        Žiga Maroh (ziga.maroh@icloud.com)
+
+MODIFICATION HISTORY:
+    RVT:
+        1.0 Written by Klemen Zaksek, 2013.
+    RVT_py:
+        1.0 Written by Žiga Maroh, 2020.
+"""
+
+
+def multiple_directions_hillshading(input_DEM_arr, resolution_x, resolution_y, nr_directions=16, sun_elevation=35,
+                                    is_padding_applied=False, slope=None, aspect=None):
+    if sun_elevation > 90 or sun_elevation < 0:
+        raise Exception("RVT multiple_directions_hillshading: sun_elevation must be [0-90]!")
+
+    ve_factor = 1
+
+    # calculates slope and aspect if they are not added
+    if slope is None or aspect is None:  # slope and aspect are the same, so we have to calculate it once
+        slope, aspect = slope_aspect(input_DEM_arr=input_DEM_arr, resolution_x=resolution_x,
+                                     resolution_y=resolution_y,
+                                     ve_factor=ve_factor, is_padding_applied=is_padding_applied,
+                                     output_units="radian")
+
+    hillshades_arr_list = []  # list of all hillshades in diffrent directions
+    for i_direction in range(nr_directions):
+        sun_azimuth = (360 / nr_directions) * i_direction
+        hillshade = analytical_hillshading(input_DEM_arr=input_DEM_arr, resolution_x=resolution_x,
+                                           resolution_y=resolution_y, sun_elevation=sun_elevation,
+                                           sun_azimuth=sun_azimuth, is_padding_applied=is_padding_applied, slope=slope,
+                                           aspect=aspect)
+        hillshades_arr_list.append(hillshade)
+
+    multi_hillshade = np.asarray(hillshades_arr_list)
+    return multi_hillshade
+

@@ -8,7 +8,7 @@ DESCRIPTION:
     Slope is defined as 0 for Hz plane and pi/2 for vertical plane.
 
 INPUTS:
-    input_DEM_arr       - input DEM numpy array
+    input_DEM_arr       - input DEM 2D numpy array
     resolution          - DEM resolution
     ve_factor           - vertical exaggeration factor (must be greater than 0)
     output_units        - percent, degree, radians
@@ -99,6 +99,7 @@ class RVT_Slope():
         kwargs['output_info']['noData'] = self.assignNoData(r['pixelType']) if not(r['noData']) else r['noData']
         kwargs['output_info']['pixelType'] = 'f4'
         kwargs['output_info']['histogram'] = ()
+        kwargs['output_info']['statistics'] = ()
         self.prepare(ve_factor=kwargs.get('ve_factor'), output_unit=kwargs.get("output_unit"))
         return kwargs
 
@@ -116,7 +117,7 @@ class RVT_Slope():
                                                 resolution_y=pixel_size[1], ve_factor=self.ve_factor,
                                                 is_padding_applied=True, output_units=self.output_unit)
 
-        pixelBlocks['output_pixels'] = slope.astype(props['pixelType'])
+        pixelBlocks['output_pixels'] = slope.astype(props['pixelType'], copy=False)
         pixelBlocks['output_mask'] = \
             m[:-2, :-2]  & m[1:-1, :-2]  & m[2:, :-2]  \
             & m[:-2, 1:-1] & m[1:-1, 1:-1] & m[2:, 1:-1] \

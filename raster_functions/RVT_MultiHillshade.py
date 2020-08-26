@@ -1,6 +1,6 @@
 """
 NAME:
-    RVT Analytical hillshading, ESRI ArcGis Pro
+    RVT Analytical hillshading in multiple directions, ESRI ArcGis Pro
 
 DESCRIPTION:
     https://github.com/Esri/raster-functions/wiki/PythonRasterFunction#anatomy-of-a-python-raster-function
@@ -10,11 +10,11 @@ INPUTS:
     input_DEM_arr   - input DEM 2D numpy array
     resolution_x    - DEM resolution in X direction
     resolution_y    - DEM resolution in Y direction
-    sun_azimuth     - solar azimuth angle (clockwise from North) in degrees
+    nr_directions   - Number of directions for solar azimuth angle (360/nr_directions*i_direction)
     sun_elevation   - solar vertical angle (above the horizon) in degrees
 
 OUTPUTS:
-    hillshade
+    multi_hillshade
 
 KEYWORDS:
     /
@@ -22,6 +22,7 @@ KEYWORDS:
 DEPENDENCIES:
     RVT_vis_fn.slope_aspect
     RVT_vis_fn.analytical_hillshading
+    RVT_vis_fn.multiple_directions_hillshading
 
 AUTHOR:
     RVT:
@@ -41,11 +42,11 @@ import numpy as np
 import RVT_vis_fn
 
 
-class RVT_Hillshade():
+class RVT_MultiHillshade():
 
     def __init(self):
-        self.name = "RVT analytical hillshading"
-        self.description = "Calculates hillshade."
+        self.name = "RVT multiple directions hillshading"
+        self.description = "Calculate hillshadings in multiple directions."
         self.prepare()
 
     def getParameterInfo(self):
@@ -59,12 +60,12 @@ class RVT_Hillshade():
                 'description': "Input raster for which to create the hillshade map."
             },
             {
-                'name': 'sun_azimuth',
+                'name': 'nr_directions',
                 'dataType': 'numeric',
-                'value': 315.,
+                'value': 16.,
                 'required': False,
-                'displayName': "Sun azimuth",
-                'description': "Solar azimuth angle (clockwise from North) in degrees."
+                'displayName': "Number of directions",
+                'description': "Number of directions for sun azimuth angle (clockwise from North)."
             },
             {
                 'name': 'sun_elevation',
@@ -89,13 +90,14 @@ class RVT_Hillshade():
         }
 
     def updateRasterInfo(self, **kwargs):
-        kwargs['output_info']['bandCount'] = 1
+        nr_bands = int(kwargs.get('nr_directions'))
+        kwargs['output_info']['bandCount'] = nr_bands
         r = kwargs['raster_info']
         kwargs['output_info']['noData'] = self.assignNoData(r['pixelType']) if not (r['noData']) else r['noData']
         kwargs['output_info']['pixelType'] = 'f4'
         kwargs['output_info']['histogram'] = ()
         kwargs['output_info']['statistics'] = ()
-        self.prepare(azimuth=kwargs.get('sun_azimuth'), elevation=kwargs.get("sun_elevation"))
+        self.prepare(nr_directions=kwargs.get('nr_directions'), elevation=kwargs.get("sun_elevation"))
         return kwargs
 
     def updatePixels(self, tlc, shape, props, **pixelBlocks):
@@ -108,11 +110,13 @@ class RVT_Hillshade():
         if (pixel_size[0] <= 0) | (pixel_size[1] <= 0):
             raise Exception("Input raster cell size is invalid.")
 
-        hillshade = RVT_vis_fn.analytical_hillshading(input_DEM_arr=dem, resolution_x=pixel_size[0],
-                                                      resolution_y=pixel_size[1], sun_azimuth=self.azimuth,
-                                                      sun_elevation=self.elevation, is_padding_applied=True)
+        multi_hillshade = RVT_vis_fn.multiple_directions_hillshading(input_DEM_arr=dem, resolution_x=pixel_size[0],
+                                                                     resolution_y=pixel_size[1],
+                                                                     nr_directions=self.nr_directions,
+                                                                     sun_elevation=self.elevation,
+                                                                     is_padding_applied=True)
 
-        pixelBlocks['output_pixels'] = hillshade.astype(props['pixelType'], copy=False)
+        pixelBlocks['output_pixels'] = multi_hillshade.astype(props['pixelType'], copy=False)
         pixelBlocks['output_mask'] = \
             m[:-2, :-2] & m[1:-1, :-2] & m[2:, :-2] \
             & m[:-2, 1:-1] & m[1:-1, 1:-1] & m[2:, 1:-1] \
@@ -137,6 +141,6 @@ class RVT_Hillshade():
         elif pixelType == 'u1':
             return np.array([255, ])  # unsigned integer 8 bit
 
-    def prepare(self, azimuth=315, elevation=35):
-        self.azimuth = azimuth
+    def prepare(self, nr_directions=16, elevation=35):
+        self.nr_directions = int(nr_directions)  # must be int
         self.elevation = elevation
