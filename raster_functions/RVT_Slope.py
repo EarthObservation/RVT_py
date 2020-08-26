@@ -30,10 +30,16 @@ DEPENDENCIES:
     RVT_vis_fn.slope_aspect
 
 AUTHOR:
-    Žiga Maroh (ziga.maroh@icloud.com)
+    RVT:
+        Klemen Zaksek (klemen.zaksek@zmaw.de)
+    RVT_py:
+        Žiga Maroh (ziga.maroh@icloud.com)
 
 MODIFICATION HISTORY:
-    1.0 Written by Žiga Maroh, 2020.
+    RVT:
+        1.0 Written by Klemen Zaksek, 2011.
+    RVT_py:
+        1.0 Written by Žiga Maroh, 2020.
 """
 
 

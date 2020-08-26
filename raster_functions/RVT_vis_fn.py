@@ -34,10 +34,17 @@ DEPENDENCIES:
     slope_aspect
 
 AUTHOR:
-    Žiga Maroh (ziga.maroh@icloud.com)
+    RVT:
+        Klemen Zaksek (klemen.zaksek@zmaw.de)
+    RVT_py:
+        Žiga Maroh (ziga.maroh@icloud.com)
 
 MODIFICATION HISTORY:
-    1.0 Written by Žiga Maroh, 2020.
+    RVT:
+        1.0     Written by Klemen Zaksek, 2013.
+        1.1     September 2014: Suppress_output and cosi keywords added to the procedure
+    RVT_py:
+        1.0     Written by Žiga Maroh, 2020.
 """
 
 
@@ -98,10 +105,16 @@ DEPENDENCIES:
     /
 
 AUTHOR:
-    Žiga Maroh (ziga.maroh@icloud.com)
+    RVT:
+        Klemen Zaksek (klemen.zaksek@zmaw.de)
+    RVT_py:
+        Žiga Maroh (ziga.maroh@icloud.com)
 
 MODIFICATION HISTORY:
-    1.0 Written by Žiga Maroh, 2020.
+    RVT:
+        1.0 Written by Klemen Zaksek, 2011.
+    RVT_py:
+        1.0 Written by Žiga Maroh, 2020.
 """
 
 
@@ -111,7 +124,7 @@ def slope_aspect(input_DEM_arr, resolution_x, resolution_y, ve_factor, is_paddin
     dem = input_DEM_arr * ve_factor
     # add frame of 0 (additional row up bottom and column left right)
     if not is_padding_applied:
-        dem = np.pad(dem, pad_width=1, mode="constant", constant_values=0)
+        dem = np.pad(dem, pad_width=1, mode="constant", constant_values=1)
 
     # Derivates in X and Y direction
     dzdx = ((np.roll(dem, 1, axis=1) - np.roll(dem, -1, axis=1)) / 2) / resolution_x

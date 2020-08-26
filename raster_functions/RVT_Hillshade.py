@@ -24,10 +24,17 @@ DEPENDENCIES:
     RVT_vis_fn.analytical_hillshading
 
 AUTHOR:
-    Žiga Maroh (ziga.maroh@icloud.com)
+    RVT:
+        Klemen Zaksek (klemen.zaksek@zmaw.de)
+    RVT_py:
+        Žiga Maroh (ziga.maroh@icloud.com)
 
 MODIFICATION HISTORY:
-    1.0 Written by Žiga Maroh, 2020.
+    RVT:
+        1.0     Written by Klemen Zaksek, 2013.
+        1.1     September 2014: Suppress_output and cosi keywords added to the procedure
+    RVT_py:
+        1.0     Written by Žiga Maroh, 2020.
 """
 
 import numpy as np
