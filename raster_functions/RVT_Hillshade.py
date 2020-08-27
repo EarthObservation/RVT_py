@@ -110,7 +110,8 @@ class RVT_Hillshade():
 
         hillshade = RVT_vis_fn.analytical_hillshading(input_DEM_arr=dem, resolution_x=pixel_size[0],
                                                       resolution_y=pixel_size[1], sun_azimuth=self.azimuth,
-                                                      sun_elevation=self.elevation, is_padding_applied=True)
+                                                      sun_elevation=self.elevation, is_padding_applied=True,
+                                                      bytscl=False)
 
         pixelBlocks['output_pixels'] = hillshade.astype(props['pixelType'], copy=False)
         pixelBlocks['output_mask'] = \

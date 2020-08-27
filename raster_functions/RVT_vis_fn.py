@@ -10,6 +10,62 @@ PURPOSE:
 import numpy as np
 
 
+def bytescale(data, cmin=None, cmax=None, high=255, low=0):
+    """
+    Byte scales an array (image).
+
+    Byte scaling means converting the input image to uint8 dtype and scaling
+    the range to ``(low, high)`` (default 0-255).
+
+    Parameters
+    ----------
+    data : ndarray
+        numpy image data array.
+    cmin : scalar, optional
+        Bias scaling of small values. Default is ``data.min()``.
+    cmax : scalar, optional
+        Bias scaling of large values. Default is ``data.max()``.
+    high : scalar, optional
+        Scale max value to `high`.  Default is 255.
+    low : scalar, optional
+        Scale min value to `low`.  Default is 0.
+
+    Returns
+    -------
+    img_array : uint8 ndarray
+        The byte-scaled array.
+
+    """
+
+    if high < low:
+        raise ValueError("`high` should be larger than `low`.")
+
+    if cmin is None:
+        cmin = data.min()
+    if cmax is None:
+        cmax = data.max()
+
+    cscale = cmax - cmin
+    if cscale < 0:
+        raise ValueError("`cmax` should be larger than `cmin`.")
+    elif cscale == 0:
+        cscale = 1
+
+    if data.dtype == np.uint8:
+        bytedata = (high + 1) * (data - cmin - 1) / (cmax - cmin)  # copied from IDL BYTSCL
+        bytedata[bytedata > high] = high
+        bytedata[bytedata < 0] = 0
+        return np.cast[np.uint8](bytedata) + np.cast[np.uint8](low)
+
+    # scale = float(high - low) / cscale  # old scipy fn
+    # bytedata = (data * 1.0 - cmin) * scale + 0.4999  # old scipy fn
+
+    bytedata = (high + 0.9999) * (data - cmin) / (cmax - cmin)  # copied from IDL BYTSCL
+    bytedata[bytedata > high] = high
+    bytedata[bytedata < 0] = 0
+    return np.cast[np.uint8](bytedata) + np.cast[np.uint8](low)
+
+
 """
 NAME:
     Slope, Aspect
@@ -117,11 +173,13 @@ DESCRIPTION:
     Compute hillshade.
 
 INPUTS:
-    input_DEM_arr   - input DEM 2D numpy array
-    resolution_x      - DEM resolution in X direction
-    resolution_y      - DEM resolution in Y direction
-    sun_azimuth     - solar azimuth angle (clockwise from North) in degrees
-    sun_elevation   - solar vertical angle (above the horizon) in degrees
+    input_DEM_arr       - input DEM 2D numpy array
+    resolution_x        - DEM resolution in X direction
+    resolution_y        - DEM resolution in Y direction
+    sun_azimuth         - solar azimuth angle (clockwise from North) in degrees
+    sun_elevation       - solar vertical angle (above the horizon) in degrees
+    bytscl              - if True scale values to 0-255 (u1, uint8)
+    bytscl_min_max      - tuple(min, max) for bytscl (RVT: sc_hls_ev)
     is_padding_applied  - is padding already applied on input array (needed for ArcGIS Pro which applies padding)
     slope               - slope in radians if you don't input it, it is calculated
     aspect              - aspect in radians if you don't input it, it is calculated
@@ -150,8 +208,8 @@ MODIFICATION HISTORY:
 """
 
 
-def analytical_hillshading(input_DEM_arr, resolution_x, resolution_y, sun_azimuth=315, sun_elevation=35,
-                           is_padding_applied=False, slope=None, aspect=None):
+def analytical_hillshading(input_DEM_arr, resolution_x, resolution_y, sun_azimuth=315, sun_elevation=35, bytscl=True,
+                           bytscl_min_max=(0,1), is_padding_applied=False, slope=None, aspect=None):
     ve_factor = 1
     if sun_azimuth > 360 or sun_elevation > 90 or sun_azimuth < 0 or sun_elevation < 0:
         raise Exception("RVT analytical_hillshading: sun_azimuth must be [0-360] and sun_elevation [0-90]!")
@@ -172,6 +230,8 @@ def analytical_hillshading(input_DEM_arr, resolution_x, resolution_y, sun_azimut
     # Compute solar incidence angle, hillshading
     hillshading = np.cos(sun_zenith_rad) * np.cos(slope) + np.sin(sun_zenith_rad) * np.sin(slope) * np.cos(
         aspect - sun_azimuth_rad)
+    if bytscl:
+        hillshading = bytescale(hillshading, cmin=bytscl_min_max[0], cmax=bytscl_min_max[1])
 
     return hillshading
 
@@ -189,6 +249,8 @@ INPUTS:
     resolution_y            - DEM resolution in Y direction
     nr_directions           - number of solar azimuth angles (clockwise from North)
     sun_elevation           - solar vertical angle (above the horizon) in degrees
+    bytscl                  - if True scale values to 0-255 (u1, uint8)
+    bytscl_min_max          - tuple(min, max) for bytscl (RVT: sc_hls_ev)
     is_padding_applied      - is padding already applied on input array (needed for ArcGIS Pro which applies padding)
     slope               - slope in radians if you don't input it, it is calculated
     aspect              - aspect in radians if you don't input it, it is calculated
@@ -218,6 +280,7 @@ MODIFICATION HISTORY:
 
 
 def multiple_directions_hillshading(input_DEM_arr, resolution_x, resolution_y, nr_directions=16, sun_elevation=35,
+                                    bytscl=True, bytscl_min_max=(0.00, 1.00),
                                     is_padding_applied=False, slope=None, aspect=None):
     if sun_elevation > 90 or sun_elevation < 0:
         raise Exception("RVT multiple_directions_hillshading: sun_elevation must be [0-90]!")
@@ -237,9 +300,10 @@ def multiple_directions_hillshading(input_DEM_arr, resolution_x, resolution_y, n
         hillshade = analytical_hillshading(input_DEM_arr=input_DEM_arr, resolution_x=resolution_x,
                                            resolution_y=resolution_y, sun_elevation=sun_elevation,
                                            sun_azimuth=sun_azimuth, is_padding_applied=is_padding_applied, slope=slope,
-                                           aspect=aspect)
+                                           aspect=aspect, bytscl=bytscl, bytscl_min_max=bytscl_min_max)
         hillshades_arr_list.append(hillshade)
 
     multi_hillshade = np.asarray(hillshades_arr_list)
+
     return multi_hillshade
 

@@ -25,7 +25,7 @@ def test_analytical_hillshading(input_DEM_path, output_path):
 
     hillshading_arr = RVT_vis_fn.analytical_hillshading(input_DEM_arr=input_DEM_arr, resolution_x=x_res,
                                                         resolution_y=y_res, sun_azimuth=315, sun_elevation=35,
-                                                        is_padding_applied=False)
+                                                        is_padding_applied=False, bytscl=False)
     output_hillshading_dataset = rio.open(output_path, "w", **input_DEM_dataset.meta)
     output_hillshading_dataset.write(np.array([hillshading_arr]))
 
@@ -41,6 +41,7 @@ def test_multiple_directions_hillshading(input_DEM_path, output_path):
 
     profile = input_DEM_dataset.profile
     profile.update(count=16)
+    profile.update(dtype='uint8')
     output_multi_hillshading_dataset = rio.open(output_path, "w", **profile)
     output_multi_hillshading_dataset.write(multi_hillshading_arr)
 
