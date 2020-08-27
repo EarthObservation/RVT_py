@@ -3,6 +3,7 @@
 import rasterio as rio
 import RVT_vis_fn
 import numpy as np
+import scipy.ndimage
 
 
 def test_slope_aspect(input_DEM_path, resolution, ve_factor, output_units, output_path):
@@ -46,9 +47,23 @@ def test_multiple_directions_hillshading(input_DEM_path, output_path):
     output_multi_hillshading_dataset.write(multi_hillshading_arr)
 
 
-test_slope_aspect(input_DEM_path=r"D:\RVT_py\test\TM1_564_146.tif", resolution=1, ve_factor=1, output_units="degree",
-                  output_path=r"D:\RVT_py\test\TM1_564_146_test_slope.tif")
-test_analytical_hillshading(input_DEM_path=r"D:\RVT_py\test\TM1_564_146.tif",
-                            output_path=r"D:\RVT_py\test\TM1_564_146_test_hillsahade.tif")
-test_multiple_directions_hillshading(input_DEM_path=r"D:\RVT_py\test\TM1_564_146.tif",
-                            output_path=r"D:\RVT_py\test\TM1_564_146_test_multi_hillsahade.tif")
+def test_SLRM(input_DEM_path, output_path):
+    input_DEM_dataset = rio.open(input_DEM_path)
+    input_DEM_arr = input_DEM_dataset.read()[0]
+
+    slrm_arr = RVT_vis_fn.SLRM(input_DEM_arr, bytscl=False)
+    profile = input_DEM_dataset.profile
+    #profile.update(dtype='uint8')
+    output_slrm_arr_dataset = rio.open(output_path, "w", **profile)
+    output_slrm_arr_dataset.write(np.array([slrm_arr]))
+
+
+# test_slope_aspect(input_DEM_path=r"D:\RVT_py\test\TM1_564_146.tif", resolution=1, ve_factor=1, output_units="degree",
+#                   output_path=r"D:\RVT_py\test\TM1_564_146_test_slope.tif")
+# test_analytical_hillshading(input_DEM_path=r"D:\RVT_py\test\TM1_564_146.tif",
+#                             output_path=r"D:\RVT_py\test\TM1_564_146_test_hillsahade.tif")
+# test_multiple_directions_hillshading(input_DEM_path=r"D:\RVT_py\test\TM1_564_146.tif",
+#                             output_path=r"D:\RVT_py\test\TM1_564_146_test_multi_hillsahade.tif")
+
+test_SLRM(input_DEM_path=r"D:\RVT_py\test\TM1_564_146.tif",
+                  output_path=r"D:\RVT_py\test\TM1_564_146_test_SLRM.tif")

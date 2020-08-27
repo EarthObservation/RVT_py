@@ -8,6 +8,7 @@ PURPOSE:
 
 # python libraries
 import numpy as np
+import scipy.ndimage
 
 
 def bytescale(data, cmin=None, cmax=None, high=255, low=0):
@@ -178,7 +179,7 @@ INPUTS:
     resolution_y        - DEM resolution in Y direction
     sun_azimuth         - solar azimuth angle (clockwise from North) in degrees
     sun_elevation       - solar vertical angle (above the horizon) in degrees
-    bytscl              - if True scale values to 0-255 (u1, uint8)
+    bytscl              - byte scale, if True scale values to 0-255 (u1, uint8)
     bytscl_min_max      - tuple(min, max) for bytscl (RVT: sc_hls_ev)
     is_padding_applied  - is padding already applied on input array (needed for ArcGIS Pro which applies padding)
     slope               - slope in radians if you don't input it, it is calculated
@@ -249,7 +250,7 @@ INPUTS:
     resolution_y            - DEM resolution in Y direction
     nr_directions           - number of solar azimuth angles (clockwise from North)
     sun_elevation           - solar vertical angle (above the horizon) in degrees
-    bytscl                  - if True scale values to 0-255 (u1, uint8)
+    bytscl                  - byte scale, if True scale values to 0-255 (u1, uint8)
     bytscl_min_max          - tuple(min, max) for bytscl (RVT: sc_hls_ev)
     is_padding_applied      - is padding already applied on input array (needed for ArcGIS Pro which applies padding)
     slope               - slope in radians if you don't input it, it is calculated
@@ -306,4 +307,62 @@ def multiple_directions_hillshading(input_DEM_arr, resolution_x, resolution_y, n
     multi_hillshade = np.asarray(hillshades_arr_list)
 
     return multi_hillshade
+
+
+"""
+NAME:
+    Simple local relief model - SLRM
+
+DESCRIPTION:
+    Calculates simple local relief model.
+
+INPUTS:
+    input_DEM_arr           - input DEM 2D numpy array
+    radious             - Radius for trend assessment [pixels]
+    bytscl                  - byte scale, if True scale values to 0-255 (u1, uint8)
+    bytscl_min_max          - tuple(min, max) for bytscl (RVT: sc_hls_ev)
+
+
+OUTPUTS:
+    slrm - SLRM 2D numpy array
+
+KEYWORDS:
+    /
+
+DEPENDENCIES:
+    /
+
+AUTHOR:
+    RVT:
+        Klemen Zaksek (klemen.zaksek@zmaw.de)
+    RVT_py:
+        Žiga Maroh (ziga.maroh@icloud.com)
+
+MODIFICATION HISTORY:
+    RVT:
+        1.0 Written by Klemen Zaksek, 2013.
+    RVT_py:
+        1.0 Written by Žiga Maroh, 2020.
+"""
+
+def SLRM(input_DEM_arr, radious=20, bytscl=True, bytscl_min_max=(-2,2)):
+    if radious < 10 or radious > 50:
+        import warnings
+        raise Exception("RVT SLRM: Radius for trend assessment needs to be in interval 10-50 pixels!")
+
+    dem = input_DEM_arr
+    dem[dem < -1200] = np.nan
+    dem[dem > 2000] = np.nan
+
+    # mean filter
+    slrm = dem - scipy.ndimage.uniform_filter(input_DEM_arr, mode='nearest', size=radious*2)
+
+    if bytscl:
+        slrm = bytescale(slrm, cmin=bytscl_min_max[0], cmax=bytscl_min_max[1])
+
+    return slrm
+
+
+
+
 
