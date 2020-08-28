@@ -154,14 +154,14 @@ def slope_aspect(input_DEM_arr, resolution_x, resolution_y, ve_factor, is_paddin
     aspect = aspect[1:-1, 1:-1]
 
     # edges to -1
-    slope[:,0] = -1
-    slope[0,:] = -1
-    slope[:,-1] = -1
-    slope[-1,:] = -1
-    aspect[:,0] = -1
-    aspect[0,:] = -1
-    aspect[:,-1] = -1
-    aspect[-1,:] = -1
+    slope[:, 0] = -1
+    slope[0, :] = -1
+    slope[:, -1] = -1
+    slope[-1, :] = -1
+    aspect[:, 0] = -1
+    aspect[0, :] = -1
+    aspect[:, -1] = -1
+    aspect[-1, :] = -1
 
     return slope, aspect
 
@@ -210,7 +210,7 @@ MODIFICATION HISTORY:
 
 
 def analytical_hillshading(input_DEM_arr, resolution_x, resolution_y, sun_azimuth=315, sun_elevation=35, bytscl=True,
-                           bytscl_min_max=(0,1), is_padding_applied=False, slope=None, aspect=None):
+                           bytscl_min_max=(0, 1), is_padding_applied=False, slope=None, aspect=None):
     ve_factor = 1
     if sun_azimuth > 360 or sun_elevation > 90 or sun_azimuth < 0 or sun_elevation < 0:
         raise Exception("RVT analytical_hillshading: sun_azimuth must be [0-360] and sun_elevation [0-90]!")
@@ -318,7 +318,7 @@ DESCRIPTION:
 
 INPUTS:
     input_DEM_arr           - input DEM 2D numpy array
-    radious             - Radius for trend assessment [pixels]
+    radius             - Radius for trend assessment [pixels]
     bytscl                  - byte scale, if True scale values to 0-255 (u1, uint8)
     bytscl_min_max          - tuple(min, max) for bytscl (RVT: sc_hls_ev)
 
@@ -345,8 +345,9 @@ MODIFICATION HISTORY:
         1.0 Written by Žiga Maroh, 2020.
 """
 
-def SLRM(input_DEM_arr, radious=20, bytscl=True, bytscl_min_max=(-2,2)):
-    if radious < 10 or radious > 50:
+
+def SLRM(input_DEM_arr, radius=20, bytscl=True, bytscl_min_max=(-2, 2)):
+    if radius < 10 or radius > 50:
         import warnings
         raise Exception("RVT SLRM: Radius for trend assessment needs to be in interval 10-50 pixels!")
 
@@ -355,14 +356,9 @@ def SLRM(input_DEM_arr, radious=20, bytscl=True, bytscl_min_max=(-2,2)):
     dem[dem > 2000] = np.nan
 
     # mean filter
-    slrm = dem - scipy.ndimage.uniform_filter(input_DEM_arr, mode='nearest', size=radious*2)
+    slrm = dem - scipy.ndimage.uniform_filter(input_DEM_arr, mode='nearest', size=radius * 2)
 
     if bytscl:
         slrm = bytescale(slrm, cmin=bytscl_min_max[0], cmax=bytscl_min_max[1])
 
     return slrm
-
-
-
-
-
