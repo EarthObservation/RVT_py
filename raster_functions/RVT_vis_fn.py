@@ -346,8 +346,8 @@ MODIFICATION HISTORY:
 """
 
 
-def SLRM(input_DEM_arr, radius=20, bytscl=True, bytscl_min_max=(-2, 2)):
-    if radius < 10 or radius > 50:
+def SLRM(input_DEM_arr, radius_cell=20, bytscl=True, bytscl_min_max=(-2, 2)):
+    if radius_cell < 10 or radius_cell > 50:
         import warnings
         raise Exception("RVT SLRM: Radius for trend assessment needs to be in interval 10-50 pixels!")
 
@@ -356,7 +356,7 @@ def SLRM(input_DEM_arr, radius=20, bytscl=True, bytscl_min_max=(-2, 2)):
     dem[dem > 2000] = np.nan
 
     # mean filter
-    slrm = dem - scipy.ndimage.uniform_filter(input_DEM_arr, mode='nearest', size=radius * 2)
+    slrm = dem - scipy.ndimage.uniform_filter(input_DEM_arr, mode='nearest', size=radius_cell * 2)
 
     if bytscl:
         slrm = bytescale(slrm, cmin=bytscl_min_max[0], cmax=bytscl_min_max[1])

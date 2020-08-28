@@ -54,11 +54,11 @@ class RVT_SLRM():
                 'description': "Input raster for which to create the SLRM."
             },
             {
-                'name': 'radius',
+                'name': 'radius_cell',
                 'dataType': 'numeric',
                 'value': 20.,
                 'required': False,
-                'displayName': "Radius",
+                'displayName': "Radius [pixels]",
                 'description': "Radius for trend assessment [pixels], allowed values 10-50. "
                                "If radius less than 10 program changes it to 10, "
                                "if more than 50 program changes it to 50"
@@ -83,7 +83,7 @@ class RVT_SLRM():
         kwargs['output_info']['pixelType'] = 'f4'
         kwargs['output_info']['histogram'] = ()
         kwargs['output_info']['statistics'] = ()
-        self.prepare(radius=kwargs.get('radius'))
+        self.prepare(radius_cell=kwargs.get('radius_cell'))
         return kwargs
 
     def updatePixels(self, tlc, shape, props, **pixelBlocks):
@@ -92,7 +92,7 @@ class RVT_SLRM():
         self.noData = self.assignNoData(props['pixelType']) if not (props['noData']) else props['noData']
         dem = np.where(np.not_equal(dem, self.noData), dem, dem)
 
-        slrm = RVT_vis_fn.SLRM(input_DEM_arr=dem, radius=self.radius, bytscl=False)
+        slrm = RVT_vis_fn.SLRM(input_DEM_arr=dem, radius_cell=self.radius_cell, bytscl=False)
 
         pixelBlocks['output_pixels'] = slrm.astype(props['pixelType'], copy=False)
         pixelBlocks['output_mask'] = m
@@ -116,11 +116,11 @@ class RVT_SLRM():
         elif pixelType == 'u1':
             return np.array([255, ])  # unsigned integer 8 bit
 
-    def prepare(self, radius=20):
-        if radius < 10:
-            self.radius = 10
-        elif radius > 50:
-            self.radius = 50
+    def prepare(self, radius_cell=20):
+        if radius_cell < 10:
+            self.radius_cell = 10
+        elif radius_cell > 50:
+            self.radius_cell = 50
         else:
-            self.radius = int(radius)
+            self.radius_cell = int(radius_cell)
 
