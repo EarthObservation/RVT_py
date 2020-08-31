@@ -70,6 +70,7 @@ def bytescale(data, cmin=None, cmax=None, high=255, low=0):
 """
 NAME:
     Slope, Aspect
+    slope_aspect
 
 DESCRIPTION:
     Procedure can return terrain slope and aspect in radian units (default) or in alternative units (if specified).
@@ -109,9 +110,9 @@ AUTHOR:
 
 MODIFICATION HISTORY:
     RVT:
-        1.0 Written by Klemen Zaksek, 2011.
+        Written by Klemen Zaksek, 2011.
     RVT_py:
-        1.0 Written by Žiga Maroh, 2020.
+        Written by Žiga Maroh, 2020.
 """
 
 
@@ -169,6 +170,7 @@ def slope_aspect(input_DEM_arr, resolution_x, resolution_y, ve_factor, is_paddin
 """
 NAME:
     Analytical hillshading
+    analytical_hillshading
 
 DESCRIPTION:
     Compute hillshade.
@@ -205,7 +207,7 @@ MODIFICATION HISTORY:
         1.0     Written by Klemen Zaksek, 2013.
         1.1     September 2014: Suppress_output and cosi keywords added to the procedure
     RVT_py:
-        1.0     Written by Žiga Maroh, 2020.
+        Written by Žiga Maroh, 2020.
 """
 
 
@@ -240,6 +242,7 @@ def analytical_hillshading(input_DEM_arr, resolution_x, resolution_y, sun_azimut
 """
 NAME:
     Multiple directions hillshading
+    multiple_directions_hillshading
 
 DESCRIPTION:
     Calculates hillshades from multiple directions.
@@ -274,9 +277,9 @@ AUTHOR:
 
 MODIFICATION HISTORY:
     RVT:
-        1.0 Written by Klemen Zaksek, 2013.
+        Written by Klemen Zaksek, 2013.
     RVT_py:
-        1.0 Written by Žiga Maroh, 2020.
+        Written by Žiga Maroh, 2020.
 """
 
 
@@ -312,6 +315,7 @@ def multiple_directions_hillshading(input_DEM_arr, resolution_x, resolution_y, n
 """
 NAME:
     Simple local relief model - SLRM
+    SLRM
 
 DESCRIPTION:
     Calculates simple local relief model.
@@ -340,9 +344,9 @@ AUTHOR:
 
 MODIFICATION HISTORY:
     RVT:
-        1.0 Written by Klemen Zaksek, 2013.
+        Written by Klemen Zaksek, 2013.
     RVT_py:
-        1.0 Written by Žiga Maroh, 2020.
+        Written by Žiga Maroh, 2020.
 """
 
 
@@ -362,3 +366,221 @@ def SLRM(input_DEM_arr, radius_cell=20, bytscl=True, bytscl_min_max=(-2, 2)):
         slrm = bytescale(slrm, cmin=bytscl_min_max[0], cmax=bytscl_min_max[1])
 
     return slrm
+
+
+"""
+NAME:
+    azimuth
+
+DESCRIPTION:
+     Determine the azimuth in the range of [0,2pi).
+
+INPUTS:
+    This function needs point coordinates xa,ya,xb,yb
+
+OUTPUTS:
+    a - outputs the azimuth in radians.
+
+KEYWORDS:
+    /
+
+DEPENDENCIES:
+    /
+
+AUTHOR:
+    RVT:
+        Klemen Zaksek (klemen.zaksek@zmaw.de)
+        Kristof Ostir (kristof.ostir@fgg.uni-lj.si)
+    RVT_py:
+        Žiga Maroh (ziga.maroh@icloud.com)
+
+MODIFICATION HISTORY:
+    RVT:
+        Written by Klemen Zaksek, 2004.
+        Implemented in IDL by Kristof Ostir, 2008.
+    RVT_py:
+        Written by Žiga Maroh, 2020.
+"""
+
+
+def azimuth(xa, ya, xb, yb):
+    north = ya - yb
+    east = xb - xa
+
+    if north == 0:
+        if east > 0:
+            a = np.pi / 2
+        else:
+            if east < 0:
+                a = 3 * np.pi / 2
+            else:
+                a = np.nan
+    else:
+        a0 = np.arctan(east / north)
+        if north > 0 and east >= 0:
+            a = a0
+        elif north < 0:
+            a = a0 + np.pi
+        else:
+            a = a0 + 2 * np.pi
+    return a
+
+
+"""
+NAME:
+    Sky-View determination movement matrix
+    sky_view_det_move
+
+DESCRIPTION:
+    Determine the movement matrix for Sky-View computation.
+
+INPUTS:
+    num_directions - number of directions as input
+    radius_cell - radius to consider in cells (not in meters)
+    ncol - number of columns of the input DEM
+
+
+OUTPUTS:
+    move - 2D numpy array movement matrix.
+
+KEYWORDS:
+    /
+
+DEPENDENCIES:
+    azimuth
+
+AUTHOR:
+    RVT:
+        Klemen Zaksek (klemen.zaksek@zmaw.de)
+        Kristof Ostir (kristof.ostir@fgg.uni-lj.si)
+    RVT_py:
+        Žiga Maroh (ziga.maroh@icloud.com)
+
+MODIFICATION HISTORY:
+    RVT:
+        Written by Klemen Zaksek, 2005.
+        Implemented in IDL by Kristof Ostir, 2008.
+        Optimized by Klemen Zaksek, 2013.
+    RVT_py:
+        Written by Žiga Maroh, 2020.
+"""
+
+
+def sky_view_det_move(num_directions, radius_cell, ncol):
+    # Parameters
+    look_angle = 2 * np.pi / num_directions
+
+    # Matrix initialization
+    move = np.zeros((3, radius_cell + 1, num_directions))
+
+    # For each direction
+    for i_direction in range(num_directions):
+        angle = i_direction * look_angle
+        d = 0
+        x0 = 0
+        y0 = 0
+        xt = x0
+        yt = y0
+        rad = 0
+
+        if 0 <= angle < np.pi / 2:
+            quad = 1
+        elif np.pi / 2 <= angle < np.pi:
+            quad = 2
+        elif np.pi <= angle < 3 * np.pi / 2:
+            quad = 3
+        elif 3 * np.pi / 2 <= angle < 2 * np.pi:
+            quad = 4
+
+        # while within range
+        while d <= radius_cell:
+            # compute direction
+            if quad == 1:
+                # Right
+                xa = xt + 1
+                ya = yt
+                # Up
+                xb = xt
+                yb = yt - 1
+                # diagonal right up
+                xc = xt + 1
+                yc = yt - 1
+            elif quad == 2:
+                # Right
+                xa = xt + 1
+                ya = yt
+                # Diagonal right down
+                xb = xt + 1
+                yb = yt + 1
+                # Down
+                xc = xt
+                yc = yt + 1
+            elif quad == 3:
+                # Left
+                xa = xt - 1
+                ya = yt
+                # Diagonal left down
+                xb = xt - 1
+                yb = yt + 1
+                # Down
+                xc = xt
+                yc = yt + 1
+            elif quad == 4:
+                # Left
+                xa = xt - 1
+                ya = yt
+                # Up
+                xb = xt
+                yb = yt - 1
+                # Diagonal left up
+                xc = xt - 1
+                yc = yt - 1
+
+            # azimuths of possible movements (nearest neighbor, no interpolation)
+            k_a = azimuth(x0, y0, xa, ya)
+            k_b = azimuth(x0, y0, xb, yb)
+            k_c = azimuth(x0, y0, xc, yc)
+
+            # Minimum difference in angle for new point
+            if abs(k_a - angle) <= abs(k_b - angle):
+                if abs(k_a - angle) <= abs(k_c - angle):
+                    xt = xa
+                    yt = ya
+                else:
+                    xt = xc
+                    yt = yc
+            else:
+                if abs(k_b - angle) <= abs(k_c - angle):
+                    xt = xb
+                    yt = yb
+                else:
+                    xt = xc
+                    yt = yc
+
+            # Output
+            move[0, rad, i_direction] = xt - x0
+            move[1, rad, i_direction] = yt - y0
+            d = np.sqrt((xt - x0) ** 2 + (yt - y0) ** 2)
+            move[2, rad, i_direction] = d
+
+            # next cell
+            rad += 1
+
+    # Reformat the radius:
+    # First row tells you, how many valid cells are available, bellow is actual radius in cells
+    move[2, 1:radius_cell + 1, :] = move[2, 0:radius_cell, :]
+    for i_direction in range(num_directions):
+        tmp = move[2, 1:radius_cell + 1, i_direction]
+        if tmp[tmp > radius_cell].size > 0:
+            move[2, 0, i_direction] = np.min(tmp[tmp > radius_cell])
+        else:
+            move[2, 0, i_direction] = radius_cell
+
+    # Convert 2D index into 1D index
+    move_t = np.zeros((2, radius_cell + 1, num_directions))
+    move_t[0, :, :] = move[1, :, :] * ncol + move[0, :, :]
+    move_t[1, :, :] = move[2, :, :]
+    move = move_t
+
+    return move
+
