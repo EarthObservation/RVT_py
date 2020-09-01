@@ -9,6 +9,7 @@ PURPOSE:
 # python libraries
 import numpy as np
 import scipy.ndimage
+import scipy.ndimage.interpolation
 
 
 def bytescale(data, cmin=None, cmax=None, high=255, low=0):
@@ -406,7 +407,6 @@ MODIFICATION HISTORY:
 def azimuth(xa, ya, xb, yb):
     north = ya - yb
     east = xb - xa
-
     if north == 0:
         if east > 0:
             a = np.pi / 2
@@ -438,7 +438,6 @@ INPUTS:
     num_directions - number of directions as input
     radius_cell - radius to consider in cells (not in meters)
     ncol - number of columns of the input DEM
-
 
 OUTPUTS:
     move - 2D numpy array movement matrix.
@@ -541,6 +540,7 @@ def sky_view_det_move(num_directions, radius_cell, ncol):
             k_b = azimuth(x0, y0, xb, yb)
             k_c = azimuth(x0, y0, xc, yc)
 
+
             # Minimum difference in angle for new point
             if abs(k_a - angle) <= abs(k_b - angle):
                 if abs(k_a - angle) <= abs(k_c - angle):
@@ -556,6 +556,8 @@ def sky_view_det_move(num_directions, radius_cell, ncol):
                 else:
                     xt = xc
                     yt = yc
+
+
 
             # Output
             move[0, rad, i_direction] = xt - x0
@@ -584,3 +586,238 @@ def sky_view_det_move(num_directions, radius_cell, ncol):
 
     return move
 
+
+"""
+NAME:
+    Sky-View factor compute
+    sky_view_factor_compute
+
+DESCRIPTION:
+    Compute the Sky-View Factor.
+
+INPUTS:
+    height_arr              - elevation (DEM) as 2D numpy array
+    i_valid                 - index of valid pixels to be processed
+    radius_max              - maximal search radius in pixels/cells (not in meters)
+    radius_min              - minimal search radius in pixels/cells (not in meters), for noise reduction
+    num_directions          - number of directions as input
+    a_main_direction        - main direction of anisotropy
+    a_poly_level            - level of polynomial that determines the anisotropy
+    a_min_wight             - weight to consider anisotropy (0 - isotropic, 1 - no illumination from the direction 
+                                                             opposite the main direction)
+    compute_svf             - if true it computes svf, if false output svf = False
+    compute_asvf            - if true it computes asvf, if false output asvf = False
+    compute_opns            - if true it computes opns, if false output opns = False
+    
+OUTPUTS:
+    svf, asvf, opns
+        svf, skyview_factor               - 2D numpy array of skyview factor.
+        asvf, anisotropic_skyview_factor  - 2D numpy array of anisotropic skyview factor.
+        opns, openness                    - openness (elevation angle of horizon)
+
+KEYWORDS:
+    /
+
+DEPENDENCIES:
+    azimuth
+    sky_view_det_move
+
+AUTHOR:
+    RVT:
+        Klemen Zaksek (klemen.zaksek@zmaw.de)
+        Kristof Ostir (kristof.ostir@fgg.uni-lj.si)
+    RVT_py:
+        Žiga Maroh (ziga.maroh@icloud.com)
+
+MODIFICATION HISTORY:
+    RVT:
+        Written by Klemen Zaksek, 2005.
+        Implemented in IDL by Kristof Ostir, 2008.
+        Optimized by Klemen Zaksek, 2009.
+        Rewritten (cleaner code + option of anisometric SCF and openess) by Klemen Zaksek, 2013.
+    RVT_py:
+        Written by Žiga Maroh, 2020.
+"""
+
+def sky_view_factor_compute(height_arr, i_valid, radius_max, radius_min, num_directions,
+                    a_main_direction, a_poly_level, a_min_weight, compute_svf=True, compute_asvf=True,
+                    compute_opns=True):
+    height = height_arr
+
+    svf = False  # if compute_svf is False then function doesn't compute svf and returns False
+    asvf = False  # if compute_asvf is False then function doesn't compute asvf and returns False
+    opns = False  # if compute_opns is False then function doesn't compute opns and returns False
+
+    # directional step
+    dir_step = 2 * np.pi / num_directions
+
+    # vector of movement
+    ncol = height.shape[1]  # number of columns
+    count_height = i_valid[0].size  # number of all elements
+    move = sky_view_det_move(num_directions=num_directions, radius_cell=radius_max, ncol=ncol)
+    # init the outputs
+    if compute_svf:
+        svf = np.zeros(count_height)
+    if compute_opns:
+        opns = np.zeros(count_height)
+    if compute_asvf:
+        asvf = np.zeros(count_height)
+        w_m = a_min_weight  # compute weights
+        w_a = np.rad2deg(a_main_direction)
+        weight = np.arange(num_directions) * dir_step
+        weight = (1 - w_m) * (np.cos((weight - w_a) / 2)) ** a_poly_level + w_m
+
+    # look into each direction...
+    for i_dir in range(num_directions):
+        # reset maximum at each iteration - at each new direction
+        max_slope = np.zeros(count_height) - 1000
+
+        # ... and to the search radius - this depends on the direction - radius is written in the first row
+        for i_rad in range(1, int(move[1, 0, i_dir])):
+            # ignore radios if smaller than minimal defined radius
+            if radius_min > move[1, i_rad, i_dir]:
+                continue
+            # search for max (sky)
+            h_flt = height.flatten()
+            m_slp = (h_flt[i_valid[0] + int(move[0, int(i_rad - 1), i_dir])] - h_flt[i_valid[0]]) / move[1, i_rad, i_dir]
+            max_slope = (max_slope < m_slp).choose(max_slope,m_slp)
+
+        max_slope = np.arctan(max_slope)
+
+        if compute_opns:
+            opns = opns + max_slope
+        if compute_svf:
+            svf = svf + (1 - np.sin((max_slope < 0).choose(max_slope, 0)))
+        if compute_asvf:
+            asvf = asvf + (1 - np.sin((max_slope < 0).choose(max_slope, 0))) * weight[i_dir]
+
+
+    # Normalize to the number of directions / weights
+    if compute_svf:
+        svf = svf / num_directions
+    if compute_asvf:
+        asvf  = asvf / np.sum(weight)
+    if compute_opns:
+        opns = np.pi / 2 - (opns / num_directions)
+
+    return svf, asvf, opns
+
+
+"""
+NAME:
+    Sky-View factor
+    sky_view_factor
+
+DESCRIPTION:
+    Prepare the data and compute the Sky-View Factor.
+
+INPUTS:
+    input_DEM_arr           - input DEM 2D numpy array (Ve Exaggeration and pixel size already considered)
+    compute_svf             - compute SVF (True) or not (False)
+    compute_opns            - compute OPENNESS (True) or not (False)
+    resolution              - pixel resolution
+    svf_n_dir            - number of directions
+    svf_r_max            - maximal search radius in pixels
+    svf_noise            - the level of noise remove (0-3)
+    compute_asvf            - compute anisotropic SVF (True) or not (False)
+    asvf_level           - level of anisotropy, 1-low, 2-high,
+    a_min_weight            - weight to consider anisotropy (0 - isotropic, 1 - no illumination from the direction opposite the main direction)
+    bytscl                  - byte scale, if True scale values to 0-255 (u1, uint8)
+    bytscl_min_max_svf      - tuple(min, max) for bytscl (RVT: sc_svf_ev)
+    bytscl_min_max_opns     - tuple(min, max) for bytscl (RVT: sc_opns_ev)
+    bytscl_min_max_asvf     - tuple(min, max) for bytscl (RVT: sc_asvf_ev)
+        CONSTANTS:
+            sc_asvf_min             - level of polynomial that determines the anisotropy, selected with in_asvf_level
+            sc_asvf_pol             - level of polynomial that determines the anisotropy, selected with in_asvf_level
+            sc_svf_r_min            - the portion (percent) of the maximal search radius to ignore in horizon estimation; for each noise level, selected with in_svf_noise
+    
+    
+OUTPUTS:
+    svf, asvf, opns
+        svf, skyview_factor               - 2D numpy array of skyview factor.
+        asvf, anisotropic_skyview_factor  - 2D numpy array of anisotropic skyview factor.
+        opns, openness                    - openness (elevation angle of horizon)
+
+KEYWORDS:
+    /
+
+DEPENDENCIES:
+    azimuth
+    sky_view_det_move
+    sky_view_compute
+
+AUTHOR:
+    RVT:
+        Klemen Zaksek (klemen.zaksek@zmaw.de)
+        Kristof Ostir (kristof.ostir@fgg.uni-lj.si)
+    RVT_py:
+        Žiga Maroh (ziga.maroh@icloud.com)
+
+MODIFICATION HISTORY:
+    RVT:
+        Written by Klemen Zaksek, 20013.
+    RVT_py:
+        Written by Žiga Maroh, 2020.
+"""
+
+
+def sky_view_factor(input_DEM_arr, resolution, compute_svf=True, compute_opns=True, compute_asvf=True,
+                    svf_n_dir=16, svf_r_max=10, svf_noise=0, asvf_level=1,
+                    bytscl=True, bytscl_min_max_svf=(0.6375, 1.00),
+                    bytscl_min_max_opns=(60, 95.), bytscl_min_max_asvf=(0.6375, 1.00)):
+
+    # CONSTANTS
+    # level of polynomial that determines the anisotropy, selected with in_asvf_level (1 - low, 2 - high)
+    sc_asvf_pol = [4, 8]
+    sc_asvf_min = [0.4, 0.1]
+    # the portion (percent) of the maximal search radius to ignore in horizon estimation; for each noise level,
+    # selected with in_svf_noise (0-3)
+    sc_svf_r_min = [0., 10., 20., 40.]
+    # main direction of anisotropy in degrees
+    asvf_dir = [0., 360.];
+
+    # pixel size
+    dem = input_DEM_arr / resolution
+    # increase edge - visualization foes to edge, so mirror them, leave blank corners
+    ncol = dem.shape[1]
+    nlin = dem.shape[0]
+    tmp = np.zeros((nlin + 2 * svf_r_max, ncol + 2 * svf_r_max))
+
+    # prepare indx for output
+    tmp[svf_r_max:nlin + svf_r_max, svf_r_max:ncol + svf_r_max] = 1
+
+    indx_all = np.where(tmp.flatten() == 1)
+
+    # fill center
+    tmp[svf_r_max:nlin + svf_r_max, svf_r_max:ncol + svf_r_max] = dem
+
+    # final dem with increased edges
+    dem = tmp
+    del tmp
+
+    # minimal search radious depends on the noise level
+    svf_r_min = svf_r_max * sc_svf_r_min[svf_noise] * 0.01
+
+    # set anisotropy parameters
+    if compute_asvf:
+        poly_level = sc_asvf_pol[asvf_level-1]
+        min_weight = sc_asvf_min[asvf_level-1]
+
+    svf, asvf, opns = sky_view_factor_compute(height_arr=dem, i_valid=indx_all, radius_max=svf_r_max,
+                                              radius_min=svf_r_min, num_directions=svf_n_dir,
+                                              a_main_direction=asvf_dir[0], a_poly_level=poly_level,
+                                              a_min_weight=min_weight, compute_svf=compute_svf,
+                                              compute_asvf=compute_asvf, compute_opns=compute_opns)
+    # reshape 1D to 2D
+    svf = svf.reshape((nlin, ncol))
+    asvf = asvf.reshape((nlin, ncol))
+    opns = opns.reshape((nlin, ncol))
+
+    if compute_svf and bytscl:
+        svf = bytescale(svf, cmin=bytscl_min_max_svf[0], cmax=bytscl_min_max_svf[1])
+    if compute_asvf and bytscl:
+        asvf = bytescale(asvf, cmin=bytscl_min_max_asvf[0], cmax=bytscl_min_max_asvf[1])
+    if compute_opns and bytscl:
+        opns = bytescale(opns, cmin=bytscl_min_max_opns[0], cmax=bytscl_min_max_opns[1])
+
+    return svf, asvf, opns

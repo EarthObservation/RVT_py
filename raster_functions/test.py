@@ -57,6 +57,29 @@ def test_SLRM(input_DEM_path, output_path):
     output_slrm_arr_dataset = rio.open(output_path, "w", **profile)
     output_slrm_arr_dataset.write(np.array([slrm_arr]))
 
+def test_sky_view_factor(input_DEM_path, output_svf_path, output_asvf_path, output_opns_path):
+    input_DEM_dataset = rio.open(input_DEM_path)
+    t = input_DEM_dataset.transform
+    x_res = t[0]
+    y_res = -t[4]
+    input_DEM_arr = input_DEM_dataset.read()[0]
+
+
+    svf_arr, asvf_arr, opns_arr = RVT_vis_fn.sky_view_factor(input_DEM_arr=input_DEM_arr, resolution=x_res)
+
+    profile = input_DEM_dataset.profile
+    profile.update(dtype='uint8')
+    output_svf = rio.open(output_svf_path, "w", **profile)
+    output_svf.write(np.array([svf_arr]))
+
+    output_asvf = rio.open(output_asvf_path, "w", **profile)
+    output_asvf.write(np.array([asvf_arr]))
+
+    output_opns = rio.open(output_opns_path, "w", **profile)
+    output_opns.write(np.array([opns_arr]))
+
+
+
 
 # test_slope_aspect(input_DEM_path=r"D:\RVT_py\test\TM1_564_146.tif", resolution=1, ve_factor=1, output_units="degree",
 #                   output_path=r"D:\RVT_py\test\TM1_564_146_test_slope.tif")
@@ -64,6 +87,12 @@ def test_SLRM(input_DEM_path, output_path):
 #                             output_path=r"D:\RVT_py\test\TM1_564_146_test_hillsahade.tif")
 # test_multiple_directions_hillshading(input_DEM_path=r"D:\RVT_py\test\TM1_564_146.tif",
 #                             output_path=r"D:\RVT_py\test\TM1_564_146_test_multi_hillsahade.tif")
+#
+# test_SLRM(input_DEM_path=r"D:\RVT_py\test\TM1_564_146.tif",
+#                   output_path=r"D:\RVT_py\test\TM1_564_146_test_SLRM.tif")
 
-test_SLRM(input_DEM_path=r"D:\RVT_py\test\TM1_564_146.tif",
-                  output_path=r"D:\RVT_py\test\TM1_564_146_test_SLRM.tif")
+# test_sky_view_factor(input_DEM_path=r"D:\RVT_py\test\TM1_564_146.tif",
+#                      output_svf_path=r"D:\RVT_py\test\TM1_564_146_test_SVF.tif",
+#                      output_asvf_path=r"D:\RVT_py\test\TM1_564_146_test_ASVF.tif",
+#                      output_opns_path=r"D:\RVT_py\test\TM1_564_146_test_OPNS.tif")
+
