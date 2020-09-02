@@ -7,8 +7,8 @@ DESCRIPTION:
     Python raster function for ESRI ArcGis which calculates simple local relief model.
 
 INPUTS:
-    input_DEM_arr           - input DEM 2D numpy array
-    radius                  - Radius for trend assessment [pixels]
+    raster      - input raster
+    radius_cell - Radius for trend assessment [pixels]
 
 OUTPUTS:
     slrm

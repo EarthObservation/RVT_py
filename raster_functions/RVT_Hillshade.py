@@ -7,9 +7,7 @@ DESCRIPTION:
     Python raster function for ESRI ArcGis which computes hillshade.
 
 INPUTS:
-    input_DEM_arr   - input DEM 2D numpy array
-    resolution_x    - DEM resolution in X direction
-    resolution_y    - DEM resolution in Y direction
+    raster          - input raster
     sun_azimuth     - solar azimuth angle (clockwise from North) in degrees
     sun_elevation   - solar vertical angle (above the horizon) in degrees
 

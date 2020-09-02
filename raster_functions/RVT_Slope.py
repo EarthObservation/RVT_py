@@ -8,12 +8,9 @@ DESCRIPTION:
     Slope is defined as 0 for Hz plane and pi/2 for vertical plane.
 
 INPUTS:
-    input_DEM_arr       - input DEM 2D numpy array
-    resolution          - DEM resolution
+    raster             - input raster
     ve_factor           - vertical exaggeration factor (must be greater than 0)
     output_units        - percent, degree, radians
-    is_padding_applied  - is padding already applied on input array (needed for ArcGIS Pro which applies padding)
-
 
 OUTPUTS:
     slope
@@ -21,10 +18,6 @@ OUTPUTS:
 KEYWORDS:
     DEM_slope       - output terrain slope
     DEM_aspect      - output terrain aspect
-    output_units    - percent, degree, radians
-        percent         - output terrain slope in percent (0% for HZ surface, 100% for 45 degree tilted plane)
-        degree          - output terrain slope and aspect in degrees
-        radian          - output terrain slope and aspect in radians
 
 DEPENDENCIES:
     RVT_vis_fn.slope_aspect
