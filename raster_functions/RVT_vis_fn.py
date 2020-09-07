@@ -3,13 +3,13 @@ NAME:
     RVT_py visualization functions
 
 PURPOSE:
-    Contains all functions for visualization.
+    Contains all functions for visualization. All functions are rewritten from RVT (IDL)
+    https://github.com/EarthObservation/RVT
 """
 
 # python libraries
 import numpy as np
 import scipy.ndimage
-import scipy.ndimage.interpolation
 
 
 def bytescale(data, cmin=None, cmax=None, high=255, low=0):
@@ -105,13 +105,13 @@ DEPENDENCIES:
 
 AUTHOR:
     RVT:
-        Klemen Zaksek (klemen.zaksek@zmaw.de)
+        Klemen Zakšek (klemen.zaksek@zmaw.de)
     RVT_py:
         Žiga Maroh (ziga.maroh@icloud.com)
 
 MODIFICATION HISTORY:
     RVT:
-        Written by Klemen Zaksek, 2011.
+        Written by Klemen Zakšek, 2011.
     RVT_py:
         Written by Žiga Maroh, 2020.
 """
@@ -199,13 +199,13 @@ DEPENDENCIES:
 
 AUTHOR:
     RVT:
-        Klemen Zaksek (klemen.zaksek@zmaw.de)
+        Klemen Zakšek (klemen.zaksek@zmaw.de)
     RVT_py:
         Žiga Maroh (ziga.maroh@icloud.com)
 
 MODIFICATION HISTORY:
     RVT:
-        1.0     Written by Klemen Zaksek, 2013.
+        1.0     Written by Klemen Zakšek, 2013.
         1.1     September 2014: Suppress_output and cosi keywords added to the procedure
     RVT_py:
         Written by Žiga Maroh, 2020.
@@ -272,13 +272,13 @@ DEPENDENCIES:
 
 AUTHOR:
     RVT:
-        Klemen Zaksek (klemen.zaksek@zmaw.de)
+        Klemen Zakšek (klemen.zaksek@zmaw.de)
     RVT_py:
         Žiga Maroh (ziga.maroh@icloud.com)
 
 MODIFICATION HISTORY:
     RVT:
-        Written by Klemen Zaksek, 2013.
+        Written by Klemen Zakšek, 2013.
     RVT_py:
         Written by Žiga Maroh, 2020.
 """
@@ -339,13 +339,13 @@ DEPENDENCIES:
 
 AUTHOR:
     RVT:
-        Klemen Zaksek (klemen.zaksek@zmaw.de)
+        Klemen Zakšek (klemen.zaksek@zmaw.de)
     RVT_py:
         Žiga Maroh (ziga.maroh@icloud.com)
 
 MODIFICATION HISTORY:
     RVT:
-        Written by Klemen Zaksek, 2013.
+        Written by Klemen Zakšek, 2013.
     RVT_py:
         Written by Žiga Maroh, 2020.
 """
@@ -390,15 +390,15 @@ DEPENDENCIES:
 
 AUTHOR:
     RVT:
-        Klemen Zaksek (klemen.zaksek@zmaw.de)
-        Kristof Ostir (kristof.ostir@fgg.uni-lj.si)
+        Klemen Zakšek (klemen.zaksek@zmaw.de)
+        Krištof Oštir (kristof.ostir@fgg.uni-lj.si)
     RVT_py:
         Žiga Maroh (ziga.maroh@icloud.com)
 
 MODIFICATION HISTORY:
     RVT:
-        Written by Klemen Zaksek, 2004.
-        Implemented in IDL by Kristof Ostir, 2008.
+        Written by Klemen Zakšek, 2004.
+        Implemented in IDL by Krištof Oštir, 2008.
     RVT_py:
         Written by Žiga Maroh, 2020.
 """
@@ -450,16 +450,16 @@ DEPENDENCIES:
 
 AUTHOR:
     RVT:
-        Klemen Zaksek (klemen.zaksek@zmaw.de)
-        Kristof Ostir (kristof.ostir@fgg.uni-lj.si)
+        Klemen Zakšek (klemen.zaksek@zmaw.de)
+        Krištof Oštir (kristof.ostir@fgg.uni-lj.si)
     RVT_py:
         Žiga Maroh (ziga.maroh@icloud.com)
 
 MODIFICATION HISTORY:
     RVT:
-        Written by Klemen Zaksek, 2005.
-        Implemented in IDL by Kristof Ostir, 2008.
-        Optimized by Klemen Zaksek, 2013.
+        Written by Klemen Zakšek, 2005.
+        Implemented in IDL by Krištof Oštir, 2008.
+        Optimized by Klemen Zakšek, 2013.
     RVT_py:
         Written by Žiga Maroh, 2020.
 """
@@ -540,7 +540,6 @@ def sky_view_det_move(num_directions, radius_cell, ncol):
             k_b = azimuth(x0, y0, xb, yb)
             k_c = azimuth(x0, y0, xc, yc)
 
-
             # Minimum difference in angle for new point
             if abs(k_a - angle) <= abs(k_b - angle):
                 if abs(k_a - angle) <= abs(k_c - angle):
@@ -556,8 +555,6 @@ def sky_view_det_move(num_directions, radius_cell, ncol):
                 else:
                     xt = xc
                     yt = yc
-
-
 
             # Output
             move[0, rad, i_direction] = xt - x0
@@ -624,24 +621,25 @@ DEPENDENCIES:
 
 AUTHOR:
     RVT:
-        Klemen Zaksek (klemen.zaksek@zmaw.de)
-        Kristof Ostir (kristof.ostir@fgg.uni-lj.si)
+        Klemen Zakšek (klemen.zaksek@zmaw.de)
+        Krištof Oštir (kristof.ostir@fgg.uni-lj.si)
     RVT_py:
         Žiga Maroh (ziga.maroh@icloud.com)
 
 MODIFICATION HISTORY:
     RVT:
-        Written by Klemen Zaksek, 2005.
-        Implemented in IDL by Kristof Ostir, 2008.
-        Optimized by Klemen Zaksek, 2009.
-        Rewritten (cleaner code + option of anisometric SCF and openess) by Klemen Zaksek, 2013.
+        Written by Klemen Zakšek, 2005.
+        Implemented in IDL by Krištof Oštir, 2008.
+        Optimized by Klemen Zakšek, 2009.
+        Rewritten (cleaner code + option of anisometric SCF and openess) by Klemen Zakšek, 2013.
     RVT_py:
         Written by Žiga Maroh, 2020.
 """
 
+
 def sky_view_factor_compute(height_arr, i_valid, radius_max, radius_min, num_directions,
-                    a_main_direction, a_poly_level, a_min_weight, compute_svf=True, compute_asvf=True,
-                    compute_opns=True):
+                            a_main_direction, a_poly_level, a_min_weight, compute_svf=True, compute_asvf=True,
+                            compute_opns=True):
     height = height_arr
 
     svf = False  # if compute_svf is False then function doesn't compute svf and returns False
@@ -663,7 +661,7 @@ def sky_view_factor_compute(height_arr, i_valid, radius_max, radius_min, num_dir
     if compute_asvf:
         asvf = np.zeros(count_height)
         w_m = a_min_weight  # compute weights
-        w_a = np.rad2deg(a_main_direction)
+        w_a = np.deg2rad(a_main_direction)
         weight = np.arange(num_directions) * dir_step
         weight = (1 - w_m) * (np.cos((weight - w_a) / 2)) ** a_poly_level + w_m
 
@@ -679,8 +677,11 @@ def sky_view_factor_compute(height_arr, i_valid, radius_max, radius_min, num_dir
                 continue
             # search for max (sky)
             h_flt = height.flatten()
-            m_slp = (h_flt[i_valid[0] + int(move[0, int(i_rad - 1), i_dir])] - h_flt[i_valid[0]]) / move[1, i_rad, i_dir]
-            max_slope = (max_slope < m_slp).choose(max_slope,m_slp)
+            np.seterr(divide='ignore', invalid='ignore')  # ignore warnings for dividing with zero
+            m_slp = (h_flt[i_valid[0] + int(move[0, int(i_rad - 1), i_dir])] - h_flt[i_valid[0]]) / move[
+                1, i_rad, i_dir]
+            np.seterr(divide='warn', invalid='warn')  # reset warnings
+            max_slope = (max_slope < m_slp).choose(max_slope, m_slp)
 
         max_slope = np.arctan(max_slope)
 
@@ -691,12 +692,11 @@ def sky_view_factor_compute(height_arr, i_valid, radius_max, radius_min, num_dir
         if compute_asvf:
             asvf = asvf + (1 - np.sin((max_slope < 0).choose(max_slope, 0))) * weight[i_dir]
 
-
     # Normalize to the number of directions / weights
     if compute_svf:
         svf = svf / num_directions
     if compute_asvf:
-        asvf  = asvf / np.sum(weight)
+        asvf = asvf / np.sum(weight)
     if compute_opns:
         opns = np.pi / 2 - (opns / num_directions)
 
@@ -748,24 +748,23 @@ DEPENDENCIES:
 
 AUTHOR:
     RVT:
-        Klemen Zaksek (klemen.zaksek@zmaw.de)
-        Kristof Ostir (kristof.ostir@fgg.uni-lj.si)
+        Klemen Zakšek (klemen.zaksek@zmaw.de)
+        Krištof Oštir (kristof.ostir@fgg.uni-lj.si)
     RVT_py:
         Žiga Maroh (ziga.maroh@icloud.com)
 
 MODIFICATION HISTORY:
     RVT:
-        Written by Klemen Zaksek, 20013.
+        Written by Klemen Zakšek, 2013.
     RVT_py:
         Written by Žiga Maroh, 2020.
 """
 
 
 def sky_view_factor(input_DEM_arr, resolution, compute_svf=True, compute_opns=True, compute_asvf=True,
-                    svf_n_dir=16, svf_r_max=10, svf_noise=0, asvf_level=1,
+                    svf_n_dir=16, svf_r_max=10, svf_noise=0, asvf_dir=315, asvf_level=1,
                     bytscl=True, bytscl_min_max_svf=(0.6375, 1.00),
                     bytscl_min_max_opns=(60, 95.), bytscl_min_max_asvf=(0.6375, 1.00)):
-
     # CONSTANTS
     # level of polynomial that determines the anisotropy, selected with in_asvf_level (1 - low, 2 - high)
     sc_asvf_pol = [4, 8]
@@ -773,8 +772,6 @@ def sky_view_factor(input_DEM_arr, resolution, compute_svf=True, compute_opns=Tr
     # the portion (percent) of the maximal search radius to ignore in horizon estimation; for each noise level,
     # selected with in_svf_noise (0-3)
     sc_svf_r_min = [0., 10., 20., 40.]
-    # main direction of anisotropy in degrees
-    asvf_dir = [0., 360.];
 
     # pixel size
     dem = input_DEM_arr / resolution
@@ -799,19 +796,21 @@ def sky_view_factor(input_DEM_arr, resolution, compute_svf=True, compute_opns=Tr
     svf_r_min = svf_r_max * sc_svf_r_min[svf_noise] * 0.01
 
     # set anisotropy parameters
-    if compute_asvf:
-        poly_level = sc_asvf_pol[asvf_level-1]
-        min_weight = sc_asvf_min[asvf_level-1]
+    poly_level = sc_asvf_pol[asvf_level - 1]
+    min_weight = sc_asvf_min[asvf_level - 1]
 
     svf, asvf, opns = sky_view_factor_compute(height_arr=dem, i_valid=indx_all, radius_max=svf_r_max,
                                               radius_min=svf_r_min, num_directions=svf_n_dir,
-                                              a_main_direction=asvf_dir[0], a_poly_level=poly_level,
+                                              a_main_direction=asvf_dir, a_poly_level=poly_level,
                                               a_min_weight=min_weight, compute_svf=compute_svf,
                                               compute_asvf=compute_asvf, compute_opns=compute_opns)
     # reshape 1D to 2D
-    svf = svf.reshape((nlin, ncol))
-    asvf = asvf.reshape((nlin, ncol))
-    opns = opns.reshape((nlin, ncol))
+    if compute_svf:
+        svf = svf.reshape((nlin, ncol))
+    if compute_asvf:
+        asvf = asvf.reshape((nlin, ncol))
+    if compute_opns:
+        opns = opns.reshape((nlin, ncol))
 
     if compute_svf and bytscl:
         svf = bytescale(svf, cmin=bytscl_min_max_svf[0], cmax=bytscl_min_max_svf[1])
@@ -821,3 +820,407 @@ def sky_view_factor(input_DEM_arr, resolution, compute_svf=True, compute_opns=Tr
         opns = bytescale(opns, cmin=bytscl_min_max_opns[0], cmax=bytscl_min_max_opns[1])
 
     return svf, asvf, opns
+
+
+"""
+NAME:
+    morph_shade_move
+
+DESCRIPTION:
+    Calculates azimuth for morph_shade
+
+INPUTS:
+    d_max  - maximum search distance in pixels
+    angle
+
+OUTPUTS:
+    move
+
+KEYWORDS:
+    /
+
+DEPENDENCIES:
+    /
+
+AUTHOR:
+    RVT:
+        Klemen Čotar
+    RVT_py:
+        Žiga Maroh (ziga.maroh@icloud.com)
+
+MODIFICATION HISTORY:
+    RVT:
+        Initial version written by Klemen Čotar, 2014.
+    RVT_py:
+        Written by Žiga Maroh, 2020.
+"""
+
+
+def morph_shade_move(d_max, angle):
+    # init
+    move = np.zeros((d_max + 1, 3))
+    d = 0
+    x0 = 0
+    y0 = 0
+    xt = x0
+    yt = y0
+    i_rad = 0
+    quad = 0
+
+    # determine quadrant number
+    if 0 <= angle < np.pi / 2:
+        quad = 1
+    elif np.pi / 2 <= angle < np.pi:
+        quad = 2
+    elif np.pi <= angle < 3 * np.pi / 2:
+        quad = 3
+    elif 3 * np.pi / 2 <= angle < 2 * np.pi:
+        quad = 4
+
+    # while within range
+    while d <= d_max:
+        # compute direction
+        if quad == 1:
+            # Right
+            xa = xt + 1
+            ya = yt
+            # Up
+            xb = xt
+            yb = yt - 1
+            # diagonal right up
+            xc = xt + 1
+            yc = yt - 1
+        elif quad == 2:
+            # Right
+            xa = xt + 1
+            ya = yt
+            # Diagonal right down
+            xb = xt + 1
+            yb = yt + 1
+            # Down
+            xc = xt
+            yc = yt + 1
+        elif quad == 3:
+            # Left
+            xa = xt - 1
+            ya = yt
+            # Diagonal left down
+            xb = xt - 1
+            yb = yt + 1
+            # Down
+            xc = xt
+            yc = yt + 1
+        elif quad == 4:
+            # Left
+            xa = xt - 1
+            ya = yt
+            # Up
+            xb = xt
+            yb = yt - 1
+            # Diagonal left up
+            xc = xt - 1
+            yc = yt - 1
+
+        # azimuths of possible movements (nearest neighbor, no interpolation)
+        k_a = azimuth(x0, y0, xa, ya)
+        k_b = azimuth(x0, y0, xb, yb)
+        k_c = azimuth(x0, y0, xc, yc)
+
+        # Minimum difference in angle for new point
+        if abs(k_a - angle) <= abs(k_b - angle):
+            if abs(k_a - angle) <= abs(k_c - angle):
+                xt = xa
+                yt = ya
+            else:
+                xt = xc
+                yt = yc
+        else:
+            if abs(k_b - angle) <= abs(k_c - angle):
+                xt = xb
+                yt = yb
+            else:
+                xt = xc
+                yt = yc
+
+        # Output
+        move[i_rad, 0] = xt - x0
+        move[i_rad, 1] = yt - y0
+        d = np.sqrt((xt - x0) ** 2 + (yt - y0) ** 2)
+        move[i_rad, 2] = d
+
+        # next cell
+        i_rad += 1
+
+    move = move[0:i_rad, :]
+    return move
+
+
+"""
+NAME:
+    morph_shade
+
+DESCRIPTION:
+    Compute topographic corrections for sky illumination.
+
+INPUTS:
+    height - elevation 2D np array
+    sol_z  - solar zenith angle in rad (0 for vertical and pi/2 for horizontal surface)
+    sol_a  - solar azimuth angle
+    d_max  - maximum search distance in pixels
+    resolution  - pixel size
+
+OUTPUTS:
+    This procedure determines those cells that are in its own (hillshade) or thrown (cast shade) shadow
+
+KEYWORDS:
+    /
+
+DEPENDENCIES:
+    morph_shade_move
+
+AUTHOR:
+    RVT:
+        Klemen Čotar
+    RVT_py:
+        Žiga Maroh (ziga.maroh@icloud.com)
+
+MODIFICATION HISTORY:
+    RVT:
+        Initial version written by Klemen Čotar, 2014.
+    RVT_py:
+        Written by Žiga Maroh, 2020.
+"""
+
+
+def morph_shade(height, sol_z, sol_a, d_max, nrows, ncols, resolution):
+    # initialize the results
+    # print(d_max)
+    mask = np.zeros((nrows + 2 * d_max, ncols + 2 * d_max))
+    mask[d_max:(nrows + d_max), d_max:(ncols + d_max)] = 1
+    i_valid = np.where(mask.flatten() == 1)
+    tmp = np.zeros((nrows + 2 * d_max, ncols + 2 * d_max))
+    tmp[d_max:(nrows + d_max), d_max:(ncols + d_max)] = height
+    height = tmp
+    del tmp
+
+    # determine the direction of movment
+    move = morph_shade_move(d_max, sol_a)
+    move_s = move.shape
+    move1di = move[:, 1] * (ncols + 2 * d_max) + move[:, 0]
+    move1dd = move[:, 2]
+    # set the maximal allowed horizon angle (if it is greater, then the area in the shadow)
+    max_slope = 0
+    for i_rad in range(int(move_s[0])):
+        height_flt = height.flatten()
+        # m_slp = ((height_flt[i_valid[0]+int(move1di[i_rad])] - height_flt[i_valid[0]]) / move1dd[i_rad])
+        sel = i_valid[0] + int(move1di[i_rad])
+        nr_zeros = sel[sel > height_flt.size].size  # can't call indexes that are bigger than num of elements
+        zeros = np.zeros(nr_zeros)
+        sel = sel[sel <= height_flt.size]
+        m_slp = ((height_flt[sel] - height_flt[i_valid[0][:sel.size]]) / move1dd[i_rad])
+        print(m_slp)
+        m_slp = np.append(m_slp, zeros)  # add zeros, for non existing indexes
+        max_slope = (max_slope < m_slp).choose(max_slope, m_slp)
+
+    # update mask
+    max_slope = np.arctan(max_slope / resolution)
+    indx_mask = np.where(max_slope > (np.pi / 2 - sol_z))
+
+    # print(mask[i_valid[0][indx_mask[0]]])
+    if indx_mask[0].size > 0:
+        mask_size = mask.shape
+        mask_flt = mask.flatten()
+        mask_flt[i_valid[0][indx_mask[0]]] = 0
+        mask = mask_flt.reshape((mask_size[0], mask_size[1]))
+    mask = mask[d_max:(nrows + d_max), d_max:(ncols + d_max)]
+    return mask
+
+
+"""
+NAME:
+    Sky illumination
+    sky_illumination
+
+DESCRIPTION:
+    Computes Sky ilumination.
+
+INPUTS:
+    input_DEM_arr   - numpy 2D array of elevation (DEM)
+    resolution      - dem pixel size
+    sky_model       - sky model [overcast, uniform]
+    sampling_points - number of sampling points
+    shadow_dist     - max shadow modeling distance [pixels]
+    shadow_az       - shadow azimuth
+    shadow_el       - shadow elevation
+    shadow_only     - bool compute shadow only
+
+OUTPUTS:
+    skyilumination
+
+KEYWORDS:
+    /
+
+DEPENDENCIES:
+    morph_shade_move
+    morph_shade
+
+AUTHOR:
+    RVT:
+        Klemen Čotar
+    RVT_py:
+        Žiga Maroh (ziga.maroh@icloud.com)
+
+MODIFICATION HISTORY:
+    RVT:
+        Initial version written by Klemen Čotar, 2014.
+    RVT_py:
+        Written by Žiga Maroh, 2020.
+"""
+
+
+def sky_illumination(input_DEM_arr, resolution, sky_model="overcast", sampling_points=250, shadow_dist=100,
+                     shadow_az=315, shadow_el=35, shadow_only=False):
+    if sampling_points != 250 and sampling_points != 500:
+        raise Exception("RVT sky_illumination: sampling_points needs to be 250 or 500!")
+    if sky_model != "overcast" and sky_model != "uniform":
+        raise Exception("RVT sky_illumination: sky_model needs to be overcast or uniform!")
+
+    dem = input_DEM_arr
+    indx_novalues = np.where(dem < 0)
+    dem[indx_novalues[0], indx_novalues[1]] = np.nan
+
+    # determine the max search distance in pixels
+    h_min = np.nanmin(dem)
+    h_max = np.nanmax(dem)
+    dh = h_max - h_min
+    dem_size = dem.shape
+    dem[indx_novalues[0], indx_novalues[1]] = 0
+
+    if shadow_az and shadow_el:
+        sh_z = np.pi / 2 - np.deg2rad(shadow_el)
+        sh_az = np.deg2rad(shadow_az)
+        d_max = 1
+        d_max = round(d_max * dh * np.tan(sh_z) / resolution)
+        dem_tmp = dem
+        out_shadow = morph_shade(dem_tmp, sh_z, sh_az, d_max, dem_size[0], dem_size[1], resolution)
+
+    if shadow_only:
+        dem[indx_novalues[0], indx_novalues[1]] = np.nan
+        return out_shadow
+
+    else:
+        sc_skyilu_ev = [0.25, 0.]  # percent
+        scale_lower = sc_skyilu_ev[0]
+        scale_upper = sc_skyilu_ev[1]
+
+        dat_hillset = open(r'settings\{}_{}sp.txt'.format(sky_model, sampling_points), 'r')
+        skyillumination = np.zeros((dem_size[0], dem_size[1]))
+        slope, aspect = slope_aspect(input_DEM_arr=input_DEM_arr, resolution_x=resolution,
+                                     resolution_y=resolution,
+                                     ve_factor=1, is_padding_applied=False,
+                                     output_units="radian")
+        for line in dat_hillset:
+            if line.strip() == "":  # empty line
+                continue
+            print(line)
+            d_max = 1
+            line = line.rstrip().split(",")
+            azim = int(line[0])
+            elev = int(line[1])
+            weight = float(line[2])
+            hillshade = analytical_hillshading(input_DEM_arr=dem, resolution_x=resolution, resolution_y=resolution,
+                                               sun_azimuth=azim, sun_elevation=elev, slope=slope, aspect=aspect,
+                                               is_padding_applied=False, bytscl=False)
+            sh_z = np.pi / 2 - np.deg2rad(elev)
+            sh_az = np.deg2rad(azim)
+            d_max = round(d_max * dh * np.tan(sh_z) / resolution)
+
+            if d_max > 1:
+                if shadow_dist != 'unlimited':
+                    if d_max < int(shadow_dist):
+                        d_max = int(shadow_dist)
+                dem_tmp = dem
+                out_shadow = morph_shade(dem_tmp, sh_z, sh_az, d_max, dem_size[0], dem_size[1], resolution)
+                skyillumination += hillshade * out_shadow * weight
+            else:
+                skyillumination += hillshade * weight
+        del hillshade
+
+        if shadow_az and shadow_el:
+            skyillumination = 0.8 * skyillumination + 0.2 * out_shadow
+
+        dem[indx_novalues[0], indx_novalues[1]] = np.nan
+
+        return skyillumination
+
+
+"""
+NAME:
+    Local dominance
+    local_dominance
+
+DESCRIPTION:
+    Compute Local Dominance dem visualization.
+    
+    Adapted from original version that is part of the Lida Visualisation Toolbox LiVT developed by Ralf Hesse.
+
+INPUTS:
+    input_DEM_arr   - input DEM 2D numpy array
+    min_rad         - minimum radial distance (in pixels) at which the algorithm starts with visualization computation
+    max_rad         - maximum radial distance (in pixels) at which the algorithm ends with visualization computation
+    rad_inc         - radial distance steps in pixels
+    angular_res     - angular step for determination of number of angular directions
+    observer_height - height at which we observe the terrain
+
+OUTPUTS:
+    localdominance - 2D numpy array of localdominance
+
+KEYWORDS:
+    /
+
+DEPENDENCIES:
+    /
+
+AUTHOR:
+    RVT:
+        Klemen Čotar
+
+MODIFICATION HISTORY:
+    RVT:
+        Initial version written by Klemen Čotar, 2016.
+    RVT_py:
+        Written by Žiga Maroh, 2020.
+"""
+
+
+def local_dominance(input_DEM_arr, min_rad=10, max_rad=20, rad_inc=1, angular_res=15, observer_height=1.7):
+    dem = input_DEM_arr
+
+    # create a vector with possible distances
+    n_dist = int((max_rad - min_rad) / rad_inc + 1)
+    distances = np.arange(n_dist * rad_inc, step=rad_inc) + min_rad
+    # create vector with possible angles
+    n_ang = int(359 / angular_res + 1)
+    angles = np.arange(n_ang * angular_res, step=angular_res)
+    # determine total area within radius range
+    norma = np.sum((observer_height / distances) * (2 * distances + rad_inc)) * n_ang
+
+    # image shifts
+    n_shifts = distances.size * angles.size
+    x_t = (np.outer(np.cos(np.deg2rad(angles)), distances)).reshape(n_shifts)
+    y_t = (np.outer(np.sin(np.deg2rad(angles)), distances)).reshape(n_shifts)
+    distances = (np.outer(np.ones(n_ang), distances)).reshape(n_shifts)
+    dist_factr = 2 * distances + rad_inc
+
+    localdominance = dem * 0
+    for i_s in range(n_shifts):
+        dem_moved = np.roll(dem, int(round(y_t[i_s])), axis=0)
+        dem_moved = np.roll(dem_moved, int(round(x_t[i_s])), axis=1)
+        idx_lower = np.where((dem + observer_height) > dem_moved)
+        if idx_lower[0].size > 0:
+            localdominance[idx_lower[0], idx_lower[1]] += (dem[idx_lower[0], idx_lower[1]] + observer_height -
+                                                           dem_moved[idx_lower[0], idx_lower[1]]) / \
+                                                          distances[i_s] * dist_factr[i_s]
+    localdominance /= norma
+
+    return localdominance
