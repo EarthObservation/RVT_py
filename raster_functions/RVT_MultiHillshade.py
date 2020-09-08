@@ -7,9 +7,7 @@ DESCRIPTION:
     Python raster function for ESRI ArcGis which computes hillshade.
 
 INPUTS:
-    input_DEM_arr   - input DEM 2D numpy array
-    resolution_x    - DEM resolution in X direction
-    resolution_y    - DEM resolution in Y direction
+    raster          - input raster
     nr_directions   - Number of directions for solar azimuth angle (360/nr_directions*i_direction)
     sun_elevation   - solar vertical angle (above the horizon) in degrees
 
@@ -92,8 +90,8 @@ class RVT_MultiHillshade():
     def updateRasterInfo(self, **kwargs):
         nr_bands = int(kwargs.get('nr_directions'))
         kwargs['output_info']['bandCount'] = nr_bands
-        r = kwargs['raster_info']
-        kwargs['output_info']['noData'] = self.assignNoData(r['pixelType']) if not (r['noData']) else r['noData']
+        #r = kwargs['raster_info']
+        #kwargs['output_info']['noData'] = self.assignNoData(r['pixelType']) if not (r['noData']) else r['noData']
         kwargs['output_info']['pixelType'] = 'f4'
         kwargs['output_info']['histogram'] = ()
         kwargs['output_info']['statistics'] = ()
@@ -103,18 +101,30 @@ class RVT_MultiHillshade():
     def updatePixels(self, tlc, shape, props, **pixelBlocks):
         dem = np.array(pixelBlocks['raster_pixels'], dtype='f4', copy=False)[0]  # Input pixel array.
         m = np.array(pixelBlocks['raster_mask'], dtype='u1', copy=False)[0]  # Input raster mask.
-        self.noData = self.assignNoData(props['pixelType']) if not (props['noData']) else props['noData']
-        dem = np.where(np.not_equal(dem, self.noData), dem, dem)
+        #self.noData = self.assignNoData(props['pixelType']) if not (props['noData']) else props['noData']
+        #dem = np.where(np.not_equal(dem, self.noData), dem, dem)
 
         pixel_size = props['cellSize']
         if (pixel_size[0] <= 0) | (pixel_size[1] <= 0):
             raise Exception("Input raster cell size is invalid.")
 
-        multi_hillshade = RVT_vis_fn.multiple_directions_hillshading(input_DEM_arr=dem, resolution_x=pixel_size[0],
-                                                                     resolution_y=pixel_size[1],
-                                                                     nr_directions=self.nr_directions,
-                                                                     sun_elevation=self.elevation,
-                                                                     is_padding_applied=True)
+        slope, aspect = RVT_vis_fn.slope_aspect(dem=dem, resolution_x=1,
+                                     resolution_y=1,
+                                     ve_factor=1, is_padding_applied=True,
+                                     output_units="radian")
+
+        hillshades_arr_list = []  # list of all hillshades in diffrent directions
+        for i_direction in range(self.nr_directions):
+            sun_azimuth = (360 / self.nr_directions) * i_direction
+            hillshade = RVT_vis_fn.analytical_hillshading(dem=dem, resolution_x=1,
+                                               resolution_y=1, sun_elevation=self.elevation,
+                                               sun_azimuth=sun_azimuth, is_padding_applied=True,
+                                               slope=slope,
+                                               aspect=aspect)
+
+            hillshades_arr_list.append(hillshade)
+
+        multi_hillshade = np.asarray(hillshades_arr_list)
 
         pixelBlocks['output_pixels'] = multi_hillshade.astype(props['pixelType'], copy=False)
         pixelBlocks['output_mask'] = \

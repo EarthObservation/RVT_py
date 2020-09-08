@@ -92,7 +92,7 @@ class RVT_SLRM():
         self.noData = self.assignNoData(props['pixelType']) if not (props['noData']) else props['noData']
         dem = np.where(np.not_equal(dem, self.noData), dem, dem)
 
-        slrm = RVT_vis_fn.SLRM(input_DEM_arr=dem, radius_cell=self.radius_cell, bytscl=False)
+        slrm = RVT_vis_fn.SLRM(den=dem, radius_cell=self.radius_cell)
 
         pixelBlocks['output_pixels'] = slrm.astype(props['pixelType'], copy=False)
         pixelBlocks['output_mask'] = m

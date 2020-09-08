@@ -106,10 +106,9 @@ class RVT_Hillshade():
         if (pixel_size[0] <= 0) | (pixel_size[1] <= 0):
             raise Exception("Input raster cell size is invalid.")
 
-        hillshade = RVT_vis_fn.analytical_hillshading(input_DEM_arr=dem, resolution_x=pixel_size[0],
+        hillshade = RVT_vis_fn.analytical_hillshading(dem=dem, resolution_x=pixel_size[0],
                                                       resolution_y=pixel_size[1], sun_azimuth=self.azimuth,
-                                                      sun_elevation=self.elevation, is_padding_applied=True,
-                                                      bytscl=False)
+                                                      sun_elevation=self.elevation, is_padding_applied=True)
 
         pixelBlocks['output_pixels'] = hillshade.astype(props['pixelType'], copy=False)
         pixelBlocks['output_mask'] = \

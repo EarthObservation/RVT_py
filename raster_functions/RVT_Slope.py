@@ -106,7 +106,7 @@ class RVT_Slope():
         if (pixel_size[0] <= 0) | (pixel_size[1] <= 0):
             raise Exception("Input raster cell size is invalid.")
 
-        slope, aspect = RVT_vis_fn.slope_aspect(input_DEM_arr=dem, resolution_x=pixel_size[0],
+        slope, aspect = RVT_vis_fn.slope_aspect(dem=dem, resolution_x=pixel_size[0],
                                                 resolution_y=pixel_size[1], ve_factor=self.ve_factor,
                                                 is_padding_applied=True, output_units=self.output_unit)
 

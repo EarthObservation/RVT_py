@@ -3,7 +3,7 @@ NAME:
     RVT_py visualization functions
 
 PURPOSE:
-    Contains all functions for visualization. All functions are rewritten from RVT (IDL)
+    Contains all functions for visualization. All functions are rewritten to python from RVT (IDL)
     https://github.com/EarthObservation/RVT
 """
 
@@ -14,6 +14,7 @@ import scipy.ndimage
 
 def bytescale(data, cmin=None, cmax=None, high=255, low=0):
     """
+    Remade old scipy function.
     Byte scales an array (image).
 
     Byte scaling means converting the input image to uint8 dtype and scaling
@@ -36,7 +37,6 @@ def bytescale(data, cmin=None, cmax=None, high=255, low=0):
     -------
     img_array : uint8 ndarray
         The byte-scaled array.
-
     """
 
     if high < low:
@@ -80,7 +80,7 @@ DESCRIPTION:
     Currently applied finite difference method.
 
 INPUTS:
-    input_DEM_arr       - input DEM 2D numpy array
+    dem       - input DEM 2D numpy array
     resolution_x      - DEM resolution in X direction
     resolution_y      - DEM resolution in Y direction
     ve_factor           - vertical exaggeration factor (must be greater than 0)
@@ -113,14 +113,18 @@ MODIFICATION HISTORY:
     RVT:
         Written by Klemen Zakšek, 2011.
     RVT_py:
-        Written by Žiga Maroh, 2020.
+        Rewritten to python by Žiga Maroh, 2020.
 """
 
 
-def slope_aspect(input_DEM_arr, resolution_x, resolution_y, ve_factor, is_padding_applied=False, output_units="radian"):
+def slope_aspect(dem, resolution_x, resolution_y, ve_factor, is_padding_applied=False, output_units="radian"):
     if ve_factor <= 0:
-        raise Exception("RVT slope_aspect: Vertical exagerration must be positive number!")
-    dem = input_DEM_arr * ve_factor
+        raise Exception("RVT slope_aspect: ve_factor must be a positive number!")
+
+    if resolution_x < 0 or resolution_y < 0:
+        raise Exception("RVT slope_aspect: resolution must be a positive number!")
+
+    dem = dem * ve_factor
     # add frame of 0 (additional row up bottom and column left right)
     if not is_padding_applied:
         dem = np.pad(dem, pad_width=1, mode="constant", constant_values=0)
@@ -177,16 +181,14 @@ DESCRIPTION:
     Compute hillshade.
 
 INPUTS:
-    input_DEM_arr       - input DEM 2D numpy array
+    dem                 - input DEM 2D numpy array
     resolution_x        - DEM resolution in X direction
     resolution_y        - DEM resolution in Y direction
     sun_azimuth         - solar azimuth angle (clockwise from North) in degrees
     sun_elevation       - solar vertical angle (above the horizon) in degrees
-    bytscl              - byte scale, if True scale values to 0-255 (u1, uint8)
-    bytscl_min_max      - tuple(min, max) for bytscl (RVT: sc_hls_ev)
     is_padding_applied  - is padding already applied on input array (needed for ArcGIS Pro which applies padding)
-    slope               - slope in radians if you don't input it, it is calculated
-    aspect              - aspect in radians if you don't input it, it is calculated
+    slope               - slope arr in radians if you don't input it, it is calculated
+    aspect              - aspect arr in radians if you don't input it, it is calculated
 
 OUTPUTS:
     hillshade - result numpy array
@@ -208,15 +210,18 @@ MODIFICATION HISTORY:
         1.0     Written by Klemen Zakšek, 2013.
         1.1     September 2014: Suppress_output and cosi keywords added to the procedure
     RVT_py:
-        Written by Žiga Maroh, 2020.
+        Rewritten to python by Žiga Maroh, 2020.
 """
 
 
-def analytical_hillshading(input_DEM_arr, resolution_x, resolution_y, sun_azimuth=315, sun_elevation=35, bytscl=True,
-                           bytscl_min_max=(0, 1), is_padding_applied=False, slope=None, aspect=None):
+def analytical_hillshading(dem, resolution_x, resolution_y, sun_azimuth=315, sun_elevation=35,
+                           is_padding_applied=False, slope=None, aspect=None):
     ve_factor = 1
     if sun_azimuth > 360 or sun_elevation > 90 or sun_azimuth < 0 or sun_elevation < 0:
         raise Exception("RVT analytical_hillshading: sun_azimuth must be [0-360] and sun_elevation [0-90]!")
+
+    if resolution_x < 0 or resolution_y < 0:
+        raise Exception("RVT analytical_hillshading: resolution must be a positive number!")
 
     # Convert solar position (degrees) to radians
     sun_azimuth_rad = np.deg2rad(sun_azimuth)
@@ -228,14 +233,12 @@ def analytical_hillshading(input_DEM_arr, resolution_x, resolution_y, sun_azimut
     # are slope and aspect already calculated and presented
     if slope is None or aspect is None:
         # calculates slope and aspect
-        slope, aspect = slope_aspect(input_DEM_arr=input_DEM_arr, resolution_x=resolution_x, resolution_y=resolution_y,
+        slope, aspect = slope_aspect(dem=dem, resolution_x=resolution_x, resolution_y=resolution_y,
                                      ve_factor=ve_factor, is_padding_applied=is_padding_applied, output_units="radian")
 
     # Compute solar incidence angle, hillshading
     hillshading = np.cos(sun_zenith_rad) * np.cos(slope) + np.sin(sun_zenith_rad) * np.sin(slope) * np.cos(
         aspect - sun_azimuth_rad)
-    if bytscl:
-        hillshading = bytescale(hillshading, cmin=bytscl_min_max[0], cmax=bytscl_min_max[1])
 
     return hillshading
 
@@ -249,13 +252,11 @@ DESCRIPTION:
     Calculates hillshades from multiple directions.
 
 INPUTS:
-    input_DEM_arr           - input DEM 2D numpy array
+    dem                     - input DEM 2D numpy array
     resolution_x            - DEM resolution in X direction
     resolution_y            - DEM resolution in Y direction
     nr_directions           - number of solar azimuth angles (clockwise from North)
     sun_elevation           - solar vertical angle (above the horizon) in degrees
-    bytscl                  - byte scale, if True scale values to 0-255 (u1, uint8)
-    bytscl_min_max          - tuple(min, max) for bytscl (RVT: sc_hls_ev)
     is_padding_applied      - is padding already applied on input array (needed for ArcGIS Pro which applies padding)
     slope               - slope in radians if you don't input it, it is calculated
     aspect              - aspect in radians if you don't input it, it is calculated
@@ -280,21 +281,26 @@ MODIFICATION HISTORY:
     RVT:
         Written by Klemen Zakšek, 2013.
     RVT_py:
-        Written by Žiga Maroh, 2020.
+        Rewritten to python by Žiga Maroh, 2020.
 """
 
 
-def multiple_directions_hillshading(input_DEM_arr, resolution_x, resolution_y, nr_directions=16, sun_elevation=35,
-                                    bytscl=True, bytscl_min_max=(0.00, 1.00),
+def multiple_directions_hillshading(dem, resolution_x, resolution_y, nr_directions=16, sun_elevation=35,
                                     is_padding_applied=False, slope=None, aspect=None):
     if sun_elevation > 90 or sun_elevation < 0:
         raise Exception("RVT multiple_directions_hillshading: sun_elevation must be [0-90]!")
+
+    if resolution_x < 0 or resolution_y < 0:
+        raise Exception("RVT multiple_directions_hillshading: resolution must be a positive number!")
+
+    if nr_directions < 0:
+        raise Exception("RVT multiple_directions_hillshading: nr_directions must be a positive number!")
 
     ve_factor = 1
 
     # calculates slope and aspect if they are not added
     if slope is None or aspect is None:  # slope and aspect are the same, so we have to calculate it once
-        slope, aspect = slope_aspect(input_DEM_arr=input_DEM_arr, resolution_x=resolution_x,
+        slope, aspect = slope_aspect(dem=dem, resolution_x=resolution_x,
                                      resolution_y=resolution_y,
                                      ve_factor=ve_factor, is_padding_applied=is_padding_applied,
                                      output_units="radian")
@@ -302,10 +308,10 @@ def multiple_directions_hillshading(input_DEM_arr, resolution_x, resolution_y, n
     hillshades_arr_list = []  # list of all hillshades in diffrent directions
     for i_direction in range(nr_directions):
         sun_azimuth = (360 / nr_directions) * i_direction
-        hillshade = analytical_hillshading(input_DEM_arr=input_DEM_arr, resolution_x=resolution_x,
+        hillshade = analytical_hillshading(dem=dem, resolution_x=resolution_x,
                                            resolution_y=resolution_y, sun_elevation=sun_elevation,
                                            sun_azimuth=sun_azimuth, is_padding_applied=is_padding_applied, slope=slope,
-                                           aspect=aspect, bytscl=bytscl, bytscl_min_max=bytscl_min_max)
+                                           aspect=aspect)
         hillshades_arr_list.append(hillshade)
 
     multi_hillshade = np.asarray(hillshades_arr_list)
@@ -322,11 +328,8 @@ DESCRIPTION:
     Calculates simple local relief model.
 
 INPUTS:
-    input_DEM_arr           - input DEM 2D numpy array
+    dem                - input DEM 2D numpy array
     radius             - Radius for trend assessment [pixels]
-    bytscl                  - byte scale, if True scale values to 0-255 (u1, uint8)
-    bytscl_min_max          - tuple(min, max) for bytscl (RVT: sc_hls_ev)
-
 
 OUTPUTS:
     slrm - SLRM 2D numpy array
@@ -347,24 +350,19 @@ MODIFICATION HISTORY:
     RVT:
         Written by Klemen Zakšek, 2013.
     RVT_py:
-        Written by Žiga Maroh, 2020.
+        Rewritten to python by Žiga Maroh, 2020.
 """
 
 
-def SLRM(input_DEM_arr, radius_cell=20, bytscl=True, bytscl_min_max=(-2, 2)):
+def SLRM(dem, radius_cell=20):
     if radius_cell < 10 or radius_cell > 50:
-        import warnings
         raise Exception("RVT SLRM: Radius for trend assessment needs to be in interval 10-50 pixels!")
 
-    dem = input_DEM_arr
     dem[dem < -1200] = np.nan
     dem[dem > 2000] = np.nan
 
     # mean filter
-    slrm = dem - scipy.ndimage.uniform_filter(input_DEM_arr, mode='nearest', size=radius_cell * 2)
-
-    if bytscl:
-        slrm = bytescale(slrm, cmin=bytscl_min_max[0], cmax=bytscl_min_max[1])
+    slrm = dem - scipy.ndimage.uniform_filter(dem, mode='reflect', size=radius_cell * 2)
 
     return slrm
 
@@ -400,7 +398,7 @@ MODIFICATION HISTORY:
         Written by Klemen Zakšek, 2004.
         Implemented in IDL by Krištof Oštir, 2008.
     RVT_py:
-        Written by Žiga Maroh, 2020.
+        Rewritten to python by Žiga Maroh, 2020.
 """
 
 
@@ -461,7 +459,7 @@ MODIFICATION HISTORY:
         Implemented in IDL by Krištof Oštir, 2008.
         Optimized by Klemen Zakšek, 2013.
     RVT_py:
-        Written by Žiga Maroh, 2020.
+        Rewritten to python by Žiga Maroh, 2020.
 """
 
 
@@ -633,7 +631,7 @@ MODIFICATION HISTORY:
         Optimized by Klemen Zakšek, 2009.
         Rewritten (cleaner code + option of anisometric SCF and openess) by Klemen Zakšek, 2013.
     RVT_py:
-        Written by Žiga Maroh, 2020.
+        Rewritten to python by Žiga Maroh, 2020.
 """
 
 
@@ -712,7 +710,7 @@ DESCRIPTION:
     Prepare the data and compute the Sky-View Factor.
 
 INPUTS:
-    input_DEM_arr           - input DEM 2D numpy array (Ve Exaggeration and pixel size already considered)
+    dem                     - input DEM 2D numpy array (Ve Exaggeration and pixel size already considered)
     compute_svf             - compute SVF (True) or not (False)
     compute_opns            - compute OPENNESS (True) or not (False)
     resolution              - pixel resolution
@@ -722,10 +720,6 @@ INPUTS:
     compute_asvf            - compute anisotropic SVF (True) or not (False)
     asvf_level           - level of anisotropy, 1-low, 2-high,
     a_min_weight            - weight to consider anisotropy (0 - isotropic, 1 - no illumination from the direction opposite the main direction)
-    bytscl                  - byte scale, if True scale values to 0-255 (u1, uint8)
-    bytscl_min_max_svf      - tuple(min, max) for bytscl (RVT: sc_svf_ev)
-    bytscl_min_max_opns     - tuple(min, max) for bytscl (RVT: sc_opns_ev)
-    bytscl_min_max_asvf     - tuple(min, max) for bytscl (RVT: sc_asvf_ev)
         CONSTANTS:
             sc_asvf_min             - level of polynomial that determines the anisotropy, selected with in_asvf_level
             sc_asvf_pol             - level of polynomial that determines the anisotropy, selected with in_asvf_level
@@ -757,14 +751,12 @@ MODIFICATION HISTORY:
     RVT:
         Written by Klemen Zakšek, 2013.
     RVT_py:
-        Written by Žiga Maroh, 2020.
+        Rewritten to python by Žiga Maroh, 2020.
 """
 
 
-def sky_view_factor(input_DEM_arr, resolution, compute_svf=True, compute_opns=True, compute_asvf=True,
-                    svf_n_dir=16, svf_r_max=10, svf_noise=0, asvf_dir=315, asvf_level=1,
-                    bytscl=True, bytscl_min_max_svf=(0.6375, 1.00),
-                    bytscl_min_max_opns=(60, 95.), bytscl_min_max_asvf=(0.6375, 1.00)):
+def sky_view_factor(dem, resolution, compute_svf=True, compute_opns=True, compute_asvf=True,
+                    svf_n_dir=16, svf_r_max=10, svf_noise=0, asvf_dir=315, asvf_level=1):
     # CONSTANTS
     # level of polynomial that determines the anisotropy, selected with in_asvf_level (1 - low, 2 - high)
     sc_asvf_pol = [4, 8]
@@ -774,7 +766,7 @@ def sky_view_factor(input_DEM_arr, resolution, compute_svf=True, compute_opns=Tr
     sc_svf_r_min = [0., 10., 20., 40.]
 
     # pixel size
-    dem = input_DEM_arr / resolution
+    dem = dem / resolution
     # increase edge - visualization foes to edge, so mirror them, leave blank corners
     ncol = dem.shape[1]
     nlin = dem.shape[0]
@@ -812,13 +804,6 @@ def sky_view_factor(input_DEM_arr, resolution, compute_svf=True, compute_opns=Tr
     if compute_opns:
         opns = opns.reshape((nlin, ncol))
 
-    if compute_svf and bytscl:
-        svf = bytescale(svf, cmin=bytscl_min_max_svf[0], cmax=bytscl_min_max_svf[1])
-    if compute_asvf and bytscl:
-        asvf = bytescale(asvf, cmin=bytscl_min_max_asvf[0], cmax=bytscl_min_max_asvf[1])
-    if compute_opns and bytscl:
-        opns = bytescale(opns, cmin=bytscl_min_max_opns[0], cmax=bytscl_min_max_opns[1])
-
     return svf, asvf, opns
 
 
@@ -852,7 +837,7 @@ MODIFICATION HISTORY:
     RVT:
         Initial version written by Klemen Čotar, 2014.
     RVT_py:
-        Written by Žiga Maroh, 2020.
+        Rewritten to python by Žiga Maroh, 2020.
 """
 
 
@@ -988,7 +973,7 @@ MODIFICATION HISTORY:
     RVT:
         Initial version written by Klemen Čotar, 2014.
     RVT_py:
-        Written by Žiga Maroh, 2020.
+        Rewritten to python by Žiga Maroh, 2020.
 """
 
 
@@ -1018,7 +1003,6 @@ def morph_shade(height, sol_z, sol_a, d_max, nrows, ncols, resolution):
         zeros = np.zeros(nr_zeros)
         sel = sel[sel <= height_flt.size]
         m_slp = ((height_flt[sel] - height_flt[i_valid[0][:sel.size]]) / move1dd[i_rad])
-        print(m_slp)
         m_slp = np.append(m_slp, zeros)  # add zeros, for non existing indexes
         max_slope = (max_slope < m_slp).choose(max_slope, m_slp)
 
@@ -1045,7 +1029,7 @@ DESCRIPTION:
     Computes Sky ilumination.
 
 INPUTS:
-    input_DEM_arr   - numpy 2D array of elevation (DEM)
+    dem             - numpy 2D array of elevation (DEM)
     resolution      - dem pixel size
     sky_model       - sky model [overcast, uniform]
     sampling_points - number of sampling points
@@ -1074,18 +1058,17 @@ MODIFICATION HISTORY:
     RVT:
         Initial version written by Klemen Čotar, 2014.
     RVT_py:
-        Written by Žiga Maroh, 2020.
+        Rewritten to python by Žiga Maroh, 2020.
 """
 
 
-def sky_illumination(input_DEM_arr, resolution, sky_model="overcast", sampling_points=250, shadow_dist=100,
+def sky_illumination(dem, resolution, sky_model="overcast", sampling_points=250, shadow_dist=100,
                      shadow_az=315, shadow_el=35, shadow_only=False):
     if sampling_points != 250 and sampling_points != 500:
         raise Exception("RVT sky_illumination: sampling_points needs to be 250 or 500!")
     if sky_model != "overcast" and sky_model != "uniform":
         raise Exception("RVT sky_illumination: sky_model needs to be overcast or uniform!")
 
-    dem = input_DEM_arr
     indx_novalues = np.where(dem < 0)
     dem[indx_novalues[0], indx_novalues[1]] = np.nan
 
@@ -1115,7 +1098,7 @@ def sky_illumination(input_DEM_arr, resolution, sky_model="overcast", sampling_p
 
         dat_hillset = open(r'settings\{}_{}sp.txt'.format(sky_model, sampling_points), 'r')
         skyillumination = np.zeros((dem_size[0], dem_size[1]))
-        slope, aspect = slope_aspect(input_DEM_arr=input_DEM_arr, resolution_x=resolution,
+        slope, aspect = slope_aspect(dem=dem, resolution_x=resolution,
                                      resolution_y=resolution,
                                      ve_factor=1, is_padding_applied=False,
                                      output_units="radian")
@@ -1128,9 +1111,9 @@ def sky_illumination(input_DEM_arr, resolution, sky_model="overcast", sampling_p
             azim = int(line[0])
             elev = int(line[1])
             weight = float(line[2])
-            hillshade = analytical_hillshading(input_DEM_arr=dem, resolution_x=resolution, resolution_y=resolution,
+            hillshade = analytical_hillshading(dem=dem, resolution_x=resolution, resolution_y=resolution,
                                                sun_azimuth=azim, sun_elevation=elev, slope=slope, aspect=aspect,
-                                               is_padding_applied=False, bytscl=False)
+                                               is_padding_applied=False)
             sh_z = np.pi / 2 - np.deg2rad(elev)
             sh_az = np.deg2rad(azim)
             d_max = round(d_max * dh * np.tan(sh_z) / resolution)
@@ -1165,7 +1148,7 @@ DESCRIPTION:
     Adapted from original version that is part of the Lida Visualisation Toolbox LiVT developed by Ralf Hesse.
 
 INPUTS:
-    input_DEM_arr   - input DEM 2D numpy array
+    dem             - input DEM 2D numpy array
     min_rad         - minimum radial distance (in pixels) at which the algorithm starts with visualization computation
     max_rad         - maximum radial distance (in pixels) at which the algorithm ends with visualization computation
     rad_inc         - radial distance steps in pixels
@@ -1189,13 +1172,11 @@ MODIFICATION HISTORY:
     RVT:
         Initial version written by Klemen Čotar, 2016.
     RVT_py:
-        Written by Žiga Maroh, 2020.
+        Rewritten to python by Žiga Maroh, 2020.
 """
 
 
-def local_dominance(input_DEM_arr, min_rad=10, max_rad=20, rad_inc=1, angular_res=15, observer_height=1.7):
-    dem = input_DEM_arr
-
+def local_dominance(dem, min_rad=10, max_rad=20, rad_inc=1, angular_res=15, observer_height=1.7):
     # create a vector with possible distances
     n_dist = int((max_rad - min_rad) / rad_inc + 1)
     distances = np.arange(n_dist * rad_inc, step=rad_inc) + min_rad
