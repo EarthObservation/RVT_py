@@ -5,12 +5,19 @@ NAME:
 PURPOSE:
     Contains all functions for visualization. All functions are rewritten to python from RVT (IDL)
     https://github.com/EarthObservation/RVT
+
+COPYRIGHT:
+    ZRC SAZU (Novi trg 2, 1000 Ljubljana, Slovenia) & Space-SI (Aškerčeva 12, 1000 Ljubljana, Slovenia)
 """
 
 # python libraries
 import numpy as np
 import scipy.ndimage
 
+#TO DO: Float32 vs Float64 speed
+#TO DO: check speed skyilumination
+#TO DO: change choose, Žiga
+#TO DO: rename properly, Žiga
 
 def bytescale(data, cmin=None, cmax=None, high=255, low=0):
     """
@@ -80,9 +87,9 @@ DESCRIPTION:
     Currently applied finite difference method.
 
 INPUTS:
-    dem       - input DEM 2D numpy array
-    resolution_x      - DEM resolution in X direction
-    resolution_y      - DEM resolution in Y direction
+    dem                 - input DEM 2D numpy array
+    resolution_x        - DEM resolution in X direction
+    resolution_y        - DEM resolution in Y direction
     ve_factor           - vertical exaggeration factor (must be greater than 0)
     output_units        - percent, degree, radians
     is_padding_applied  - is padding already applied on input array (needed for ArcGIS Pro which applies padding)
@@ -169,7 +176,7 @@ def slope_aspect(dem, resolution_x, resolution_y, ve_factor, is_padding_applied=
     aspect[:, -1] = -1
     aspect[-1, :] = -1
 
-    return slope, aspect
+    return {"slope": slope, "aspect": aspect}
 
 
 """
@@ -233,8 +240,10 @@ def analytical_hillshading(dem, resolution_x, resolution_y, sun_azimuth=315, sun
     # are slope and aspect already calculated and presented
     if slope is None or aspect is None:
         # calculates slope and aspect
-        slope, aspect = slope_aspect(dem=dem, resolution_x=resolution_x, resolution_y=resolution_y,
+        dict_slp_asp = slope_aspect(dem=dem, resolution_x=resolution_x, resolution_y=resolution_y,
                                      ve_factor=ve_factor, is_padding_applied=is_padding_applied, output_units="radian")
+        slope = dict_slp_asp["slope"]
+        aspect = dict_slp_asp["aspect"]
 
     # Compute solar incidence angle, hillshading
     hillshading = np.cos(sun_zenith_rad) * np.cos(slope) + np.sin(sun_zenith_rad) * np.sin(slope) * np.cos(
@@ -252,12 +261,12 @@ DESCRIPTION:
     Calculates hillshades from multiple directions.
 
 INPUTS:
-    dem                     - input DEM 2D numpy array
-    resolution_x            - DEM resolution in X direction
-    resolution_y            - DEM resolution in Y direction
-    nr_directions           - number of solar azimuth angles (clockwise from North)
-    sun_elevation           - solar vertical angle (above the horizon) in degrees
-    is_padding_applied      - is padding already applied on input array (needed for ArcGIS Pro which applies padding)
+    dem                 - input DEM 2D numpy array
+    resolution_x        - DEM resolution in X direction
+    resolution_y        - DEM resolution in Y direction
+    nr_directions       - number of solar azimuth angles (clockwise from North)
+    sun_elevation       - solar vertical angle (above the horizon) in degrees
+    is_padding_applied  - is padding already applied on input array (needed for ArcGIS Pro which applies padding)
     slope               - slope in radians if you don't input it, it is calculated
     aspect              - aspect in radians if you don't input it, it is calculated
 
@@ -293,46 +302,46 @@ def multiple_directions_hillshading(dem, resolution_x, resolution_y, nr_directio
     if resolution_x < 0 or resolution_y < 0:
         raise Exception("RVT multiple_directions_hillshading: resolution must be a positive number!")
 
-    if nr_directions < 0:
+    if nr_directions < 1:
         raise Exception("RVT multiple_directions_hillshading: nr_directions must be a positive number!")
 
     ve_factor = 1
 
     # calculates slope and aspect if they are not added
     if slope is None or aspect is None:  # slope and aspect are the same, so we have to calculate it once
-        slope, aspect = slope_aspect(dem=dem, resolution_x=resolution_x,
-                                     resolution_y=resolution_y,
-                                     ve_factor=ve_factor, is_padding_applied=is_padding_applied,
-                                     output_units="radian")
+        dict_slp_asp = slope_aspect(dem=dem, resolution_x=resolution_x, resolution_y=resolution_y,
+                                    ve_factor=ve_factor, is_padding_applied=is_padding_applied, output_units="radian")
+        slope = dict_slp_asp["slope"]
+        aspect = dict_slp_asp["aspect"]
 
     hillshades_arr_list = []  # list of all hillshades in diffrent directions
     for i_direction in range(nr_directions):
         sun_azimuth = (360 / nr_directions) * i_direction
-        hillshade = analytical_hillshading(dem=dem, resolution_x=resolution_x,
+        hillshading = analytical_hillshading(dem=dem, resolution_x=resolution_x,
                                            resolution_y=resolution_y, sun_elevation=sun_elevation,
                                            sun_azimuth=sun_azimuth, is_padding_applied=is_padding_applied, slope=slope,
                                            aspect=aspect)
-        hillshades_arr_list.append(hillshade)
+        hillshades_arr_list.append(hillshading)
 
-    multi_hillshade = np.asarray(hillshades_arr_list)
+    multi_hillshading = np.asarray(hillshades_arr_list)
 
-    return multi_hillshade
+    return multi_hillshading
 
 
 """
 NAME:
     Simple local relief model - SLRM
-    SLRM
+    slrm
 
 DESCRIPTION:
     Calculates simple local relief model.
 
 INPUTS:
-    dem                - input DEM 2D numpy array
-    radius             - Radius for trend assessment [pixels]
+    dem     - input DEM 2D numpy array
+    radius  - Radius for trend assessment [pixels]
 
 OUTPUTS:
-    slrm - SLRM 2D numpy array
+    slrm    - slrm 2D numpy array
 
 KEYWORDS:
     /
@@ -354,17 +363,17 @@ MODIFICATION HISTORY:
 """
 
 
-def SLRM(dem, radius_cell=20):
+def slrm(dem, radius_cell=20):
     if radius_cell < 10 or radius_cell > 50:
-        raise Exception("RVT SLRM: Radius for trend assessment needs to be in interval 10-50 pixels!")
+        raise Exception("RVT slrm: Radius for trend assessment needs to be in interval 10-50 pixels!")
 
     dem[dem < -1200] = np.nan
     dem[dem > 2000] = np.nan
 
     # mean filter
-    slrm = dem - scipy.ndimage.uniform_filter(dem, mode='reflect', size=radius_cell * 2)
+    slrmod = dem - scipy.ndimage.uniform_filter(dem, mode='nearest', size=radius_cell * 2)
 
-    return slrm
+    return slrmod
 
 
 """
@@ -605,10 +614,10 @@ INPUTS:
     compute_opns            - if true it computes opns, if false output opns = False
     
 OUTPUTS:
-    svf, asvf, opns
-        svf, skyview_factor               - 2D numpy array of skyview factor.
-        asvf, anisotropic_skyview_factor  - 2D numpy array of anisotropic skyview factor.
-        opns, openness                    - openness (elevation angle of horizon)
+    {"svf": svf, "asvf": asvf, "opns": opns}  - dictionary
+        svf, skyview_factor               - 1D numpy vector of skyview factor.
+        asvf, anisotropic_skyview_factor  - 1D numpy vector of anisotropic skyview factor.
+        opns, openness                    - 1D numpy openness (elevation angle of horizon)
 
 KEYWORDS:
     /
@@ -636,13 +645,13 @@ MODIFICATION HISTORY:
 
 
 def sky_view_factor_compute(height_arr, i_valid, radius_max, radius_min, num_directions,
-                            a_main_direction, a_poly_level, a_min_weight, compute_svf=True, compute_asvf=True,
-                            compute_opns=True):
+                            a_main_direction, a_poly_level, a_min_weight, compute_svf=True, compute_asvf=False,
+                            compute_opns=False):
     height = height_arr
 
-    svf = False  # if compute_svf is False then function doesn't compute svf and returns False
-    asvf = False  # if compute_asvf is False then function doesn't compute asvf and returns False
-    opns = False  # if compute_opns is False then function doesn't compute opns and returns False
+    svf = None  # if compute_svf is False then function doesn't compute svf and returns False
+    asvf = None  # if compute_asvf is False then function doesn't compute asvf and returns False
+    opns = None  # if compute_opns is False then function doesn't compute opns and returns False
 
     # directional step
     dir_step = 2 * np.pi / num_directions
@@ -698,7 +707,10 @@ def sky_view_factor_compute(height_arr, i_valid, radius_max, radius_min, num_dir
     if compute_opns:
         opns = np.pi / 2 - (opns / num_directions)
 
-    return svf, asvf, opns
+    dict_svf_asvf_opns = {"svf": svf, "asvf": asvf, "opns": opns}
+    dict_svf_asvf_opns = {k: v for k, v in dict_svf_asvf_opns.items() if v is not None}  # filter out none
+
+    return dict_svf_asvf_opns
 
 
 """
@@ -727,7 +739,7 @@ INPUTS:
     
     
 OUTPUTS:
-    svf, asvf, opns
+    {"svf": svf, "asvf": asvf, "opns": opns}  - dictionary
         svf, skyview_factor               - 2D numpy array of skyview factor.
         asvf, anisotropic_skyview_factor  - 2D numpy array of anisotropic skyview factor.
         opns, openness                    - openness (elevation angle of horizon)
@@ -755,7 +767,7 @@ MODIFICATION HISTORY:
 """
 
 
-def sky_view_factor(dem, resolution, compute_svf=True, compute_opns=True, compute_asvf=True,
+def sky_view_factor(dem, resolution, compute_svf=True, compute_opns=False, compute_asvf=False,
                     svf_n_dir=16, svf_r_max=10, svf_noise=0, asvf_dir=315, asvf_level=1):
     # CONSTANTS
     # level of polynomial that determines the anisotropy, selected with in_asvf_level (1 - low, 2 - high)
@@ -791,20 +803,27 @@ def sky_view_factor(dem, resolution, compute_svf=True, compute_opns=True, comput
     poly_level = sc_asvf_pol[asvf_level - 1]
     min_weight = sc_asvf_min[asvf_level - 1]
 
-    svf, asvf, opns = sky_view_factor_compute(height_arr=dem, i_valid=indx_all, radius_max=svf_r_max,
-                                              radius_min=svf_r_min, num_directions=svf_n_dir,
-                                              a_main_direction=asvf_dir, a_poly_level=poly_level,
-                                              a_min_weight=min_weight, compute_svf=compute_svf,
-                                              compute_asvf=compute_asvf, compute_opns=compute_opns)
+    svf = None
+    asvf = None
+    opns = None
+
+    dict_svf_asvf_opns = sky_view_factor_compute(height_arr=dem, i_valid=indx_all, radius_max=svf_r_max,
+                                                 radius_min=svf_r_min, num_directions=svf_n_dir,
+                                                 a_main_direction=asvf_dir, a_poly_level=poly_level,
+                                                 a_min_weight=min_weight, compute_svf=compute_svf,
+                                                 compute_asvf=compute_asvf, compute_opns=compute_opns)
     # reshape 1D to 2D
     if compute_svf:
-        svf = svf.reshape((nlin, ncol))
+        svf = dict_svf_asvf_opns["svf"].reshape((nlin, ncol))
     if compute_asvf:
-        asvf = asvf.reshape((nlin, ncol))
+        asvf = dict_svf_asvf_opns["asvf"].reshape((nlin, ncol))
     if compute_opns:
-        opns = opns.reshape((nlin, ncol))
+        opns = dict_svf_asvf_opns["opns"].reshape((nlin, ncol))
 
-    return svf, asvf, opns
+    dict_svf_asvf_opns = {"svf": svf, "asvf": asvf, "opns": opns}
+    dict_svf_asvf_opns = {k: v for k, v in dict_svf_asvf_opns.items() if v is not None}  # filter out none
+
+    return dict_svf_asvf_opns
 
 
 """
@@ -812,7 +831,7 @@ NAME:
     morph_shade_move
 
 DESCRIPTION:
-    Calculates azimuth for morph_shade
+    Calculates morph_shade.
 
 INPUTS:
     d_max  - maximum search distance in pixels
@@ -979,7 +998,6 @@ MODIFICATION HISTORY:
 
 def morph_shade(height, sol_z, sol_a, d_max, nrows, ncols, resolution):
     # initialize the results
-    # print(d_max)
     mask = np.zeros((nrows + 2 * d_max, ncols + 2 * d_max))
     mask[d_max:(nrows + d_max), d_max:(ncols + d_max)] = 1
     i_valid = np.where(mask.flatten() == 1)
@@ -1005,12 +1023,13 @@ def morph_shade(height, sol_z, sol_a, d_max, nrows, ncols, resolution):
         m_slp = ((height_flt[sel] - height_flt[i_valid[0][:sel.size]]) / move1dd[i_rad])
         m_slp = np.append(m_slp, zeros)  # add zeros, for non existing indexes
         max_slope = (max_slope < m_slp).choose(max_slope, m_slp)
+        if i_rad == 0:
+            print(max_slope)
 
     # update mask
     max_slope = np.arctan(max_slope / resolution)
     indx_mask = np.where(max_slope > (np.pi / 2 - sol_z))
 
-    # print(mask[i_valid[0][indx_mask[0]]])
     if indx_mask[0].size > 0:
         mask_size = mask.shape
         mask_flt = mask.flatten()
