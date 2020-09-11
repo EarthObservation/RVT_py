@@ -118,7 +118,7 @@ def test_sky_illumination(input_dem_path, output_path):
 def test_local_dominance(input_dem_path, output_path):
     input_dem_dataset = rio.open(input_dem_path)
     input_dem_arr = input_dem_dataset.read()[0]
-    localdominance_arr = rvt_vis.local_dominance(input_dem_arr)
+    localdominance_arr = rvt.vis.local_dominance(input_dem_arr)
     localdominance_arr = localdominance_arr.astype('float64')
     profile = input_dem_dataset.profile
     profile.update(dtype='float64')
