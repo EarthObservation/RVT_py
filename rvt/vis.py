@@ -17,7 +17,9 @@ AUTHORS:
     Žiga Maroh
 
 COPYRIGHT:
-    ZRC SAZU (Novi trg 2, 1000 Ljubljana, Slovenia) & Space-SI (Aškerčeva 12, 1000 Ljubljana, Slovenia)
+    Research Centre of the Slovenian Academy of Sciences and Arts
+    Space-SI
+    University of Ljubljana, Faculty of Civil and Geodetic Engineering
 """
 
 # python libraries
@@ -25,9 +27,10 @@ import numpy as np
 import scipy.ndimage
 
 
-# TO DO: Float32 vs Float64 speed
-# TO DO: check speed skyilumination
-# TO DO: change choose, Žiga
+# TODO: Float32 vs Float64 speed
+# TODO: check speed skyilumination
+# TODO: change choose, Žiga
+# TODO: check IDL vectorisation remains
 
 
 def byte_scale(data, c_min=None, c_max=None, high=255, low=0):
