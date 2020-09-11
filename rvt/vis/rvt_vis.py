@@ -519,6 +519,7 @@ def sky_view_factor_compute(height_arr, i_valid, radius_max, radius_min, num_dir
             m_slp = (h_flt[i_valid[0] + int(move[0, int(i_rad - 1), i_dir])] - h_flt[i_valid[0]]) / move[
                 1, i_rad, i_dir]
             np.seterr(divide='warn', invalid='warn')  # reset warnings
+            max_slope[max_slope < m_slp] = m_slp
             max_slope = (max_slope < m_slp).choose(max_slope, m_slp)
 
         max_slope = np.arctan(max_slope)
