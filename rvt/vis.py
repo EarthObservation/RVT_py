@@ -1,6 +1,6 @@
 """
 NAME:
-    rvt_py, rvt_vis - rvt visualization functions
+    rvt_py, rvt.vis - rvt visualization functions
 
 DESCRIPTION:
     Contains all functions for visualization. Functions are rewritten from RVT (IDL).
@@ -203,8 +203,8 @@ def hillshade(dem, resolution_x, resolution_y, sun_azimuth=315, sun_elevation=35
         aspect = dict_slp_asp["aspect"]
 
     # Compute solar incidence angle, hillshading
-    hillshade_out = np.cos(sun_zenith_rad) * np.cos(slope) + np.sin(sun_zenith_rad) * np.sin(slope) * \
-                    np.cos(aspect - sun_azimuth_rad)
+    hillshade_out = np.cos(sun_zenith_rad) * np.cos(slope) + np.sin(sun_zenith_rad) * np.sin(slope) * np.cos(
+        aspect - sun_azimuth_rad)
 
     return hillshade_out
 
@@ -510,6 +510,7 @@ def sky_view_factor_compute(height_arr, i_valid, radius_max, radius_min, num_dir
     for i_dir in range(num_directions):
         # reset maximum at each iteration - at each new direction
         max_slope = np.zeros(count_height) - 1000
+        max_slope2 = np.zeros(count_height) - 1000
 
         # ... and to the search radius - this depends on the direction - radius is written in the first row
         for i_rad in range(1, int(move[1, 0, i_dir])):
@@ -522,7 +523,6 @@ def sky_view_factor_compute(height_arr, i_valid, radius_max, radius_min, num_dir
             m_slp = (h_flt[i_valid[0] + int(move[0, int(i_rad - 1), i_dir])] - h_flt[i_valid[0]]) / move[
                 1, i_rad, i_dir]
             np.seterr(divide='warn', invalid='warn')  # reset warnings
-            max_slope[max_slope < m_slp] = m_slp
             max_slope = (max_slope < m_slp).choose(max_slope, m_slp)
 
         max_slope = np.arctan(max_slope)
@@ -792,8 +792,6 @@ def morph_shade(height, sol_z, sol_a, d_max, nrows, ncols, resolution):
         m_slp = ((height_flt[sel] - height_flt[i_valid[0][:sel.size]]) / move1dd[i_rad])
         m_slp = np.append(m_slp, zeros)  # add zeros, for non existing indexes
         max_slope = (max_slope < m_slp).choose(max_slope, m_slp)
-        if i_rad == 0:
-            print(max_slope)
 
     # update mask
     max_slope = np.arctan(max_slope / resolution)
@@ -859,10 +857,13 @@ def sky_illumination(dem, resolution, sky_model="overcast", sampling_points=250,
     else:
         dat_hillset = open(r'settings\{}_{}sp.txt'.format(sky_model, sampling_points), 'r')
         sky_illum_out = np.zeros((dem_size[0], dem_size[1]))
-        slope, aspect = slope_aspect(dem=dem, resolution_x=resolution,
-                                     resolution_y=resolution,
-                                     ve_factor=1, is_padding_applied=False,
-                                     output_units="radian")
+        dict_slope_aspect = slope_aspect(dem=dem, resolution_x=resolution,
+                                         resolution_y=resolution,
+                                         ve_factor=1, is_padding_applied=False,
+                                         output_units="radian")
+        slope = dict_slope_aspect["slope"]
+        aspect = dict_slope_aspect["aspect"]
+
         for line in dat_hillset:
             if line.strip() == "":  # empty line
                 continue
@@ -873,8 +874,8 @@ def sky_illumination(dem, resolution, sky_model="overcast", sampling_points=250,
             elev = int(line[1])
             weight = float(line[2])
             hillshade_tmp = hillshade(dem=dem, resolution_x=resolution, resolution_y=resolution,
-                                  sun_azimuth=azim, sun_elevation=elev, slope=slope, aspect=aspect,
-                                  is_padding_applied=False)
+                                      sun_azimuth=azim, sun_elevation=elev, slope=slope, aspect=aspect,
+                                      is_padding_applied=False)
             sh_z = np.pi / 2 - np.deg2rad(elev)
             sh_az = np.deg2rad(azim)
             d_max = round(d_max * dh * np.tan(sh_z) / resolution)
