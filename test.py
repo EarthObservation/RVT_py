@@ -1,4 +1,5 @@
-# rvt_vis quick TEST
+# rvt.vis quick TEST
+# test files: https://www.dropbox.com/sh/p7ia8fk6mywa8y3/AABWuw4wFUvULU7SeNXyWhjka?dl=0
 
 import time
 import rasterio as rio
@@ -150,7 +151,4 @@ def test_local_dominance(input_dem_path, output_path):
 # test_local_dominance(input_dem_path=r"D:\RVT_py\test\TM1_564_146.tif",
 #                      output_path=r"D:\RVT_py\test\TM1_564_146_test_localdom.tif")
 
-###
 
-# test_hillshade(input_dem_path=r"D:\RVT_py\test\manhattan\Manhattan_DSM_1m_clip.tif",
-#                             output_path=r"D:\RVT_py\test\manhattan\Manhattan_DSM_1m_clip_test_hillshade.tif")
