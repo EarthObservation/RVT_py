@@ -185,7 +185,7 @@ def blend_images(blend_mode, active, background, min_c=None, max_c=None):
 
 def apply_opacity(active, background, opacity):
     if opacity > 1:
-        opacity = opacity/100
+        opacity = opacity / 100
     return active * opacity + background * (1 - opacity)
 
 
@@ -274,7 +274,7 @@ def render_images(active, background, opacity):
 def render_all_images(layers, images):
     rendered_image = []
 
-    for i_img in range(len(layers)-1, -1, -1):
+    for i_img in range(len(layers) - 1, -1, -1):
         # if current layer visualization applied, skip
         visualization = layers[i_img].vis
         if visualization is None:
@@ -300,6 +300,17 @@ def render_all_images(layers, images):
             rendered_image = render_images(top, background, opacity)
 
             if np.nanmin(background) < 0 or np.nanmax(background > 1):
-                raise Warning("RVT render_all_images: Rendered omage scale distorted")
+                raise Warning("RVT render_all_images: Rendered image scale distorted")
 
         return rendered_image
+
+
+class BlenderLayer:
+    def __init__(self, vis_method=None, normalization="value", minimum=None, maximum=None,
+                 blend_mode="normal", opacity=100):
+        self.vis = vis_method
+        self.normalization = normalization
+        self.min = minimum
+        self.max = maximum
+        self.blend_mode = blend_mode
+        self.opacity = opacity
