@@ -7,7 +7,7 @@ import rvt.vis
 import numpy as np
 
 
-def test_slope_aspect(input_dem_path, output_path):
+def test_slope_aspect(input_dem_path, output_path, ve_factor=1, output_units="degree"):
     input_dem_dataset = rio.open(input_dem_path)
     t = input_dem_dataset.transform
     x_res = t[0]
@@ -15,8 +15,8 @@ def test_slope_aspect(input_dem_path, output_path):
     input_dem_arr = input_dem_dataset.read()[0]
 
     dict_slp_asp = rvt.vis.slope_aspect(dem=input_dem_arr, resolution_x=x_res,
-                                        resolution_y=y_res, ve_factor=1,
-                                        is_padding_applied=False, output_units="degree")
+                                        resolution_y=y_res, ve_factor=ve_factor,
+                                        is_padding_applied=False, output_units=output_units)
     slope_arr = dict_slp_asp["slope"]
     slope_arr = slope_arr.astype('float64')
     profile = input_dem_dataset.profile
@@ -25,7 +25,7 @@ def test_slope_aspect(input_dem_path, output_path):
     output_slope_dataset.write(np.array([slope_arr]))
 
 
-def test_hillshade(input_dem_path, output_path):
+def test_hillshade(input_dem_path, output_path, sun_azimuth=315, sun_elevation=35):
     input_dem_dataset = rio.open(input_dem_path)
     t = input_dem_dataset.transform
     x_res = t[0]
@@ -33,7 +33,7 @@ def test_hillshade(input_dem_path, output_path):
     input_dem_arr = input_dem_dataset.read()[0]
 
     hillshading_arr = rvt.vis.hillshade(dem=input_dem_arr, resolution_x=x_res,
-                                        resolution_y=y_res, sun_azimuth=315, sun_elevation=35,
+                                        resolution_y=y_res, sun_azimuth=sun_azimuth, sun_elevation=sun_elevation,
                                         is_padding_applied=False)
     hillshading_arr = hillshading_arr.astype('float64')
     profile = input_dem_dataset.profile
@@ -42,15 +42,15 @@ def test_hillshade(input_dem_path, output_path):
     output_hillshading_dataset.write(np.array([hillshading_arr]))
 
 
-def test_multi_hillshade(input_dem_path, output_path):
+def test_multi_hillshade(input_dem_path, output_path, nr_directions=16, sun_elevation=35):
     input_dem_dataset = rio.open(input_dem_path)
     t = input_dem_dataset.transform
     x_res = t[0]
     y_res = -t[4]
     input_dem_arr = input_dem_dataset.read()[0]
     multi_hillshading_arr = rvt.vis.multi_hillshade(dem=input_dem_arr, resolution_x=x_res,
-                                                    resolution_y=y_res, nr_directions=16,
-                                                    sun_elevation=35,
+                                                    resolution_y=y_res, nr_directions=nr_directions,
+                                                    sun_elevation=sun_elevation,
                                                     is_padding_applied=False)
     multi_hillshading_arr = multi_hillshading_arr.astype('float64')
     profile = input_dem_dataset.profile
