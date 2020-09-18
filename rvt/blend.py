@@ -26,6 +26,51 @@ COPYRIGHT:
 import numpy as np
 
 
+def normalize_lin(image, minimum, maximum):
+    # linear cut off
+    idx_min = np.where(image < minimum)
+    idx_max = np.where(image > maximum)
+    if idx_min[0].size == 0 and idx_max[0].size == 0:
+        return image
+    if idx_min[0].size > 0:
+        image[idx_min] = minimum
+    if idx_max[0].size > 0:
+        image[idx_max] = maximum
+
+    # stretch to 0.0 - 1.0 interval
+    image = (image - minimum) / (maximum - minimum)
+    return image
+
+
+def lin_cutoff_calc_from_perc(image, minimum, maximum):
+    if 1 < minimum < 100:
+        minimum = minimum / 100
+    if 1 < maximum < 100:
+        maximum = maximum / 100
+
+    distribution = np.percentile(a=image, q=np.array([minimum, 1-maximum]))
+    min_lin = np.amin(distribution)
+    max_lin = np.amax(distribution)
+    return {"min_lin": min_lin, "max_lin": max_lin}
+
+
+def normalize_perc(image, minimum, maximum):
+    min_max_lin_dict = lin_cutoff_calc_from_perc(image, minimum, maximum)
+    min_lin = min_max_lin_dict["min_lin"]
+    max_lin = min_max_lin_dict["max_lin"]
+    return normalize_lin(image, min_lin, max_lin)
+
+
+def advanced_normalization(image, minimum, maximum, normalization):
+    if normalization.lower() == "value":
+        equ_image = normalize_lin(image, minimum, maximum)
+    elif normalization.lower() == "perc":
+        equ_image = normalize_perc(image, minimum, maximum)
+    elif normalization is None:
+        equ_image = image
+    return equ_image
+
+
 def image_join_channels(r, g, b):
     if r.shape != g.shape or r.shape != b.shape or g.shape != b.shape:
         raise Exception("RVT image_join_channels: r, g, b must me same dimensions!")
@@ -314,3 +359,21 @@ class BlenderLayer:
         self.max = maximum
         self.blend_mode = blend_mode
         self.opacity = opacity
+        self.check_data()
+
+    def check_data(self):
+        if self.normalization.lower() != "value" or self.normalization.lower() != "perc" or \
+           self.normalization is not None:
+            raise Exception("RVT BlenderLayer check_data: normalization value incorrect!")
+        if 0 > self.min > 100 and self.min is not None:
+            raise Exception("RVT BlenderLayer check_data: min value incorrect [0-100]!")
+        if 0 > self.max > 100 and self.max is not None:
+            raise Exception("RVT BlenderLayer check_data: max value incorrect [0-100]!")
+        if self.min > self.max:
+            raise Exception("RVT BlenderLayer check_data: min bigger than max!")
+        if self.blend_mode.lower() != "normal" or self.blend_mode.lower() != "multiply" or \
+           self.blend_mode.lower() != "overlay" or self.blend_mode.lower() != "luminosity" or \
+           self.blend_mode.lower() != "screen":
+            raise Exception("RVT BlenderLayer check_data: blend_mode incorrect!")
+        if 0 > self.opacity > 100:
+            raise Exception("RVT BlenderLayer check_data: opacity incorrect [0-100]!")
