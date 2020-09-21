@@ -28,6 +28,7 @@ layers.create_layer(vis_method="svf", normalization="value", minimum=0.7, maximu
 
 # 2;opns_pos;value;68;93;overlay;50
 opns_arr = svf_dict["opns"]
+opns_arr = np.rad2deg(opns_arr)  # convert to deg
 layers.create_layer(vis_method="opns_pos", normalization="value", minimum=68, maximum=93, blend_mode="overlay",
                     opacity=50, image=np.array(opns_arr))
 
@@ -37,8 +38,8 @@ slope_dict = rvt.vis.slope_aspect(dem=input_dem_arr, resolution_x=x_res, resolut
 slope_arr = slope_dict["slope"]
 layers.create_layer(vis_method="slope", normalization="value", minimum=0, maximum=50, blend_mode="normal",
                     opacity=50, image=np.array(slope_arr))
-
-# 4;hillshade;value;0;1;normal;100
+#
+# # 4;hillshade;value;0;1;normal;100
 hillshade_arr = rvt.vis.hillshade(dem=input_dem_arr, resolution_x=x_res, resolution_y=y_res)
 layers.create_layer(vis_method="hillshade", normalization="value", minimum=0, maximum=1, blend_mode="normal",
                     opacity=100, image=np.array(hillshade_arr))
@@ -47,10 +48,11 @@ layers.create_layer(vis_method="hillshade", normalization="value", minimum=0, ma
 layers.create_layer(vis_method=None)
 
 
-layers.normalize_images_on_layers()
+layers.normalize_images()
 rendered_imgs = layers.render_all_images()
 rendered_imgs = rendered_imgs.astype('float64')
 profile = input_dem_dataset.profile
 profile.update(dtype='float64')
 output_blend_arr_dataset = rio.open(output_blend_path, "w", **profile)
 output_blend_arr_dataset.write(np.array([rendered_imgs]))
+

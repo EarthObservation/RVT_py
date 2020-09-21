@@ -83,7 +83,7 @@ def byte_scale(data, c_min=None, c_max=None, high=255, low=0):
     return np.cast[np.uint8](byte_data) + np.cast[np.uint8](low)
 
 
-def slope_aspect(dem, resolution_x, resolution_y, ve_factor, is_padding_applied=False, output_units="radian"):
+def slope_aspect(dem, resolution_x, resolution_y, ve_factor=1, is_padding_applied=False, output_units="radian"):
     """
     Procedure can return terrain slope and aspect in radian units (default) or in alternative units (if specified).
     Slope is defined as 0 for Hz plane and pi/2 for vertical plane.

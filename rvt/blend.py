@@ -21,7 +21,7 @@ COPYRIGHT:
     Space-SI
     University of Ljubljana, Faculty of Civil and Geodetic Engineering
 """
-# TODO: more testing with RVT to get the same results, find and fix bugs
+# TODO: more testing, find and fix bugs if they exists
 
 # python libraries
 import numpy as np
@@ -251,7 +251,7 @@ class BlenderLayers:
     def add_layer(self, layer : BlenderLayer):
         self.layers.append(layer)
 
-    def normalize_images_on_layers(self):
+    def normalize_images(self):
         nr_layers = sum(lyr.vis is not None for lyr in self.layers)
         nr_images = sum(lyr.image is not None for lyr in self.layers)
 
