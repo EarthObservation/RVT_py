@@ -21,6 +21,7 @@ COPYRIGHT:
     Space-SI
     University of Ljubljana, Faculty of Civil and Geodetic Engineering
 """
+# TODO: more testing with RVT to get the same results, find and fix bugs
 
 # python libraries
 import numpy as np
@@ -48,7 +49,7 @@ def lin_cutoff_calc_from_perc(image, minimum, maximum):
     if 1 < maximum < 100:
         maximum = maximum / 100
 
-    distribution = np.percentile(a=image, q=np.array([minimum, 1-maximum]))
+    distribution = np.percentile(a=image, q=np.array([minimum, 1 - maximum]))
     min_lin = np.amin(distribution)
     max_lin = np.amax(distribution)
     return {"min_lin": min_lin, "max_lin": max_lin}
@@ -75,57 +76,6 @@ def image_join_channels(r, g, b):
     if r.shape != g.shape or r.shape != b.shape or g.shape != b.shape:
         raise Exception("RVT image_join_channels: r, g, b must me same dimensions!")
     return np.array([r, g, b])
-
-
-def blend_normal(active, background):
-    return active
-
-
-def blend_screen(active, background):
-    return 1 - (1 - active) * (1 - background)
-
-
-def blend_multiply(active, background):
-    return active * background
-
-
-def blend_overlay(active, background):
-    idx1 = np.where(background > 0.5)
-    idx2 = np.where(background <= 0.5)
-    background[idx1[0], idx1[1]] = (1 - (1 - 2 * (background[idx1[0], idx1[1]] - 0.5)) * (1 - active[idx1[0], idx1[1]]))
-    background[idx2[0], idx2[1]] = ((2 * background[idx2[0], idx2[1]]) * active[idx2[0], idx2[1]])
-    return background
-
-
-def equation_blend(blend_mode, active, background):
-    if blend_mode.lower() == "screen":
-        return blend_screen(active, background)
-    elif blend_mode.lower() == "multiply":
-        return blend_multiply(active, background)
-    elif blend_mode.lower() == "overlay":
-        return blend_overlay(active, background)
-
-
-def blend_multi_dim_images(blend_mode, active, background):
-    a_rgb = active.shape[0] == 3  # bool, is active rgb
-    b_rgb = background.shape[0] == 3  # bool, is background rgb
-
-    if a_rgb and b_rgb:
-        blended_image = np.zeros(background.shape)
-        for i in range(3):
-            blended_image[i, :, :] = equation_blend(blend_mode, active[i, :, :], background[i, :, :])
-    if a_rgb and not b_rgb:
-        blended_image = np.zeros(active.shape)
-        for i in range(3):
-            blended_image[i, :, :] = equation_blend(blend_mode, active[i, :, :], background)
-    if not a_rgb and b_rgb:
-        blended_image = np.zeros(background.shape)
-        for i in range(3):
-            blended_image[i, :, :] = equation_blend(blend_mode, active, background[i, :, :])
-    if not a_rgb and not b_rgb:
-        blended_image = equation_blend(blend_mode, active, background)
-
-    return blended_image
 
 
 def lum(img):
@@ -197,43 +147,6 @@ def clip_color(c, min_c=None, max_c=None):
     return c
 
 
-def blend_luminosity(active, background, min_c=None, max_c=None):
-    lum_active = lum(active)
-    lum_background = lum(background)
-    luminosity = lum_active - lum_background
-
-    if background.shape[0] < 3:
-        return lum_active
-
-    r = background[0] + luminosity
-    g = background[1] + luminosity
-    b = background[2] + luminosity
-
-    c = np.zeros(background.shape)
-    c[0, :, :] = r
-    c[1, :, :] = g
-    c[2, :, :] = b
-
-    clipped_image = clip_color(c, min_c, max_c)
-
-    return clipped_image
-
-
-def blend_images(blend_mode, active, background, min_c=None, max_c=None):
-    if blend_mode.lower() == "multiply" or blend_mode.lower() == "overlay" or blend_mode.lower() == "screen":
-        return blend_multi_dim_images(blend_mode, active, background)
-    elif blend_mode.lower() == "luminosity":
-        return blend_luminosity(active, background, min_c, max_c)
-    else:
-        return blend_normal(active, background)
-
-
-def apply_opacity(active, background, opacity):
-    if opacity > 1:
-        opacity = opacity / 100
-    return active * opacity + background * (1 - opacity)
-
-
 def scale_within_0_and_1(numeric_value):
     if np.nanmin(numeric_value) >= 0 and np.nanmax(numeric_value) <= 1:
         return numeric_value
@@ -287,83 +200,29 @@ def scale_0_to_1(numeric_value):
         return scale_strict_0_to_1(numeric_value)
 
 
-def render_images(active, background, opacity):
-    if np.nanmin(active) < 0 or np.nanmax(active) > 1.1:
-        active = scale_0_to_1(active)
-    if np.nanmin(background) < 0 or np.nanmax(background) > 1.1:
-        background = scale_0_to_1(background)
-
-    a_rgb = active.shape[0] == 3
-    b_rgb = background.shpae[0] == 3
-
-    if a_rgb and b_rgb:
-        render_image = np.zeros(background.shape)
-        for i in range(3):
-            render_image[i, :, :] = apply_opacity(active[i, :, :], background[i, :, :], opacity)
-    if a_rgb and not b_rgb:
-        render_image = np.zeros(active.shape)
-        for i in range(3):
-            render_image[i, :, :] = apply_opacity(active[i, :, :], background, opacity)
-    if not a_rgb and b_rgb:
-        render_image = np.zeros(background.shape)
-        for i in range(3):
-            render_image[i, :, :] = apply_opacity(active, background[i, :, :], opacity)
-    if not a_rgb and b_rgb:
-        render_image = apply_opacity(active, background, opacity)
-
-    return render_image
-
-
-# rendering across all layers - form last to first layer
-# each image is either: (1) image of visualization + blending or (2) original image (if vis == None for that layer)
-def render_all_images(layers, images):
-    rendered_image = []
-
-    for i_img in range(len(layers) - 1, -1, -1):
-        # if current layer visualization applied, skip
-        visualization = layers[i_img].vis
-        if visualization is None:
-            continue
-
-        # if current layer has visualization applied, but there has been no rendering of images yet, than current layer
-        # will be the initial value of rendered_image
-        if not rendered_image:
-            rendered_image = images[i_img]
-            continue
-        else:
-            active = images[i_img]
-            background = rendered_image
-            blend_mode = layers[i_img].blend_mode
-            opacity = layers[i_img].opacity
-
-            if np.nanmin(active) < 0 or np.nanmax(active) > 1:
-                active = scale_0_to_1(active)
-            if np.nanmin(background) < 0 or np.nanmax(background) > 1:
-                background = scale_0_to_1(background)
-
-            top = blend_images(blend_mode, active, background)
-            rendered_image = render_images(top, background, opacity)
-
-            if np.nanmin(background) < 0 or np.nanmax(background > 1):
-                raise Warning("RVT render_all_images: Rendered image scale distorted")
-
-        return rendered_image
-
-
 class BlenderLayer:
     def __init__(self, vis_method=None, normalization="value", minimum=None, maximum=None,
-                 blend_mode="normal", opacity=100):
+                 blend_mode="normal", opacity=100, image=None):
         self.vis = vis_method
         self.normalization = normalization
         self.min = minimum
         self.max = maximum
         self.blend_mode = blend_mode
         self.opacity = opacity
+        self.image = image
+        self.norm_image = None
         self.check_data()
 
     def check_data(self):
-        if self.normalization.lower() != "value" or self.normalization.lower() != "perc" or \
-           self.normalization is not None:
+        if self.vis is None:
+            self.normalization = None
+            self.min = None
+            self.max = None
+            self.blend_mode = None
+            self.opacity = None
+            return
+        if self.normalization.lower() != "value" and self.normalization.lower() != "perc" and \
+                self.normalization is not None:
             raise Exception("RVT BlenderLayer check_data: normalization value incorrect!")
         if 0 > self.min > 100 and self.min is not None:
             raise Exception("RVT BlenderLayer check_data: min value incorrect [0-100]!")
@@ -371,9 +230,219 @@ class BlenderLayer:
             raise Exception("RVT BlenderLayer check_data: max value incorrect [0-100]!")
         if self.min > self.max:
             raise Exception("RVT BlenderLayer check_data: min bigger than max!")
-        if self.blend_mode.lower() != "normal" or self.blend_mode.lower() != "multiply" or \
-           self.blend_mode.lower() != "overlay" or self.blend_mode.lower() != "luminosity" or \
-           self.blend_mode.lower() != "screen":
+        if self.blend_mode.lower() != "normal" and self.blend_mode.lower() != "multiply" and \
+                self.blend_mode.lower() != "overlay" and self.blend_mode.lower() != "luminosity" and \
+                self.blend_mode.lower() != "screen":
             raise Exception("RVT BlenderLayer check_data: blend_mode incorrect!")
         if 0 > self.opacity > 100:
             raise Exception("RVT BlenderLayer check_data: opacity incorrect [0-100]!")
+
+
+class BlenderLayers:
+    layers = []
+
+    # create and add layer
+    def create_layer(self, vis_method=None, normalization="value", minimum=None, maximum=None,
+                     blend_mode="normal", opacity=100, image=None):
+        layer = BlenderLayer(vis_method=vis_method, normalization=normalization, minimum=minimum, maximum=maximum,
+                             blend_mode=blend_mode, opacity=opacity, image=image)
+        self.layers.append(layer)
+
+    def add_layer(self, layer : BlenderLayer):
+        self.layers.append(layer)
+
+    def normalize_images_on_layers(self):
+        nr_layers = sum(lyr.vis is not None for lyr in self.layers)
+        nr_images = sum(lyr.image is not None for lyr in self.layers)
+
+        if nr_layers != nr_images:
+            raise Exception("RVT normalize_images_on_layers: layers and images number don't match")
+
+        for i_img in range(nr_layers):
+            visualization = self.layers[i_img].vis
+            if visualization is None:
+                continue
+            image = self.layers[i_img].image
+            min_norm = self.layers[i_img].min
+            max_norm = self.layers[i_img].max
+            normalization = self.layers[i_img].normalization
+
+            # workaround for RGB images because they are on scale [0, 255] not [0, 1],
+            # we use multiplier to get proper values
+            if normalization.lower() == "value" and visualization.lower() == "hillshade":
+                if np.nanmax(image) > 100.0 and image.shape[0] == 3:
+                    # limit normalization 0 to 1
+                    # all numbers below are 0
+                    # numbers above are 1
+                    if min_norm < 0:
+                        min_norm = 0
+                    if max_norm > 1:
+                        max_norm = 1
+
+                    min_norm = round(min_norm * 255)
+                    max_norm = round(max_norm * 255)
+
+            norm_image = advanced_normalization(image, min_norm, max_norm, normalization)
+
+            # make sure it scales 0 to 1
+            if np.nanmax(norm_image) > 1:
+                if visualization.lower() == "multi_hillshade":
+                    norm_image = scale_0_to_1(norm_image)
+                else:
+                    norm_image = scale_0_to_1(norm_image)
+                    raise Warning("RVT normalize_images_on_layers: unexpected values! max > 1")
+                if np.nanmin(norm_image) < 0:
+                    raise Warning("RVT normalize_images_on_layers: unexpected values! min < 0")
+
+            # for slope and neg openness, invert scale
+            # meaning high slopes will be black
+            if visualization.lower() == "opns_neg" or visualization.lower() == "slope":
+                norm_image = 1 - norm_image
+
+            self.layers[i_img].norm_image = norm_image
+
+    def check_for_normalization(self):
+        for lyr in self.layers:
+            if lyr.norm_image is None and lyr.vis is not None:
+                raise Exception("RVT BlenderLayers: normalize_images_on_layers before render!")
+
+    def blend_normal(self, active, background):
+        return active
+
+    def blend_screen(self, active, background):
+        return 1 - (1 - active) * (1 - background)
+
+    def blend_multiply(self, active, background):
+        return active * background
+
+    def blend_overlay(self, active, background):
+        idx1 = np.where(background > 0.5)
+        idx2 = np.where(background <= 0.5)
+        background[idx1[0], idx1[1]] = (
+                    1 - (1 - 2 * (background[idx1[0], idx1[1]] - 0.5)) * (1 - active[idx1[0], idx1[1]]))
+        background[idx2[0], idx2[1]] = ((2 * background[idx2[0], idx2[1]]) * active[idx2[0], idx2[1]])
+        return background
+
+    def equation_blend(self, blend_mode, active, background):
+        if blend_mode.lower() == "screen":
+            return self.blend_screen(active, background)
+        elif blend_mode.lower() == "multiply":
+            return self.blend_multiply(active, background)
+        elif blend_mode.lower() == "overlay":
+            return self.blend_overlay(active, background)
+
+    def blend_luminosity(self, active, background, min_c=None, max_c=None):
+        lum_active = lum(active)
+        lum_background = lum(background)
+        luminosity = lum_active - lum_background
+
+        if background.shape[0] < 3:
+            return lum_active
+
+        r = background[0] + luminosity
+        g = background[1] + luminosity
+        b = background[2] + luminosity
+
+        c = np.zeros(background.shape)
+        c[0, :, :] = r
+        c[1, :, :] = g
+        c[2, :, :] = b
+
+        clipped_image = clip_color(c, min_c, max_c)
+
+        return clipped_image
+
+    def blend_images(self, blend_mode, active, background, min_c=None, max_c=None):
+        if blend_mode.lower() == "multiply" or blend_mode.lower() == "overlay" or blend_mode.lower() == "screen":
+            return self.blend_multi_dim_images(blend_mode, active, background)
+        elif blend_mode.lower() == "luminosity":
+            return self.blend_luminosity(active, background, min_c, max_c)
+        else:
+            return self.blend_normal(active, background)
+
+    def apply_opacity(self, active, background, opacity):
+        if opacity > 1:
+            opacity = opacity / 100
+        return active * opacity + background * (1 - opacity)
+
+    def blend_multi_dim_images(self, blend_mode, active, background):
+        a_rgb = active.shape[0] == 3  # bool, is active rgb
+        b_rgb = background.shape[0] == 3  # bool, is background rgb
+
+        if a_rgb and b_rgb:
+            blended_image = np.zeros(background.shape)
+            for i in range(3):
+                blended_image[i, :, :] = self.equation_blend(blend_mode, active[i, :, :], background[i, :, :])
+        if a_rgb and not b_rgb:
+            blended_image = np.zeros(active.shape)
+            for i in range(3):
+                blended_image[i, :, :] = self.equation_blend(blend_mode, active[i, :, :], background)
+        if not a_rgb and b_rgb:
+            blended_image = np.zeros(background.shape)
+            for i in range(3):
+                blended_image[i, :, :] = self.equation_blend(blend_mode, active, background[i, :, :])
+        if not a_rgb and not b_rgb:
+            blended_image = self.equation_blend(blend_mode, active, background)
+
+        return blended_image
+
+    def render_images(self, active, background, opacity):
+        if np.nanmin(active) < 0 or np.nanmax(active) > 1.1:
+            active = scale_0_to_1(active)
+        if np.nanmin(background) < 0 or np.nanmax(background) > 1.1:
+            background = scale_0_to_1(background)
+
+        a_rgb = active.shape[0] == 3
+        b_rgb = background.shape[0] == 3
+        render_image = 0
+        if a_rgb and b_rgb:
+            render_image = np.zeros(background.shape)
+            for i in range(3):
+                render_image[i, :, :] = self.apply_opacity(active[i, :, :], background[i, :, :], opacity)
+        if a_rgb and not b_rgb:
+            render_image = np.zeros(active.shape)
+            for i in range(3):
+                render_image[i, :, :] = self.apply_opacity(active[i, :, :], background, opacity)
+        if not a_rgb and b_rgb:
+            render_image = np.zeros(background.shape)
+            for i in range(3):
+                render_image[i, :, :] = self.apply_opacity(active, background[i, :, :], opacity)
+        if not a_rgb and not b_rgb:
+            render_image = self.apply_opacity(active, background, opacity)
+        return render_image
+
+    # rendering across all layers - form last to first layer
+    # each image is either: (1) image of visualization + blending or (2) original image (if vis == None for that layer)
+    def render_all_images(self):
+        self.check_for_normalization()
+
+        rendered_image = []
+
+        for i_img in range(len(self.layers) - 1, -1, -1):
+            # if current layer visualization applied, skip
+            visualization = self.layers[i_img].vis
+            if visualization is None:
+                continue
+
+            # if current layer has visualization applied, but there has been no rendering
+            # of images yet, than current layer will be the initial value of rendered_image
+            if rendered_image == []:
+                rendered_image = self.layers[i_img].norm_image
+                continue
+            else:
+                active = self.layers[i_img].norm_image
+                background = rendered_image
+                blend_mode = self.layers[i_img].blend_mode
+                opacity = self.layers[i_img].opacity
+                if np.nanmin(active) < 0 or np.nanmax(active) > 1:
+                    active = scale_0_to_1(active)
+                if np.nanmin(background) < 0 or np.nanmax(background) > 1:
+                    background = scale_0_to_1(background)
+                top = self.blend_images(blend_mode, active, background)
+                rendered_image = self.render_images(top, background, opacity)
+
+                if np.nanmin(background) < 0 or np.nanmax(background > 1):
+                    raise Warning("RVT render_all_images: Rendered image scale distorted")
+
+        return rendered_image
+
