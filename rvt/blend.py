@@ -25,6 +25,8 @@ COPYRIGHT:
 
 # python libraries
 import numpy as np
+import warnings
+import rvt.default
 
 
 def normalize_lin(image, minimum, maximum):
@@ -236,10 +238,13 @@ class BlenderLayer:
             raise Exception("RVT BlenderLayer check_data: blend_mode incorrect!")
         if 0 > self.opacity > 100:
             raise Exception("RVT BlenderLayer check_data: opacity incorrect [0-100]!")
+        if self.vis is not None and self.image is None:
+            raise Exception("RVT BlenderLayer check_data: Layer needs image!")
 
 
 class BlenderLayers:
     layers = []
+    default = rvt.default.DefaultValues()
 
     # create and add layer
     def create_layer(self, vis_method=None, normalization="value", minimum=None, maximum=None,
@@ -286,17 +291,17 @@ class BlenderLayers:
 
             # make sure it scales 0 to 1
             if np.nanmax(norm_image) > 1:
-                if visualization.lower() == "multi_hillshade":
+                if visualization.lower() == "multiple directions hillshade":
                     norm_image = scale_0_to_1(norm_image)
                 else:
                     norm_image = scale_0_to_1(norm_image)
-                    raise Warning("RVT normalize_images_on_layers: unexpected values! max > 1")
+                    warnings.warn("RVT normalize_images_on_layers: unexpected values! max > 1")
                 if np.nanmin(norm_image) < 0:
-                    raise Warning("RVT normalize_images_on_layers: unexpected values! min < 0")
+                    warnings.warn("RVT normalize_images_on_layers: unexpected values! min < 0")
 
             # for slope and neg openness, invert scale
             # meaning high slopes will be black
-            if visualization.lower() == "opns_neg" or visualization.lower() == "slope":
+            if visualization.lower() == "openness - negative" or visualization.lower() == "slope gradient":
                 norm_image = 1 - norm_image
 
             self.layers[i_img].norm_image = norm_image
@@ -442,7 +447,48 @@ class BlenderLayers:
                 rendered_image = self.render_images(top, background, opacity)
 
                 if np.nanmin(background) < 0 or np.nanmax(background > 1):
-                    raise Warning("RVT render_all_images: Rendered image scale distorted")
+                    warnings.warn("RVT render_all_images: Rendered image scale distorted")
 
         return rendered_image
+
+    def build_blender_layers_from_file(self, file_path):
+        # Example file in dir settings: blender_file_example.txt
+        dat = open(file_path, "r")
+        for line in dat:
+            line = line.strip()
+            if line == "":
+                continue
+            if line[0] == "#":
+                continue
+            line_list = line.split(",")
+            vis_method = None
+            normalization = None
+            minimum = None
+            maximum = None
+            blend_mode = None
+            opacity = None
+            image = None
+            for element in line_list:
+                element = element.strip()
+                parameter_name = element.split(":")[0].strip()
+                parameter_value = element.split(":")[1].strip()
+                if parameter_name == "vis":
+                    vis_method = parameter_value
+                elif parameter_name == "norm":
+                    normalization = parameter_value
+                elif parameter_name == "min":
+                    minimum = float(parameter_value)
+                elif parameter_name == "max":
+                    maximum = float(parameter_value)
+                elif parameter_name == "blend_mode":
+                    blend_mode = parameter_value
+                elif parameter_name == "opacity":
+                    opacity = float(parameter_value)
+            # TODO: fill image (using rvt.default), first finish default
+            #image
+            layer = BlenderLayer(vis_method=vis_method, normalization=normalization, minimum=minimum, maximum=maximum,
+                                 blend_mode=blend_mode, opacity=opacity, image=image)
+            self.layers.append(layer)
+        dat.close()
+
 
