@@ -40,6 +40,11 @@ import rvt
 ```
 ## Examples
 
+A sample dataset for trying RVT is available here:  
+http://bit.ly/RVT_test
+
+Download it an try the visualisations.
+
 ```python
 test
 ```
