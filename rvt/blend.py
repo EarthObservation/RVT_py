@@ -27,6 +27,14 @@ COPYRIGHT:
 import numpy as np
 import warnings
 import rvt.default
+import rasterio as rio
+
+
+def get_raster_array(raster_path):
+    raster_dataset = rio.open(raster_path)
+    raster_arr = raster_dataset.read()[0]
+    raster_dataset.close()
+    return raster_arr
 
 
 def normalize_lin(image, minimum, maximum):
@@ -65,6 +73,7 @@ def normalize_perc(image, minimum, maximum):
 
 
 def advanced_normalization(image, minimum, maximum, normalization):
+    equ_image = image
     if normalization.lower() == "value":
         equ_image = normalize_lin(image, minimum, maximum)
     elif normalization.lower() == "perc":
@@ -223,29 +232,33 @@ class BlenderLayer:
             self.blend_mode = None
             self.opacity = None
             return
-        if self.normalization.lower() != "value" and self.normalization.lower() != "perc" and \
-                self.normalization is not None:
-            raise Exception("RVT BlenderLayer check_data: normalization value incorrect!")
-        if 0 > self.min > 100 and self.min is not None:
-            raise Exception("RVT BlenderLayer check_data: min value incorrect [0-100]!")
-        if 0 > self.max > 100 and self.max is not None:
-            raise Exception("RVT BlenderLayer check_data: max value incorrect [0-100]!")
-        if self.min > self.max:
-            raise Exception("RVT BlenderLayer check_data: min bigger than max!")
-        if self.blend_mode.lower() != "normal" and self.blend_mode.lower() != "multiply" and \
-                self.blend_mode.lower() != "overlay" and self.blend_mode.lower() != "luminosity" and \
-                self.blend_mode.lower() != "screen":
-            raise Exception("RVT BlenderLayer check_data: blend_mode incorrect!")
-        if 0 > self.opacity > 100:
-            raise Exception("RVT BlenderLayer check_data: opacity incorrect [0-100]!")
+        if self.normalization is not None:
+            if self.normalization.lower() != "value" and self.normalization.lower() != "perc":
+                raise Exception("RVT BlenderLayer check_data: normalization value incorrect!")
+        if self.min is not None:
+            if 0 > self.min > 100:
+                raise Exception("RVT BlenderLayer check_data: min value incorrect [0-100]!")
+        if self.max is not None:
+            if 0 > self.max > 100:
+                raise Exception("RVT BlenderLayer check_data: max value incorrect [0-100]!")
+        if self.max is not None and self.min is not None:
+            if self.min > self.max:
+                raise Exception("RVT BlenderLayer check_data: min bigger than max!")
+        if self.blend_mode is not None:
+            if self.blend_mode.lower() != "normal" and self.blend_mode.lower() != "multiply" and \
+                    self.blend_mode.lower() != "overlay" and self.blend_mode.lower() != "luminosity" and \
+                    self.blend_mode.lower() != "screen":
+                raise Exception("RVT BlenderLayer check_data: blend_mode incorrect!")
+        if self.opacity is not None:
+            if 0 > self.opacity > 100:
+                raise Exception("RVT BlenderLayer check_data: opacity incorrect [0-100]!")
         if self.vis is not None and self.image is None:
             raise Exception("RVT BlenderLayer check_data: Layer needs image!")
 
 
 class BlenderLayers:
     layers = []
-    default = rvt.default.DefaultValues()
-
+    rendered_image = None
     # create and add layer
     def create_layer(self, vis_method=None, normalization="value", minimum=None, maximum=None,
                      blend_mode="normal", opacity=100, image=None):
@@ -253,13 +266,12 @@ class BlenderLayers:
                              blend_mode=blend_mode, opacity=opacity, image=image)
         self.layers.append(layer)
 
-    def add_layer(self, layer : BlenderLayer):
+    def add_layer(self, layer: BlenderLayer):
         self.layers.append(layer)
 
     def normalize_images(self):
         nr_layers = sum(lyr.vis is not None for lyr in self.layers)
         nr_images = sum(lyr.image is not None for lyr in self.layers)
-
         if nr_layers != nr_images:
             raise Exception("RVT normalize_images_on_layers: layers and images number don't match")
 
@@ -275,7 +287,7 @@ class BlenderLayers:
             # workaround for RGB images because they are on scale [0, 255] not [0, 1],
             # we use multiplier to get proper values
             if normalization.lower() == "value" and visualization.lower() == "hillshade":
-                if np.nanmax(image) > 100.0 and image.shape[0] == 3:
+                if np.nanmax(image) > 100.0 and len(image.shape) == 3:
                     # limit normalization 0 to 1
                     # all numbers below are 0
                     # numbers above are 1
@@ -340,8 +352,7 @@ class BlenderLayers:
         lum_active = lum(active)
         lum_background = lum(background)
         luminosity = lum_active - lum_background
-
-        if background.shape[0] < 3:
+        if len(background.shape) < 3:
             return lum_active
 
         r = background[0] + luminosity
@@ -371,8 +382,8 @@ class BlenderLayers:
         return active * opacity + background * (1 - opacity)
 
     def blend_multi_dim_images(self, blend_mode, active, background):
-        a_rgb = active.shape[0] == 3  # bool, is active rgb
-        b_rgb = background.shape[0] == 3  # bool, is background rgb
+        a_rgb = len(active.shape) == 3  # bool, is active rgb
+        b_rgb = len(background.shape) == 3  # bool, is background rgb
 
         if a_rgb and b_rgb:
             blended_image = np.zeros(background.shape)
@@ -397,8 +408,8 @@ class BlenderLayers:
         if np.nanmin(background) < 0 or np.nanmax(background) > 1.1:
             background = scale_0_to_1(background)
 
-        a_rgb = active.shape[0] == 3
-        b_rgb = background.shape[0] == 3
+        a_rgb = len(active.shape) == 3
+        b_rgb = len(background.shape) == 3
         render_image = 0
         if a_rgb and b_rgb:
             render_image = np.zeros(background.shape)
@@ -449,10 +460,14 @@ class BlenderLayers:
                 if np.nanmin(background) < 0 or np.nanmax(background > 1):
                     warnings.warn("RVT render_all_images: Rendered image scale distorted")
 
-        return rendered_image
+        self.rendered_image = rendered_image
 
-    def build_blender_layers_from_file(self, file_path):
-        # Example file in dir settings: blender_file_example.txt
+    def build_blender_layers_from_file(self, dem_path, file_path, default=None):
+        self.layers = []
+        # default is rvt.default.DefaultValues class
+        # Example file (for file_path) in dir settings: blender_file_example.txt
+        if default is None:
+            default = rvt.default.DefaultValues()
         dat = open(file_path, "r")
         for line in dat:
             line = line.strip()
@@ -474,6 +489,8 @@ class BlenderLayers:
                 parameter_value = element.split(":")[1].strip()
                 if parameter_name == "vis":
                     vis_method = parameter_value
+                    if vis_method == "None":
+                        vis_method = None
                 elif parameter_name == "norm":
                     normalization = parameter_value
                 elif parameter_name == "min":
@@ -484,11 +501,56 @@ class BlenderLayers:
                     blend_mode = parameter_value
                 elif parameter_name == "opacity":
                     opacity = float(parameter_value)
-            # TODO: fill image (using rvt.default), first finish default
-            #image
-            layer = BlenderLayer(vis_method=vis_method, normalization=normalization, minimum=minimum, maximum=maximum,
-                                 blend_mode=blend_mode, opacity=opacity, image=image)
-            self.layers.append(layer)
+            if vis_method is not None:
+                if vis_method.lower() == "slope gradient":
+                    default.save_slope(dem_path)
+                    image = get_raster_array(default.get_slope_path(dem_path))
+                elif vis_method.lower() == "hillshade":
+                    default.save_hillshade(dem_path)
+                    image = get_raster_array(default.get_hillshade_path(dem_path))
+                elif vis_method.lower() == "multiple directions hillshade":
+                    default.save_multi_hillshade(dem_path)
+                    image = get_raster_array(default.get_multi_hillshade_path(dem_path))
+                elif vis_method.lower() == "simple local relief model":
+                    default.save_slrm(dem_path)
+                    image = get_raster_array(default.get_slrm_path(dem_path))
+                elif vis_method.lower() == "sky-view factor":
+                    default.save_sky_view_factor(dem_path, save_svf=True, save_asvf=False, save_opns=False)
+                    image = get_raster_array(default.get_svf_path(dem_path))
+                elif vis_method.lower() == "anisotropic sky-view factor":
+                    default.save_sky_view_factor(dem_path, save_svf=False, save_asvf=True, save_opns=False)
+                    image = get_raster_array(default.get_asvf_path(dem_path))
+                elif vis_method.lower() == "openness - positive":
+                    default.save_sky_view_factor(dem_path, save_svf=False, save_asvf=False, save_opns=True)
+                    image = get_raster_array(default.get_opns_path(dem_path))
+                elif vis_method.lower() == "openness - negative":
+                    default.save_neg_opns(dem_path)
+                    image = get_raster_array(default.get_neg_opns_path(dem_path))
+                elif vis_method.lower() == "sky illumination":
+                    default.save_sky_illumination(dem_path)
+                    image = get_raster_array(default.get_sky_illumination_path(dem_path))
+                elif vis_method.lower() == "local dominance":
+                    default.save_local_dominance(dem_path)
+                    image = get_raster_array(default.get_local_dominance_path(dem_path))
+                layer = BlenderLayer(vis_method=vis_method, normalization=normalization, minimum=minimum, maximum=maximum,
+                                 blend_mode=blend_mode, opacity=opacity, image=np.array(image))
+            else:
+                layer = BlenderLayer(vis_method=None)
+            self.add_layer(layer)
         dat.close()
+
+    def save_rendered_image(self, dem_path, save_render_path):
+        if self.rendered_image is None:
+            raise Exception("RVT BlenderLayers.save_rendered_image: You have to render_all_images first!")
+        dem_dataset = rio.open(dem_path)
+        profile = dem_dataset.profile
+        dem_dataset.close()
+        profile.update(dtype='float32')
+        rendered_img_dataset = rio.open(save_render_path, "w", **profile)
+        rendered_image = self.rendered_image.astype('float32')
+        rendered_img_dataset.write(np.array([rendered_image]))
+        rendered_img_dataset.close()
+
+
 
 
