@@ -630,6 +630,7 @@ def sky_view_factor(dem, resolution, compute_svf=True, compute_opns=False, compu
         asvf_out = dict_svf_asvf_opns["asvf"].reshape((n_lin, n_col))
     if compute_opns:
         opns_out = dict_svf_asvf_opns["opns"].reshape((n_lin, n_col))
+        opns_out = np.rad2deg(opns_out)
 
     dict_svf_asvf_opns = {"svf": svf_out, "asvf": asvf_out, "opns": opns_out}
     dict_svf_asvf_opns = {k: v for k, v in dict_svf_asvf_opns.items() if v is not None}  # filter out none
