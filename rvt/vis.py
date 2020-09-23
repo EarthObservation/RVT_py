@@ -29,7 +29,6 @@ import scipy.ndimage
 
 # TODO: Float32 vs Float64 speed
 # TODO: check speed skyilumination
-# TODO: change choose, Žiga
 # TODO: check IDL vectorisation remains
 
 
@@ -84,7 +83,7 @@ def byte_scale(data, c_min=None, c_max=None, high=255, low=0):
     return np.cast[np.uint8](byte_data) + np.cast[np.uint8](low)
 
 
-def slope_aspect(dem, resolution_x, resolution_y, ve_factor, is_padding_applied=False, output_units="radian"):
+def slope_aspect(dem, resolution_x, resolution_y, ve_factor=1, is_padding_applied=False, output_units="radian"):
     """
     Procedure can return terrain slope and aspect in radian units (default) or in alternative units (if specified).
     Slope is defined as 0 for Hz plane and pi/2 for vertical plane.
@@ -510,7 +509,6 @@ def sky_view_factor_compute(height_arr, i_valid, radius_max, radius_min, num_dir
     for i_dir in range(num_directions):
         # reset maximum at each iteration - at each new direction
         max_slope = np.zeros(count_height) - 1000
-        max_slope2 = np.zeros(count_height) - 1000
 
         # ... and to the search radius - this depends on the direction - radius is written in the first row
         for i_rad in range(1, int(move[1, 0, i_dir])):
@@ -523,16 +521,18 @@ def sky_view_factor_compute(height_arr, i_valid, radius_max, radius_min, num_dir
             m_slp = (h_flt[i_valid[0] + int(move[0, int(i_rad - 1), i_dir])] - h_flt[i_valid[0]]) / move[
                 1, i_rad, i_dir]
             np.seterr(divide='warn', invalid='warn')  # reset warnings
-            max_slope = (max_slope < m_slp).choose(max_slope, m_slp)
+            if np.isnan(m_slp).any():  # skip non existing m_slp
+                continue
+            np.clip(a=max_slope, a_min=m_slp, a_max=None, out=max_slope)
 
         max_slope = np.arctan(max_slope)
 
         if compute_opns:
             opns_out = opns_out + max_slope
         if compute_svf:
-            svf_out = svf_out + (1 - np.sin((max_slope < 0).choose(max_slope, 0)))
+            svf_out = svf_out + (1 - np.sin(np.clip(a=max_slope, a_min=0, a_max=None, out=max_slope)))
         if compute_asvf:
-            asvf_out = asvf_out + (1 - np.sin((max_slope < 0).choose(max_slope, 0))) * weight[i_dir]
+            asvf_out = asvf_out + (1 - np.sin(np.clip(a=max_slope, a_min=0, a_max=None, out=max_slope))) * weight[i_dir]
 
     # Normalize to the number of directions / weights
     if compute_svf:
@@ -630,6 +630,7 @@ def sky_view_factor(dem, resolution, compute_svf=True, compute_opns=False, compu
         asvf_out = dict_svf_asvf_opns["asvf"].reshape((n_lin, n_col))
     if compute_opns:
         opns_out = dict_svf_asvf_opns["opns"].reshape((n_lin, n_col))
+        opns_out = np.rad2deg(opns_out)
 
     dict_svf_asvf_opns = {"svf": svf_out, "asvf": asvf_out, "opns": opns_out}
     dict_svf_asvf_opns = {k: v for k, v in dict_svf_asvf_opns.items() if v is not None}  # filter out none
@@ -791,7 +792,7 @@ def morph_shade(height, sol_z, sol_a, d_max, nrows, ncols, resolution):
         sel = sel[sel <= height_flt.size]
         m_slp = ((height_flt[sel] - height_flt[i_valid[0][:sel.size]]) / move1dd[i_rad])
         m_slp = np.append(m_slp, zeros)  # add zeros, for non existing indexes
-        max_slope = (max_slope < m_slp).choose(max_slope, m_slp)
+        max_slope = np.clip(a=max_slope, a_min=m_slp, a_max=None)
 
     # update mask
     max_slope = np.arctan(max_slope / resolution)
