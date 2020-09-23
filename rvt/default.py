@@ -150,11 +150,11 @@ class DefaultValues():
 
     def get_opns_path(self, dem_path):
         dem_path_split = dem_path.split(".")  # split file type
-        return "{}_OPNS.tif".format(dem_path_split[0])
+        return "{}_OPEN-POS_R{}_D{}.tif".format(dem_path_split[0], self.svf_r_max, self.svf_n_dir)
 
     def get_neg_opns_path(self, dem_path):
         dem_path_split = dem_path.split(".")  # split file type
-        return "{}_NOPNS.tif".format(dem_path_split[0])
+        return "{}_OPEN-NEG_R{}_D{}.tif".format(dem_path_split[0], self.svf_r_max, self.svf_n_dir)
 
     def get_sky_illumination_path(self, dem_path):
         dem_path_split = dem_path.split(".")  # split file type
