@@ -28,8 +28,9 @@ import scipy.ndimage
 
 
 # TODO: Float32 vs Float64 speed
-# TODO: check speed skyilumination
-# TODO: check IDL vectorisation remains
+# TODO: check speed sky_ilumination
+# TODO: check IDL vectorisation remains:
+#  (sky_view_factor, sky_view_det_move, sky_view_compute, morph_shade_move, morph_shade, sky_illumination)
 
 
 def byte_scale(data, c_min=None, c_max=None, high=255, low=0):
