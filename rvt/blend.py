@@ -90,7 +90,7 @@ def image_join_channels(r, g, b):
 
 
 def lum(img):
-    if img.shape == 3:
+    if len(img.shape) == 3:
         r = img[0]
         g = img[1]
         b = img[2]
@@ -259,6 +259,7 @@ class BlenderLayer:
 class BlenderLayers:
     layers = []
     rendered_image = None
+
     # create and add layer
     def create_layer(self, vis_method=None, normalization="value", minimum=None, maximum=None,
                      blend_mode="normal", opacity=100, image=None):
@@ -336,7 +337,7 @@ class BlenderLayers:
         idx1 = np.where(background > 0.5)
         idx2 = np.where(background <= 0.5)
         background[idx1[0], idx1[1]] = (
-                    1 - (1 - 2 * (background[idx1[0], idx1[1]] - 0.5)) * (1 - active[idx1[0], idx1[1]]))
+                1 - (1 - 2 * (background[idx1[0], idx1[1]] - 0.5)) * (1 - active[idx1[0], idx1[1]]))
         background[idx2[0], idx2[1]] = ((2 * background[idx2[0], idx2[1]]) * active[idx2[0], idx2[1]])
         return background
 
@@ -532,8 +533,8 @@ class BlenderLayers:
                 elif vis_method.lower() == "local dominance":
                     default.save_local_dominance(dem_path)
                     image = get_raster_array(default.get_local_dominance_path(dem_path))
-                layer = BlenderLayer(vis_method=vis_method, normalization=normalization, minimum=minimum, maximum=maximum,
-                                 blend_mode=blend_mode, opacity=opacity, image=np.array(image))
+                layer = BlenderLayer(vis_method=vis_method, normalization=normalization, minimum=minimum,
+                                     maximum=maximum, blend_mode=blend_mode, opacity=opacity, image=np.array(image))
             else:
                 layer = BlenderLayer(vis_method=None)
             self.add_layer(layer)
@@ -550,7 +551,3 @@ class BlenderLayers:
         rendered_image = self.rendered_image.astype('float32')
         rendered_img_dataset.write(np.array([rendered_image]))
         rendered_img_dataset.close()
-
-
-
-
