@@ -513,6 +513,7 @@ def sky_view_factor_compute(height_arr, i_valid, radius_max, radius_min, num_dir
 
         # ... and to the search radius - this depends on the direction - radius is written in the first row
         for i_rad in range(1, int(move[1, 0, i_dir])):
+            # TODO: Krištof
             # ignore radios if smaller than minimal defined radius
             if radius_min > move[1, i_rad, i_dir]:
                 continue
@@ -739,6 +740,7 @@ def morph_shade_move(d_max, angle):
                 yt = yc
 
         # Output
+        # TODO: Krištof
         move[i_rad, 0] = xt - x0
         move[i_rad, 1] = yt - y0
         d = np.sqrt((xt - x0) ** 2 + (yt - y0) ** 2)
@@ -776,7 +778,7 @@ def morph_shade(height, sol_z, sol_a, d_max, nrows, ncols, resolution):
     tmp[d_max:(nrows + d_max), d_max:(ncols + d_max)] = height
     height = tmp
     del tmp
-
+    # TODO: Krištof
     # determine the direction of movment
     move = morph_shade_move(d_max, sol_a)
     move_s = move.shape
