@@ -67,7 +67,7 @@ class RVTSlope():
             'invalidateProperties': 2 | 4 | 8,
             'inputMask': False,
             'resampling': False,
-            'padding': 1
+            'padding': 0
         }
 
     def updateRasterInfo(self, **kwargs):
@@ -87,8 +87,7 @@ class RVTSlope():
             raise Exception("Input raster cell size is invalid.")
 
         dict_slp_asp = rvt.vis.slope_aspect(dem=dem, resolution_x=pixel_size[0], resolution_y=pixel_size[1],
-                                            ve_factor=self.ve_factor, is_padding_applied=True,
-                                            output_units=self.output_unit)
+                                            ve_factor=self.ve_factor, output_units=self.output_unit)
         slope = dict_slp_asp["slope"]
 
         pixelBlocks['output_pixels'] = slope.astype(props['pixelType'], copy=False)

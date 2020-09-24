@@ -16,7 +16,7 @@ def test_slope_aspect(input_dem_path, output_path, ve_factor=1, output_units="de
 
     dict_slp_asp = rvt.vis.slope_aspect(dem=input_dem_arr, resolution_x=x_res,
                                         resolution_y=y_res, ve_factor=ve_factor,
-                                        is_padding_applied=False, output_units=output_units)
+                                        output_units=output_units)
     slope_arr = dict_slp_asp["slope"]
     slope_arr = slope_arr.astype('float64')
     profile = input_dem_dataset.profile
@@ -35,8 +35,7 @@ def test_hillshade(input_dem_path, output_path, sun_azimuth=315, sun_elevation=3
     input_dem_arr = input_dem_dataset.read()[0]
 
     hillshade_arr = rvt.vis.hillshade(dem=input_dem_arr, resolution_x=x_res,
-                                      resolution_y=y_res, sun_azimuth=sun_azimuth, sun_elevation=sun_elevation,
-                                      is_padding_applied=False)
+                                      resolution_y=y_res, sun_azimuth=sun_azimuth, sun_elevation=sun_elevation)
     hillshade_arr = hillshade_arr.astype('float64')
     profile = input_dem_dataset.profile
     profile.update(dtype='float64')
@@ -54,8 +53,7 @@ def test_multi_hillshade(input_dem_path, output_path, nr_directions=16, sun_elev
     input_dem_arr = input_dem_dataset.read()[0]
     multi_hillshade_arr = rvt.vis.multi_hillshade(dem=input_dem_arr, resolution_x=x_res,
                                                   resolution_y=y_res, nr_directions=nr_directions,
-                                                  sun_elevation=sun_elevation,
-                                                  is_padding_applied=False)
+                                                  sun_elevation=sun_elevation)
     multi_hillshade_arr = multi_hillshade_arr.astype('float64')
     profile = input_dem_dataset.profile
     profile.update(dtype='float64')

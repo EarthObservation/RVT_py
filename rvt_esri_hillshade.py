@@ -66,7 +66,7 @@ class RVTHillshade():
             'invalidateProperties': 2 | 4 | 8,
             'inputMask': False,
             'resampling': False,
-            'padding': 1
+            'padding': 0
         }
 
     def updateRasterInfo(self, **kwargs):
@@ -86,7 +86,7 @@ class RVTHillshade():
             raise Exception("Input raster cell size is invalid.")
         hillshade = rvt.vis.hillshade(dem=dem, resolution_x=pixel_size[0],
                                       resolution_y=pixel_size[1], sun_azimuth=self.azimuth,
-                                      sun_elevation=self.elevation, is_padding_applied=True)
+                                      sun_elevation=self.elevation)
         pixelBlocks['output_pixels'] = hillshade.astype(props['pixelType'], copy=False)
         return pixelBlocks
 

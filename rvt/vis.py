@@ -84,7 +84,7 @@ def byte_scale(data, c_min=None, c_max=None, high=255, low=0):
     return np.cast[np.uint8](byte_data) + np.cast[np.uint8](low)
 
 
-def slope_aspect(dem, resolution_x, resolution_y, ve_factor=1, is_padding_applied=False, output_units="radian"):
+def slope_aspect(dem, resolution_x, resolution_y, ve_factor=1, output_units="radian"):
     """
     Procedure can return terrain slope and aspect in radian units (default) or in alternative units (if specified).
     Slope is defined as 0 for Hz plane and pi/2 for vertical plane.
@@ -98,7 +98,6 @@ def slope_aspect(dem, resolution_x, resolution_y, ve_factor=1, is_padding_applie
     resolution_y : DEM resolution in Y direction
     ve_factor : vertical exaggeration factor (must be greater than 0)
     output_units : percent, degree, radians
-    is_padding_applied : is padding already applied on input array (needed for ArcGIS Pro which applies padding)
 
     Returns
     -------
@@ -113,8 +112,7 @@ def slope_aspect(dem, resolution_x, resolution_y, ve_factor=1, is_padding_applie
 
     dem = dem * ve_factor
     # add frame of 0 (additional row up bottom and column left right)
-    if not is_padding_applied:
-        dem = np.pad(dem, pad_width=1, mode="constant", constant_values=0)
+    dem = np.pad(dem, pad_width=1, mode="constant", constant_values=0)
 
     # derivatives in X and Y direction
     dzdx = ((np.roll(dem, 1, axis=1) - np.roll(dem, -1, axis=1)) / 2) / resolution_x
@@ -159,7 +157,7 @@ def slope_aspect(dem, resolution_x, resolution_y, ve_factor=1, is_padding_applie
     return {"slope": slope_out, "aspect": aspect_out}
 
 
-def hillshade(dem, resolution_x, resolution_y, sun_azimuth=315, sun_elevation=35, is_padding_applied=False,
+def hillshade(dem, resolution_x, resolution_y, sun_azimuth=315, sun_elevation=35,
               slope=None, aspect=None):
     """
     Compute hillshade.
@@ -171,7 +169,6 @@ def hillshade(dem, resolution_x, resolution_y, sun_azimuth=315, sun_elevation=35
     resolution_y : DEM resolution in Y direction
     sun_azimuth : solar azimuth angle (clockwise from North) in degrees
     sun_elevation : solar vertical angle (above the horizon) in degrees
-    is_padding_applied : is padding already applied on input array (needed for ArcGIS Pro which applies padding)
     slope : slope arr in radians if you don't input it, it is calculated
     aspect : aspect arr in radians if you don't input it, it is calculated
 
@@ -198,7 +195,7 @@ def hillshade(dem, resolution_x, resolution_y, sun_azimuth=315, sun_elevation=35
     if slope is None or aspect is None:
         # calculates slope and aspect
         dict_slp_asp = slope_aspect(dem=dem, resolution_x=resolution_x, resolution_y=resolution_y,
-                                    ve_factor=ve_factor, is_padding_applied=is_padding_applied, output_units="radian")
+                                    ve_factor=ve_factor, output_units="radian")
         slope = dict_slp_asp["slope"]
         aspect = dict_slp_asp["aspect"]
 
@@ -209,7 +206,7 @@ def hillshade(dem, resolution_x, resolution_y, sun_azimuth=315, sun_elevation=35
     return hillshade_out
 
 
-def multi_hillshade(dem, resolution_x, resolution_y, nr_directions=16, sun_elevation=35, is_padding_applied=False,
+def multi_hillshade(dem, resolution_x, resolution_y, nr_directions=16, sun_elevation=35,
                     slope=None, aspect=None):
     """
     Calculates hillshades from multiple directions.
@@ -221,7 +218,6 @@ def multi_hillshade(dem, resolution_x, resolution_y, nr_directions=16, sun_eleva
     resolution_y : DEM resolution in Y direction
     nr_directions : number of solar azimuth angles (clockwise from North)
     sun_elevation : solar vertical angle (above the horizon) in degrees
-    is_padding_applied : is padding already applied on input array (needed for ArcGIS Pro which applies padding)
     slope : slope in radians if you don't input it, it is calculated
     aspect : aspect in radians if you don't input it, it is calculated
 
@@ -244,7 +240,7 @@ def multi_hillshade(dem, resolution_x, resolution_y, nr_directions=16, sun_eleva
     # calculates slope and aspect if they are not added
     if slope is None or aspect is None:  # slope and aspect are the same, so we have to calculate it once
         dict_slp_asp = slope_aspect(dem=dem, resolution_x=resolution_x, resolution_y=resolution_y,
-                                    ve_factor=ve_factor, is_padding_applied=is_padding_applied, output_units="radian")
+                                    ve_factor=ve_factor, output_units="radian")
         slope = dict_slp_asp["slope"]
         aspect = dict_slp_asp["aspect"]
 
@@ -252,8 +248,7 @@ def multi_hillshade(dem, resolution_x, resolution_y, nr_directions=16, sun_eleva
     for i_direction in range(nr_directions):
         sun_azimuth = (360 / nr_directions) * i_direction
         hillshading = hillshade(dem=dem, resolution_x=resolution_x, resolution_y=resolution_y,
-                                sun_elevation=sun_elevation, sun_azimuth=sun_azimuth,
-                                is_padding_applied=is_padding_applied, slope=slope, aspect=aspect)
+                                sun_elevation=sun_elevation, sun_azimuth=sun_azimuth, slope=slope, aspect=aspect)
         hillshades_arr_list.append(hillshading)
 
     multi_hillshade_out = np.asarray(hillshades_arr_list)
@@ -863,8 +858,7 @@ def sky_illumination(dem, resolution, sky_model="overcast", sampling_points=250,
         sky_illum_out = np.zeros((dem_size[0], dem_size[1]))
         dict_slope_aspect = slope_aspect(dem=dem, resolution_x=resolution,
                                          resolution_y=resolution,
-                                         ve_factor=1, is_padding_applied=False,
-                                         output_units="radian")
+                                         ve_factor=1, output_units="radian")
         slope = dict_slope_aspect["slope"]
         aspect = dict_slope_aspect["aspect"]
 
@@ -878,8 +872,7 @@ def sky_illumination(dem, resolution, sky_model="overcast", sampling_points=250,
             elev = int(line[1])
             weight = float(line[2])
             hillshade_tmp = hillshade(dem=dem, resolution_x=resolution, resolution_y=resolution,
-                                      sun_azimuth=azim, sun_elevation=elev, slope=slope, aspect=aspect,
-                                      is_padding_applied=False)
+                                      sun_azimuth=azim, sun_elevation=elev, slope=slope, aspect=aspect)
             sh_z = np.pi / 2 - np.deg2rad(elev)
             sh_az = np.deg2rad(azim)
             d_max = round(d_max * dh * np.tan(sh_z) / resolution)
