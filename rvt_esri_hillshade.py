@@ -24,14 +24,12 @@ import rvt.vis
 
 
 class RVTHillshade():
-
     def __init__(self):
         self.name = "RVT hillshade"
         self.description = "Calculates hillshade."
         # default values
         self.azimuth = 315.
         self.elevation = 35.
-        self.noData = None
 
     def getParameterInfo(self):
         return [
@@ -74,7 +72,7 @@ class RVTHillshade():
     def updateRasterInfo(self, **kwargs):
         kwargs['output_info']['bandCount'] = 1
         r = kwargs['raster_info']
-        kwargs['output_info']['noData'] = self.assignNoData(r['pixelType']) if not (r['noData']) else r['noData']
+        kwargs['output_info']['noData'] = -3.4028235e+038
         kwargs['output_info']['pixelType'] = 'f4'
         kwargs['output_info']['histogram'] = ()
         kwargs['output_info']['statistics'] = ()
@@ -83,35 +81,14 @@ class RVTHillshade():
 
     def updatePixels(self, tlc, shape, props, **pixelBlocks):
         dem = np.array(pixelBlocks['raster_pixels'], dtype='f4', copy=False)[0]  # Input pixel array.
-        self.noData = self.assignNoData(props['pixelType']) if not (props['noData']) else props['noData']
-        dem = np.where(np.not_equal(dem, self.noData), dem, dem)
         pixel_size = props['cellSize']
         if (pixel_size[0] <= 0) | (pixel_size[1] <= 0):
             raise Exception("Input raster cell size is invalid.")
-
         hillshade = rvt.vis.hillshade(dem=dem, resolution_x=pixel_size[0],
                                       resolution_y=pixel_size[1], sun_azimuth=self.azimuth,
                                       sun_elevation=self.elevation, is_padding_applied=True)
-
         pixelBlocks['output_pixels'] = hillshade.astype(props['pixelType'], copy=False)
         return pixelBlocks
-
-    def assignNoData(self, pixelType):
-        # assign noData depending on input pixelType
-        if pixelType == 'f4':
-            return np.array([-3.4028235e+038, ])  # float 32 bit
-        elif pixelType == 'i4':
-            return np.array([-65536, ])  # signed integer 32 bit
-        elif pixelType == 'i2':
-            return np.array([-32768, ])  # signed integer 16 bit
-        elif pixelType == 'i1':
-            return np.array([-256, ])  # signed integer 8 bit
-        elif pixelType == 'u4':
-            return np.array([65535, ])  # unsigned integer 32 bit
-        elif pixelType == 'u2':
-            return np.array([32767, ])  # unsigned integer 16 bit
-        elif pixelType == 'u1':
-            return np.array([255, ])  # unsigned integer 8 bit
 
     def prepare(self, azimuth=315, elevation=35):
         self.azimuth = azimuth
