@@ -37,7 +37,7 @@ slrm_rad_cell = 20			# radius for trend assessment in pixels
 # Sky-View Factor
 svf_n_dir = 16				# number of directions
 svf_r_max = 10				# maximal search radius in pixels
-svf_noise = 0				# the level of noise remove [0-3]
+svf_noise = 0				# the level of noise remove [0-don't remove, 1-low, 2-med, 3-high]
 
 # Anisotropic Sky-View Factor
 asvf_dir = 315				# direction of anisotropy in degrees

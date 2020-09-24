@@ -26,7 +26,7 @@ import rvt.vis
 class RVTSlrm():
 
     def __init__(self):
-        self.name = "RVT SLRM"
+        self.name = "RVT simple local relief model."
         self.description = "Calculates simple local relief model."
         # default values
         self.radius_cell = 20.

@@ -558,7 +558,7 @@ def sky_view_factor(dem, resolution, compute_svf=True, compute_opns=False, compu
     resolution : pixel resolution
     svf_n_dir : number of directions
     svf_r_max : maximal search radius in pixels
-    svf_noise : the level of noise remove (0-3)
+    svf_noise : the level of noise remove (0-don't remove, 1-low, 2-med, 3-high)
     compute_asvf : compute anisotropic SVF (True) or not (False)
     asvf_level : level of anisotropy, 1-low, 2-high,
     a_min_weight : weight to consider anisotropy (0 - isotropic, 1 - no illumination from the direction
