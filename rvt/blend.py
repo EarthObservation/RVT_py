@@ -409,7 +409,6 @@ class BlenderLayer:
         self.opacity = opacity
         self.image_path = image_path
         self.image = image
-        self.norm_image = None
         self.check_data()
 
     def check_data(self):
@@ -446,7 +445,6 @@ class BlenderLayer:
 
 class BlenderLayers:
     layers = []
-    rendered_image = None
 
     # create and add layer
     def create_layer(self, vis_method=None, normalization="value", minimum=None, maximum=None,
