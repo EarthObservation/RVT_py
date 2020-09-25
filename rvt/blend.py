@@ -22,7 +22,6 @@ COPYRIGHT:
     University of Ljubljana, Faculty of Civil and Geodetic Engineering
 """
 # TODO: more testing, find and fix bugs if they exists
-# TODO: when blending automatically open image when needed, don't save all images in class
 
 # python libraries
 import numpy as np
