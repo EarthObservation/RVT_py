@@ -22,12 +22,39 @@ COPYRIGHT:
     University of Ljubljana, Faculty of Civil and Geodetic Engineering
 """
 # TODO: more testing, find and fix bugs if they exists
+# TODO: when blending automatically open image when needed, don't save all images in class
 
 # python libraries
 import numpy as np
 import warnings
 import rvt.default
 import rasterio as rio
+
+
+def create_blender_file_example(file_path=None):
+    if file_path is None:
+        dat = open(r"..\settings\blender_file_example.txt", "w")
+    else:
+        dat = open(file_path, "w")
+    dat.write("#---------------------------------------------------------------------------------------------------"
+              "-------\n#------------------------------------------------------------------------------------------"
+              "----------------\n#\n#	Relief Visualization Toolbox python, example settings file to build rvt.ble"
+              "nder.BlenderLayers class\n#	This class is used to store blender layers and render blender images\n"
+              "#	method: rvt.blend.BlenderLayers.build_blender_layers_from_file(file_path)\n#\n#----------------"
+              "------------------------------------------------------------------------------------------\n#-------"
+              "---------------------------------------------------------------------------------------------------"
+              "\n#\n# VISUALIZATION METHODS:\n#\n# Hillshade\n# Multiple directions hillshade\n# Slope gradient\n"
+              "# Simple local relief model\n# Sky-View Factor\n# Anisotropic Sky-View Factor\n# Openness - Positi"
+              "ve\n# Openness - Negative\n# Sky illumination\n# Local dominance\n# None\n#\n#\n# NORMALIZATIONS:\n"
+              "#\n# Value - min and max are (linear) cut-off points\n# Perc - min and max are\n#\n#\n"
+              "# BLEND MODES:\n#\n# Normal\n# Multiply\n# Overlay\n# Luminosity\n# Screen\n\n# layer order is importa"
+              "nt\n\n#---------------------------------------------------------------------------------------------"
+              "-------------\n\n# VAT - Archeological\nlayer:1, vis:Sky-View Factor, norm:Value, min:0.7, max:1.0,"
+              " blend_mode:Multiply, opacity:25\nlayer:2, vis:Openness - Positive, norm:Value, min:68, max:93,"
+              " blend_mode:Overlay, opacity:50\nlayer:3, vis:Slope gradient, norm:Value, min:0, max:50,"
+              " blend_mode:Luminosity, opacity:50\nlayer:4, vis:Hillshade, norm:Value, min:0, max:1,"
+              " blend_mode:Normal, opacity:100\nlayer:5, vis:None\n\n")
+    dat.close()
 
 
 def get_raster_array(raster_path):
@@ -551,3 +578,5 @@ class BlenderLayers:
         rendered_image = self.rendered_image.astype('float32')
         rendered_img_dataset.write(np.array([rendered_image]))
         rendered_img_dataset.close()
+
+create_blender_file_example()
