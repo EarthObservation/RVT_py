@@ -44,10 +44,8 @@ layers_manual.create_layer(vis_method="Hillshade", normalization="value", minimu
                            opacity=100, image=hillshade_arr)
 # 5;None
 layers_manual.create_layer(vis_method=None)
-
-layers_manual.normalize_images()
-layers_manual.render_all_images()
-layers_manual.save_rendered_image(input_dem_path, output_blend_path)
+# you can save to tif if input_dem_path and output_blend_path presented else it only returns array
+render_arr = layers_manual.render_all_images(input_dem_path, output_blend_path)
 #####
 
 #####
@@ -59,8 +57,8 @@ output_blend_path = r"D:\RVT_py\test\TM1_564_146_test_blend_automatic.tif"
 layers_auto = rvt.blend.BlenderLayers()
 default = rvt.default.DefaultValues()
 default.read_default_from_file("D:\RVT_py\RVT_py\settings\default_settings.txt")
+# build_blender_layers_from_file saves images paths and images arrays are None (BlenderLayers class)
 layers_auto.build_blender_layers_from_file(input_dem_path, blender_file, default)
-layers_auto.normalize_images()
-layers_auto.render_all_images()
-layers_auto.save_rendered_image(input_dem_path, output_blend_path)
+# render_all_images reads images simultaneously if image is None and image_path is not None (BlenderLayers class)
+layers_auto.render_all_images(dem_path=input_dem_path, save_render_path=output_blend_path)
 #####
