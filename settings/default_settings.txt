@@ -1,12 +1,12 @@
-#----------------------------------------------------------------------------------------------------------
-#----------------------------------------------------------------------------------------------------------
+# ----------------------------------------------------------------------------------------------------------
+# ----------------------------------------------------------------------------------------------------------
 #
 #	Relief Visualization Toolbox python, settings file to change default values in rvt.default.DefaultValues class
 #	This class stores default values for visualisation functions
 #	method: rvt.default.DefaultValues.read_default_from_file(file_path)
 #
-#----------------------------------------------------------------------------------------------------------
-#----------------------------------------------------------------------------------------------------------
+# ----------------------------------------------------------------------------------------------------------
+# ----------------------------------------------------------------------------------------------------------
 #
 # VISUALIZATION METHODS:
 #
@@ -21,39 +21,38 @@
 # Sky illumination
 # Local dominance
 
-#----------------------------------------------------------------------------------------------------------
+# ----------------------------------------------------------------------------------------------------------
 
 # Hillshade
-hs_sun_azi = 315			# solar azimuth angle (clockwise from North) in degrees
-hs_sun_el = 35				# solar vertical angle (above the horizon) in degrees
+hs_sun_azi = 315  # solar azimuth angle (clockwise from North) in degrees
+hs_sun_el = 35  # solar vertical angle (above the horizon) in degrees
 
 # Multiple directions hillshade
-mhs_nr_dir = 16				# number of solar azimuth angles (clockwise from North)
-mhs_sun_el = 35				# solar vertical angle (above the horizon) in degrees
+mhs_nr_dir = 16  # number of solar azimuth angles (clockwise from North)
+mhs_sun_el = 35  # solar vertical angle (above the horizon) in degrees
 
 # Simple local relief model
-slrm_rad_cell = 20			# radius for trend assessment in pixels
+slrm_rad_cell = 20  # radius for trend assessment in pixels
 
 # Sky-View Factor
-svf_n_dir = 16				# number of directions
-svf_r_max = 10				# maximal search radius in pixels
-svf_noise = 0				# the level of noise remove [0-don't remove, 1-low, 2-med, 3-high]
+svf_n_dir = 16  # number of directions
+svf_r_max = 10  # maximal search radius in pixels
+svf_noise = 0  # the level of noise remove [0-don't remove, 1-low, 2-med, 3-high]
 
 # Anisotropic Sky-View Factor
-asvf_dir = 315				# direction of anisotropy in degrees
-asvf_level = 1				# level of anisotropy [1-low, 2-high]
+asvf_dir = 315  # direction of anisotropy in degrees
+asvf_level = 1  # level of anisotropy [1-low, 2-high]
 
 # Sky illumination
-sim_sky_mod = "overcast"    # sky model [overcast, uniform]
-sim_samp_pnts = 250         # number of sampling points [250 or 500]
-sim_shadow_dist = 100       # max shadow modeling distance in pixels
-sim_shadow_az = 315			# shadow azimuth in degrees
-sim_shadow_el = 35			# shadow elevation in degrees
+sim_sky_mod = overcast  # sky model [overcast, uniform]
+sim_samp_pnts = 250  # number of sampling points [250 or 500]
+sim_shadow_dist = 100  # max shadow modeling distance in pixels
+sim_shadow_az = 315  # shadow azimuth in degrees
+sim_shadow_el = 35  # shadow elevation in degrees
 
 # Local dominance
-ld_min_rad = 10				# minimum radial distance (in pixels) at which the algorithm starts with visualization computation
-ld_max_rad = 20				# maximum radial distance (in pixels) at which the algorithm ends with visualization computation
-ld_rad_inc = 1				# radial distance steps in pixels
-ld_anglr_res = 15			# angular step for determination of number of angular directions
-ld_observer_h = 1.7			# height at which we observe the terrain
-
+ld_min_rad = 10  # minimum radial distance (in pixels) at which the algorithm starts with visualization computation
+ld_max_rad = 20  # maximum radial distance (in pixels) at which the algorithm ends with visualization computation
+ld_rad_inc = 1  # radial distance steps in pixels
+ld_anglr_res = 15  # angular step for determination of number of angular directions
+ld_observer_h = 1.7  # height at which we observe the terrain

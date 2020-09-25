@@ -64,6 +64,55 @@ class DefaultValues():
         self.ld_anglr_res = 15
         self.ld_observer_h = 1.7
 
+    def save_default_to_file(self, file_path=None):
+        if file_path is None:
+            dat = open(r"settings\default_settings.txt", "w")
+        else:
+            dat = open(file_path, "w")
+        dat.write("# --------------------------------------------------------------------------------------------------"
+                  "--------\n# ----------------------------------------------------------------------------------------"
+                  "------------------\n#\n#	Relief Visualization Toolbox python, settings file to change default"
+                  " values in rvt.default.DefaultValues class\n#	This class stores default values for visualisation"
+                  " functions\n#	method: rvt.default.DefaultValues.read_default_from_file(file_path)\n#\n"
+                  "# --------------------------------------------------------------------------------------------------"
+                  "--------\n# ----------------------------------------------------------------------------------------"
+                  "------------------\n#\n# VISUALIZATION METHODS:\n#\n# Hillshade\n# Multiple directions hillshade\n"
+                  "# Slope gradient\n# Simple local relief model\n# Sky-View Factor\n# Anisotropic Sky-View Factor\n"
+                  "# Openness - Positive\n# Openness - Negative\n# Sky illumination\n# Local dominance\n\n"
+                  "# --------------------------------------------------------------------------------------------------"
+                  "--------\n\n# Hillshade\n")
+        dat.write("hs_sun_azi = {}  # solar azimuth angle (clockwise from North) in degrees\n".format(self.hs_sun_azi))
+        dat.write("hs_sun_el = {}  # solar vertical angle (above the horizon) in degrees\n\n".format(self.hs_sun_el))
+        dat.write("# Multiple directions hillshade\n")
+        dat.write("mhs_nr_dir = {}  # number of solar azimuth angles (clockwise from North)\n".format(self.mhs_nr_dir))
+        dat.write("mhs_sun_el = {}  # solar vertical angle (above the horizon) in degrees\n\n".format(self.mhs_sun_el))
+        dat.write("# Simple local relief model\n")
+        dat.write("slrm_rad_cell = {}  # radius for trend assessment in pixels\n\n".format(self.slrm_rad_cell))
+        dat.write("# Sky-View Factor\n")
+        dat.write("svf_n_dir = {}  # number of directions\n".format(self.svf_n_dir))
+        dat.write("svf_r_max = {}  # maximal search radius in pixels\n".format(self.svf_r_max))
+        dat.write("svf_noise = {}  # the level of noise remove [0-don't remove, 1-low, 2-med, 3-high]"
+                  "\n\n".format(self.svf_noise))
+        dat.write("# Anisotropic Sky-View Factor\n")
+        dat.write("asvf_dir = {}  # direction of anisotropy in degrees\n".format(self.asvf_dir))
+        dat.write("asvf_level = {}  # level of anisotropy [1-low, 2-high]\n\n".format(self.asvf_level))
+        dat.write("# Sky illumination\n")
+        dat.write("sim_sky_mod = {}  # sky model [overcast, uniform]\n".format(self.sim_sky_mod))
+        dat.write("sim_samp_pnts = {}  # number of sampling points [250 or 500]\n".format(self.sim_samp_pnts))
+        dat.write("sim_shadow_dist = {}  # max shadow modeling distance in pixels\n".format(self.sim_shadow_dist))
+        dat.write("sim_shadow_az = {}  # shadow azimuth in degrees\n".format(self.sim_shadow_az))
+        dat.write("sim_shadow_el = {}  # shadow elevation in degrees\n\n".format(self.sim_shadow_el))
+        dat.write("# Local dominance\n")
+        dat.write("ld_min_rad = {}  # minimum radial distance (in pixels) at which the algorithm starts with visualizat"
+                  "ion computation\n".format(self.ld_min_rad))
+        dat.write("ld_max_rad = {}  # maximum radial distance (in pixels) at which the algorithm ends with visualizati"
+                  "on computation\n".format(self.ld_max_rad))
+        dat.write("ld_rad_inc = {}  # radial distance steps in pixels\n".format(self.ld_rad_inc))
+        dat.write("ld_anglr_res = {}  # angular step for determination of number of angular directions"
+                  "\n".format(self.ld_anglr_res))
+        dat.write("ld_observer_h = {}  # height at which we observe the terrain\n".format(self.ld_observer_h))
+
+
     def read_default_from_file(self, file_path):
         # Example file in dir settings: default_settings.txt
         dat = open(file_path, "r")
@@ -404,3 +453,4 @@ class DefaultValues():
             self.save_neg_opns(dem_path)
         if sav_local_dominance:
             self.save_local_dominance(dem_path)
+

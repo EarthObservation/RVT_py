@@ -5,7 +5,7 @@ import rvt.default
 # class with default values for all visualization functions
 default = rvt.default.DefaultValues()
 default.read_default_from_file("D:\RVT_py\RVT_py\settings\default_settings.txt")
-
+default.save_default_to_file()
 # save specific visualization function
 default.save_hillshade(r"D:\RVT_py\test\TM1_564_146.tif")
 default.save_slope(r"D:\RVT_py\test\TM1_564_146.tif")
