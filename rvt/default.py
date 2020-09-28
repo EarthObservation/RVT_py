@@ -319,9 +319,9 @@ class DefaultValues():
         return 1
 
     # get svf, asvf, opns dict
-    def get_sky_view_factor(self, dem_arr, resolution, save_svf=True, save_asvf=False, save_opns=False):
-        dict_svf_asvf_opns = rvt.vis.sky_view_factor(dem=dem_arr, resolution=resolution, compute_svf=save_svf,
-                                                     compute_opns=save_opns, compute_asvf=save_asvf,
+    def get_sky_view_factor(self, dem_arr, resolution, compute_svf=True, compute_asvf=False, compute_opns=False):
+        dict_svf_asvf_opns = rvt.vis.sky_view_factor(dem=dem_arr, resolution=resolution, compute_svf=compute_svf,
+                                                     compute_opns=compute_opns, compute_asvf=compute_asvf,
                                                      svf_n_dir=self.svf_n_dir, svf_r_max=self.svf_r_max,
                                                      svf_noise=self.svf_noise, asvf_dir=self.asvf_dir,
                                                      asvf_level=self.asvf_level)
@@ -353,8 +353,8 @@ class DefaultValues():
         if x_res != y_res:
             raise Exception("RVT DefaultValues.save_sky_view_factor: dem x resolution not equal y resolution")
         dem_arr = dem_dataset.read()[0]
-        dict_svf_asvf_opns = self.get_sky_view_factor(dem_arr=dem_arr, resolution=x_res, save_svf=save_svf,
-                                                      save_asvf=save_asvf, save_opns=save_opns)
+        dict_svf_asvf_opns = self.get_sky_view_factor(dem_arr=dem_arr, resolution=x_res, compute_svf=save_svf,
+                                                      compute_asvf=save_asvf, compute_opns=save_opns)
         if save_svf:
             svf_arr = dict_svf_asvf_opns["svf"]
             svf_arr = svf_arr.astype('float32')
