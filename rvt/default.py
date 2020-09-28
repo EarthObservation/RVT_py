@@ -112,7 +112,6 @@ class DefaultValues():
                   "\n".format(self.ld_anglr_res))
         dat.write("ld_observer_h = {}  # height at which we observe the terrain\n".format(self.ld_observer_h))
 
-
     def read_default_from_file(self, file_path):
         # Example file in dir settings: default_settings.txt
         dat = open(file_path, "r")
@@ -215,6 +214,12 @@ class DefaultValues():
         return "{}_LD_R_M{}-{}_DI{}_A{}_OH{}.tif".format(dem_path_split[0], self.ld_min_rad, self.ld_max_rad,
                                                          self.ld_rad_inc, self.ld_anglr_res, self.ld_observer_h)
 
+    # get slope, aspect dict
+    def get_slope(self, dem_arr, resolution_x, resolution_y):
+        dict_slp_asp = rvt.vis.slope_aspect(dem=dem_arr, resolution_x=resolution_x, resolution_y=resolution_y,
+                                            ve_factor=self.slp_ve_factor, output_units=self.slp_output_units)
+        return dict_slp_asp
+
     # save default slope gradient
     def save_slope(self, dem_path):
         slope_path = self.get_slope_path(dem_path)
@@ -227,11 +232,8 @@ class DefaultValues():
         x_res = t[0]
         y_res = -t[4]
         dem_arr = dem_dataset.read()[0]
-        dict_slp_asp = rvt.vis.slope_aspect(dem=dem_arr, resolution_x=x_res,
-                                            resolution_y=y_res, ve_factor=self.slp_ve_factor,
-                                            output_units=self.slp_output_units)
-        slope_arr = dict_slp_asp["slope"]
-        slope_arr = slope_arr.astype('float32')
+        dict_slp_asp = self.get_slope(dem_arr=dem_arr, resolution_x=x_res, resolution_y=y_res)
+        slope_arr = dict_slp_asp["slope"].astype('float32')
         profile = dem_dataset.profile
         profile.update(dtype='float32')
         slope_dataset = rio.open(slope_path, "w", **profile)
@@ -239,6 +241,12 @@ class DefaultValues():
         dem_dataset.close()
         slope_dataset.close()
         return 1
+
+    # get hillshade array
+    def get_hillshade(self, dem_arr, resolution_x, resolution_y):
+        hillshade_arr = rvt.vis.hillshade(dem=dem_arr, resolution_x=resolution_x, resolution_y=resolution_y,
+                                          sun_azimuth=self.hs_sun_azi, sun_elevation=self.hs_sun_el)
+        return hillshade_arr
 
     # save default hillshade
     def save_hillshade(self, dem_path):
@@ -252,9 +260,7 @@ class DefaultValues():
         x_res = t[0]
         y_res = -t[4]
         dem_arr = dem_dataset.read()[0]
-        hillshade_arr = rvt.vis.hillshade(dem=dem_arr, resolution_x=x_res, resolution_y=y_res,
-                                          sun_azimuth=self.hs_sun_azi, sun_elevation=self.hs_sun_el)
-        hillshade_arr = hillshade_arr.astype('float32')
+        hillshade_arr = self.get_hillshade(dem_arr=dem_arr, resolution_x=x_res, resolution_y=y_res).astype('float32')
         profile = dem_dataset.profile
         profile.update(dtype='float32')
         hillshade_dataset = rio.open(hillshade_path, "w", **profile)
@@ -262,6 +268,12 @@ class DefaultValues():
         dem_dataset.close()
         hillshade_dataset.close()
         return 1
+
+    # get multi hillshade array
+    def get_multi_hillshade(self, dem_arr, resolution_x, resolution_y):
+        multi_hillshade_arr = rvt.vis.multi_hillshade(dem=dem_arr, resolution_x=resolution_x, resolution_y=resolution_y,
+                                                      nr_directions=self.mhs_nr_dir, sun_elevation=self.mhs_sun_el)
+        return multi_hillshade_arr
 
     def save_multi_hillshade(self, dem_path):
         multi_hillshade_path = self.get_multi_hillshade_path(dem_path)
@@ -274,9 +286,8 @@ class DefaultValues():
         x_res = t[0]
         y_res = -t[4]
         dem_arr = dem_dataset.read()[0]
-        multi_hillshade_arr = rvt.vis.multi_hillshade(dem=dem_arr, resolution_x=x_res, resolution_y=y_res,
-                                                      nr_directions=self.mhs_nr_dir, sun_elevation=self.mhs_sun_el)
-        multi_hillshade_arr = multi_hillshade_arr.astype('float32')
+        multi_hillshade_arr = self.get_multi_hillshade(dem_arr=dem_arr, resolution_x=x_res,
+                                                       resolution_y=y_res).astype('float32')
         profile = dem_dataset.profile
         profile.update(dtype='float32')
         profile.update(count=16)
@@ -286,6 +297,10 @@ class DefaultValues():
         multi_hillshade_dataset.close()
         return 1
 
+    def get_slrm(self, dem_arr):
+        slrm_arr = rvt.vis.slrm(dem=dem_arr, radius_cell=self.slrm_rad_cell)
+        return slrm_arr
+
     def save_slrm(self, dem_path):
         slrm_path = self.get_slrm_path(dem_path)
         if os.path.isfile(slrm_path):
@@ -294,8 +309,7 @@ class DefaultValues():
             raise Exception("RVT DefaultValues.save_slrm: dem_path doesn't exist!")
         dem_dataset = rio.open(dem_path)
         dem_arr = dem_dataset.read()[0]
-        slrm_arr = rvt.vis.slrm(dem=dem_arr, radius_cell=self.slrm_rad_cell)
-        slrm_arr = slrm_arr.astype('float32')
+        slrm_arr = self.get_slrm(dem_arr=dem_arr).astype('float32')
         profile = dem_dataset.profile
         profile.update(dtype='float32')
         slrm_dataset = rio.open(slrm_path, "w", **profile)
@@ -303,6 +317,15 @@ class DefaultValues():
         dem_dataset.close()
         slrm_dataset.close()
         return 1
+
+    # get svf, asvf, opns dict
+    def get_sky_view_factor(self, dem_arr, resolution, save_svf=True, save_asvf=False, save_opns=False):
+        dict_svf_asvf_opns = rvt.vis.sky_view_factor(dem=dem_arr, resolution=resolution, compute_svf=save_svf,
+                                                     compute_opns=save_opns, compute_asvf=save_asvf,
+                                                     svf_n_dir=self.svf_n_dir, svf_r_max=self.svf_r_max,
+                                                     svf_noise=self.svf_noise, asvf_dir=self.asvf_dir,
+                                                     asvf_level=self.asvf_level)
+        return dict_svf_asvf_opns
 
     def save_sky_view_factor(self, dem_path, save_svf=True, save_asvf=False, save_opns=False):
         if save_svf:
@@ -330,11 +353,8 @@ class DefaultValues():
         if x_res != y_res:
             raise Exception("RVT DefaultValues.save_sky_view_factor: dem x resolution not equal y resolution")
         dem_arr = dem_dataset.read()[0]
-        dict_svf_asvf_opns = rvt.vis.sky_view_factor(dem=dem_arr, resolution=x_res, compute_svf=save_svf,
-                                                     compute_opns=save_opns, compute_asvf=save_asvf,
-                                                     svf_n_dir=self.svf_n_dir, svf_r_max=self.svf_r_max,
-                                                     svf_noise=self.svf_noise, asvf_dir=self.asvf_dir,
-                                                     asvf_level=self.asvf_level)
+        dict_svf_asvf_opns = self.get_sky_view_factor(dem_arr=dem_arr, resolution=x_res, save_svf=save_svf,
+                                                      save_asvf=save_asvf, save_opns=save_opns)
         if save_svf:
             svf_arr = dict_svf_asvf_opns["svf"]
             svf_arr = svf_arr.astype('float32')
@@ -362,6 +382,13 @@ class DefaultValues():
         dem_dataset.close()
         return 1
 
+    def get_neg_opns(self, dem_arr, resolution):
+        dem_arr = -1 * dem_arr
+        dict_neg_opns = rvt.vis.sky_view_factor(dem=dem_arr, resolution=resolution, compute_svf=False, compute_asvf=False,
+                                                compute_opns=True)
+        neg_opns_arr = dict_neg_opns["opns"]
+        return neg_opns_arr
+
     def save_neg_opns(self, dem_path):  # negative openness is openness with negative dem (-dem)
         neg_opns_path = self.get_neg_opns_path(dem_path)
         if os.path.isfile(neg_opns_path):
@@ -375,11 +402,7 @@ class DefaultValues():
         if x_res != y_res:
             raise Exception("RVT DefaultValues.save_sky_view_factor: dem x resolution not equal y resolution")
         dem_arr = dem_dataset.read()[0]
-        dem_arr = -1 * dem_arr
-        dict_neg_opns = rvt.vis.sky_view_factor(dem=dem_arr, resolution=x_res, compute_svf=False, compute_asvf=False,
-                                                compute_opns=True)
-        neg_opns_arr = dict_neg_opns["opns"]
-        neg_opns_arr = neg_opns_arr.astype('float32')
+        neg_opns_arr = self.get_neg_opns(dem_arr=dem_arr, resolution=x_res).astype('float32')
         profile = dem_dataset.profile
         profile.update(dtype='float32')
         neg_opns_dataset = rio.open(neg_opns_path, "w", **profile)
@@ -387,6 +410,13 @@ class DefaultValues():
         dem_dataset.close()
         neg_opns_dataset.close()
         return 1
+
+    def get_sky_illumination(self, dem_arr, resolution):
+        sky_illumination_arr = rvt.vis.sky_illumination(dem=dem_arr, resolution=resolution, sky_model=self.sim_sky_mod,
+                                                        sampling_points=self.sim_samp_pnts,
+                                                        shadow_dist=self.sim_shadow_dist,
+                                                        shadow_az=self.sim_shadow_az, shadow_el=self.sim_shadow_el)
+        return sky_illumination_arr
 
     def save_sky_illumination(self, dem_path):
         sky_illumination_path = self.get_sky_illumination_path(dem_path)
@@ -401,11 +431,7 @@ class DefaultValues():
         if x_res != y_res:
             raise Exception("RVT DefaultValues.save_sky_view_factor: dem x resolution not equal y resolution")
         dem_arr = dem_dataset.read()[0]
-        sky_illumination_arr = rvt.vis.sky_illumination(dem=dem_arr, resolution=x_res, sky_model=self.sim_sky_mod,
-                                                        sampling_points=self.sim_samp_pnts,
-                                                        shadow_dist=self.sim_shadow_dist,
-                                                        shadow_az=self.sim_shadow_az, shadow_el=self.sim_shadow_el)
-        sky_illumination_arr = sky_illumination_arr.astype('float32')
+        sky_illumination_arr = self.get_sky_illumination(dem_arr=dem_arr, resolution=x_res).astype('float32')
         profile = dem_dataset.profile
         profile.update(dtype='float32')
         sky_illumination_dataset = rio.open(sky_illumination_path, "w", **profile)
@@ -413,6 +439,12 @@ class DefaultValues():
         dem_dataset.close()
         sky_illumination_dataset.close()
         return 1
+
+    def get_local_dominance(self, dem_arr):
+        local_dominance_arr = rvt.vis.local_dominance(dem=dem_arr, min_rad=self.ld_min_rad, max_rad=self.ld_max_rad,
+                                                      rad_inc=self.ld_rad_inc, angular_res=self.ld_anglr_res,
+                                                      observer_height=self.ld_observer_h)
+        return local_dominance_arr
 
     def save_local_dominance(self, dem_path):
         local_dominance_path = self.get_local_dominance_path(dem_path)
@@ -422,10 +454,7 @@ class DefaultValues():
             raise Exception("RVT DefaultValues.save_local_dominance: dem_path doesn't exist!")
         dem_dataset = rio.open(dem_path)
         dem_arr = dem_dataset.read()[0]
-        local_dominance_arr = rvt.vis.local_dominance(dem=dem_arr, min_rad=self.ld_min_rad, max_rad=self.ld_max_rad,
-                                                      rad_inc=self.ld_rad_inc, angular_res=self.ld_anglr_res,
-                                                      observer_height=self.ld_observer_h)
-        local_dominance_arr = local_dominance_arr.astype('float32')
+        local_dominance_arr = self.get_local_dominance(dem_arr=dem_arr).astype('float32')
         profile = dem_dataset.profile
         profile.update(dtype='float32')
         local_dominance_dataset = rio.open(local_dominance_path, "w", **profile)
@@ -453,4 +482,3 @@ class DefaultValues():
             self.save_neg_opns(dem_path)
         if sav_local_dominance:
             self.save_local_dominance(dem_path)
-
