@@ -22,9 +22,8 @@ COPYRIGHT:
 import numpy as np
 import rvt.vis
 
-# NOT WORKING!!! Needs to be debugged
 
-class RVTSvf():
+class RVTSvf:
     def __init__(self):
         self.name = "RVT sky-view factor"
         self.description = "Calculates sky-view factor."
@@ -94,13 +93,15 @@ class RVTSvf():
     def updatePixels(self, tlc, shape, props, **pixelBlocks):
         dem = np.array(pixelBlocks['raster_pixels'], dtype='f4', copy=False)[0]  # Input pixel array.
         pixel_size = props['cellSize']
-        if (pixel_size[0] <= 0) | (pixel_size[1] <= 0) | pixel_size[0] != pixel_size[1]:
+
+        if (pixel_size[0] <= 0) | (pixel_size[1] <= 0):
             raise Exception("Input raster cell size is invalid.")
-        # TODO: something wrong ArcGIS Pro doesn't want to run rvt.vis.sky_view_factor (ask Esri dev how to debug)
+
         dict_svf = rvt.vis.sky_view_factor(dem=dem, resolution=pixel_size[0], compute_svf=True, compute_asvf=False,
                                            compute_opns=False, svf_n_dir=self.nr_directions, svf_r_max=self.max_rad,
                                            svf_noise=self.noise)
         svf = dict_svf["svf"]
+
         pixelBlocks['output_pixels'] = svf.astype(props['pixelType'], copy=False)
         return pixelBlocks
 
