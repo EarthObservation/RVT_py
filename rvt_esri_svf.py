@@ -1,6 +1,6 @@
 """
 NAME:
-    RVT sky view factor esri raster function
+    RVT Sky-view factor esri raster function
     rvt_py, rvt.vis.sky_view_factor
 
 PROJECT MANAGER:
@@ -25,8 +25,8 @@ import rvt.vis
 
 class RVTSvf:
     def __init__(self):
-        self.name = "RVT sky-view factor"
-        self.description = "Calculates sky-view factor."
+        self.name = "RVT Sky-view factor"
+        self.description = "Calculates Sky-view factor."
         # default values
         self.nr_directions = 16.
         self.max_rad = 10.
