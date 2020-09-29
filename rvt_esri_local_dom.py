@@ -22,7 +22,6 @@ COPYRIGHT:
 import numpy as np
 import rvt.vis
 
-# NOT WORKING!!! Needs to be debugged
 
 class RVTLocalDominance:
     def __init__(self):
