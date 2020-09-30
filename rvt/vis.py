@@ -527,9 +527,9 @@ def sky_view_factor_compute(height_arr, i_valid, radius_max, radius_min, num_dir
         if compute_opns:
             opns_out = opns_out + max_slope
         if compute_svf:
-            svf_out = svf_out + (1 - np.sin(np.clip(a=max_slope, a_min=0, a_max=None, out=max_slope)))
+            svf_out = svf_out + (1 - np.sin(np.clip(a=max_slope, a_min=0, a_max=None)))
         if compute_asvf:
-            asvf_out = asvf_out + (1 - np.sin(np.clip(a=max_slope, a_min=0, a_max=None, out=max_slope))) * weight[i_dir]
+            asvf_out = asvf_out + (1 - np.sin(np.clip(a=max_slope, a_min=0, a_max=None))) * weight[i_dir]
 
     # Normalize to the number of directions / weights
     if compute_svf:
