@@ -109,7 +109,7 @@ def slope_aspect(dem, resolution_x, resolution_y, ve_factor=1, output_units="rad
 
     if resolution_x < 0 or resolution_y < 0:
         raise Exception("RVT slope_aspect: resolution must be a positive number!")
-
+    dem = dem.astype(np.float32)
     dem = dem * ve_factor
     # add frame of 0 (additional row up bottom and column left right)
     dem = np.pad(dem, pad_width=1, mode="constant", constant_values=0)
@@ -184,6 +184,8 @@ def hillshade(dem, resolution_x, resolution_y, sun_azimuth=315, sun_elevation=35
     if resolution_x < 0 or resolution_y < 0:
         raise Exception("RVT analytical_hillshading: resolution must be a positive number!")
 
+    dem = dem.astype(np.float32)
+
     # Convert solar position (degrees) to radians
     sun_azimuth_rad = np.deg2rad(sun_azimuth)
     sun_elevation_rad = np.deg2rad(sun_elevation)
@@ -237,6 +239,8 @@ def multi_hillshade(dem, resolution_x, resolution_y, nr_directions=16, sun_eleva
 
     ve_factor = 1
 
+    dem = dem.astype(np.float32)
+
     # calculates slope and aspect if they are not added
     if slope is None or aspect is None:  # slope and aspect are the same, so we have to calculate it once
         dict_slp_asp = slope_aspect(dem=dem, resolution_x=resolution_x, resolution_y=resolution_y,
@@ -250,7 +254,6 @@ def multi_hillshade(dem, resolution_x, resolution_y, nr_directions=16, sun_eleva
         hillshading = hillshade(dem=dem, resolution_x=resolution_x, resolution_y=resolution_y,
                                 sun_elevation=sun_elevation, sun_azimuth=sun_azimuth, slope=slope, aspect=aspect)
         hillshades_arr_list.append(hillshading)
-
     multi_hillshade_out = np.asarray(hillshades_arr_list)
 
     return multi_hillshade_out
@@ -271,6 +274,8 @@ def slrm(dem, radius_cell=20):
     """
     if radius_cell < 10 or radius_cell > 50:
         raise Exception("RVT slrm: Radius for trend assessment needs to be in interval 10-50 pixels!")
+
+    dem = dem.astype(np.float32)
 
     dem[dem < -1200] = np.float64(np.NaN)
     dem[dem > 2000] = np.float64(np.NaN)
@@ -333,7 +338,7 @@ def sky_view_det_move(num_directions, radius_cell, n_col):
     look_angle = 2 * np.pi / num_directions
 
     # matrix initialization
-    move = np.zeros((3, radius_cell + 1, num_directions))
+    move = np.zeros((3, radius_cell + 1, num_directions), dtype=np.float32)
 
     # for each direction
     for i_direction in range(num_directions):
@@ -439,7 +444,7 @@ def sky_view_det_move(num_directions, radius_cell, n_col):
             move[2, 0, i_direction] = radius_cell
 
     # convert 2D index into 1D index
-    move_t = np.zeros((2, radius_cell + 1, num_directions))
+    move_t = np.zeros((2, radius_cell + 1, num_directions), dtype=np.float32)
     move_t[0, :, :] = move[1, :, :] * n_col + move[0, :, :]
     move_t[1, :, :] = move[2, :, :]
     move = move_t
@@ -489,13 +494,14 @@ def sky_view_factor_compute(height_arr, i_valid, radius_max, radius_min, num_dir
     n_col = height.shape[1]  # number of columns
     count_height = i_valid[0].size  # number of all elements
     move = sky_view_det_move(num_directions=num_directions, radius_cell=radius_max, n_col=n_col)
+
     # init the outputs
     if compute_svf:
-        svf_out = np.zeros(count_height)
+        svf_out = np.zeros(count_height, dtype=np.float32)
     if compute_opns:
-        opns_out = np.zeros(count_height)
+        opns_out = np.zeros(count_height, dtype=np.float32)
     if compute_asvf:
-        asvf_out = np.zeros(count_height)
+        asvf_out = np.zeros(count_height, dtype=np.float32)
         w_m = a_min_weight  # compute weights
         w_a = np.deg2rad(a_main_direction)
         weight = np.arange(num_directions) * dir_step
@@ -504,7 +510,7 @@ def sky_view_factor_compute(height_arr, i_valid, radius_max, radius_min, num_dir
     # look into each direction...
     for i_dir in range(num_directions):
         # reset maximum at each iteration - at each new direction
-        max_slope = np.zeros(count_height) - 1000
+        max_slope = np.zeros(count_height, dtype=np.float32) - 1000
 
         # ... and to the search radius - this depends on the direction - radius is written in the first row
         for i_rad in range(1, int(move[1, 0, i_dir])):
@@ -577,6 +583,8 @@ def sky_view_factor(dem, resolution, compute_svf=True, compute_opns=False, compu
         opns_out, openness : 2D numpy openness (elevation angle of horizon)
     """
 
+    dem = dem.astype(np.float32)
+
     # CONSTANTS
     # level of polynomial that determines the anisotropy, selected with in_asvf_level (1 - low, 2 - high)
     sc_asvf_pol = [4, 8]
@@ -590,7 +598,7 @@ def sky_view_factor(dem, resolution, compute_svf=True, compute_opns=False, compu
     # increase edge - visualization foes to edge, so mirror them, leave blank corners
     n_col = dem.shape[1]
     n_lin = dem.shape[0]
-    tmp = np.zeros((n_lin + 2 * svf_r_max, n_col + 2 * svf_r_max))
+    tmp = np.zeros((n_lin + 2 * svf_r_max, n_col + 2 * svf_r_max), dtype=np.float32)
 
     # prepare indx for output
     tmp[svf_r_max:n_lin + svf_r_max, svf_r_max:n_col + svf_r_max] = 1
@@ -650,7 +658,7 @@ def morph_shade_move(d_max, angle):
     """
 
     # init
-    move = np.zeros((d_max + 1, 3))
+    move = np.zeros((d_max + 1, 3), dtype=np.float32)
     d = 0
     x0 = 0
     y0 = 0
@@ -766,10 +774,10 @@ def morph_shade(height, sol_z, sol_a, d_max, nrows, ncols, resolution):
     """
 
     # initialize the results
-    mask = np.zeros((nrows + 2 * d_max, ncols + 2 * d_max))
+    mask = np.zeros((nrows + 2 * d_max, ncols + 2 * d_max), dtype=np.float32)
     mask[d_max:(nrows + d_max), d_max:(ncols + d_max)] = 1
     i_valid = np.where(mask.flatten() == 1)
-    tmp = np.zeros((nrows + 2 * d_max, ncols + 2 * d_max))
+    tmp = np.zeros((nrows + 2 * d_max, ncols + 2 * d_max), dtype=np.float32)
     tmp[d_max:(nrows + d_max), d_max:(ncols + d_max)] = height
     height = tmp
     del tmp
@@ -786,7 +794,7 @@ def morph_shade(height, sol_z, sol_a, d_max, nrows, ncols, resolution):
         # m_slp = ((height_flt[i_valid[0]+int(move1di[i_rad])] - height_flt[i_valid[0]]) / move1dd[i_rad])
         sel = i_valid[0] + int(move1di[i_rad])
         nr_zeros = sel[sel > height_flt.size].size  # can't call indexes that are bigger than num of elements
-        zeros = np.zeros(nr_zeros)
+        zeros = np.zeros(nr_zeros, dtype=np.float32)
         sel = sel[sel <= height_flt.size]
         m_slp = ((height_flt[sel] - height_flt[i_valid[0][:sel.size]]) / move1dd[i_rad])
         m_slp = np.append(m_slp, zeros)  # add zeros, for non existing indexes
@@ -856,7 +864,7 @@ def sky_illumination(dem, resolution, sky_model="overcast", sampling_points=250,
 
     else:
         dat_hillset = open(r'settings\{}_{}sp.txt'.format(sky_model, sampling_points), 'r')
-        sky_illum_out = np.zeros((dem_size[0], dem_size[1]))
+        sky_illum_out = np.zeros((dem_size[0], dem_size[1]), dtype=np.float32)
         dict_slope_aspect = slope_aspect(dem=dem, resolution_x=resolution,
                                          resolution_y=resolution,
                                          ve_factor=1, output_units="radian")
