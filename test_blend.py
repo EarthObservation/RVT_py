@@ -12,8 +12,8 @@ import numpy as np
 # manual blending, custom raster numpy arrays
 layers_manual = rvt.blend.BlenderLayers()
 # read dem
-input_dem_path = r"D:\RVT_py\test\TM1_564_146.tif"
-output_blend_path = r"D:\RVT_py\test\TM1_564_146_test_blend_manual.tif"
+input_dem_path = r"test_data\TM1_564_146.tif"
+output_blend_path = r"test_data\TM1_564_146_test_blend_manual.tif"
 input_dem_dataset = rio.open(input_dem_path)
 t = input_dem_dataset.transform
 x_res = t[0]
@@ -50,13 +50,13 @@ render_arr = layers_manual.render_all_images(input_dem_path, output_blend_path)
 
 #####
 # automatic blending, blending from blender_file with values from default.DefaultValues class
-input_dem_path = r"D:\RVT_py\test\TM1_564_146.tif"
+input_dem_path = r"test_data\TM1_564_146.tif"
 # Example file (for file_path) in dir settings: blender_file_example.txt
 blender_file = r"settings\blender_file_example.txt"
-output_blend_path = r"D:\RVT_py\test\TM1_564_146_test_blend_automatic.tif"
+output_blend_path = r"test_data\TM1_564_146_test_blend_automatic.tif"
 layers_auto = rvt.blend.BlenderLayers()
 default = rvt.default.DefaultValues()
-default.read_default_from_file("D:\RVT_py\RVT_py\settings\default_settings.txt")
+default.read_default_from_file("settings\default_settings.txt")
 # build_blender_layers_from_file saves images paths and images arrays are None (BlenderLayers class)
 layers_auto.build_blender_layers_from_file(input_dem_path, blender_file, default)
 # render_all_images reads images simultaneously if image is None and image_path is not None (BlenderLayers class)
