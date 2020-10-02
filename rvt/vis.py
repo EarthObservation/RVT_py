@@ -839,6 +839,8 @@ def sky_illumination(dem, resolution, sky_model="overcast", sampling_points=250,
     if sky_model != "overcast" and sky_model != "uniform":
         raise Exception("RVT sky_illumination: sky_model needs to be overcast or uniform!")
 
+    dem = dem.astype(np.float32)
+
     indx_no_values = np.where(dem < 0)
     dem[indx_no_values[0], indx_no_values[1]] = np.float64(np.NaN)
 
@@ -924,7 +926,7 @@ def local_dominance(dem, min_rad=10, max_rad=20, rad_inc=1, angular_res=15, obse
     -------
     local_dom_out - 2D numpy array of local dominance
     """
-
+    dem = dem.astype(np.float32)
     # create a vector with possible distances
     n_dist = int((max_rad - min_rad) / rad_inc + 1)
     distances = np.arange(n_dist * rad_inc, step=rad_inc) + min_rad
