@@ -418,6 +418,8 @@ class BlenderLayer:
             self.max = None
             self.blend_mode = None
             self.opacity = None
+            self.image = None
+            self.image_path = None
             return
         if self.normalization is not None:
             if self.normalization.lower() != "value" and self.normalization.lower() != "perc":

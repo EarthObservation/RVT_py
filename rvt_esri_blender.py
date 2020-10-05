@@ -25,14 +25,19 @@ import rvt.default
 import rvt.vis
 import os
 
-# NOT WORKING!!! Needs to be debugged
+
+# Working only when save_individual_vis_fn=No
+# Needs to be debugged for when save_individual_vis_fn=Yes
+# Find out problems with for loop why layers contains more than 5 layers (layers.add_layer(layer))
 
 class RVTBlender:
     def __init__(self):
         self.name = "RVT Blender"
         self.description = "Blend visualisations together using norm, min, max, blending mode, opacity."
         # default values
-        self.default_val_file_path = "/settings/default_settings.txt"
+        self.dem_path = None
+        self.default_val_file_path = os.path.normpath(os.path.join(os.path.dirname(os.path.realpath(__file__)),
+                                                                   "settings/default_settings.txt"))
         self.save_individual_vis_fn = "Yes"  # in prepare changed to True False
 
         self.layer1_vis = "Sky-View Factor"
@@ -87,9 +92,9 @@ class RVTBlender:
                 'required': False,
                 'displayName': "Save individual visualisation function.",
                 'domain': ("No", "Yes"),
-                'description': "If Yes (works faster) it saves individual visualisation function (layer) in folder"
-                               " where python Esri raster function is. If No (works very slow or crashes when"
-                               " dealing with big raster) it holds specific raster function in memory."
+                'description': "If Yes (works faster) it saves individual visualization function (layer) in raster"
+                               " directory. If No (works very slow or crashes when"
+                               " dealing with big raster), it holds specific raster function result (raster) in memory."
             },
             {
                 'name': 'default_val_file_path',
@@ -97,8 +102,8 @@ class RVTBlender:
                 'value': self.default_val_file_path,
                 'required': False,
                 'displayName': "Visualisation functions parameter values file path",
-                'description': "File with parameter values for visualisation functions (if file doesn't exists"
-                               " it takes default values)."
+                'description': "File with parameter values for visualisation functions (if file doesn't exist"
+                               " it takes default values and creates file /settings/default_settings.txt)."
             },
             {
                 'name': 'layer1_vis',
@@ -384,6 +389,8 @@ class RVTBlender:
         kwargs['output_info']['pixelType'] = 'f4'
         kwargs['output_info']['histogram'] = ()
         kwargs['output_info']['statistics'] = ()
+        # self.dem_path = str(kwargs.get("_cachedproperties").get("tifftag_documentname"))  # ASK ESRI how to get raster path?
+        self.dem_path = "D:/RVT_py/RVT_py/test_data/TM1_564_146.tif"
         self.prepare(default_val_file_path=kwargs.get("default_val_file_path"),
                      save_individual_vis_fn=kwargs.get("save_individual_vis_fn"),
                      layer1_vis=kwargs.get("layer1_vis"), layer1_norm=kwargs.get("layer1_norm"),
@@ -411,11 +418,14 @@ class RVTBlender:
             raise Exception("Input raster cell size is invalid.")
 
         # read visualisation parameters values in DefaultValues class
-        default = rvt.default.DefaultValues  # already contains default values
+        default = rvt.default.DefaultValues()  # already contains default values
+
         if os.path.isfile(self.default_val_file_path):  # if settings file exists change values from file
-            default.read_default_from_file()
+            default.read_default_from_file(self.default_val_file_path)
+
         else:  # if doesn't exists create one with default values
-            default_file_out_path = "/settings/default_settings.txt"
+            default_file_out_path = os.path.normpath(os.path.join(os.path.dirname(os.path.realpath(__file__)),
+                                                                  "settings/default_settings.txt"))
             if not os.path.exists(os.path.dirname(default_file_out_path)):
                 os.makedirs(os.path.dirname(default_file_out_path))
             default.save_default_to_file(file_path=default_file_out_path)
@@ -428,7 +438,6 @@ class RVTBlender:
                               self.layer4_blending_mode, self.layer5_blending_mode]
         opacity_list = [self.layer1_opacity, self.layer2_opacity, self.layer3_opacity, self.layer4_opacity,
                         self.layer5_opacity]
-
         layers = rvt.blend.BlenderLayers()  # containing layers
 
         for i_lyr in range(5):  # iterate trough all layers and saves them in layers (rvt.blend.BlenderLayers())
@@ -440,94 +449,92 @@ class RVTBlender:
             opacity = opacity_list[i_lyr]
             image = None
             image_path = None
-            dem_path = "neke"
-            image_path = image_path
             if vis_method is not None:
                 if vis_method.lower() == "slope gradient":
                     if self.save_individual_vis_fn:  # save individually visualisation function output as raster (tif)
-                        default.save_slope(dem_path)
-                        image_path = default.get_slope_path(dem_path)
+                        default.save_slope(self.dem_path)
+                        image_path = default.get_slope_path(self.dem_path)
                     else:
                         image = default.get_slope(dem_arr=dem, resolution_x=pixel_size[0],
-                                                  resolution_y=pixel_size[1])["slope"].astype('float32')
+                                                  resolution_y=pixel_size[1])["slope"]
                 elif vis_method.lower() == "hillshade":
                     if self.save_individual_vis_fn:  # save individually visualisation function output as raster (tif)
-                        default.save_hillshade(dem_path)
-                        image_path = default.get_hillshade_path(dem_path)
+                        default.save_hillshade(self.dem_path)
+                        image_path = default.get_hillshade_path(self.dem_path)
                     else:
                         image = default.get_hillshade(dem_arr=dem, resolution_x=pixel_size[0],
                                                       resolution_y=pixel_size[1])
                 elif vis_method.lower() == "multiple directions hillshade":
                     if self.save_individual_vis_fn:  # save individually visualisation function output as raster (tif)
-                        default.save_multi_hillshade(dem_path)
-                        image_path = default.get_multi_hillshade_path(dem_path)
+                        default.save_multi_hillshade(self.dem_path)
+                        image_path = default.get_multi_hillshade_path(self.dem_path)
                     else:
                         image = default.get_multi_hillshade(dem_arr=dem, resolution_x=pixel_size[0],
                                                             resolution_y=pixel_size[1])
                 elif vis_method.lower() == "simple local relief model":
                     if self.save_individual_vis_fn:  # save individually visualisation function output as raster (tif)
-                        default.save_slrm(dem_path)
-                        image_path = default.get_slrm_path(dem_path)
+                        default.save_slrm(self.dem_path)
+                        image_path = default.get_slrm_path(self.dem_path)
                     else:
                         image = default.get_slrm(dem_arr=dem)
                 elif vis_method.lower() == "sky-view factor":
                     if self.save_individual_vis_fn:  # save individually visualisation function output as raster (tif)
-                        default.save_sky_view_factor(dem_path, save_svf=True, save_asvf=False, save_opns=False)
-                        image_path = default.get_svf_path(dem_path)
+                        default.save_sky_view_factor(self.dem_path, save_svf=True, save_asvf=False, save_opns=False)
+                        image_path = default.get_svf_path(self.dem_path)
                     else:
-                        image = default.get_sky_view_factor(dem_arr=dem, resolution=pixel_size[0], compute_svf=True,
-                                                            compute_asvf=False, compute_opns=False)
+                        image = default.get_sky_view_factor(dem_arr=dem, resolution=pixel_size[0],
+                                                            compute_svf=True,
+                                                            compute_asvf=False, compute_opns=False)["svf"]
                 elif vis_method.lower() == "anisotropic sky-view factor":
                     if self.save_individual_vis_fn:  # save individually visualisation function output as raster (tif)
-                        default.save_sky_view_factor(dem_path, save_svf=False, save_asvf=True, save_opns=False)
-                        image_path = default.get_asvf_path(dem_path)
+                        default.save_sky_view_factor(self.dem_path, save_svf=False, save_asvf=True, save_opns=False)
+                        image_path = default.get_asvf_path(self.dem_path)
                     else:
-                        image = default.get_sky_view_factor(dem_arr=dem, resolution=pixel_size[0], compute_svf=False,
-                                                            compute_asvf=True, compute_opns=False)
+                        image = default.get_sky_view_factor(dem_arr=dem, resolution=pixel_size[0],
+                                                            compute_svf=False,
+                                                            compute_asvf=True, compute_opns=False)["asvf"]
                 elif vis_method.lower() == "openness - positive":
                     if self.save_individual_vis_fn:  # save individually visualisation function output as raster (tif)
-                        default.save_sky_view_factor(dem_path, save_svf=False, save_asvf=False, save_opns=True)
-                        image_path = default.get_opns_path(dem_path)
+                        default.save_sky_view_factor(self.dem_path, save_svf=False, save_asvf=False, save_opns=True)
+                        image_path = default.get_opns_path(self.dem_path)
                     else:
-                        image = default.get_sky_view_factor(dem_arr=dem, resolution=pixel_size[0], compute_svf=False,
-                                                            compute_asvf=False, compute_opns=True)
+                        image = default.get_sky_view_factor(dem_arr=dem, resolution=pixel_size[0],
+                                                            compute_svf=False,
+                                                            compute_asvf=False, compute_opns=True)["opns"]
                 elif vis_method.lower() == "openness - negative":
                     if self.save_individual_vis_fn:  # save individually visualisation function output as raster (tif)
-                        default.save_neg_opns(dem_path)
-                        image_path = default.get_neg_opns_path(dem_path)
+                        default.save_neg_opns(self.dem_path)
+                        image_path = default.get_neg_opns_path(self.dem_path)
                     else:
                         image = default.get_neg_opns(dem_arr=dem, resolution=pixel_size[0])
                 elif vis_method.lower() == "sky illumination":
                     if self.save_individual_vis_fn:  # save individually visualisation function output as raster (tif)
-                        default.save_sky_illumination(dem_path)
-                        image_path = default.get_sky_illumination_path(dem_path)
+                        default.save_sky_illumination(self.dem_path)
+                        image_path = default.get_sky_illumination_path(self.dem_path)
                     else:
                         image = default.get_sky_illumination(dem_arr=dem, resolution=pixel_size[0])
                 elif vis_method.lower() == "local dominance":
                     if self.save_individual_vis_fn:  # save individually visualisation function output as raster (tif)
-                        default.save_local_dominance(dem_path)
-                        image_path = default.get_local_dominance_path(dem_path)
+                        default.save_local_dominance(self.dem_path)
+                        image_path = default.get_local_dominance_path(self.dem_path)
                     else:
                         image = default.get_local_dominance(dem_arr=dem)
 
-                if image_path is not None:
-                    layer = rvt.blend.BlenderLayer(vis_method=vis_method, normalization=normalization, minimum=minimum,
-                                                   maximum=maximum, blend_mode=blend_mode, opacity=opacity,
-                                                   image_path=image_path)
-                if image is not None:
-                    layer = rvt.blend.BlenderLayer(vis_method=vis_method, normalization=normalization, minimum=minimum,
-                                                   maximum=maximum, blend_mode=blend_mode, opacity=opacity,
-                                                   image=image)
+                layer = rvt.blend.BlenderLayer(vis_method=vis_method, normalization=normalization, minimum=minimum,
+                                               maximum=maximum, blend_mode=blend_mode, opacity=opacity, image=image,
+                                               image_path=image_path)
             else:
                 layer = rvt.blend.BlenderLayer(vis_method=None)
 
             layers.add_layer(layer)
 
+        layers.layers = layers.layers[-5:]  # ASK ESRI why is there more elements than 5
         blender = layers.render_all_images()  # calculate blender
         pixelBlocks['output_pixels'] = blender.astype(props['pixelType'], copy=False)
         return pixelBlocks
 
-    def prepare(self, default_val_file_path="/settings/default_settings.txt", save_individual_vis_fn="Yes",
+
+    def prepare(self, default_val_file_path="settings/default_settings.txt", save_individual_vis_fn="Yes",
                 layer1_vis="Sky-View Factor", layer1_norm="Value", layer1_min=0.7, layer1_max=1.,
                 layer1_blending_mode="Multiply", layer1_opacity=25., layer2_vis="Openness - Positive",
                 layer2_norm="Value", layer2_min=68., layer2_max=93., layer2_blending_mode="Overlay",
@@ -556,7 +563,7 @@ class RVTBlender:
         if layer2_vis == "None":
             self.layer2_vis = None
         else:
-            self.layer2_vis = layer1_vis
+            self.layer2_vis = layer2_vis
         self.layer2_norm = layer2_norm
         self.layer2_min = float(layer2_min)
         self.layer2_max = float(layer2_max)
@@ -565,7 +572,7 @@ class RVTBlender:
         if layer3_vis == "None":
             self.layer3_vis = None
         else:
-            self.layer3_vis = layer1_vis
+            self.layer3_vis = layer3_vis
         self.layer3_norm = layer3_norm
         self.layer3_min = float(layer3_min)
         self.layer3_max = float(layer3_max)
@@ -574,7 +581,7 @@ class RVTBlender:
         if layer4_vis == "None":
             self.layer4_vis = None
         else:
-            self.layer4_vis = layer1_vis
+            self.layer4_vis = layer4_vis
         self.layer4_norm = layer4_norm
         self.layer4_min = float(layer4_min)
         self.layer4_max = float(layer4_max)
@@ -583,7 +590,7 @@ class RVTBlender:
         if layer5_vis == "None":
             self.layer5_vis = None
         else:
-            self.layer5_vis = layer1_vis
+            self.layer5_vis = layer5_vis
         self.layer5_norm = layer5_norm
         self.layer5_min = float(layer5_min)
         self.layer5_max = float(layer5_max)
