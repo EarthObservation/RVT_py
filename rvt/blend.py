@@ -28,6 +28,8 @@ import numpy as np
 import warnings
 import rvt.default
 import rasterio as rio
+import matplotlib as mpl
+import matplotlib.cm
 
 
 def create_blender_file_example(file_path=None):
@@ -72,6 +74,27 @@ def save_rendered_image(rendered_image, dem_path, save_render_path):
     rendered_image = rendered_image.astype('float32')
     rendered_img_dataset.write(np.array([rendered_image]))
     rendered_img_dataset.close()
+
+
+def gray_scale_to_color_ramp(gray_scale, colormap):
+    """
+    Turns normalized gray scale np.array to rgba (np.array of 4 np.arrays r, g, b, a).
+
+    Parameters
+    ----------
+    gray_scale : normalized gray_scale img as np.array (0-1)
+    colormap : colormap form matplotlib (https://matplotlib.org/3.3.2/tutorials/colors/colormaps.html)
+
+    Returns
+    -------
+    rgba_out : 4D np.array (red 0-255, green 0-255, blue 0-255, alpha 0-255)
+    """
+    cm = mpl.cm.get_cmap(colormap)
+    rgba_out = cm(gray_scale)  # normalized rgb
+    rgba_mtpl_out = np.uint8(rgba_out * 255)  # 0-1 scale to 0-255 and change type to uint8
+    rgba_out = np.array([rgba_mtpl_out[:, :, 0], rgba_mtpl_out[:, :, 1], rgba_mtpl_out[:, :, 2],
+                        rgba_mtpl_out[:, :, 3]])
+    return rgba_out
 
 
 def normalize_lin(image, minimum, maximum):
@@ -579,4 +602,3 @@ class BlenderLayers:
                 layer = BlenderLayer(vis_method=None)
             self.add_layer(layer)
         dat.close()
-
