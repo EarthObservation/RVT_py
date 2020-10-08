@@ -384,8 +384,9 @@ class DefaultValues():
 
     def get_neg_opns(self, dem_arr, resolution):
         dem_arr = -1 * dem_arr
-        dict_neg_opns = rvt.vis.sky_view_factor(dem=dem_arr, resolution=resolution, compute_svf=False, compute_asvf=False,
-                                                compute_opns=True)
+        dict_neg_opns = rvt.vis.sky_view_factor(dem=dem_arr, resolution=resolution, svf_n_dir=self.svf_n_dir,
+                                                svf_r_max=self.svf_r_max, svf_noise=self.svf_noise,
+                                                compute_svf=False, compute_asvf=False, compute_opns=True)
         neg_opns_arr = dict_neg_opns["opns"]
         return neg_opns_arr
 
