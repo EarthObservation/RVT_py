@@ -27,7 +27,6 @@ import numpy as np
 import scipy.ndimage
 
 
-# TODO: Float32 vs Float64 speed
 # TODO: check speed sky_ilumination
 # TODO: check IDL vectorisation remains:
 #  (sky_view_factor, sky_view_det_move, sky_view_compute, morph_shade_move, morph_shade, sky_illumination)
@@ -956,6 +955,7 @@ def local_dominance(dem, min_rad=10, max_rad=20, rad_inc=1, angular_res=15, obse
     local_dom_out = local_dom_out / norma
 
     return local_dom_out
+
 
 # If we don't fix morp_shade we could use adams_shadows function (for that we would need to use numba)
 # https://github.com/jacobdadams/general_scripts/blob/master/raster_chunk_processing.py

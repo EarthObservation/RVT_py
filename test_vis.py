@@ -56,8 +56,7 @@ def test_multi_hillshade(input_dem_path, output_path, nr_directions=16, sun_elev
                                                   sun_elevation=sun_elevation)
     multi_hillshade_arr = multi_hillshade_arr.astype('float32')
     profile = input_dem_dataset.profile
-    profile.update(dtype='float32')
-    profile.update(count=16)
+    profile.update(dtype='float32', count=16)
     output_multi_hillshade_dataset = rio.open(output_path, "w", **profile)
     output_multi_hillshade_dataset.write(multi_hillshade_arr)
     input_dem_dataset.close()
@@ -138,27 +137,28 @@ def test_local_dominance(input_dem_path, output_path):
     output_localdom.close()
     input_dem_dataset.close()
 
+
 ###
 
-test_slope_aspect(input_dem_path=r"test_data\TM1_564_146.tif",
-                  output_path=r"test_data\TM1_564_146_test_slope.tif")
+# test_slope_aspect(input_dem_path=r"test_data\TM1_564_146.tif",
+#                   output_path=r"test_data\TM1_564_146_test_slope.tif")
 
-test_hillshade(input_dem_path=r"test_data\TM1_564_146.tif",
-               output_path=r"test_data\TM1_564_146_test_hillsahade.tif")
+# test_hillshade(input_dem_path=r"test_data\TM1_564_146.tif",
+#                output_path=r"test_data\TM1_564_146_test_hillsahade.tif")
 
-test_multi_hillshade(input_dem_path=r"test_data\TM1_564_146.tif",
-                     output_path=r"test_data\TM1_564_146_test_multi_hillsahade.tif")
+# test_multi_hillshade(input_dem_path=r"test_data\TM1_564_146.tif",
+#                      output_path=r"test_data\TM1_564_146_test_multi_hillsahade.tif")
 
-test_slrm(input_dem_path=r"test_data\TM1_564_146.tif",
-          output_path=r"test_data\TM1_564_146_test_SLRM.tif")
+# test_slrm(input_dem_path=r"test_data\TM1_564_146.tif",
+#           output_path=r"test_data\TM1_564_146_test_SLRM.tif")
 
 # test_sky_view_factor(input_dem_path=r"test_data\TM1_564_146.tif",
 #                      output_svf_path=r"test_data\TM1_564_146_test_SVF.tif",
 #                      output_asvf_path=r"test_data\TM1_564_146_test_ASVF.tif",
 #                      output_opns_path=r"test_data\TM1_564_146_test_OPNS.tif")
 
-test_sky_illumination(input_dem_path=r"test_data\TM1_564_146.tif",
-                      output_path=r"test_data\TM1_564_146_test_skyillum.tif")
+# test_sky_illumination(input_dem_path=r"test_data\TM1_564_146.tif",
+#                       output_path=r"test_data\TM1_564_146_test_skyillum.tif")
 
-test_local_dominance(input_dem_path=r"test_data\TM1_564_146.tif",
-                     output_path=r"test_data\TM1_564_146_test_localdom.tif")
+# test_local_dominance(input_dem_path=r"test_data\TM1_564_146.tif",
+#                      output_path=r"test_data\TM1_564_146_test_localdom.tif")
