@@ -30,11 +30,18 @@ import rvt.default
 import rasterio as rio
 import matplotlib as mpl
 import matplotlib.cm
+import os
 
 
 def create_blender_file_example(file_path=None):
     if file_path is None:
-        dat = open(r"..\settings\blender_file_example.txt", "w")
+        file_path = r"settings\blender_file_example.txt"
+        if os.path.isfile(file_path):
+            pass
+        else:
+            if not os.path.exists(os.path.dirname(file_path)):
+                os.makedirs(os.path.dirname(file_path))
+        dat = open(file_path, "w")
     else:
         dat = open(file_path, "w")
     dat.write("#---------------------------------------------------------------------------------------------------"
@@ -76,7 +83,7 @@ def save_rendered_image(rendered_image, dem_path, save_render_path):
     rendered_img_dataset.close()
 
 
-def gray_scale_to_color_ramp(gray_scale, colormap):
+def gray_scale_to_color_ramp(gray_scale, colormap, alpha=False):
     """
     Turns normalized gray scale np.array to rgba (np.array of 4 np.arrays r, g, b, a).
 
@@ -87,13 +94,17 @@ def gray_scale_to_color_ramp(gray_scale, colormap):
 
     Returns
     -------
-    rgba_out : 4D np.array (red 0-255, green 0-255, blue 0-255, alpha 0-255)
+    rgba_out :  3D np.array (red 0-255, green 0-255, blue 0-255)
+                if alpha False: 4D np.array (red 0-255, green 0-255, blue 0-255, alpha 0-255)
     """
     cm = mpl.cm.get_cmap(colormap)
     rgba_out = cm(gray_scale)  # normalized rgb
     rgba_mtpl_out = np.uint8(rgba_out * 255)  # 0-1 scale to 0-255 and change type to uint8
-    rgba_out = np.array([rgba_mtpl_out[:, :, 0], rgba_mtpl_out[:, :, 1], rgba_mtpl_out[:, :, 2],
-                        rgba_mtpl_out[:, :, 3]])
+    if alpha:
+        rgba_out = np.array([rgba_mtpl_out[:, :, 0], rgba_mtpl_out[:, :, 1], rgba_mtpl_out[:, :, 2]])
+    else:
+        rgba_out = np.array([rgba_mtpl_out[:, :, 0], rgba_mtpl_out[:, :, 1], rgba_mtpl_out[:, :, 2],
+                            rgba_mtpl_out[:, :, 3]])
     return rgba_out
 
 

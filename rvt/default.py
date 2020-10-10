@@ -66,7 +66,13 @@ class DefaultValues():
 
     def save_default_to_file(self, file_path=None):
         if file_path is None:
-            dat = open(r"settings\default_settings.txt", "w")
+            file_path = r"settings\default_settings.txt"
+            if os.path.isfile(file_path):
+                pass
+            else:
+                if not os.path.exists(os.path.dirname(file_path)):
+                    os.makedirs(os.path.dirname(file_path))
+            dat = open(file_path, "w")
         else:
             dat = open(file_path, "w")
         dat.write("# --------------------------------------------------------------------------------------------------"
