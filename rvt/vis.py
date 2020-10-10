@@ -743,6 +743,8 @@ def morph_shade_move(d_max, angle):
 
         # Output
         # TODO: Krištof
+        # This is just a function to determine the direction of horizon search.
+        # It is called only once, so there is no need to make any optimization here.
         move[i_rad, 0] = xt - x0
         move[i_rad, 1] = yt - y0
         d = np.sqrt((xt - x0) ** 2 + (yt - y0) ** 2)
