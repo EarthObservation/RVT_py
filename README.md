@@ -37,14 +37,14 @@ When using the tools, please cite:
 
 Copy or clone the files to your environment.
 
-###Python libraries
+### Python libraries
 We suggest using an anaconda enviroment and python version 3.5 or higher.
 You'll need libraries (could also work with other versions):
 *   numpy 1.19.2
 *   scipy 1.5.2
 *   rasterio 1.1.7
 
-###ArcGIS Pro
+### ArcGIS Pro
 If you would like to use visualization functions in ArcGIS Pro you have to click Analysis->Raster functions->"three parallel lines"->Open Python Raster Function. Then select Python Module (rvt_esri_*.py) and Class Name (it is only one).
 
 For rvt_esri_blender.py you will need to install rasterio into Python ArcGIS Pro conda environment. To do that open ArcGIS Pro click Python then click Manage Environments and Clone the default environment. After you clone default environment set new env to active and click ok. Then click Add Packages search for rasterio and install it. In case you are having problems try older version of rasterio.
@@ -70,7 +70,7 @@ Import rvt.vis module:
 import rvt.vis
 ```
 
-*   slope gradient, <br>
+*   **Slope Gradient** <br>
 Parameters <br>
 ---------- <br>
 ve_factor : vertical exaggeration factor (must be greater than 0) <br>
@@ -85,7 +85,7 @@ slope_arr = dict_slp_asp["slope"]
 aspect_arr = dict_slo_asp["aspect"]
 ```
 
-*   hillshading <br>
+*   **Hillshade** <br>
 Parameters <br>
 ---------- <br>
 sun_azimuth : solar azimuth angle (clockwise from North) in degrees <br>
@@ -98,7 +98,7 @@ hillshade_arr = rvt.vis.hillshade(dem=input_dem_arr, resolution_x=x_res, resolut
                                   sun_elevation=sun_elevation)
 ```
 
-*   hillshading from multiple directions <br>
+*   **Hillshade from multiple directions** <br>
 Parameters <br>
 ---------- <br>
 nr_directions : number of solar azimuth angles (clockwise from North) <br>
@@ -111,7 +111,7 @@ multi_hillshade_arr = rvt.vis.multi_hillshade(dem=input_dem_arr, resolution_x=x_
                                               nr_directions=nr_directions, sun_elevation=sun_elevation)
 ```
 
-*   simple local relief model <br>
+*   **Simple Local Relief Model** <br>
 Parameters <br>
 ---------- <br>
 radius_cell : Radius for trend assessment [pixels] <br> <br>
@@ -122,7 +122,7 @@ slrm_out : slrm 2D numpy array <br>
 slrm_arr = rvt.vis.slrm(dem=input_dem_arr, radious_cell=radious_cell)
 ```
 
-*   sky illumination <br>
+*   **Sky Illumination** <br>
 Parameters <br>
 ---------- <br>
 sky_model : sky model [overcast, uniform] <br>
@@ -139,7 +139,7 @@ sky_illumination_arr = rvt.vis.sky_illumination(dem=input_dem_arr, resolution=x_
                                                 shadow_az=shadow_az, shadow_el=shadow_el)
 ```
 
-*   sky-view factor / anisotropic sky-view factor / positive and negative openness <br>
+*   **Sky-View Factor / Anisotropic Sky-View Factor / Positive and Negative Openness** <br>
 Sky-view factor, Antisotropic Sky-view factor and Openness are all calculated in the same function (less computing if you have to compute all of them). Negative openness is openness where (-1)*dem. <br><br>
 Parameters <br>
 compute_svf : compute SVF (True) or not (False) <br>
@@ -190,7 +190,7 @@ neg_opns_arr = rvt.vis.sky_view_factor(dem=(-1)*input_dem_arr, resolution=x_res,
                                    svf_r_max=svf_r_max, svf_noise=svf_noise)["opns"]  # be aware ["opns"], because result is dict
 ```
 
-*   local dominance <br>
+*   **Local Dominance** <br>
 Parameters <br>
 ---------- <br>
 min_rad : minimum radial distance (in pixels) at which the algorithm starts with visualization computation <br>
@@ -217,6 +217,62 @@ output_computed_dataset.write(np.array([computed_arr]))  # computed_arr is array
 output_computed_dataset.close()
 ```
 
+### Module default
+Default module contains class DefaultValues() where we can store our visualization functions parameters, this class also has methods for saving and computing visualization functions with that parameters. To import it we use:
+```python
+import rvt.default
+```
+We have to create class instance first.
+```python
+default = rvt.default.DefaultValues()
+```
+When we create instance parameter values are already populated with default values. We can store them in file, change them in file and read them back from file. We can also change them in program.
+```python
+default.save_default_to_file(file_path=r"settings\default_settings.txt")  # save parameters in file
+# we can make a copy of our own parameters values and load them to default
+default.read_default_from_file(file_path="settings\default_settings.txt")  # read parameters from file
+# example to change specific parameter programmatically
+default.hs_sun_el = 45  # change hillshade sun elevation
+```
+After we have set our parameters, we can compute visualization functions and get results in array or we can save them in file. If we save them result will be saved where input raster location is. You don't need to use get methods if you only need saved results.
+```python
+# Slope
+dict_slp_asp = default.get_slope(dem_arr=dem_arr, resolution_x=x_res, resolution_y=y_res)  # you have to read dem and input dem_arr, it returns dict, same as rvt.vis.slope_aspect()
+default.save_slope(dem_path=dem_path)  # reads dem, computes slope and saves slope in directory where input raster is (dem_path)
+
+# Hillshade
+hillshade_arr = default.get_hillshade(dem_arr=dem_arr, resolution_x=x_res, resolution_y=y_res)
+default.save_hillshade(dem_path=dem_path)
+
+# Multi hillshade
+multi_hillshade_arr = default.get_multi_hillshade(dem_arr=dem_arr, resolution_x=x_res, resolution_y=y_res)
+default.save_multi_hillshade(dem_path=dem_path)
+
+# Simple local relief model
+slrm_arr = get_slrm(dem_arr=dem_arr)
+default.save_slrm(dem_path=dem_path)
+
+# Svf, ASvf, Pos Opns, You have to define with compute and save (True/False) which ones you need
+dict_svf_asvf_opns = default.get_sky_view_factor(dem_arr=dem_arr, resolution=res, compute_svf=True, compute_asvf=True, compute_opns=True)  # it returns dict same as rvt.vis.sky_view_factor()
+default.save_sky_view_factor(dem_path=dem_path, save_svf=True, save_asvf=True, save_opns=True)  # define (True/False) which ones to save
+
+# Negative Openness
+neg_opns_arr = default.get_neg_opns(dem_arr=dem_arr, resolution=res)
+default.save_neg_opns(dem_path=dem_path)
+
+# Sky illumination
+sky_illumination_arr = default.get_sky_illumination(dem_arr=dem_arr, resolution=res)
+default.save_sky_illumination(dem_path=dem_path)
+
+# Local dominance
+local_dominance_arr = default.get_local_dominance(dem_arr=dem_arr)
+default.save_local_dominance(dem_path=dem_path)
+
+# To save visualizations with one line of code
+default.save_visualizations(dem_path=dem_path, sav_slope=True, sav_hillshade=True, sav_mulit_hillshade=True, sav_slrm=True,
+                            sav_svf=True, sav_asvf=True, sav_opns=True, sav_neg_opns=True, sav_sky_illumination=True,
+                            sav_local_dominance=True)  # if you want to save specific vis set it to True else to False
+```
 
 ### Module blend
 Blend is module for blending different visualizations together. To import it we use:
@@ -252,17 +308,32 @@ render_arr = layers_manual.render_all_images()  # to only get result render arra
 ```
 
 #### Automatic blending
-
-### Module default
+Automatic blending depends on rvt.default, so you have to import rvt.default.
 ```python
+import rvt.blend
 import rvt.default
 ```
+Automatic blending is blending from file. All the visualisations we need for blending will be computed and stored in the directory where input raster is. To create example file where we can later change parameters we call function create_blender_file_example.
+```python
+blender_file = rvt.blend.create_blender_file_example(file_path=r"settings\blender_file_example.txt")
+```
+To blend from file we also need function parameters values which we define in class rvt.default.DefaultValues() (look Module default).
+```python
+default = rvt.default.DefaultValues()
+```
+To blend from file we create BlenderLayers() class, call method build_blender_layers_from_file and then render_all_images.
+```python
+layers_auto = rvt.blend.BlenderLayers()
+layers_auto.build_blender_layers_from_file(dem_path=input_dem_path, file_path=blender_file, default=default)  # we can make our own blender_file (change example), we can change default
+render_arr = layers_auto.render_all_images(dem_path=input_dem_path, save_render_path=output_blend_path)  # if we dont input dem_path and save_rander_path result won't be stored as raster (tif)
+```
+
 ## Examples
 
 A sample dataset for trying RVT python is available here ("TM1_564_146.tif"):  
 https://www.dropbox.com/sh/p7ia8fk6mywa8y3/AABWuw4wFUvULU7SeNXyWhjka?dl=0
 
-Download it and try the visualisations.
+Download it, save it in test_data directory and try the visualisations.
 
 Examples how to use are in files:
 ```python
