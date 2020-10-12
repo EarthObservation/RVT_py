@@ -22,17 +22,15 @@ COPYRIGHT:
 import numpy as np
 import rvt.vis
 
-# TODO: If nr_band > 10 function doesn't work, find out from Esri developers why
-# Currently working 8bit, 3 bands (azimuth 315 for red, 22.5 for green, and 90 for the blue band)
-# TODO: when solved remove temporarily working 8bit (azimuth 315 for red, 22.5 for green, and 90 for the blue band)
 
 class RVTMultiHillshade():
     def __init__(self):
         self.name = "RVT multi hillshade"
         self.description = "Calculates multiple directions hillshade."
         # default values
-        #self.nr_directions = 16.
+        self.nr_directions = 16.
         self.elevation = 35.
+        self.calc_8_bit = False
 
     def getParameterInfo(self):
         return [
@@ -44,14 +42,23 @@ class RVTMultiHillshade():
                 'displayName': "Input Raster",
                 'description': "Input raster for which to create the multiple directions hillshade map."
             },
-            # {
-            #     'name': 'nr_directions',
-            #     'dataType': 'numeric',
-            #     'value': self.nr_directions,
-            #     'required': False,
-            #     'displayName': "Number of directions",
-            #     'description': "Number of directions for sun azimuth angle (clockwise from North)."
-            # },
+            {
+                'name': 'calc_8_bit',
+                'dataType': 'boolean',
+                'value': self.calc_8_bit,
+                'required': False,
+                'displayName': "Calculate 8-bit",
+                'description': "If True it only calculates 8-bit (nr_directions doesn't matter),"
+                               " in 3 directions (sun_azimuith = 315, 22.5, 90)"
+            },
+            {
+                'name': 'nr_directions',
+                'dataType': 'numeric',
+                'value': self.nr_directions,
+                'required': False,
+                'displayName': "Number of directions",
+                'description': "Number of directions for sun azimuth angle (clockwise from North)."
+            },
             {
                 'name': 'sun_elevation',
                 'dataType': 'numeric',
@@ -73,14 +80,16 @@ class RVTMultiHillshade():
         }
 
     def updateRasterInfo(self, **kwargs):
-        kwargs['output_info']['bandCount'] = 3 #int(kwargs.get('nr_directions'))
-        r = kwargs['raster_info']
         kwargs['output_info']['noData'] = -3.4028235e+038
         kwargs['output_info']['pixelType'] = 'f4'
         kwargs['output_info']['histogram'] = ()
-        kwargs['output_info']['statistics'] = ()
-        #self.prepare(nr_directions=kwargs.get('nr_directions'), elevation=kwargs.get("sun_elevation"))
-        self.prepare(elevation=kwargs.get("sun_elevation"))
+        kwargs['output_info']['statistics'] = int(self.nr_directions) * ({'minimum': -1, 'maximum': 1}, )
+        self.prepare(nr_directions=kwargs.get('nr_directions'), elevation=kwargs.get("sun_elevation"),
+                     calc_8_bit=kwargs.get("calc_8_bit"))
+        if self.calc_8_bit:
+            kwargs['output_info']['bandCount'] = 3
+        else:
+            kwargs['output_info']['bandCount'] = int(self.nr_directions)
         return kwargs
 
     def updatePixels(self, tlc, shape, props, **pixelBlocks):
@@ -90,25 +99,28 @@ class RVTMultiHillshade():
             raise Exception("Input raster cell size is invalid.")
         dict_slp_asp = rvt.vis.slope_aspect(dem=dem, resolution_x=pixel_size[0], resolution_y=pixel_size[1],
                                             ve_factor=1)
-        hillshade_r = rvt.vis.hillshade(dem=dem, resolution_x=pixel_size[0], resolution_y=pixel_size[1],
-                                        sun_azimuth=315, sun_elevation=self.elevation,
-                                        slope=dict_slp_asp["slope"], aspect=dict_slp_asp["aspect"])
-        hillshade_g = rvt.vis.hillshade(dem=dem, resolution_x=pixel_size[0], resolution_y=pixel_size[1],
-                                        sun_azimuth=22.5, sun_elevation=self.elevation,
-                                        slope=dict_slp_asp["slope"], aspect=dict_slp_asp["aspect"])
-        hillshade_b = rvt.vis.hillshade(dem=dem, resolution_x=pixel_size[0], resolution_y=pixel_size[1],
-                                        sun_azimuth=90, sun_elevation=self.elevation,
-                                        slope=dict_slp_asp["slope"], aspect=dict_slp_asp["aspect"])
-        hillshade_rgb = np.array([hillshade_r, hillshade_g, hillshade_b])
-        pixelBlocks['output_pixels'] = hillshade_rgb.astype(props['pixelType'], copy=False)
-        # multihillshade = rvt.vis.multi_hillshade(dem=dem, resolution_x=pixel_size[0], resolution_y=pixel_size[1],
-        #                                          nr_directions=self.nr_directions, sun_elevation=self.elevation,
-        #                                          slope=dict_slp_asp["slope"], aspect=dict_slp_asp["aspect"])
-        # pixelBlocks['output_pixels'] = multihillshade.astype(props['pixelType'], copy=False)
-        return pixelBlocks
+        if self.calc_8_bit:  # calc 8 bit
+            hillshade_r = rvt.vis.hillshade(dem=dem, resolution_x=pixel_size[0], resolution_y=pixel_size[1],
+                                            sun_azimuth=315, sun_elevation=self.elevation,
+                                            slope=dict_slp_asp["slope"], aspect=dict_slp_asp["aspect"])
+            hillshade_g = rvt.vis.hillshade(dem=dem, resolution_x=pixel_size[0], resolution_y=pixel_size[1],
+                                            sun_azimuth=22.5, sun_elevation=self.elevation,
+                                            slope=dict_slp_asp["slope"], aspect=dict_slp_asp["aspect"])
+            hillshade_b = rvt.vis.hillshade(dem=dem, resolution_x=pixel_size[0], resolution_y=pixel_size[1],
+                                            sun_azimuth=90, sun_elevation=self.elevation,
+                                            slope=dict_slp_asp["slope"], aspect=dict_slp_asp["aspect"])
+            hillshade_rgb = np.array([hillshade_r, hillshade_g, hillshade_b])
+            pixelBlocks['output_pixels'] = hillshade_rgb.astype(props['pixelType'], copy=False)
+            return pixelBlocks
+        else:  # calc nr_directions
+            multihillshade = rvt.vis.multi_hillshade(dem=dem, resolution_x=pixel_size[0], resolution_y=pixel_size[1],
+                                                 nr_directions=self.nr_directions, sun_elevation=self.elevation,
+                                                 slope=dict_slp_asp["slope"], aspect=dict_slp_asp["aspect"])
+            pixelBlocks['output_pixels'] = multihillshade.astype(props['pixelType'], copy=False)
+            return pixelBlocks
 
-    # def prepare(self, nr_directions=16, elevation=35):
-    #     self.nr_directions = int(nr_directions)
-    #     self.elevation = elevation
-    def prepare(self, elevation=35):
+    def prepare(self, nr_directions=16, elevation=35, calc_8_bit=False):
+        self.nr_directions = int(nr_directions)
         self.elevation = elevation
+        self.calc_8_bit = calc_8_bit
+
