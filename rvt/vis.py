@@ -108,8 +108,11 @@ def slope_aspect(dem, resolution_x, resolution_y, ve_factor=1, output_units="rad
 
     if resolution_x < 0 or resolution_y < 0:
         raise Exception("RVT slope_aspect: resolution must be a positive number!")
+
     dem = dem.astype(np.float32)
-    dem = dem * ve_factor
+    if ve_factor != 1:
+        dem = dem * ve_factor
+
     # add frame of 0 (additional row up bottom and column left right)
     dem = np.pad(dem, pad_width=1, mode="constant", constant_values=0)
 
@@ -157,7 +160,7 @@ def slope_aspect(dem, resolution_x, resolution_y, ve_factor=1, output_units="rad
 
 
 def hillshade(dem, resolution_x, resolution_y, sun_azimuth=315, sun_elevation=35,
-              slope=None, aspect=None):
+              slope=None, aspect=None, ve_factor=1):
     """
     Compute hillshade.
 
@@ -170,13 +173,15 @@ def hillshade(dem, resolution_x, resolution_y, sun_azimuth=315, sun_elevation=35
     sun_elevation : solar vertical angle (above the horizon) in degrees
     slope : slope arr in radians if you don't input it, it is calculated
     aspect : aspect arr in radians if you don't input it, it is calculated
+    ve_factor : vertical exaggeration factor (must be greater than 0)
 
     Returns
     -------
     hillshade_out : result numpy array
     """
+    if ve_factor <= 0:
+        raise Exception("RVT slope_aspect: ve_factor must be a positive number!")
 
-    ve_factor = 1
     if sun_azimuth > 360 or sun_elevation > 90 or sun_azimuth < 0 or sun_elevation < 0:
         raise Exception("RVT analytical_hillshading: sun_azimuth must be [0-360] and sun_elevation [0-90]!")
 
@@ -184,6 +189,8 @@ def hillshade(dem, resolution_x, resolution_y, sun_azimuth=315, sun_elevation=35
         raise Exception("RVT analytical_hillshading: resolution must be a positive number!")
 
     dem = dem.astype(np.float32)
+    if ve_factor != 1:
+        dem = dem * ve_factor
 
     # Convert solar position (degrees) to radians
     sun_azimuth_rad = np.deg2rad(sun_azimuth)
@@ -196,7 +203,7 @@ def hillshade(dem, resolution_x, resolution_y, sun_azimuth=315, sun_elevation=35
     if slope is None or aspect is None:
         # calculates slope and aspect
         dict_slp_asp = slope_aspect(dem=dem, resolution_x=resolution_x, resolution_y=resolution_y,
-                                    ve_factor=ve_factor, output_units="radian")
+                                    output_units="radian")
         slope = dict_slp_asp["slope"]
         aspect = dict_slp_asp["aspect"]
 
@@ -208,7 +215,7 @@ def hillshade(dem, resolution_x, resolution_y, sun_azimuth=315, sun_elevation=35
 
 
 def multi_hillshade(dem, resolution_x, resolution_y, nr_directions=16, sun_elevation=35,
-                    slope=None, aspect=None):
+                    slope=None, aspect=None, ve_factor=1):
     """
     Calculates hillshades from multiple directions.
 
@@ -221,6 +228,7 @@ def multi_hillshade(dem, resolution_x, resolution_y, nr_directions=16, sun_eleva
     sun_elevation : solar vertical angle (above the horizon) in degrees
     slope : slope in radians if you don't input it, it is calculated
     aspect : aspect in radians if you don't input it, it is calculated
+    ve_factor : vertical exaggeration factor (must be greater than 0)
 
     Returns
     -------
@@ -236,14 +244,17 @@ def multi_hillshade(dem, resolution_x, resolution_y, nr_directions=16, sun_eleva
     if nr_directions < 1:
         raise Exception("RVT multiple_directions_hillshading: nr_directions must be a positive number!")
 
-    ve_factor = 1
+    if ve_factor <= 0:
+        raise Exception("RVT slope_aspect: ve_factor must be a positive number!")
 
     dem = dem.astype(np.float32)
+    if ve_factor != 1:
+        dem = dem * ve_factor
 
     # calculates slope and aspect if they are not added
     if slope is None or aspect is None:  # slope and aspect are the same, so we have to calculate it once
         dict_slp_asp = slope_aspect(dem=dem, resolution_x=resolution_x, resolution_y=resolution_y,
-                                    ve_factor=ve_factor, output_units="radian")
+                                    output_units="radian")
         slope = dict_slp_asp["slope"]
         aspect = dict_slp_asp["aspect"]
 
@@ -258,7 +269,7 @@ def multi_hillshade(dem, resolution_x, resolution_y, nr_directions=16, sun_eleva
     return multi_hillshade_out
 
 
-def slrm(dem, radius_cell=20):
+def slrm(dem, radius_cell=20, ve_factor=1):
     """
     Calculates Simple local relief model.
 
@@ -266,6 +277,7 @@ def slrm(dem, radius_cell=20):
     ----------
     dem : input DEM 2D numpy array
     radius_cell : Radius for trend assessment [pixels]
+    ve_factor : vertical exaggeration factor (must be greater than 0)
 
     Returns
     -------
@@ -274,7 +286,12 @@ def slrm(dem, radius_cell=20):
     if radius_cell < 10 or radius_cell > 50:
         raise Exception("RVT slrm: Radius for trend assessment needs to be in interval 10-50 pixels!")
 
+    if ve_factor <= 0:
+        raise Exception("RVT slope_aspect: ve_factor must be a positive number!")
+
     dem = dem.astype(np.float32)
+    if ve_factor != 1:
+        dem = dem * ve_factor
 
     dem[dem < -1200] = np.float64(np.NaN)
     dem[dem > 2000] = np.float64(np.NaN)
@@ -551,7 +568,7 @@ def sky_view_factor_compute(height_arr, i_valid, radius_max, radius_min, num_dir
 
 
 def sky_view_factor(dem, resolution, compute_svf=True, compute_opns=False, compute_asvf=False,
-                    svf_n_dir=16, svf_r_max=10, svf_noise=0, asvf_dir=315, asvf_level=1):
+                    svf_n_dir=16, svf_r_max=10, svf_noise=0, asvf_dir=315, asvf_level=1, ve_factor=1):
     """
     Prepare the data, call sky_view_factor_compute, reformat and return back 2D arrays.
 
@@ -568,6 +585,7 @@ def sky_view_factor(dem, resolution, compute_svf=True, compute_opns=False, compu
     asvf_level : level of anisotropy, 1-low, 2-high,
     a_min_weight : weight to consider anisotropy (0 - isotropic, 1 - no illumination from the direction
                    opposite the main direction)
+    ve_factor : vertical exaggeration factor (must be greater than 0)
         CONSTANTS:
             sc_asvf_min : level of polynomial that determines the anisotropy, selected with in_asvf_level
             sc_asvf_pol : level of polynomial that determines the anisotropy, selected with in_asvf_level
@@ -582,7 +600,12 @@ def sky_view_factor(dem, resolution, compute_svf=True, compute_opns=False, compu
         opns_out, openness : 2D numpy openness (elevation angle of horizon)
     """
 
+    if ve_factor <= 0:
+        raise Exception("RVT slope_aspect: ve_factor must be a positive number!")
+
     dem = dem.astype(np.float32)
+    if ve_factor != 1:
+        dem = dem * ve_factor
 
     # CONSTANTS
     # level of polynomial that determines the anisotropy, selected with in_asvf_level (1 - low, 2 - high)
@@ -815,7 +838,7 @@ def morph_shade(height, sol_z, sol_a, d_max, nrows, ncols, resolution):
 
 
 def sky_illumination(dem, resolution, sky_model="overcast", sampling_points=250, shadow_dist=100,
-                     shadow_az=315, shadow_el=35, shadow_only=False):
+                     shadow_az=315, shadow_el=35, shadow_only=False, ve_factor=1):
     """
     Compute topographic corrections for sky illumination.
 
@@ -829,6 +852,7 @@ def sky_illumination(dem, resolution, sky_model="overcast", sampling_points=250,
     shadow_az : shadow azimuth
     shadow_el : shadow elevation
     shadow_only : bool compute shadow only
+    ve_factor : vertical exaggeration factor (must be greater than 0)
 
     Returns
     -------
@@ -839,8 +863,12 @@ def sky_illumination(dem, resolution, sky_model="overcast", sampling_points=250,
         raise Exception("RVT sky_illumination: sampling_points needs to be 250 or 500!")
     if sky_model != "overcast" and sky_model != "uniform":
         raise Exception("RVT sky_illumination: sky_model needs to be overcast or uniform!")
+    if ve_factor <= 0:
+        raise Exception("RVT slope_aspect: ve_factor must be a positive number!")
 
     dem = dem.astype(np.float32)
+    if ve_factor != 1:
+        dem = dem * ve_factor
 
     indx_no_values = np.where(dem < 0)
     dem[indx_no_values[0], indx_no_values[1]] = np.float64(np.NaN)
@@ -909,7 +937,7 @@ def sky_illumination(dem, resolution, sky_model="overcast", sampling_points=250,
         return sky_illum_out
 
 
-def local_dominance(dem, min_rad=10, max_rad=20, rad_inc=1, angular_res=15, observer_height=1.7):
+def local_dominance(dem, min_rad=10, max_rad=20, rad_inc=1, angular_res=15, observer_height=1.7, ve_factor=1):
     """
     Compute Local Dominance dem visualization.
     Adapted from original version that is part of the Lida Visualisation Toolbox LiVT developed by Ralf Hesse.
@@ -922,12 +950,18 @@ def local_dominance(dem, min_rad=10, max_rad=20, rad_inc=1, angular_res=15, obse
     rad_inc : radial distance steps in pixels
     angular_res : angular step for determination of number of angular directions
     observer_height : height at which we observe the terrain
+    ve_factor : vertical exaggeration factor (must be greater than 0)
 
     Returns
     -------
     local_dom_out - 2D numpy array of local dominance
     """
+    if ve_factor <= 0:
+        raise Exception("RVT slope_aspect: ve_factor must be a positive number!")
+
     dem = dem.astype(np.float32)
+    if ve_factor != 1:
+        dem = dem * ve_factor
     # create a vector with possible distances
     n_dist = int((max_rad - min_rad) / rad_inc + 1)
     distances = np.arange(n_dist * rad_inc, step=rad_inc) + min_rad
