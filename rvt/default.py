@@ -34,8 +34,8 @@ import numpy as np
 
 class DefaultValues():
     def __init__(self):
+        self.ve_factor = 1
         # slope gradient
-        self.slp_ve_factor = 1
         self.slp_output_units = "degree"
         # hillshade
         self.hs_sun_azi = 315
@@ -86,7 +86,12 @@ class DefaultValues():
                   "# Slope gradient\n# Simple local relief model\n# Sky-View Factor\n# Anisotropic Sky-View Factor\n"
                   "# Openness - Positive\n# Openness - Negative\n# Sky illumination\n# Local dominance\n\n"
                   "# --------------------------------------------------------------------------------------------------"
-                  "--------\n\n# Hillshade\n")
+                  "--------\n\n")
+        dat.write("ve_factor = {}  # vertical exaggeration (positive number!)\n\n".format(self.ve_factor))
+        dat.write("# Slope gradient\n")
+        dat.write("slp_output_units = {}  # slope output units"
+                  " [radian, degree, percent]\n\n".format(self.slp_output_units))
+        dat.write("# Hillshade\n")
         dat.write("hs_sun_azi = {}  # solar azimuth angle (clockwise from North) in degrees\n".format(self.hs_sun_azi))
         dat.write("hs_sun_el = {}  # solar vertical angle (above the horizon) in degrees\n\n".format(self.hs_sun_el))
         dat.write("# Multiple directions hillshade\n")
@@ -134,7 +139,11 @@ class DefaultValues():
                 parameter_value = line_list[1].strip()
             else:
                 warnings.warn("RVT read_default_from_file: Wrong line '{}'".format(line))
-            if parameter_name == "hs_sun_azi":
+            if parameter_name == "ve_factor":
+                self.ve_factor = float(parameter_value)
+            elif parameter_name == "slp_output_units":
+                self.slp_output_units = str(parameter_value)
+            elif parameter_name == "hs_sun_azi":
                 self.hs_sun_azi = int(parameter_value)
             elif parameter_name == "hs_sun_el":
                 self.hs_sun_el = int(parameter_value)
@@ -223,7 +232,7 @@ class DefaultValues():
     # get slope, aspect dict
     def get_slope(self, dem_arr, resolution_x, resolution_y):
         dict_slp_asp = rvt.vis.slope_aspect(dem=dem_arr, resolution_x=resolution_x, resolution_y=resolution_y,
-                                            ve_factor=self.slp_ve_factor, output_units=self.slp_output_units)
+                                            ve_factor=self.ve_factor, output_units=self.slp_output_units)
         return dict_slp_asp
 
     # save default slope gradient
@@ -251,7 +260,8 @@ class DefaultValues():
     # get hillshade array
     def get_hillshade(self, dem_arr, resolution_x, resolution_y):
         hillshade_arr = rvt.vis.hillshade(dem=dem_arr, resolution_x=resolution_x, resolution_y=resolution_y,
-                                          sun_azimuth=self.hs_sun_azi, sun_elevation=self.hs_sun_el)
+                                          sun_azimuth=self.hs_sun_azi, sun_elevation=self.hs_sun_el,
+                                          ve_factor=self.ve_factor)
         return hillshade_arr
 
     # save default hillshade
@@ -278,7 +288,8 @@ class DefaultValues():
     # get multi hillshade array
     def get_multi_hillshade(self, dem_arr, resolution_x, resolution_y):
         multi_hillshade_arr = rvt.vis.multi_hillshade(dem=dem_arr, resolution_x=resolution_x, resolution_y=resolution_y,
-                                                      nr_directions=self.mhs_nr_dir, sun_elevation=self.mhs_sun_el)
+                                                      nr_directions=self.mhs_nr_dir, sun_elevation=self.mhs_sun_el,
+                                                      ve_factor=self.ve_factor)
         return multi_hillshade_arr
 
     def save_multi_hillshade(self, dem_path):
@@ -304,7 +315,7 @@ class DefaultValues():
         return 1
 
     def get_slrm(self, dem_arr):
-        slrm_arr = rvt.vis.slrm(dem=dem_arr, radius_cell=self.slrm_rad_cell)
+        slrm_arr = rvt.vis.slrm(dem=dem_arr, radius_cell=self.slrm_rad_cell, ve_factor=self.ve_factor)
         return slrm_arr
 
     def save_slrm(self, dem_path):
@@ -330,7 +341,7 @@ class DefaultValues():
                                                      compute_opns=compute_opns, compute_asvf=compute_asvf,
                                                      svf_n_dir=self.svf_n_dir, svf_r_max=self.svf_r_max,
                                                      svf_noise=self.svf_noise, asvf_dir=self.asvf_dir,
-                                                     asvf_level=self.asvf_level)
+                                                     asvf_level=self.asvf_level, ve_factor=self.ve_factor)
         return dict_svf_asvf_opns
 
     def save_sky_view_factor(self, dem_path, save_svf=True, save_asvf=False, save_opns=False):
@@ -392,7 +403,8 @@ class DefaultValues():
         dem_arr = -1 * dem_arr
         dict_neg_opns = rvt.vis.sky_view_factor(dem=dem_arr, resolution=resolution, svf_n_dir=self.svf_n_dir,
                                                 svf_r_max=self.svf_r_max, svf_noise=self.svf_noise,
-                                                compute_svf=False, compute_asvf=False, compute_opns=True)
+                                                compute_svf=False, compute_asvf=False, compute_opns=True,
+                                                ve_factor=self.ve_factor)
         neg_opns_arr = dict_neg_opns["opns"]
         return neg_opns_arr
 
@@ -422,7 +434,8 @@ class DefaultValues():
         sky_illumination_arr = rvt.vis.sky_illumination(dem=dem_arr, resolution=resolution, sky_model=self.sim_sky_mod,
                                                         sampling_points=self.sim_samp_pnts,
                                                         shadow_dist=self.sim_shadow_dist,
-                                                        shadow_az=self.sim_shadow_az, shadow_el=self.sim_shadow_el)
+                                                        shadow_az=self.sim_shadow_az, shadow_el=self.sim_shadow_el,
+                                                        ve_factor=self.ve_factor)
         return sky_illumination_arr
 
     def save_sky_illumination(self, dem_path):
@@ -450,7 +463,7 @@ class DefaultValues():
     def get_local_dominance(self, dem_arr):
         local_dominance_arr = rvt.vis.local_dominance(dem=dem_arr, min_rad=self.ld_min_rad, max_rad=self.ld_max_rad,
                                                       rad_inc=self.ld_rad_inc, angular_res=self.ld_anglr_res,
-                                                      observer_height=self.ld_observer_h)
+                                                      observer_height=self.ld_observer_h, ve_factor=self.ve_factor)
         return local_dominance_arr
 
     def save_local_dominance(self, dem_path):

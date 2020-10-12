@@ -84,6 +84,7 @@ dict_slp_asp = rvt.vis.slope_aspect(dem=input_dem_arr, resolution_x=x_res, resol
 slope_arr = dict_slp_asp["slope"]
 aspect_arr = dict_slo_asp["aspect"]
 ```
+Like Slope Gradient every function has ve_factor parameter.
 
 *   **Hillshade** <br>
 Parameters <br>

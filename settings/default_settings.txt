@@ -23,6 +23,11 @@
 
 # ----------------------------------------------------------------------------------------------------------
 
+ve_factor = 1.0  # vertical exaggeration (positive number!)
+
+# Slope gradient
+slp_output_units = degree  # slope output units [radian, degree, percent]
+
 # Hillshade
 hs_sun_azi = 315  # solar azimuth angle (clockwise from North) in degrees
 hs_sun_el = 35  # solar vertical angle (above the horizon) in degrees
