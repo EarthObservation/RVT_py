@@ -17,9 +17,9 @@
 
 # -- Project information -----------------------------------------------------
 
-project = '# Relief Visualization Toolbox in Python'
+project = 'Relief Visualization Toolbox in Python'
 copyright = '2020, University of Ljubljana and ZRC SAZU'
-author = 'University of Ljubljana and ZRC SAZU'
+author = 'ZRC SAZU and University of Ljubljana'
 
 
 # -- General configuration ---------------------------------------------------
