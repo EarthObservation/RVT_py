@@ -31,6 +31,7 @@ master_doc = 'index'
 extensions = [
     'sphinx.ext.autodoc',  # Core library for html generation from docstrings
     'sphinx.ext.autosummary',  # Create neat summary tables
+    'sphinx.ext.napoleon' # Use NumPy docstrings
 ]
 
 autosummary_generate = True  # Turn on sphinx.ext.autosummary

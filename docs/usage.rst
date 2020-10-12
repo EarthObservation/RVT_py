@@ -136,7 +136,7 @@ Sample dataset
 
 A sample dataset for trying RVT python is available here in the package ``/test_data/TM1_564_146.tif``. Additional files are available here:
 
-`RVT Test Data <http://bit.ly/RVT_test>`_
+`RVT Demo Data <https://rebrand.ly/rvt_demo>`_
 
 Download it, save it in ``test_data`` directory and try the visualisations.
 
