@@ -70,3 +70,6 @@ Copyright 2020 ZRC SAZU and University of Ljubljana
    usage
    examples
    arcgis
+   rvt.vis
+   rvt.default
+   rvt.blend

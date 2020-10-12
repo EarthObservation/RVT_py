@@ -10,15 +10,14 @@
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 #
-# import os
-# import sys
-# sys.path.insert(0, os.path.abspath('.'))
-
+import os
+import sys
+sys.path.insert(0, os.path.abspath('..'))  # Source code dir relative to this file
 
 # -- Project information -----------------------------------------------------
 
 project = 'Relief Visualization Toolbox in Python'
-copyright = '2020, University of Ljubljana and ZRC SAZU'
+copyright = '2020, ZRC SAZU and University of Ljubljana'
 author = 'ZRC SAZU and University of Ljubljana'
 
 
@@ -28,7 +27,14 @@ author = 'ZRC SAZU and University of Ljubljana'
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [
+    'sphinx.ext.autodoc',  # Core library for html generation from docstrings
+    'sphinx.ext.autosummary',  # Create neat summary tables
 ]
+
+autosummary_generate = True  # Turn on sphinx.ext.autosummary
+autoclass_content = "both"  # Add __init__ doc (ie. params) to class summaries
+html_show_sourcelink = False  # Remove 'view source code' from top of page (for html, not python)
+autodoc_inherit_docstrings = True  # If no class summary, inherit base class summary
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
