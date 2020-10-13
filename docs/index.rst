@@ -22,7 +22,7 @@ Methods currently implemented are:
 *   positive and negative openness,
 *   local dominance.
 
-.. image:: /figures/RVT_visualisations.jpg
+.. image:: ./figures/RVT_visualisations.jpg
 
 For a more detailed description see references given at each method in the manual and a comparative paper describing them (e.g. Kokalj and Hesse 2017, see below).
 
