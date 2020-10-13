@@ -2,6 +2,5 @@ matplotlib
 numpy
 scipy
 rasterio
-warnings
 time
 os
