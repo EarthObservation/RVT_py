@@ -2,5 +2,3 @@ matplotlib
 numpy
 scipy
 rasterio
-time
-os
