@@ -31,9 +31,11 @@ master_doc = 'index'
 extensions = [
     'sphinx.ext.autodoc',  # Core library for html generation from docstrings
     'sphinx.ext.autosummary',  # Create neat summary tables
+    'sphinx.ext.viewcode', # Add links to highlighted source code
     'sphinx.ext.napoleon' # Use NumPy docstrings
 ]
 
+autodoc_member_order = 'bysource' # Content is in the same order as in module
 autosummary_generate = True  # Turn on sphinx.ext.autosummary
 autoclass_content = "both"  # Add __init__ doc (ie. params) to class summaries
 html_show_sourcelink = False  # Remove 'view source code' from top of page (for html, not python)
