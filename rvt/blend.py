@@ -457,11 +457,6 @@ class BlenderLayer:
         Path to DEM. Doesn't matter if image is not None. Leave None if you would like for blender to compute it.
     image : numpy.array (2D)
         Visualization raster. Leave None if you would like for blender to compute it.
-
-    Methods
-    -------
-    check_data()
-        Check Attributes.
     """
 
     def __init__(self, vis_method=None, normalization="value", minimum=None, maximum=None,
@@ -477,6 +472,7 @@ class BlenderLayer:
         self.check_data()
 
     def check_data(self):
+        """ Check Attributes """
         if self.vis is None:  # if vis is None everything is None
             self.normalization = None
             self.min = None
