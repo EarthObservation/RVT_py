@@ -523,8 +523,7 @@ class BlenderLayer:
 
 class BlenderLayers:
     """
-    Class with layers list (one layer is BlenderLayer). Class contains methods for adding layers, reading layers from
-     file and rendering (blending) layers together.
+    Class for storing layers (rasters, parameters  for blending) and rendering(blending) into blended raster.
 
     Attributes
     ----------
@@ -534,30 +533,6 @@ class BlenderLayers:
         Path to DEM, needed for calculating visualization functions and saving them.
     layers : [BlenderLayer]
         List of BlenderLayer instances which will be blended together.
-
-    Methods
-    -------
-    add_dem_arr(dem_arr, resolution)
-        Add or change dem_arr attribute and its resolution.
-    add_dem_path(dem_path)
-        Add or change dem_path attribute.
-    create_layer(vis_method=None, normalization="value", minimum=None, maximum=None,
-                     blend_mode="normal", opacity=100, image=None, image_path=None)
-        Create BlenderLayer and adds it to layers attribute.
-    add_layer(layer: BlenderLayer)
-        Add BlenderLayer instance to layers attribute.
-    remove_all_layers()
-        Empties layers attribute.
-    build_blender_layers_from_file(file_path)
-        Fill layers attribute from file.
-    render_all_images(self, default=None, save_visualizations=False, save_render_path=None)
-        Render all layers and returns blended image. If specific layer (BlenderLayer) in layers has image (is not None),
-         method uses this image, if image is None and layer has image_path method reads image from path.
-        If both image and image_path are None method calculates visualization. If save_visualization is True method
-        needs dem_path and saves each visualization (if it doesn't exists) in directory of dem_path,
-        else (save_visualization=False) method needs dem_arr, dem_resolution and calculates each visualization
-         simultaneously (in memory). Be careful save_visualisation applies only if specific BlenderLayer
-         image and image_path are None
     """
 
     def __init__(self, dem_arr=None, dem_resolution=None, dem_path=None):
@@ -567,25 +542,31 @@ class BlenderLayers:
         self.layers = []
 
     def add_dem_arr(self, dem_arr, dem_resolution):
+        """Add or change dem_arr attribute and its resolution dem_resolution attribute."""
         self.dem_arr = dem_arr
         self.dem_resolution = dem_resolution
 
     def add_dem_path(self, dem_path):
+        """Add or change dem_path attribute."""
         self.dem_path = dem_path
 
     def create_layer(self, vis_method=None, normalization="value", minimum=None, maximum=None,
                      blend_mode="normal", opacity=100, image=None, image_path=None):
+        """Create BlenderLayer and adds it to layers attribute."""
         layer = BlenderLayer(vis_method=vis_method, normalization=normalization, minimum=minimum, maximum=maximum,
                              blend_mode=blend_mode, opacity=opacity, image=image, image_path=image_path)
         self.layers.append(layer)
 
     def add_layer(self, layer: BlenderLayer):
+        """Add BlenderLayer instance to layers attribute."""
         self.layers.append(layer)
 
     def remove_all_layers(self):
+        """Empties layers attribute."""
         self.layers = []
 
     def build_blender_layers_from_file(self, file_path):
+        """Fill layers from file."""
         self.layers = []
         # Example file (for file_path) in dir settings: blender_file_example.txt
         dat = open(file_path, "r")
@@ -628,6 +609,13 @@ class BlenderLayers:
         dat.close()
 
     def render_all_images(self, default=None, save_visualizations=False, save_render_path=None):
+        """Render all layers and returns blended image. If specific layer (BlenderLayer) in layers has image
+            (is not None), method uses this image, if image is None and layer has image_path method reads image from path.
+            If both image and image_path are None method calculates visualization. If save_visualization is True method
+            needs dem_path and saves each visualization (if it doesn't exists) in directory of dem_path,
+            else (save_visualization=False) method needs dem_arr, dem_resolution and calculates each visualization
+            simultaneously (in memory). Be careful save_visualisation applies only if specific BlenderLayer
+            image and image_path are None"""
         if save_render_path is not None and self.dem_path is None:
             raise Exception("rvt.blend.BlenderLayers.render_all_images: If you would like to save rendered image (blender), "
                             "you have to define dem_path (BlenderLayers.add_dem_path())!")

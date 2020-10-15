@@ -94,20 +94,6 @@ class DefaultValues():
         Local dominance. Angular step for determination of number of angular directions.
     ld_observer_h : float
         Local dominance. Height at which we observe the terrain.
-
-    Methods
-    -------
-    save_default_to_file(file_path=None)
-        Stores default values to file. If file_path None it stores default to "settings\default_settings.txt"
-    read_default_from_file(file_path)
-        Read default values from file.
-    get_"vis_function"_path(dem_path)
-        Returns vis_function default path (name convention inherited from IDL RVT).
-    get_"vis_function"(dem_arr)
-        Returns computed vis_function np.array (2D)
-    save_"vis_function"(dem_path)
-        Saves vis function in same directory as dem (in path which get_"vis_function"_path(dem_path) returns).
-
     """
     def __init__(self):
         self.ve_factor = 1
@@ -141,6 +127,7 @@ class DefaultValues():
         self.ld_observer_h = 1.7
 
     def save_default_to_file(self, file_path=None):
+        """Saves default attributes into file."""
         if file_path is None:
             file_path = r"settings\default_settings.txt"
             if os.path.isfile(file_path):
@@ -200,6 +187,7 @@ class DefaultValues():
         dat.write("ld_observer_h = {}  # height at which we observe the terrain\n".format(self.ld_observer_h))
 
     def read_default_from_file(self, file_path):
+        """Reads default attributes from file."""
         # Example file in dir settings: default_settings.txt
         dat = open(file_path, "r")
         for line in dat:
