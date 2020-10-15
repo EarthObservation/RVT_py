@@ -437,34 +437,32 @@ def normalize_image(visualization, image, min_norm, max_norm, normalization):
 
 class BlenderLayer:
     """
-        Class which define layer for blending. BlenderLayer is basic element in BlenderLayers.layers list.
+    Class which define layer for blending. BlenderLayer is basic element in BlenderLayers.layers list.
 
-        Attributes
-        ----------
-        dem_arr : np.array (2D)
-            Array with DEM data, needed for calculating visualization functions in memory.
-        vis : str
-            Visualization method.
-        normalization : str
-            Normalization type, could be "Value" or "Percent".
-        min : float
-            Normalization minimum.
-        max : float
-            Normalization maximum.
-        opacity : integer
-            Image (visualization) opacity.
-        image_path : str
-            Path to DEM. Doesn't matter if image is not None. Leave None if you would like for blender to compute it.
-        image : numpy.array (2D)
-            Visualization raster. Leave None if you would like for blender to compute it.
+    Attributes
+    ----------
+    dem_arr : np.array (2D)
+        Array with DEM data, needed for calculating visualization functions in memory.
+    vis : str
+        Visualization method.
+    normalization : str
+        Normalization type, could be "Value" or "Percent".
+    min : float
+        Normalization minimum.
+    max : float
+        Normalization maximum.
+    opacity : integer
+        Image (visualization) opacity.
+    image_path : str
+        Path to DEM. Doesn't matter if image is not None. Leave None if you would like for blender to compute it.
+    image : numpy.array (2D)
+        Visualization raster. Leave None if you would like for blender to compute it.
 
-        Methods
-        -------
-        check_data()
-            Check Attributes.
-
-
-        """
+    Methods
+    -------
+    check_data()
+        Check Attributes.
+    """
 
     def __init__(self, vis_method=None, normalization="value", minimum=None, maximum=None,
                  blend_mode="normal", opacity=100, image=None, image_path=None):
