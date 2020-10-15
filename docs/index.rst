@@ -26,10 +26,13 @@ Methods currently implemented are:
 
 For a more detailed description see references given at each method in the manual and a comparative paper describing them (e.g. Kokalj and Hesse 2017, see below).
 
-RVT python library called rvt contains 3 modules: vis (rvt.vis), blend (rvt.blend) and default (rvt.default). Modules contains:
-* vis       -   visualization functions (mentioned above), for computing visualizations;
-* blend     -   blender (mixer), for blending visualizations;
-* default   -   default values, class for defining default parameters with methods to compute and save visualization functions using set parameters.
+RVT python library called rvt contains modules:
+
+* vis (:ref:`rvt.vis`) - visualization functions (mentioned above), for computing visualizations;
+
+* blend (:ref:`rvt.blend`) - blender (mixer), for blending visualizations;
+
+* default (:ref:`rvt.default`) - default values, class for defining default parameters with methods to compute and save visualization functions using set parameters.
 
 References
 ----------
@@ -43,14 +46,14 @@ When using the tools, please cite:
 Contributing
 ------------
 
-Pull requests are welcome. For major changes, please open an issue first to discuss what you would like to change.
+The project source code is available on  `GitHub <https://github.com/EarthObservation/RVT_py>`_. Pull requests are welcome. For major changes, please open an issue first to discuss what you would like to change.
 
 Please report any bugs and suggestions for improvements.
 
 Acknowledgment
 --------------
 
-Development of RVT was part financed by the European Commission's Culture Programme through the ArchaeoLandscapes Europe project and by the Slovenian Research Agency core funding No. P2-0406, and by research projects No. J6-7085 and No. J6-9395.
+Development of RVT was part financed by the European Commission's Culture Programme through the ArchaeoLandscapes Europe project and by the Slovenian Research Agency core funding No. P2-0406, and by research projects No. J2-9251, No. J6-7085 and No. J6-9395.
 
 License
 -------
@@ -68,6 +71,7 @@ Copyright 2020 ZRC SAZU and University of Ljubljana
    usage
    examples
    arcgis
+   qgis
    rvt.vis
    rvt.default
    rvt.blend
