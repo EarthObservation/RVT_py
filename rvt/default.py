@@ -30,9 +30,71 @@ import rasterio as rio
 import numpy as np
 
 
-# TODO: add bytescale option for every save method
-
 class DefaultValues():
+    """
+    Class which define layer for blending. BlenderLayer is basic element in BlenderLayers.layers list.
+
+    Attributes
+    ----------
+    ve_factor : float
+        For all vis functions. Vertical exaggeration.
+    slp_output_units : str
+        Slope. Output units [radian, degree, percent].
+    hs_sun_azi : int
+        Hillshade. Solar azimuth angle (clockwise from North) in degrees.
+    hs_sun_el : int
+        Hillshade. Solar vertical angle (above the horizon) in degrees.
+    mhs_nr_dir : int
+        Multi directional hillshade. Number of solar azimuth angles (clockwise from North).
+    mhs_sun_el : int
+        Multi directional hillshade. Solar vertical angle (above the horizon) in degrees.
+    slrm_rad_cell : int
+        Simple local relief model. Radius for trend assessment in pixels.
+    svf_n_dir : int
+        Sky-View Factor (Anisotropic Sky-View Factor, Openness). Number of directions.
+    svf_r_max : int
+        Sky-View Factor (Anisotropic Sky-View Factor, Openness). Maximal search radius in pixels.
+    svf_noise : int
+        Sky-View Factor (Anisotropic Sky-View Factor, Openness). The level of noise remove [0-don't remove, 1-low, 2-med, 3-high].
+    asvf_dir : int
+        Anisotropic Sky-View Factor. Direction of anisotropy in degrees.
+    asvf_level : int
+        Anisotropic Sky-View Factor. Level of anisotropy [1-low, 2-high].
+    sim_sky_mod : str
+        Sky illumination. Sky model [overcast, uniform].
+    sim_samp_pnts : int
+        Sky illumination. Number of sampling points [250 or 500].
+    sim_shadow_dist : int
+        Sky illumination. Max shadow modeling distance in pixels.
+    sim_shadow_az : int
+        Sky illumination. Shadow azimuth in degrees.
+    sim_shadow_el : int
+        Sky illumination. Shadow elevation in degrees.
+    ld_min_rad : int
+        Local dominance. Minimum radial distance (in pixels) at which the algorithm starts with visualization computation.
+    ld_max_rad : int
+        Local dominance. Maximum radial distance (in pixels) at which the algorithm ends with visualization computation.
+    ld_rad_inc : int
+        Local dominance. Radial distance steps in pixels.
+    ld_anglr_res : int
+        Local dominance. Angular step for determination of number of angular directions.
+    ld_observer_h : float
+        Local dominance. Height at which we observe the terrain.
+
+    Methods
+    -------
+    save_default_to_file(file_path=None)
+        Stores default values to file. If file_path None it stores default to "settings\default_settings.txt"
+    read_default_from_file(file_path)
+        Read default values from file.
+    get_"vis_function"_path(dem_path)
+        Returns vis_function default path (name convention inherited from IDL RVT).
+    get_"vis_function"(dem_arr)
+        Returns computed vis_function np.array (2D)
+    save_"vis_function"(dem_path)
+        Saves vis function in same directory as dem (in path which get_"vis_function"_path(dem_path) returns).
+
+    """
     def __init__(self):
         self.ve_factor = 1
         # slope gradient
@@ -138,7 +200,7 @@ class DefaultValues():
                 parameter_name = line_list[0].strip()
                 parameter_value = line_list[1].strip()
             else:
-                warnings.warn("RVT read_default_from_file: Wrong line '{}'".format(line))
+                warnings.warn("rvt.default.read_default_from_file: Wrong line '{}'".format(line))
             if parameter_name == "ve_factor":
                 self.ve_factor = float(parameter_value)
             elif parameter_name == "slp_output_units":
@@ -184,7 +246,7 @@ class DefaultValues():
             elif parameter_name == "ld_observer_h":
                 self.ld_observer_h = float(parameter_value)
             else:
-                warnings.warn("RVT read_default_from_file: Wrong line '{}'".format(line))
+                warnings.warn("rvt.default.read_default_from_file: Wrong line '{}'".format(line))
         dat.close()
 
     def get_hillshade_path(self, dem_path):
@@ -241,7 +303,7 @@ class DefaultValues():
         if os.path.isfile(slope_path):
             return 0
         if not os.path.isfile(dem_path):
-            raise Exception("RVT DefaultValues.save_slope: dem_path doesn't exist!")
+            raise Exception("rvt.default.DefaultValues.save_slope: dem_path doesn't exist!")
         dem_dataset = rio.open(dem_path)
         t = dem_dataset.transform
         x_res = t[0]
@@ -270,7 +332,7 @@ class DefaultValues():
         if os.path.isfile(hillshade_path):
             return 0
         if not os.path.isfile(dem_path):
-            raise Exception("RVT DefaultValues.save_hillshade: dem_path doesn't exist!")
+            raise Exception("rvt.default.DefaultValues.save_hillshade: dem_path doesn't exist!")
         dem_dataset = rio.open(dem_path)
         t = dem_dataset.transform
         x_res = t[0]
@@ -297,7 +359,7 @@ class DefaultValues():
         if os.path.isfile(multi_hillshade_path):
             return 0
         if not os.path.isfile(dem_path):
-            raise Exception("RVT DefaultValues.save_multi_hillshade: dem_path doesn't exist!")
+            raise Exception("rvt.default.DefaultValues.save_multi_hillshade: dem_path doesn't exist!")
         dem_dataset = rio.open(dem_path)
         t = dem_dataset.transform
         x_res = t[0]
@@ -323,7 +385,7 @@ class DefaultValues():
         if os.path.isfile(slrm_path):
             return 0
         if not os.path.isfile(dem_path):
-            raise Exception("RVT DefaultValues.save_slrm: dem_path doesn't exist!")
+            raise Exception("rvt.default.DefaultValues.save_slrm: dem_path doesn't exist!")
         dem_dataset = rio.open(dem_path)
         dem_arr = dem_dataset.read()[0]
         slrm_arr = self.get_slrm(dem_arr=dem_arr).astype('float32')
@@ -362,13 +424,13 @@ class DefaultValues():
         if not save_svf and not save_asvf and not save_opns:
             return 0
         if not os.path.isfile(dem_path):
-            raise Exception("RVT DefaultValues.save_sky_view_factor: dem_path doesn't exist!")
+            raise Exception("rvt.default.DefaultValues.save_sky_view_factor: dem_path doesn't exist!")
         dem_dataset = rio.open(dem_path)
         t = dem_dataset.transform
         x_res = t[0]
         y_res = -t[4]
         if x_res != y_res:
-            raise Exception("RVT DefaultValues.save_sky_view_factor: dem x resolution not equal y resolution")
+            raise Exception("rvt.default.DefaultValues.save_sky_view_factor: dem x resolution not equal y resolution")
         dem_arr = dem_dataset.read()[0]
         dict_svf_asvf_opns = self.get_sky_view_factor(dem_arr=dem_arr, resolution=x_res, compute_svf=save_svf,
                                                       compute_asvf=save_asvf, compute_opns=save_opns)
@@ -413,13 +475,13 @@ class DefaultValues():
         if os.path.isfile(neg_opns_path):
             return 0
         if not os.path.isfile(dem_path):
-            raise Exception("RVT DefaultValues.save_neg_opns: dem_path doesn't exist!")
+            raise Exception("rvt.default.DefaultValues.save_neg_opns: dem_path doesn't exist!")
         dem_dataset = rio.open(dem_path)
         t = dem_dataset.transform
         x_res = t[0]
         y_res = -t[4]
         if x_res != y_res:
-            raise Exception("RVT DefaultValues.save_sky_view_factor: dem x resolution not equal y resolution")
+            raise Exception("rvt.default.DefaultValues.save_sky_view_factor: dem x resolution not equal y resolution")
         dem_arr = dem_dataset.read()[0]
         neg_opns_arr = self.get_neg_opns(dem_arr=dem_arr, resolution=x_res).astype('float32')
         profile = dem_dataset.profile
@@ -443,13 +505,13 @@ class DefaultValues():
         if os.path.isfile(sky_illumination_path):
             return 0
         if not os.path.isfile(dem_path):
-            raise Exception("RVT DefaultValues.save_sky_view_factor: dem_path doesn't exist!")
+            raise Exception("rvt.default.DefaultValues.save_sky_view_factor: dem_path doesn't exist!")
         dem_dataset = rio.open(dem_path)
         t = dem_dataset.transform
         x_res = t[0]
         y_res = -t[4]
         if x_res != y_res:
-            raise Exception("RVT DefaultValues.save_sky_view_factor: dem x resolution not equal y resolution")
+            raise Exception("rvt.default.DefaultValues.save_sky_view_factor: dem x resolution not equal y resolution")
         dem_arr = dem_dataset.read()[0]
         sky_illumination_arr = self.get_sky_illumination(dem_arr=dem_arr, resolution=x_res).astype('float32')
         profile = dem_dataset.profile
@@ -471,7 +533,7 @@ class DefaultValues():
         if os.path.isfile(local_dominance_path):
             return 0
         if not os.path.isfile(dem_path):
-            raise Exception("RVT DefaultValues.save_local_dominance: dem_path doesn't exist!")
+            raise Exception("rvt.default.DefaultValues.save_local_dominance: dem_path doesn't exist!")
         dem_dataset = rio.open(dem_path)
         dem_arr = dem_dataset.read()[0]
         local_dominance_arr = self.get_local_dominance(dem_arr=dem_arr).astype('float32')
