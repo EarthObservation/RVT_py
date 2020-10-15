@@ -104,10 +104,10 @@ def slope_aspect(dem, resolution_x, resolution_y, ve_factor=1, output_units="rad
     """
 
     if ve_factor <= 0:
-        raise Exception("RVT slope_aspect: ve_factor must be a positive number!")
+        raise Exception("rvt.vis.slope_aspect: ve_factor must be a positive number!")
 
     if resolution_x < 0 or resolution_y < 0:
-        raise Exception("RVT slope_aspect: resolution must be a positive number!")
+        raise Exception("rvt.vis.slope_aspect: resolution must be a positive number!")
 
     dem = dem.astype(np.float32)
     if ve_factor != 1:
@@ -129,7 +129,7 @@ def slope_aspect(dem, resolution_x, resolution_y, ve_factor=1, output_units="rad
     elif output_units == "radian":
         slope_out = np.arctan(tan_slope)
     else:
-        raise Exception("RVT calculate_slope: Wrong function input 'output_units'!")
+        raise Exception("rvt.vis.calculate_slope: Wrong function input 'output_units'!")
 
     # compute Aspect
     # aspect identifies the down slope direction of the maximum rate of change in value from each cell to its neighbors:
@@ -180,13 +180,13 @@ def hillshade(dem, resolution_x, resolution_y, sun_azimuth=315, sun_elevation=35
     hillshade_out : result numpy array
     """
     if ve_factor <= 0:
-        raise Exception("RVT slope_aspect: ve_factor must be a positive number!")
+        raise Exception("rvt.vis.slope_aspect: ve_factor must be a positive number!")
 
     if sun_azimuth > 360 or sun_elevation > 90 or sun_azimuth < 0 or sun_elevation < 0:
-        raise Exception("RVT analytical_hillshading: sun_azimuth must be [0-360] and sun_elevation [0-90]!")
+        raise Exception("rvt.vis.analytical_hillshading: sun_azimuth must be [0-360] and sun_elevation [0-90]!")
 
     if resolution_x < 0 or resolution_y < 0:
-        raise Exception("RVT analytical_hillshading: resolution must be a positive number!")
+        raise Exception("rvt.vis.analytical_hillshading: resolution must be a positive number!")
 
     dem = dem.astype(np.float32)
     if ve_factor != 1:
@@ -236,16 +236,16 @@ def multi_hillshade(dem, resolution_x, resolution_y, nr_directions=16, sun_eleva
     """
 
     if sun_elevation > 90 or sun_elevation < 0:
-        raise Exception("RVT multiple_directions_hillshading: sun_elevation must be [0-90]!")
+        raise Exception("rvt.vis.multiple_directions_hillshading: sun_elevation must be [0-90]!")
 
     if resolution_x < 0 or resolution_y < 0:
-        raise Exception("RVT multiple_directions_hillshading: resolution must be a positive number!")
+        raise Exception("rvt.vis.multiple_directions_hillshading: resolution must be a positive number!")
 
     if nr_directions < 1:
-        raise Exception("RVT multiple_directions_hillshading: nr_directions must be a positive number!")
+        raise Exception("rvt.vis.multiple_directions_hillshading: nr_directions must be a positive number!")
 
     if ve_factor <= 0:
-        raise Exception("RVT slope_aspect: ve_factor must be a positive number!")
+        raise Exception("rvt.vis.slope_aspect: ve_factor must be a positive number!")
 
     dem = dem.astype(np.float32)
     if ve_factor != 1:
@@ -284,10 +284,10 @@ def slrm(dem, radius_cell=20, ve_factor=1):
     slrm_out : slrm 2D numpy array
     """
     if radius_cell < 10 or radius_cell > 50:
-        raise Exception("RVT slrm: Radius for trend assessment needs to be in interval 10-50 pixels!")
+        raise Exception("rvt.vis.slrm: Radius for trend assessment needs to be in interval 10-50 pixels!")
 
     if ve_factor <= 0:
-        raise Exception("RVT slope_aspect: ve_factor must be a positive number!")
+        raise Exception("rvt.vis.slope_aspect: ve_factor must be a positive number!")
 
     dem = dem.astype(np.float32)
     if ve_factor != 1:
@@ -601,7 +601,7 @@ def sky_view_factor(dem, resolution, compute_svf=True, compute_opns=False, compu
     """
 
     if ve_factor <= 0:
-        raise Exception("RVT slope_aspect: ve_factor must be a positive number!")
+        raise Exception("rvt.vis.slope_aspect: ve_factor must be a positive number!")
 
     dem = dem.astype(np.float32)
     if ve_factor != 1:
@@ -860,11 +860,11 @@ def sky_illumination(dem, resolution, sky_model="overcast", sampling_points=250,
     """
 
     if sampling_points != 250 and sampling_points != 500:
-        raise Exception("RVT sky_illumination: sampling_points needs to be 250 or 500!")
+        raise Exception("rvt.vis.sky_illumination: sampling_points needs to be 250 or 500!")
     if sky_model != "overcast" and sky_model != "uniform":
-        raise Exception("RVT sky_illumination: sky_model needs to be overcast or uniform!")
+        raise Exception("rvt.vis.sky_illumination: sky_model needs to be overcast or uniform!")
     if ve_factor <= 0:
-        raise Exception("RVT slope_aspect: ve_factor must be a positive number!")
+        raise Exception("rvt.vis.slope_aspect: ve_factor must be a positive number!")
 
     dem = dem.astype(np.float32)
     if ve_factor != 1:
@@ -957,7 +957,7 @@ def local_dominance(dem, min_rad=10, max_rad=20, rad_inc=1, angular_res=15, obse
     local_dom_out - 2D numpy array of local dominance
     """
     if ve_factor <= 0:
-        raise Exception("RVT slope_aspect: ve_factor must be a positive number!")
+        raise Exception("rvt.vis.slope_aspect: ve_factor must be a positive number!")
 
     dem = dem.astype(np.float32)
     if ve_factor != 1:
