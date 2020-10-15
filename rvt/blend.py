@@ -89,13 +89,16 @@ def gray_scale_to_color_ramp(gray_scale, colormap, alpha=False):
 
     Parameters
     ----------
-    gray_scale : normalized gray_scale img as np.array (0-1)
-    colormap : colormap form matplotlib (https://matplotlib.org/3.3.2/tutorials/colors/colormaps.html)
-
+    gray_scale : np.array (2D)
+        Normalized gray_scale img as np.array (0-1)
+    colormap : str
+        colormap form matplotlib (https://matplotlib.org/3.3.2/tutorials/colors/colormaps.html)
+    alpha : bool
+        If True outputs 4D array RGBA, if False outputs 3D array RGB
     Returns
     -------
-    rgba_out :  3D np.array (red 0-255, green 0-255, blue 0-255)
-                if alpha False: 4D np.array (red 0-255, green 0-255, blue 0-255, alpha 0-255)
+    rgba_out : np.array (3D: red 0-255, green 0-255, blue 0-255)
+            If alpha False: np.array (4D: red 0-255, green 0-255, blue 0-255, alpha 0-255)
     """
     cm = mpl.cm.get_cmap(colormap)
     rgba_out = cm(gray_scale)  # normalized rgb
@@ -104,7 +107,7 @@ def gray_scale_to_color_ramp(gray_scale, colormap, alpha=False):
         rgba_out = np.array([rgba_mtpl_out[:, :, 0], rgba_mtpl_out[:, :, 1], rgba_mtpl_out[:, :, 2]])
     else:
         rgba_out = np.array([rgba_mtpl_out[:, :, 0], rgba_mtpl_out[:, :, 1], rgba_mtpl_out[:, :, 2],
-                            rgba_mtpl_out[:, :, 3]])
+                             rgba_mtpl_out[:, :, 3]])
     return rgba_out
 
 
@@ -156,7 +159,7 @@ def advanced_normalization(image, minimum, maximum, normalization):
 
 def image_join_channels(r, g, b):
     if r.shape != g.shape or r.shape != b.shape or g.shape != b.shape:
-        raise Exception("RVT image_join_channels: r, g, b must me same dimensions!")
+        raise Exception("rvt.blend.image_join_channels: r, g, b must me same dimensions!")
     return np.array([r, g, b])
 
 
@@ -421,9 +424,9 @@ def normalize_image(visualization, image, min_norm, max_norm, normalization):
             norm_image = scale_0_to_1(norm_image)
         else:
             norm_image = scale_0_to_1(norm_image)
-            warnings.warn("RVT normalize_images_on_layers: unexpected values! max > 1")
+            warnings.warn("rvt.normalize_images_on_layers: unexpected values! max > 1")
         if np.nanmin(norm_image) < 0:
-            warnings.warn("RVT normalize_images_on_layers: unexpected values! min < 0")
+            warnings.warn("rvt.normalize_images_on_layers: unexpected values! min < 0")
 
     # for slope and neg openness, invert scale
     # meaning high slopes will be black
@@ -433,6 +436,36 @@ def normalize_image(visualization, image, min_norm, max_norm, normalization):
 
 
 class BlenderLayer:
+    """
+        Class which define layer for blending. BlenderLayer is basic element in BlenderLayers.layers list.
+
+        Attributes
+        ----------
+        dem_arr : np.array (2D)
+            Array with DEM data, needed for calculating visualization functions in memory.
+        vis : str
+            Visualization method.
+        normalization : str
+            Normalization type, could be "Value" or "Percent".
+        min : float
+            Normalization minimum.
+        max : float
+            Normalization maximum.
+        opacity : integer
+            Image (visualization) opacity.
+        image_path : str
+            Path to DEM. Doesn't matter if image is not None. Leave None if you would like for blender to compute it.
+        image : numpy.array (2D)
+            Visualization raster. Leave None if you would like for blender to compute it.
+
+        Methods
+        -------
+        check_data()
+            Check Attributes.
+
+
+        """
+
     def __init__(self, vis_method=None, normalization="value", minimum=None, maximum=None,
                  blend_mode="normal", opacity=100, image=None, image_path=None):
         self.vis = vis_method
@@ -446,57 +479,156 @@ class BlenderLayer:
         self.check_data()
 
     def check_data(self):
-        if self.vis is None:
+        if self.vis is None:  # if vis is None everything is None
             self.normalization = None
             self.min = None
             self.max = None
             self.blend_mode = None
             self.opacity = None
-            self.image = None
-            self.image_path = None
-            return
-        if self.normalization is not None:
+            self.image = None  # leave None if you wish for blender to compute visualization
+            self.image_path = None  # leave None if you wish for blender to compute visualization
+        else:
             if self.normalization.lower() != "value" and self.normalization.lower() != "perc":
-                raise Exception("RVT BlenderLayer check_data: normalization value incorrect!")
-        if self.min is not None:
+                raise Exception("rvt.BlenderLayer.check_data: normalization value incorrect!")
             if 0 > self.min > 100:
-                raise Exception("RVT BlenderLayer check_data: min value incorrect [0-100]!")
-        if self.max is not None:
+                raise Exception("rvt.BlenderLayer.check_data: min value incorrect [0-100]!")
             if 0 > self.max > 100:
-                raise Exception("RVT BlenderLayer check_data: max value incorrect [0-100]!")
-        if self.max is not None and self.min is not None:
+                raise Exception("rvt.BlenderLayer.check_data: max value incorrect [0-100]!")
             if self.min > self.max:
-                raise Exception("RVT BlenderLayer check_data: min bigger than max!")
-        if self.blend_mode is not None:
+                raise Exception("rvt.BlenderLayer.check_data: min bigger than max!")
             if self.blend_mode.lower() != "normal" and self.blend_mode.lower() != "multiply" and \
                     self.blend_mode.lower() != "overlay" and self.blend_mode.lower() != "luminosity" and \
                     self.blend_mode.lower() != "screen":
-                raise Exception("RVT BlenderLayer check_data: blend_mode incorrect!")
-        if self.opacity is not None:
+                raise Exception("rvt.BlenderLayer.check_data: blend_mode incorrect!")
             if 0 > self.opacity > 100:
-                raise Exception("RVT BlenderLayer check_data: opacity incorrect [0-100]!")
-        if self.vis is not None and (self.image is None and self.image_path is None):
-            raise Exception("RVT BlenderLayer check_data: Layer needs image or image_path!")
+                raise Exception("rvt.BlenderLayer.check_data: opacity incorrect [0-100]!")
+            if self.image is None and self.image_path is None:
+                if self.vis.lower() != "slope gradient" and self.vis.lower() != "hillshade" and \
+                        self.vis.lower() != "multiple directions hillshade" and \
+                        self.vis.lower() != "simple local relief model" and self.vis.lower() != "sky-view factor" and \
+                        self.vis.lower() != "anisotropic sky-view factor" and \
+                        self.vis.lower() != "openness - positive" and self.vis.lower() != "openness - negative" and \
+                        self.vis.lower() != "sky illumination" and self.vis.lower() != "local dominance":
+                    raise Exception("rvt.BlenderLayer.check_data: Incorrect vis, if you don't input image or "
+                                    "image_path you have to input known visualization method (vis)!")
 
 
 class BlenderLayers:
-    layers = []
+    """
+    Class with layers list (one layer is BlenderLayer). Class contains methods for adding layers, reading layers from
+     file and rendering (blending) layers together.
 
-    # create and add layer
+    Attributes
+    ----------
+    dem_arr : np.array (2D)
+        Array with DEM data, needed for calculating visualization functions in memory.
+    dem_path : str
+        Path to DEM, needed for calculating visualization functions and saving them.
+    layers : [BlenderLayer]
+        List of BlenderLayer instances which will be blended together.
+
+    Methods
+    -------
+    add_dem_arr(dem_arr, resolution)
+        Add or change dem_arr attribute and its resolution.
+    add_dem_path(dem_path)
+        Add or change dem_path attribute.
+    create_layer(vis_method=None, normalization="value", minimum=None, maximum=None,
+                     blend_mode="normal", opacity=100, image=None, image_path=None)
+        Create BlenderLayer and adds it to layers attribute.
+    add_layer(layer: BlenderLayer)
+        Add BlenderLayer instance to layers attribute.
+    remove_all_layers()
+        Empties layers attribute.
+    build_blender_layers_from_file(file_path)
+        Fill layers attribute from file.
+    render_all_images(self, default=None, save_visualizations=False, save_render_path=None)
+        Render all layers and returns blended image. If specific layer (BlenderLayer) in layers has image (is not None),
+         method uses this image, if image is None and layer has image_path method reads image from path.
+        If both image and image_path are None method calculates visualization. If save_visualization is True method
+        needs dem_path and saves each visualization (if it doesn't exists) in directory of dem_path,
+        else (save_visualization=False) method needs dem_arr, dem_resolution and calculates each visualization
+         simultaneously (in memory). Be careful save_visualisation applies only if specific BlenderLayer
+         image and image_path are None
+    """
+
+    def __init__(self, dem_arr=None, dem_resolution=None, dem_path=None):
+        self.dem_arr = dem_arr
+        self.dem_resolution = dem_resolution
+        self.dem_path = dem_path
+        self.layers = []
+
+    def add_dem_arr(self, dem_arr, dem_resolution):
+        self.dem_arr = dem_arr
+        self.dem_resolution = dem_resolution
+
+    def add_dem_path(self, dem_path):
+        self.dem_path = dem_path
+
     def create_layer(self, vis_method=None, normalization="value", minimum=None, maximum=None,
-                     blend_mode="normal", opacity=100, image=None):
+                     blend_mode="normal", opacity=100, image=None, image_path=None):
         layer = BlenderLayer(vis_method=vis_method, normalization=normalization, minimum=minimum, maximum=maximum,
-                             blend_mode=blend_mode, opacity=opacity, image=image)
+                             blend_mode=blend_mode, opacity=opacity, image=image, image_path=image_path)
         self.layers.append(layer)
 
     def add_layer(self, layer: BlenderLayer):
         self.layers.append(layer)
 
-    # rendering across all layers - form last to first layer
-    # each image is either: (1) image of visualization + blending or (2) original image (if vis == None for that layer)
-    def render_all_images(self, dem_path=None, save_render_path=None):
-        # if BlenderLayers.image is None and BlenderLayers.image_path is presented it reads images simultaneously
-        # if dem_path = None and save_render_path = None -> then doesn't save rendered image it only returns it as array
+    def remove_all_layers(self):
+        self.layers = []
+
+    def build_blender_layers_from_file(self, file_path):
+        self.layers = []
+        # Example file (for file_path) in dir settings: blender_file_example.txt
+        dat = open(file_path, "r")
+        for line in dat:
+            line = line.strip()
+            if line == "":
+                continue
+            if line[0] == "#":
+                continue
+            line_list = line.split(",")
+            vis_method = None
+            normalization = None
+            minimum = None
+            maximum = None
+            blend_mode = None
+            opacity = None
+            for element in line_list:
+                element = element.strip()
+                parameter_name = element.split(":")[0].strip()
+                parameter_value = element.split(":")[1].strip()
+                if parameter_name == "vis":
+                    vis_method = parameter_value
+                    if vis_method == "None":
+                        vis_method = None
+                elif parameter_name == "norm":
+                    normalization = parameter_value
+                elif parameter_name == "min":
+                    minimum = float(parameter_value)
+                elif parameter_name == "max":
+                    maximum = float(parameter_value)
+                elif parameter_name == "blend_mode":
+                    blend_mode = parameter_value
+                elif parameter_name == "opacity":
+                    opacity = float(parameter_value)
+            if vis_method is None:
+                continue
+            layer = BlenderLayer(vis_method=vis_method, normalization=normalization, minimum=minimum,
+                                 maximum=maximum, blend_mode=blend_mode, opacity=opacity)
+            self.add_layer(layer)
+        dat.close()
+
+    def render_all_images(self, default=None, save_visualizations=False, save_render_path=None):
+        if save_render_path is not None and self.dem_path is None:
+            raise Exception("rvt.BlenderLayers.render_all_images: If you would like to save rendered image (blender), "
+                            "you have to define dem_path (BlenderLayers.add_dem_path())!")
+
+        # default is rvt.default.DefaultValues class
+        if default is None:  # if not defined, predefined values are used
+            default = rvt.default.DefaultValues()
+
+        # rendering across all layers - form last to first layer
         rendered_image = []
         for i_img in range(len(self.layers) - 1, -1, -1):
             visualization = self.layers[i_img].vis
@@ -506,13 +638,129 @@ class BlenderLayers:
             min_norm = self.layers[i_img].min
             max_norm = self.layers[i_img].max
             normalization = self.layers[i_img].normalization
+            image = self.layers[i_img].image
+            image_path = self.layers[i_img].image_path
+
+            if save_visualizations and self.dem_path is None and image_path is None and image is None:
+                raise Exception("rvt.BlenderLayers.render_all_images: If you would like to save visualizations, "
+                                "you have to define dem_path (BlenderLayers.add_dem_path())!")
+            if not save_visualizations and self.dem_arr is None and self.dem_resolution is None and \
+                    image_path is None and image is None:
+                raise Exception("rvt.BlenderLayers.render_all_images: If you would like to compute visualizations, "
+                                "you have to define dem_arr and its resolution (BlenderLayers.add_dem_arr())!")
 
             # normalize images
-            if self.layers[i_img].image is None:  # if no image read image from image_path (render from file)
-                norm_image = normalize_image(visualization, get_raster_array(self.layers[i_img].image_path), min_norm,
+            # if image is not presented and image_path is
+            if image is None and image_path is not None:
+                norm_image = normalize_image(visualization, get_raster_array(image_path), min_norm,
                                              max_norm, normalization)
+            # if image is presented
+            elif image is not None:
+                norm_image = normalize_image(visualization, image, min_norm, max_norm, normalization)
+            # they are both none
             else:
-                norm_image = normalize_image(visualization, self.layers[i_img].image, min_norm, max_norm, normalization)
+                if self.layers[i_img].vis.lower() == "slope gradient":
+                    if save_visualizations:
+                        default.save_slope(dem_path=self.dem_path)
+                        image_path = default.get_slope_path(self.dem_path)
+                        norm_image = normalize_image(visualization, get_raster_array(image_path), min_norm, max_norm,
+                                                     normalization)
+                    else:
+                        image = default.get_slope(dem_arr=self.dem_arr, resolution_x=self.dem_resolution,
+                                                  resolution_y=self.dem_resolution)["slope"]
+                        norm_image = normalize_image(visualization, image, min_norm, max_norm, normalization)
+                elif self.layers[i_img].vis.lower() == "hillshade":
+                    if save_visualizations:
+                        default.save_hillshade(dem_path=self.dem_path)
+                        image_path = default.get_hillshade_path(self.dem_path)
+                        norm_image = normalize_image(visualization, get_raster_array(image_path), min_norm, max_norm,
+                                                     normalization)
+                    else:
+                        image = default.get_hillshade(dem_arr=self.dem_arr, resolution_x=self.dem_resolution,
+                                                      resolution_y=self.dem_resolution)
+                        norm_image = normalize_image(visualization, image, min_norm, max_norm, normalization)
+                elif self.layers[i_img].vis.lower() == "multiple directions hillshade":
+                    if save_visualizations:
+                        default.save_multi_hillshade(dem_path=self.dem_path)
+                        image_path = default.get_multi_hillshade_path(self.dem_path)
+                        norm_image = normalize_image(visualization, get_raster_array(image_path), min_norm, max_norm,
+                                                     normalization)
+                    else:
+                        image = default.get_multi_hillshade(dem_arr=self.dem_arr, resolution_x=self.dem_resolution,
+                                                            resolution_y=self.dem_resolution)
+                        norm_image = normalize_image(visualization, image, min_norm, max_norm, normalization)
+                elif self.layers[i_img].vis.lower() == "simple local relief model":
+                    if save_visualizations:
+                        default.save_slrm(dem_path=self.dem_path)
+                        image_path = default.get_slrm_path(self.dem_path)
+                        norm_image = normalize_image(visualization, get_raster_array(image_path), min_norm, max_norm,
+                                                     normalization)
+                    else:
+                        image = default.get_slrm(dem_arr=self.dem_arr)
+                        norm_image = normalize_image(visualization, image, min_norm, max_norm, normalization)
+                elif self.layers[i_img].vis.lower() == "sky-view factor":
+                    if save_visualizations:
+                        default.save_sky_view_factor(dem_path=self.dem_path, save_svf=True, save_asvf=False,
+                                                     save_opns=False)
+                        image_path = default.get_svf_path(self.dem_path)
+                        norm_image = normalize_image(visualization, get_raster_array(image_path), min_norm, max_norm,
+                                                     normalization)
+                    else:
+                        image = default.get_sky_view_factor(dem_arr=self.dem_arr, resolution=self.dem_resolution,
+                                                            compute_svf=True, compute_asvf=False,
+                                                            compute_opns=False)["svf"]
+                        norm_image = normalize_image(visualization, image, min_norm, max_norm, normalization)
+                elif self.layers[i_img].vis.lower() == "anisotropic sky-view factor":
+                    if save_visualizations:
+                        default.save_sky_view_factor(dem_path=self.dem_path, save_svf=False, save_asvf=True,
+                                                     save_opns=False)
+                        image_path = default.get_asvf_path(self.dem_path)
+                        norm_image = normalize_image(visualization, get_raster_array(image_path), min_norm, max_norm,
+                                                     normalization)
+                    else:
+                        image = default.get_sky_view_factor(dem_arr=self.dem_arr, resolution=self.dem_resolution,
+                                                            compute_svf=False, compute_asvf=True,
+                                                            compute_opns=False)["asvf"]
+                        norm_image = normalize_image(visualization, image, min_norm, max_norm, normalization)
+                elif self.layers[i_img].vis.lower() == "openness - positive":
+                    if save_visualizations:
+                        default.save_sky_view_factor(dem_path=self.dem_path, save_svf=False, save_asvf=False,
+                                                     save_opns=True)
+                        image_path = default.get_opns_path(self.dem_path)
+                        norm_image = normalize_image(visualization, get_raster_array(image_path), min_norm, max_norm,
+                                                     normalization)
+                    else:
+                        image = default.get_sky_view_factor(dem_arr=self.dem_arr, resolution=self.dem_resolution,
+                                                            compute_svf=False, compute_asvf=False,
+                                                            compute_opns=True)["opns"]
+                        norm_image = normalize_image(visualization, image, min_norm, max_norm, normalization)
+                elif self.layers[i_img].vis.lower() == "openness - negative":
+                    if save_visualizations:
+                        default.save_neg_opns(dem_path=self.dem_path)
+                        image_path = default.get_neg_opns_path(self.dem_path)
+                        norm_image = normalize_image(visualization, get_raster_array(image_path), min_norm, max_norm,
+                                                     normalization)
+                    else:
+                        image = default.get_neg_opns(dem_arr=self.dem_arr, resolution=self.dem_resolution)
+                        norm_image = normalize_image(visualization, image, min_norm, max_norm, normalization)
+                elif self.layers[i_img].vis.lower() == "sky illumination":
+                    if save_visualizations:
+                        default.save_sky_illumination(dem_path=self.dem_path)
+                        image_path = default.get_sky_illumination_path(self.dem_path)
+                        norm_image = normalize_image(visualization, get_raster_array(image_path), min_norm, max_norm,
+                                                     normalization)
+                    else:
+                        image = default.get_sky_illumination(dem_arr=self.dem_arr, resolution=self.dem_resolution)
+                        norm_image = normalize_image(visualization, image, min_norm, max_norm, normalization)
+                elif self.layers[i_img].vis.lower() == "local dominance":
+                    if save_visualizations:
+                        default.save_local_dominance(dem_path=self.dem_path)
+                        image_path = default.get_local_dominance_path(self.dem_path)
+                        norm_image = normalize_image(visualization, get_raster_array(image_path), min_norm, max_norm,
+                                                     normalization)
+                    else:
+                        image = default.get_local_dominance(dem_arr=self.dem_arr)
+                        norm_image = normalize_image(visualization, image, min_norm, max_norm, normalization)
 
             # if current layer has visualization applied, but there has been no rendering
             # of images yet, than current layer will be the initial value of rendered_image
@@ -532,84 +780,7 @@ class BlenderLayers:
                 rendered_image = render_images(top, background, opacity)
 
                 if np.nanmin(background) < 0 or np.nanmax(background > 1):
-                    warnings.warn("RVT render_all_images: Rendered image scale distorted")
-        if save_render_path is not None and dem_path is not None:  # if paths presented it saves image
-            save_rendered_image(rendered_image, dem_path=dem_path, save_render_path=save_render_path)
+                    warnings.warn("rvt.BlenderLayers.render_all_images: Rendered image scale distorted")
+        if save_render_path is not None:  # if paths presented it saves image
+            save_rendered_image(rendered_image, dem_path=self.dem_path, save_render_path=save_render_path)
         return rendered_image
-
-    def build_blender_layers_from_file(self, dem_path, file_path, default=None):
-        self.layers = []
-        # default is rvt.default.DefaultValues class
-        # Example file (for file_path) in dir settings: blender_file_example.txt
-        if default is None:
-            default = rvt.default.DefaultValues()
-        dat = open(file_path, "r")
-        for line in dat:
-            line = line.strip()
-            if line == "":
-                continue
-            if line[0] == "#":
-                continue
-            line_list = line.split(",")
-            vis_method = None
-            normalization = None
-            minimum = None
-            maximum = None
-            blend_mode = None
-            opacity = None
-            image_path = None
-            for element in line_list:
-                element = element.strip()
-                parameter_name = element.split(":")[0].strip()
-                parameter_value = element.split(":")[1].strip()
-                if parameter_name == "vis":
-                    vis_method = parameter_value
-                    if vis_method == "None":
-                        vis_method = None
-                elif parameter_name == "norm":
-                    normalization = parameter_value
-                elif parameter_name == "min":
-                    minimum = float(parameter_value)
-                elif parameter_name == "max":
-                    maximum = float(parameter_value)
-                elif parameter_name == "blend_mode":
-                    blend_mode = parameter_value
-                elif parameter_name == "opacity":
-                    opacity = float(parameter_value)
-            if vis_method is not None:
-                if vis_method.lower() == "slope gradient":
-                    default.save_slope(dem_path)
-                    image_path = default.get_slope_path(dem_path)
-                elif vis_method.lower() == "hillshade":
-                    default.save_hillshade(dem_path)
-                    image_path = default.get_hillshade_path(dem_path)
-                elif vis_method.lower() == "multiple directions hillshade":
-                    default.save_multi_hillshade(dem_path)
-                    image_path = default.get_multi_hillshade_path(dem_path)
-                elif vis_method.lower() == "simple local relief model":
-                    default.save_slrm(dem_path)
-                    image_path = default.get_slrm_path(dem_path)
-                elif vis_method.lower() == "sky-view factor":
-                    default.save_sky_view_factor(dem_path, save_svf=True, save_asvf=False, save_opns=False)
-                    image_path = default.get_svf_path(dem_path)
-                elif vis_method.lower() == "anisotropic sky-view factor":
-                    default.save_sky_view_factor(dem_path, save_svf=False, save_asvf=True, save_opns=False)
-                    image_path = default.get_asvf_path(dem_path)
-                elif vis_method.lower() == "openness - positive":
-                    default.save_sky_view_factor(dem_path, save_svf=False, save_asvf=False, save_opns=True)
-                    image_path = default.get_opns_path(dem_path)
-                elif vis_method.lower() == "openness - negative":
-                    default.save_neg_opns(dem_path)
-                    image_path = default.get_neg_opns_path(dem_path)
-                elif vis_method.lower() == "sky illumination":
-                    default.save_sky_illumination(dem_path)
-                    image_path = default.get_sky_illumination_path(dem_path)
-                elif vis_method.lower() == "local dominance":
-                    default.save_local_dominance(dem_path)
-                    image_path = default.get_local_dominance_path(dem_path)
-                layer = BlenderLayer(vis_method=vis_method, normalization=normalization, minimum=minimum,
-                                     maximum=maximum, blend_mode=blend_mode, opacity=opacity, image_path=image_path)
-            else:
-                layer = BlenderLayer(vis_method=None)
-            self.add_layer(layer)
-        dat.close()
