@@ -1,7 +1,7 @@
 """
-rvt_py, rvt.vis - rvt visualization functions
+Relief Visualization Toolbox Visualization Functions
 
-Contains functions for computing the visualization.
+Contains functions for computing the visualizations.
 
 Credits:
 Žiga Kokalj (ziga.kokalj@zrc-sazu.si)

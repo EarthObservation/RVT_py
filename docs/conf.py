@@ -12,6 +12,10 @@
 #
 import os
 import sys
+
+# Needed for removing credits
+import sphinx.ext.autodoc
+
 sys.path.insert(0, os.path.abspath('..'))  # Source code dir relative to this file
 
 # -- Project information -----------------------------------------------------
@@ -62,3 +66,7 @@ html_logo = './figures/RVT_head.png'
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
 html_static_path = ['_static']
+
+# Remove module docstring credits
+def setup(app):
+    app.connect('autodoc-process-docstring', sphinx.ext.autodoc.between('Credits:', what=['module'], exclude=True))

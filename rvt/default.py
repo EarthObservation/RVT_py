@@ -1,5 +1,5 @@
 """
-rvt.default - rvt default values for visualization functions
+Relief Visualization Toolbox Default Values for Visualization Functions
 
 Contains all default values for visualisation functions, which can be changed.
 Allows computing from rvt.vis with using defined default values and saving

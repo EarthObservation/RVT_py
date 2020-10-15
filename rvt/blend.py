@@ -1,5 +1,5 @@
 """
-rvt.blend - rvt blend functions
+Relief Visualization Toolbox Blend Functions
 
 Contains functions for blending.
 
