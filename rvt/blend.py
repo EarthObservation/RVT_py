@@ -424,9 +424,9 @@ def normalize_image(visualization, image, min_norm, max_norm, normalization):
             norm_image = scale_0_to_1(norm_image)
         else:
             norm_image = scale_0_to_1(norm_image)
-            warnings.warn("rvt.normalize_images_on_layers: unexpected values! max > 1")
+            warnings.warn("rvt.blend.normalize_images_on_layers: unexpected values! max > 1")
         if np.nanmin(norm_image) < 0:
-            warnings.warn("rvt.normalize_images_on_layers: unexpected values! min < 0")
+            warnings.warn("rvt.blend.normalize_images_on_layers: unexpected values! min < 0")
 
     # for slope and neg openness, invert scale
     # meaning high slopes will be black
@@ -487,19 +487,19 @@ class BlenderLayer:
             self.image_path = None  # leave None if you wish for blender to compute visualization
         else:
             if self.normalization.lower() != "value" and self.normalization.lower() != "perc":
-                raise Exception("rvt.BlenderLayer.check_data: normalization value incorrect!")
+                raise Exception("rvt.blend.BlenderLayer.check_data: normalization value incorrect!")
             if 0 > self.min > 100:
-                raise Exception("rvt.BlenderLayer.check_data: min value incorrect [0-100]!")
+                raise Exception("rvt.blend.BlenderLayer.check_data: min value incorrect [0-100]!")
             if 0 > self.max > 100:
-                raise Exception("rvt.BlenderLayer.check_data: max value incorrect [0-100]!")
+                raise Exception("rvt.blend.BlenderLayer.check_data: max value incorrect [0-100]!")
             if self.min > self.max:
-                raise Exception("rvt.BlenderLayer.check_data: min bigger than max!")
+                raise Exception("rvt.blend.BlenderLayer.check_data: min bigger than max!")
             if self.blend_mode.lower() != "normal" and self.blend_mode.lower() != "multiply" and \
                     self.blend_mode.lower() != "overlay" and self.blend_mode.lower() != "luminosity" and \
                     self.blend_mode.lower() != "screen":
-                raise Exception("rvt.BlenderLayer.check_data: blend_mode incorrect!")
+                raise Exception("rvt.blend.BlenderLayer.check_data: blend_mode incorrect!")
             if 0 > self.opacity > 100:
-                raise Exception("rvt.BlenderLayer.check_data: opacity incorrect [0-100]!")
+                raise Exception("rvt.blend.BlenderLayer.check_data: opacity incorrect [0-100]!")
             if self.image is None and self.image_path is None:
                 if self.vis.lower() != "slope gradient" and self.vis.lower() != "hillshade" and \
                         self.vis.lower() != "multiple directions hillshade" and \
@@ -507,7 +507,7 @@ class BlenderLayer:
                         self.vis.lower() != "anisotropic sky-view factor" and \
                         self.vis.lower() != "openness - positive" and self.vis.lower() != "openness - negative" and \
                         self.vis.lower() != "sky illumination" and self.vis.lower() != "local dominance":
-                    raise Exception("rvt.BlenderLayer.check_data: Incorrect vis, if you don't input image or "
+                    raise Exception("rvt.blend.BlenderLayer.check_data: Incorrect vis, if you don't input image or "
                                     "image_path you have to input known visualization method (vis)!")
 
 
@@ -619,7 +619,7 @@ class BlenderLayers:
 
     def render_all_images(self, default=None, save_visualizations=False, save_render_path=None):
         if save_render_path is not None and self.dem_path is None:
-            raise Exception("rvt.BlenderLayers.render_all_images: If you would like to save rendered image (blender), "
+            raise Exception("rvt.blend.BlenderLayers.render_all_images: If you would like to save rendered image (blender), "
                             "you have to define dem_path (BlenderLayers.add_dem_path())!")
 
         # default is rvt.default.DefaultValues class
@@ -640,11 +640,11 @@ class BlenderLayers:
             image_path = self.layers[i_img].image_path
 
             if save_visualizations and self.dem_path is None and image_path is None and image is None:
-                raise Exception("rvt.BlenderLayers.render_all_images: If you would like to save visualizations, "
+                raise Exception("rvt.blend.BlenderLayers.render_all_images: If you would like to save visualizations, "
                                 "you have to define dem_path (BlenderLayers.add_dem_path())!")
             if not save_visualizations and self.dem_arr is None and self.dem_resolution is None and \
                     image_path is None and image is None:
-                raise Exception("rvt.BlenderLayers.render_all_images: If you would like to compute visualizations, "
+                raise Exception("rvt.blend.BlenderLayers.render_all_images: If you would like to compute visualizations, "
                                 "you have to define dem_arr and its resolution (BlenderLayers.add_dem_arr())!")
 
             # normalize images
@@ -778,7 +778,7 @@ class BlenderLayers:
                 rendered_image = render_images(top, background, opacity)
 
                 if np.nanmin(background) < 0 or np.nanmax(background > 1):
-                    warnings.warn("rvt.BlenderLayers.render_all_images: Rendered image scale distorted")
+                    warnings.warn("rvt.blend.BlenderLayers.render_all_images: Rendered image scale distorted")
         if save_render_path is not None:  # if paths presented it saves image
             save_rendered_image(rendered_image, dem_path=self.dem_path, save_render_path=save_render_path)
         return rendered_image
