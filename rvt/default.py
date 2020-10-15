@@ -1,11 +1,25 @@
 """
-NAME:
-    rvt_py, rvt.default - rvt default values for visualization functions
+rvt.default - rvt default values for visualization functions
 
-DESCRIPTION:
-    Contains all default values for visualisation functions, which can be changed.
-    Allows computing from rvt.vis with using defined default values
-    and saving output rasters with default names (dependent on default values).
+Contains all default values for visualisation functions, which can be changed.
+Allows computing from rvt.vis with using defined default values and saving
+output rasters with default names (dependent on default values).
+
+Credits:
+Žiga Kokalj (ziga.kokalj@zrc-sazu.si)
+Krištof Oštir (kristof.ostir@fgg.uni-lj.si)
+Klemen Zakšek
+Klemen Čotar
+Maja Somrak
+Žiga Maroh
+
+Copyright:
+2010-2020 Research Centre of the Slovenian Academy of Sciences and Arts
+2010-2018 Space-SI
+2016-2020 University of Ljubljana, Faculty of Civil and Geodetic Engineering
+"""
+"""
+NAME:
 
 PROJECT MANAGER:
     Žiga Kokalj (ziga.kokalj@zrc-sazu.si)
