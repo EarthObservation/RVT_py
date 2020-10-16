@@ -1,0 +1,108 @@
+{
+    "default_settings": {
+        "ve_factor": {
+            "value": 1,
+            "description": "Vertical exaggeration."
+        },
+        "Hillshade": {
+            "hs_sun_azi": {
+                "value": 315,
+                "description": "Solar azimuth angle (clockwise from North) in degrees."
+            },
+            "hs_sun_el": {
+                "value": 35,
+                "description": "Solar vertical angle (above the horizon) in degrees."
+            }
+        },
+        "Multiple directions hillshade": {
+            "mhs_nr_dir": {
+                "value": 16,
+                "description": "Number of solar azimuth angles (clockwise from North)."
+            },
+            "mhs_sun_el": {
+                "value": 35,
+                "description": "Solar vertical angle (above the horizon) in degrees."
+            }
+        },
+        "Slope gradient": {
+            "slp_output_units": {
+                "value": "degree",
+                "description": "Slope output units [radian, degree, percent]."
+            }
+        },
+        "Simple local relief model": {
+            "slrm_rad_cell": {
+                "value": 20,
+                "description": "Radius for trend assessment in pixels."
+            }
+        },
+        "Sky-View Factor": {
+            "svf_n_dir": {
+                "value": 16,
+                "description": "Number of directions."
+            },
+            "svf_r_max": {
+                "value": 10,
+                "description": "Maximal search radious in pixels."
+            },
+            "svf_noise": {
+                "value": 0,
+                "description": "The level of noise remove [0-don't remove, 1-low, 2-med, 3-high]."
+            }
+        },
+        "Anisotropic Sky-View Factor": {
+            "asvf_dir": {
+                "value": 315,
+                "description": "Direction of anisotropy in degrees."
+            },
+            "asvf_level": {
+                "value": 1,
+                "description": "Level of anisotropy [1-low, 2-high]."
+            }
+        },
+        "Sky illumination": {
+            "sim_sky_mod": {
+                "value": "overcast",
+                "description": "Sky model [overcast, uniform]."
+            },
+            "sim_samp_pnts": {
+                "value": 250,
+                "description": "Number of sampling points [250 or 500]."
+            },
+            "sim_shadow_dist": {
+                "value": 100,
+                "description": "Max shadow modeling distance in pixels."
+            },
+            "sim_shadow_az": {
+                "value": 315,
+                "description": "Shadow azimuth in degrees."
+            },
+            "sim_shadow_el": {
+                "value": 35,
+                "description": "Shadow elevation in degrees."
+            }
+        },
+        "Local dominance": {
+            "ld_min_rad": {
+                "value": 10,
+                "description": "Minimum radial distance (in pixels) at which the algorithm starts with visualization computation."
+            },
+            "ld_max_rad": {
+                "value": 20,
+                "description": "Maximum radial distance (in pixels) at which the algorithm ends with visualization computation."
+            },
+            "ld_rad_inc": {
+                "value": 1,
+                "description": "Radial distance steps in pixels."
+            },
+            "ld_anglr_res": {
+                "value": 15,
+                "description": "Angular step for determination of number of angular directions."
+            },
+            "ld_observer_h": {
+                "value": 1.7,
+                "description": "Height at which we observe the terrain."
+            }
+        }
+    }
+}

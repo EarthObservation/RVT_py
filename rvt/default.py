@@ -42,6 +42,7 @@ import rvt.vis
 import os
 import rasterio as rio
 import numpy as np
+import json
 
 
 class DefaultValues():
@@ -95,6 +96,7 @@ class DefaultValues():
     ld_observer_h : float
         Local dominance. Height at which we observe the terrain.
     """
+
     def __init__(self):
         self.ve_factor = 1
         # slope gradient
@@ -127,129 +129,196 @@ class DefaultValues():
         self.ld_observer_h = 1.7
 
     def save_default_to_file(self, file_path=None):
-        """Saves default attributes into file."""
+        """Saves default attributes into .json file."""
+        data = {"default_settings": {"ve_factor": {
+                                    "value" : self.ve_factor,
+                                    "description" : "Vertical exaggeration."},
+                                     "Hillshade": {
+                                         "hs_sun_azi": {"value": self.hs_sun_azi,
+                                                        "description": "Solar azimuth angle (clockwise from North) in "
+                                                                       "degrees."},
+                                         "hs_sun_el": {"value": self.hs_sun_el,
+                                                       "description": "Solar vertical angle (above the horizon) in "
+                                                                      "degrees."}
+                                     },
+                                     "Multiple directions hillshade": {
+                                         "mhs_nr_dir": {"value": self.mhs_nr_dir,
+                                                        "description": "Number of solar azimuth angles (clockwise "
+                                                                       "from North)."},
+                                         "mhs_sun_el": {"value": self.mhs_sun_el,
+                                                        "description": "Solar vertical angle (above the horizon) in "
+                                                                       "degrees."}
+                                     },
+                                     "Slope gradient": {
+                                         "slp_output_units": {"value": self.slp_output_units,
+                                                              "description": "Slope output units [radian, degree, "
+                                                                             "percent]."}
+                                     },
+                                     "Simple local relief model": {
+                                         "slrm_rad_cell": {"value": self.slrm_rad_cell,
+                                                           "description": "Radius for trend assessment in pixels."}
+                                     },
+                                     "Sky-View Factor": {
+                                         "svf_n_dir": {"value": self.svf_n_dir, "description": "Number of directions."},
+                                         "svf_r_max": {"value": self.svf_r_max, "description": "Maximal search "
+                                                                                               "radious in pixels."},
+                                         "svf_noise": {"value": self.svf_noise,
+                                                       "description": "The level of noise remove [0-don't remove, "
+                                                                      "1-low, 2-med, 3-high]."}
+                                     },
+                                     "Anisotropic Sky-View Factor": {
+                                         "asvf_dir": {"value": self.asvf_dir,
+                                                      "description": "Direction of anisotropy in degrees."},
+                                         "asvf_level": {"value": self.asvf_level,
+                                                        "description": "Level of anisotropy [1-low, 2-high]."}
+                                     },
+                                     "Sky illumination": {
+                                         "sim_sky_mod": {"value": self.sim_sky_mod,
+                                                         "description": "Sky model [overcast, uniform]."},
+                                         "sim_samp_pnts": {"value": self.sim_samp_pnts,
+                                                           "description": "Number of sampling points [250 or 500]."},
+                                         "sim_shadow_dist": {"value": self.sim_shadow_dist,
+                                                             "description": "Max shadow modeling distance in pixels."},
+                                         "sim_shadow_az": {"value": self.sim_shadow_az, "description": "Shadow "
+                                                                                                       "azimuth in "
+                                                                                                       "degrees."},
+                                         "sim_shadow_el": {"value": self.sim_shadow_el, "description": "Shadow "
+                                                                                                       "elevation in "
+                                                                                                       "degrees."}
+                                     },
+                                     "Local dominance": {
+                                         "ld_min_rad": {"value": self.ld_min_rad,
+                                                        "description": "Minimum radial distance (in pixels) at which "
+                                                                       "the algorithm starts with visualization "
+                                                                       "computation."},
+                                         "ld_max_rad": {"value": self.ld_max_rad,
+                                                        "description": "Maximum radial distance (in pixels) at which "
+                                                                       "the algorithm ends with visualization "
+                                                                       "computation."},
+                                         "ld_rad_inc": {"value": self.ld_rad_inc, "description": "Radial distance "
+                                                                                                 "steps in pixels."},
+                                         "ld_anglr_res": {"value": self.ld_anglr_res,
+                                                          "description": "Angular step for determination of number of "
+                                                                         "angular directions."},
+                                         "ld_observer_h": {"value": self.ld_observer_h,
+                                                           "description": "Height at which we observe the terrain."}
+                                     }}}
         if file_path is None:
-            file_path = r"settings\default_settings.txt"
+            file_path = r"settings\default_settings.json"
             if os.path.isfile(file_path):
                 pass
             else:
                 if not os.path.exists(os.path.dirname(file_path)):
                     os.makedirs(os.path.dirname(file_path))
-            dat = open(file_path, "w")
-        else:
-            dat = open(file_path, "w")
-        dat.write("# --------------------------------------------------------------------------------------------------"
-                  "--------\n# ----------------------------------------------------------------------------------------"
-                  "------------------\n#\n#	Relief Visualization Toolbox python, settings file to change default"
-                  " values in rvt.default.DefaultValues class\n#	This class stores default values for visualisation"
-                  " functions\n#	method: rvt.default.DefaultValues.read_default_from_file(file_path)\n#\n"
-                  "# --------------------------------------------------------------------------------------------------"
-                  "--------\n# ----------------------------------------------------------------------------------------"
-                  "------------------\n#\n# VISUALIZATION METHODS:\n#\n# Hillshade\n# Multiple directions hillshade\n"
-                  "# Slope gradient\n# Simple local relief model\n# Sky-View Factor\n# Anisotropic Sky-View Factor\n"
-                  "# Openness - Positive\n# Openness - Negative\n# Sky illumination\n# Local dominance\n\n"
-                  "# --------------------------------------------------------------------------------------------------"
-                  "--------\n\n")
-        dat.write("ve_factor = {}  # vertical exaggeration (positive number!)\n\n".format(self.ve_factor))
-        dat.write("# Slope gradient\n")
-        dat.write("slp_output_units = {}  # slope output units"
-                  " [radian, degree, percent]\n\n".format(self.slp_output_units))
-        dat.write("# Hillshade\n")
-        dat.write("hs_sun_azi = {}  # solar azimuth angle (clockwise from North) in degrees\n".format(self.hs_sun_azi))
-        dat.write("hs_sun_el = {}  # solar vertical angle (above the horizon) in degrees\n\n".format(self.hs_sun_el))
-        dat.write("# Multiple directions hillshade\n")
-        dat.write("mhs_nr_dir = {}  # number of solar azimuth angles (clockwise from North)\n".format(self.mhs_nr_dir))
-        dat.write("mhs_sun_el = {}  # solar vertical angle (above the horizon) in degrees\n\n".format(self.mhs_sun_el))
-        dat.write("# Simple local relief model\n")
-        dat.write("slrm_rad_cell = {}  # radius for trend assessment in pixels\n\n".format(self.slrm_rad_cell))
-        dat.write("# Sky-View Factor\n")
-        dat.write("svf_n_dir = {}  # number of directions\n".format(self.svf_n_dir))
-        dat.write("svf_r_max = {}  # maximal search radius in pixels\n".format(self.svf_r_max))
-        dat.write("svf_noise = {}  # the level of noise remove [0-don't remove, 1-low, 2-med, 3-high]"
-                  "\n\n".format(self.svf_noise))
-        dat.write("# Anisotropic Sky-View Factor\n")
-        dat.write("asvf_dir = {}  # direction of anisotropy in degrees\n".format(self.asvf_dir))
-        dat.write("asvf_level = {}  # level of anisotropy [1-low, 2-high]\n\n".format(self.asvf_level))
-        dat.write("# Sky illumination\n")
-        dat.write("sim_sky_mod = {}  # sky model [overcast, uniform]\n".format(self.sim_sky_mod))
-        dat.write("sim_samp_pnts = {}  # number of sampling points [250 or 500]\n".format(self.sim_samp_pnts))
-        dat.write("sim_shadow_dist = {}  # max shadow modeling distance in pixels\n".format(self.sim_shadow_dist))
-        dat.write("sim_shadow_az = {}  # shadow azimuth in degrees\n".format(self.sim_shadow_az))
-        dat.write("sim_shadow_el = {}  # shadow elevation in degrees\n\n".format(self.sim_shadow_el))
-        dat.write("# Local dominance\n")
-        dat.write("ld_min_rad = {}  # minimum radial distance (in pixels) at which the algorithm starts with visualizat"
-                  "ion computation\n".format(self.ld_min_rad))
-        dat.write("ld_max_rad = {}  # maximum radial distance (in pixels) at which the algorithm ends with visualizati"
-                  "on computation\n".format(self.ld_max_rad))
-        dat.write("ld_rad_inc = {}  # radial distance steps in pixels\n".format(self.ld_rad_inc))
-        dat.write("ld_anglr_res = {}  # angular step for determination of number of angular directions"
-                  "\n".format(self.ld_anglr_res))
-        dat.write("ld_observer_h = {}  # height at which we observe the terrain\n".format(self.ld_observer_h))
+        dat = open(file_path, "w")
+        dat.write(json.dumps(data, indent=4))
+        dat.close()
 
     def read_default_from_file(self, file_path):
         """Reads default attributes from file."""
-        # Example file in dir settings: default_settings.txt
-        dat = open(file_path, "r")
-        for line in dat:
-            line = line.strip()
-            if line == "":
-                continue
-            if line[0] == "#":
-                continue
-            line_list = line.split("#")  # remove comments
-            line_list = line_list[0].split("=")
-            if len(line_list) == 2:
-                parameter_name = line_list[0].strip()
-                parameter_value = line_list[1].strip()
-            else:
-                warnings.warn("rvt.default.read_default_from_file: Wrong line '{}'".format(line))
-            if parameter_name == "ve_factor":
-                self.ve_factor = float(parameter_value)
-            elif parameter_name == "slp_output_units":
-                self.slp_output_units = str(parameter_value)
-            elif parameter_name == "hs_sun_azi":
-                self.hs_sun_azi = int(parameter_value)
-            elif parameter_name == "hs_sun_el":
-                self.hs_sun_el = int(parameter_value)
-            elif parameter_name == "mhs_nr_dir":
-                self.mhs_nr_dir = int(parameter_value)
-            elif parameter_name == "mhs_sun_el":
-                self.mhs_sun_el = int(parameter_value)
-            elif parameter_name == "slrm_rad_cell":
-                self.slrm_rad_cell = int(parameter_value)
-            elif parameter_name == "svf_n_dir":
-                self.svf_n_dir = int(parameter_value)
-            elif parameter_name == "svf_r_max":
-                self.svf_r_max = int(parameter_value)
-            elif parameter_name == "svf_noise":
-                self.svf_noise = int(parameter_value)
-            elif parameter_name == "asvf_dir":
-                self.asvf_dir = int(parameter_value)
-            elif parameter_name == "asvf_level":
-                self.asvf_level = int(parameter_value)
-            elif parameter_name == "sim_sky_mod":
-                self.sim_sky_mod = parameter_value
-            elif parameter_name == "sim_samp_pnts":
-                self.sim_samp_pnts = int(parameter_value)
-            elif parameter_name == "sim_shadow_dist":
-                self.sim_shadow_dist = int(parameter_value)
-            elif parameter_name == "sim_shadow_az":
-                self.sim_shadow_az = int(parameter_value)
-            elif parameter_name == "sim_shadow_el":
-                self.sim_shadow_el = int(parameter_value)
-            elif parameter_name == "ld_min_rad":
-                self.ld_min_rad = int(parameter_value)
-            elif parameter_name == "ld_max_rad":
-                self.ld_max_rad = int(parameter_value)
-            elif parameter_name == "ld_rad_inc":
-                self.ld_rad_inc = int(parameter_value)
-            elif parameter_name == "ld_anglr_res":
-                self.ld_anglr_res = int(parameter_value)
-            elif parameter_name == "ld_observer_h":
-                self.ld_observer_h = float(parameter_value)
-            else:
-                warnings.warn("rvt.default.read_default_from_file: Wrong line '{}'".format(line))
-        dat.close()
+        # Example file in dir settings: default_settings.json
+        extension = os.path.splitext(file_path)[1]
+        if extension == ".txt":
+            dat = open(file_path, "r")
+            remove_noise = 0
+            for line in dat:
+                line = line.strip()
+                if line == "":
+                    continue
+                if line[0] == "#":
+                    continue
+                line_list = line.split("#")  # remove comments
+                line_list = line_list[0].split("=")
+                if len(line_list) == 2:
+                    parameter_name = line_list[0].strip().lower()
+                    parameter_value = line_list[1].strip()
+                else:
+                    warnings.warn("rvt.default.read_default_from_file: Wrong line '{}'".format(line))
+                if parameter_name == "exaggeration_factor":
+                    self.ve_factor = float(parameter_value)
+                elif parameter_name == "sun_azimuth":
+                    self.hs_sun_azi = int(parameter_value)
+                elif parameter_name == "sun_elevation":
+                    self.hs_sun_el = int(parameter_value)
+                elif parameter_name == "hillshade_directions":
+                    self.mhs_nr_dir = int(parameter_value)
+                elif parameter_name == "sun_elevation":
+                    self.mhs_sun_el = int(parameter_value)
+                elif parameter_name == "trend_radius":
+                    self.slrm_rad_cell = int(parameter_value)
+                elif parameter_name == "svf_directions":
+                    self.svf_n_dir = int(parameter_value)
+                elif parameter_name == "search_radius":
+                    self.svf_r_max = int(parameter_value)
+                elif parameter_name == "remove_noise":
+                    if int(parameter_value) == 0:
+                        remove_noise = 0
+                        self.svf_noise = 0
+                    else:
+                        remove_noise = 1
+                elif parameter_name == "noise_removal":
+                    if remove_noise != 0:
+                        if parameter_value == "low":
+                            self.svf_noise = 1
+                        elif parameter_value == "medium":
+                            self.svf_noise = 2
+                        elif parameter_value == "high":
+                            self.svf_noise = 3
+                elif parameter_name == "anisotropy_direction":
+                    self.asvf_dir = int(parameter_value)
+                elif parameter_name == "anisotropy_level":
+                    if parameter_value == "low":
+                        self.asvf_level = 1
+                    elif parameter_value == "high":
+                        self.asvf_level = 2
+                elif parameter_name == "sky_model":
+                    self.sim_sky_mod = parameter_value
+                elif parameter_name == "number_points":
+                    self.sim_samp_pnts = int(parameter_value)
+                elif parameter_name == "max_shadow_dist":
+                    self.sim_shadow_dist = int(parameter_value)
+                elif parameter_name == "min_radius":
+                    self.ld_min_rad = int(parameter_value)
+                elif parameter_name == "max_radius":
+                    self.ld_max_rad = int(parameter_value)
+                # else:
+                #     warnings.warn("rvt.default.read_default_from_file: Line '{}' not used.".format(line))
+            dat.close()
+        elif extension == ".json":
+            dat = open(file_path, "r")
+            data = json.load(dat)
+            default_data = data["default_settings"]
+            self.ve_factor = float(default_data["ve_factor"]["value"])
+            # Slope gradient
+            self.slp_output_units = str(default_data["Slope gradient"]["slp_output_units"]["value"])
+            # Hillshade
+            self.hs_sun_azi = int(default_data["Hillshade"]["hs_sun_azi"]["value"])
+            self.hs_sun_el = int(default_data["Hillshade"]["hs_sun_el"]["value"])
+            # Multiple directions hillshade
+            self.mhs_nr_dir = int(default_data["Multiple directions hillshade"]["mhs_nr_dir"]["value"])
+            self.mhs_sun_el = int(default_data["Multiple directions hillshade"]["mhs_sun_el"]["value"])
+            # Simple local relief model
+            self.slrm_rad_cell = int(default_data["Simple local relief model"]["slrm_rad_cell"]["value"])
+            # Sky-View Factor
+            self.svf_n_dir = int(default_data["Sky-View Factor"]["svf_n_dir"]["value"])
+            self.svf_r_max = int(default_data["Sky-View Factor"]["svf_r_max"]["value"])
+            self.svf_noise = int(default_data["Sky-View Factor"]["svf_noise"]["value"])
+            # Anisotropic Sky-View Factor
+            self.asvf_dir = int(default_data["Anisotropic Sky-View Factor"]["asvf_dir"]["value"])
+            self.asvf_level = int(default_data["Anisotropic Sky-View Factor"]["asvf_level"]["value"])
+            # Sky illumination
+            self.sim_sky_mod = str(default_data["Sky illumination"]["sim_sky_mod"]["value"])
+            self.sim_samp_pnts = int(default_data["Sky illumination"]["sim_samp_pnts"]["value"])
+            self.sim_shadow_dist = int(default_data["Sky illumination"]["sim_shadow_dist"]["value"])
+            self.sim_shadow_az = int(default_data["Sky illumination"]["sim_shadow_az"]["value"])
+            self.sim_shadow_el = int(default_data["Sky illumination"]["sim_shadow_el"]["value"])
+            # Local dominance
+            self.ld_min_rad = int(default_data["Local dominance"]["ld_min_rad"]["value"])
+            self.ld_max_rad = int(default_data["Local dominance"]["ld_max_rad"]["value"])
+            self.ld_rad_inc = int(default_data["Local dominance"]["ld_rad_inc"]["value"])
+            self.ld_anglr_res = int(default_data["Local dominance"]["ld_anglr_res"]["value"])
+            self.ld_observer_h = float(default_data["Local dominance"]["ld_observer_h"]["value"])
+            dat.close()
 
     def get_hillshade_path(self, dem_path):
         dem_path_split = dem_path.split(".")  # split file type
