@@ -72,3 +72,11 @@ html_static_path = ['_static']
 def setup(app):
     app.connect('autodoc-process-docstring', sphinx.ext.autodoc.between('Credits:', what=['module'], exclude=True))
 
+# Copy examples do docs
+examples_folder = './examples'
+shutil.rmtree(examples_folder, ignore_errors=True)
+
+try:
+    shutil.copytree('../examples', examples_folder)
+except:
+    raise Exception('Error: Cannot copy examples to Docs')
