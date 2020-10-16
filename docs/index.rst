@@ -39,9 +39,9 @@ References
 
 When using the tools, please cite:
 
-*   Kokalj, Ž., Somrak, M. 2019. Why Not a Single Image? Combining Visualizations to Facilitate Fieldwork and On-Screen Mapping. Remote Sensing 11(7): 747.
-*   Zakšek, K., Oštir, K., Kokalj, Ž. 2011. Sky-View Factor as a Relief Visualization Technique. Remote Sensing 3: 398-415.
-*   Kokalj, Ž., Zakšek, K., Oštir, K. 2011. Application of Sky-View Factor for the Visualization of Historic Landscape Features in Lidar-Derived Relief Models. Antiquity 85, 327: 263-273.
+*   Kokalj, Ž., Somrak, M. 2019. `Why Not a Single Image? Combining Visualizations to Facilitate Fieldwork and On-Screen Mapping <https://www.mdpi.com/2072-4292/11/7/747>`_. Remote Sensing 11(7): 747.
+*   Zakšek, K., Oštir, K., Kokalj, Ž. 2011. `Sky-View Factor as a Relief Visualization Technique <https://www.mdpi.com/2072-4292/3/2/398>`_. Remote Sensing 3: 398-415.
+*   Kokalj, Ž., Zakšek, K., Oštir, K. 2011. `Application of Sky-View Factor for the Visualization of Historic Landscape Features in Lidar-Derived Relief Models <https://www.cambridge.org/core/journals/antiquity/article/application-of-skyview-factor-for-the-visualisation-of-historic-landscape-features-in-lidarderived-relief-models/653F5AE9086CE2028974934C3BBDC104>`_. Antiquity 85, 327: 263-273.
 
 Contributing
 ------------
