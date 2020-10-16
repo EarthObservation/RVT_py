@@ -12,6 +12,7 @@
 #
 import os
 import sys
+import shutil
 
 # Needed for removing credits
 import sphinx.ext.autodoc
@@ -24,7 +25,6 @@ project = 'Relief Visualization Toolbox in Python'
 copyright = '2020, ZRC SAZU and University of Ljubljana'
 author = 'ZRC SAZU and University of Ljubljana'
 
-
 # -- General configuration ---------------------------------------------------
 
 master_doc = 'index'
@@ -35,11 +35,12 @@ master_doc = 'index'
 extensions = [
     'sphinx.ext.autodoc',  # Core library for html generation from docstrings
     'sphinx.ext.autosummary',  # Create neat summary tables
-    'sphinx.ext.viewcode', # Add links to highlighted source code
-    'sphinx.ext.napoleon' # Use NumPy docstrings
+    'sphinx.ext.viewcode',  # Add links to highlighted source code
+    'sphinx.ext.napoleon',  # Use NumPy docstrings
+    'nbsphinx'  # Jupyter Notebook support
 ]
 
-autodoc_member_order = 'bysource' # Content is in the same order as in module
+autodoc_member_order = 'bysource'  # Content is in the same order as in module
 autosummary_generate = True  # Turn on sphinx.ext.autosummary
 autoclass_content = "both"  # Add __init__ doc (ie. params) to class summaries
 html_show_sourcelink = False  # Remove 'view source code' from top of page (for html, not python)
@@ -52,7 +53,6 @@ templates_path = ['_templates']
 # directories to ignore when looking for source files.
 # This pattern also affects html_static_path and html_extra_path.
 exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
-
 
 # -- Options for HTML output -------------------------------------------------
 
@@ -67,6 +67,8 @@ html_logo = './figures/RVT_head.png'
 # so a file named "default.css" will overwrite the builtin "default.css".
 html_static_path = ['_static']
 
+
 # Remove module docstring credits
 def setup(app):
     app.connect('autodoc-process-docstring', sphinx.ext.autodoc.between('Credits:', what=['module'], exclude=True))
+

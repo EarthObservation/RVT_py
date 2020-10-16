@@ -487,9 +487,9 @@ def sky_view_factor_compute(height_arr, i_valid, radius_max, radius_min, num_dir
     Returns
     -------
     {"svf": svf_out, "asvf": asvf_out, "opns": opns_out} : dictionary
-        svf_out, skyview factor : 1D numpy vector of skyview factor.
-        asvf_out, anisotropic skyview factor : 1D numpy vector of anisotropic skyview factor.
-        opns_out, openness : 1D numpy openness (elevation angle of horizon)
+    svf_out, skyview factor : 1D numpy vector of skyview factor.
+    asvf_out, anisotropic skyview factor : 1D numpy vector of anisotropic skyview factor.
+    opns_out, openness : 1D numpy openness (elevation angle of horizon)
     """
 
     height = height_arr
