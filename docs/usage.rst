@@ -88,19 +88,28 @@ Manual blending
                                     image=svf_arr)
     layers_manual.add_layer(layer1)
 
-You can add as many layers as you need. When adding/creating layers you can define image or image_path parameter. If you define ``image_path`` (you have to save image first) and not image then blending will work faster because it will not hold all images (from all layers) in memory. It will read them simultaneously.
+You can add as many layers as you need. When adding/creating layers you can define image or image_path parameter or none of them. If you define ``image_path`` (you have to save image first) and not ``image`` then blending will work faster because it will not hold all images (from all layers) in memory. It will read them simultaneously. If both ``image`` and ``image_path`` are None (not defined) then when calling method ``render_all_images()`` visualizations will be calculated automatically when needed (``vis_method`` parameter has to be correct).
 
 .. code-block:: python
 
+    # you can input calculated image (preferred method for non rvt visualizations)
     layers_manual.create_layer(vis_method="Sky-View Factor", normalization="value", minimum=0.7, maximum=1,
                               blend_mode="multiply", opacity=25,
-                              image_path=svf_path)  # image_path instead of image
+                              image=svf_arr)
+    # or you can input image_path
+    layers_manual.create_layer(vis_method="Sky-View Factor", normalization="value", minimum=0.7, maximum=1,
+                              blend_mode="multiply", opacity=25,
+                              image_path=svf_path)
+    # or you don't define them (None), vis_method has to be correct (rvt, suggested method)
+    layers_manual.create_layer(vis_method="Sky-View Factor", normalization="value", minimum=0.7, maximum=1,
+                              blend_mode="multiply", opacity=25)
 
-After you added all the layers you would like to blend. You call method ``render_all()``. If you define method parameters ``input_dem_path`` (needed for profile info) and ``output_blend_path``. Result will be saved in ``output_blend_path`` else it will only return result raster array.
+After you added all the layers you would like to blend. You call method ``render_all_images()`` to create blended image. If both ``image`` and ``image_path`` are None, you can define parameters for specific visualisation function with parameter ``default``. If you call method ``add_dem_path()`` (needed for profile) and define method parameter ``save_render_path``, result will be saved in that path, else it will only return result raster array.
 
 .. code-block:: python
 
-    render_arr = layers_manual.render_all_images(input_dem_path, output_blend_path)  # to save rendered array in output_blend_path
+    layers_manual.add_dem_path(dem_path=input_dem_path)  # needed when you wish to save render (save_render_path defined in render_all_images())
+    render_arr = layers_manual.render_all_images(save_render_path=save_render_path)  # to save rendered array in save_render_path
     render_arr = layers_manual.render_all_images()  # to only get result render array (render_arr)
 
 Automatic blending
@@ -113,25 +122,27 @@ Automatic blending depends on ``rvt.default``, so you have to import ``rvt.defau
     import rvt.blend
     import rvt.default
 
-Automatic blending is blending from file. All the visualisations we need for blending will be computed and stored in the directory where input raster is. To create example file where we can later change parameters we call function ``create_blender_file_example``.
+Automatic blending is filling ``rvt.blender.BlenderLayers`` from file. To create example file where we can later change parameters we call function ``create_blender_file_example()``.
 
 .. code-block:: python
 
     blender_file = rvt.blend.create_blender_file_example(file_path=r"settings\blender_file_example.txt")
 
-To blend from file we also need function parameters values which we define in   class ``rvt.default.DefaultValues()`` (see :ref:`module_default`).
+To blend from file we also need visualization function parameters values which we define in   class ``rvt.default.DefaultValues()`` (see :ref:`module_default`).
 
 .. code-block:: python
 
     default = rvt.default.DefaultValues()
 
-To blend from file we create ``BlenderLayers()`` class, call method ``build_blender_layers_from_file`` and then ``render_all_images``.
+To blend from file we create ``BlenderLayers()`` class, call method ``build_blender_layers_from_file()`` and then ``render_all_images()``. In ``render_all_images()`` method we can save (to dem_path directory) specific visualization if we set parameter ``save_visualization`` to True.
 
 .. code-block:: python
 
     layers_auto = rvt.blend.BlenderLayers()
-    layers_auto.build_blender_layers_from_file(dem_path=input_dem_path, file_path=blender_file, default=default)  # we can make our own blender_file (change example), we can change default
-    render_arr = layers_auto.render_all_images(dem_path=input_dem_path, save_render_path=output_blend_path)  # if we dont input dem_path and save_rander_path result won't be stored as raster (tif)
+    layers_auto.build_blender_layers_from_file(file_path=blender_file)   # we can make our own blender_file (change example)
+    layers_auto.add_dem_path(input_dem_path) # needed when save_visualizations is True, and we wish to save render (save_render_path is set)
+    layers_auto.add_dem_arr(dem_arr=input_dem_arr, dem_resolution=x_res)  # needed when save_visualizations is False
+    render_arr = layers_auto.render_all_images(save_visualizations=False, save_render_path=output_blend_path)
 
 Sample dataset
 --------------
