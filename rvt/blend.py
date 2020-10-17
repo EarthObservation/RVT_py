@@ -1,40 +1,21 @@
 """
-Relief Visualization Toolbox Blend Functions
+Relief Visualization Toolbox – Visualization Functions
 
 Contains functions for blending.
 
 Credits:
-Žiga Kokalj (ziga.kokalj@zrc-sazu.si)
-Krištof Oštir (kristof.ostir@fgg.uni-lj.si)
-Klemen Zakšek
-Klemen Čotar
-Maja Somrak
-Žiga Maroh
-
-Copyright:
-2010-2020 Research Centre of the Slovenian Academy of Sciences and Arts
-2010-2018 Space-SI
-2016-2020 University of Ljubljana, Faculty of Civil and Geodetic Engineering
-"""
-"""
-NAME:
-    https://github.com/EarthObservation/RVT
-
-PROJECT MANAGER:
     Žiga Kokalj (ziga.kokalj@zrc-sazu.si)
-
-AUTHORS:
+    Krištof Oštir (kristof.ostir@fgg.uni-lj.si)
     Klemen Zakšek
-    Krištof Oštir
     Klemen Čotar
     Maja Somrak
     Žiga Maroh
 
-COPYRIGHT:
-    Research Centre of the Slovenian Academy of Sciences and Arts
-    Space-SI
-    University of Ljubljana, Faculty of Civil and Geodetic Engineering
+Copyright:
+    2010-2020 Research Centre of the Slovenian Academy of Sciences and Arts
+    2016-2020 University of Ljubljana, Faculty of Civil and Geodetic Engineering
 """
+
 # TODO: more testing, find and fix bugs if they exists
 
 # python libraries

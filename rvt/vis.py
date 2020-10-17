@@ -1,20 +1,19 @@
 """
-Relief Visualization Toolbox Visualization Functions
+Relief Visualization Toolbox – Visualization Functions
 
 Contains functions for computing the visualizations.
 
 Credits:
-Žiga Kokalj (ziga.kokalj@zrc-sazu.si)
-Krištof Oštir (kristof.ostir@fgg.uni-lj.si)
-Klemen Zakšek
-Klemen Čotar
-Maja Somrak
-Žiga Maroh
+    Žiga Kokalj (ziga.kokalj@zrc-sazu.si)
+    Krištof Oštir (kristof.ostir@fgg.uni-lj.si)
+    Klemen Zakšek
+    Klemen Čotar
+    Maja Somrak
+    Žiga Maroh
 
 Copyright:
-2010-2020 Research Centre of the Slovenian Academy of Sciences and Arts
-2010-2018 Space-SI
-2016-2020 University of Ljubljana, Faculty of Civil and Geodetic Engineering
+    2010-2020 Research Centre of the Slovenian Academy of Sciences and Arts
+    2016-2020 University of Ljubljana, Faculty of Civil and Geodetic Engineering
 """
 
 # python libraries

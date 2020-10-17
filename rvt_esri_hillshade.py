@@ -1,22 +1,20 @@
 """
-NAME:
-    RVT hillshade esri raster function
-    rvt_py, rvt.vis.hillshade
+Relief Visualization Toolbox – Visualization Functions
 
-PROJECT MANAGER:
+RVT hillshade esri raster function
+rvt_py, rvt.vis.hillshade
+
+Credits:
     Žiga Kokalj (ziga.kokalj@zrc-sazu.si)
-
-AUTHORS:
+    Krištof Oštir (kristof.ostir@fgg.uni-lj.si)
     Klemen Zakšek
-    Krištof Oštir
     Klemen Čotar
     Maja Somrak
     Žiga Maroh
 
-COPYRIGHT:
-    Research Centre of the Slovenian Academy of Sciences and Arts
-    Space-SI
-    University of Ljubljana, Faculty of Civil and Geodetic Engineering
+Copyright:
+    2010-2020 Research Centre of the Slovenian Academy of Sciences and Arts
+    2016-2020 University of Ljubljana, Faculty of Civil and Geodetic Engineering
 """
 
 import numpy as np
