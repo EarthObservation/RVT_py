@@ -3,4 +3,4 @@
 QGIS Plugin
 ===========
 
-RVT is available as a QGIS plugin.
+RVT will be available as a QGIS plugin soon. Please stay tuned.
