@@ -3,17 +3,21 @@
 ArcGIS Pro
 ==========
 
-If you would like to use visualization functions in ArcGIS Pro you have to activate it.
+Relief Visualisation Toolbox can be used in ArcGIS Pro as raster functions.
+
+As described in `Raster functions—ArcGIS Pro | Documentation <https://pro.arcgis.com/en/pro-app/help/data/imagery/raster-functions.htm>`_, raster functions are operations that apply processing directly to the pixels of imagery and raster datasets, as opposed to geoprocessing tools, which write out a new raster to disk. Calculations are applied to the pixels of the original data as the raster is displayed, so only pixels that are visible on your screen are processed. As you zoom and pan around, the calculations are performed on the fly. Since no intermediate datasets are created, processes can be applied quickly, as opposed to the time it would take to create a processed file on disk.
+
+If you would like to use use Relief Visualization Toolbox in ArcGIS Pro you have to activate each function individually.
 
 #. Select ``Imagery → Raster Functions``
 
    .. image:: ./figures/rvt_esri_ribbon.png
 
-#. Select→ ≡ → Open Python Raster Function``.
+#. Select ``≡ → Open Python Raster Function``.
 
    .. image:: ./figures/rvt_esri_toolbox.png
 
-#. Then select Python Module ``rvt_esri_*.py`` and Class Name (it is only one).
+#. Then select Python Module ``rvt_esri_*.py`` and Class Name (there is only  one class in every function).
 
    .. image:: ./figures/rvt_esri_open.png
 
