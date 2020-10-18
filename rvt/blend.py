@@ -26,37 +26,38 @@ import rasterio as rio
 import matplotlib as mpl
 import matplotlib.cm
 import os
+import json
 
 
 def create_blender_file_example(file_path=None):
+    data = {"blender_layers": {"name": "VAT - Archeological",
+                               "layers":
+                                   [
+                                       {"layer": "1", "visualization_method": "Sky-View Factor", "norm": "Value",
+                                        "min": 0.7, "max": 1.0,
+                                        "blend_mode": "Multiply", "opacity": 25},
+                                       {"layer": "2", "visualization_method": "Openness - Positive",
+                                        "norm": "Value", "min": 68, "max": 93,
+                                        "blend_mode": "Overlay", "opacity": 50},
+                                       {"layer": "3", "visualization_method": "Slope gradient", "norm": "Value",
+                                        "min": 0, "max": 50,
+                                        "blend_mode": "Luminosity", "opacity": 50},
+                                       {"layer": "4", "visualization_method": "Hillshade", "norm": "Value",
+                                        "min": 0, "max": 1,
+                                        "blend_mode": "Normal", "opacity": 100},
+                                       {"layer": "5", "visualization_method": "None"}
+                                   ]
+                               }}
     if file_path is None:
-        file_path = r"settings\blender_file_example.txt"
+        file_path = r"settings\blender_file_example.json"
         if os.path.isfile(file_path):
             pass
         else:
             if not os.path.exists(os.path.dirname(file_path)):
                 os.makedirs(os.path.dirname(file_path))
-        dat = open(file_path, "w")
-    else:
-        dat = open(file_path, "w")
-    dat.write("#---------------------------------------------------------------------------------------------------"
-              "-------\n#------------------------------------------------------------------------------------------"
-              "----------------\n#\n#	Relief Visualization Toolbox python, example settings file to build rvt.ble"
-              "nder.BlenderLayers class\n#	This class is used to store blender layers and render blender images\n"
-              "#	method: rvt.blend.BlenderLayers.build_blender_layers_from_file(file_path)\n#\n#----------------"
-              "------------------------------------------------------------------------------------------\n#-------"
-              "---------------------------------------------------------------------------------------------------"
-              "\n#\n# VISUALIZATION METHODS:\n#\n# Hillshade\n# Multiple directions hillshade\n# Slope gradient\n"
-              "# Simple local relief model\n# Sky-View Factor\n# Anisotropic Sky-View Factor\n# Openness - Positi"
-              "ve\n# Openness - Negative\n# Sky illumination\n# Local dominance\n# None\n#\n#\n# NORMALIZATIONS:\n"
-              "#\n# Value - min and max are (linear) cut-off points\n# Perc - min and max are\n#\n#\n"
-              "# BLEND MODES:\n#\n# Normal\n# Multiply\n# Overlay\n# Luminosity\n# Screen\n\n# layer order is importa"
-              "nt\n\n#---------------------------------------------------------------------------------------------"
-              "-------------\n\n# VAT - Archeological\nlayer:1, vis:Sky-View Factor, norm:Value, min:0.7, max:1.0,"
-              " blend_mode:Multiply, opacity:25\nlayer:2, vis:Openness - Positive, norm:Value, min:68, max:93,"
-              " blend_mode:Overlay, opacity:50\nlayer:3, vis:Slope gradient, norm:Value, min:0, max:50,"
-              " blend_mode:Luminosity, opacity:50\nlayer:4, vis:Hillshade, norm:Value, min:0, max:1,"
-              " blend_mode:Normal, opacity:100\nlayer:5, vis:None\n\n")
+
+    dat = open(file_path, "w")
+    dat.write(json.dumps(data, indent=4))
     dat.close()
 
 
@@ -551,42 +552,22 @@ class BlenderLayers:
         self.layers = []
         # Example file (for file_path) in dir settings: blender_file_example.txt
         dat = open(file_path, "r")
-        for line in dat:
-            line = line.strip()
-            if line == "":
+        data = json.load(dat)
+        layers_data = data["blender_layers"]["layers"]
+        for layer in layers_data:
+            layer_name = layer["layer"]
+            if layer["visualization_method"] == "None":
+                vis_method = None
                 continue
-            if line[0] == "#":
-                continue
-            line_list = line.split(",")
-            vis_method = None
-            normalization = None
-            minimum = None
-            maximum = None
-            blend_mode = None
-            opacity = None
-            for element in line_list:
-                element = element.strip()
-                parameter_name = element.split(":")[0].strip()
-                parameter_value = element.split(":")[1].strip()
-                if parameter_name == "vis":
-                    vis_method = parameter_value
-                    if vis_method == "None":
-                        vis_method = None
-                elif parameter_name == "norm":
-                    normalization = parameter_value
-                elif parameter_name == "min":
-                    minimum = float(parameter_value)
-                elif parameter_name == "max":
-                    maximum = float(parameter_value)
-                elif parameter_name == "blend_mode":
-                    blend_mode = parameter_value
-                elif parameter_name == "opacity":
-                    opacity = float(parameter_value)
-            if vis_method is None:
-                continue
-            layer = BlenderLayer(vis_method=vis_method, normalization=normalization, minimum=minimum,
-                                 maximum=maximum, blend_mode=blend_mode, opacity=opacity)
-            self.add_layer(layer)
+            else:
+                vis_method = layer["visualization_method"]
+            norm = layer["norm"]
+            norm_min = layer["min"]
+            norm_max = layer["max"]
+            blend_mode = layer["blend_mode"]
+            opacity = layer["opacity"]
+            self.add_layer(BlenderLayer(vis_method=vis_method, normalization=norm, minimum=norm_min, maximum=norm_max,
+                                        blend_mode=blend_mode, opacity=opacity))
         dat.close()
 
     def render_all_images(self, default=None, save_visualizations=False, save_render_path=None):
@@ -598,8 +579,9 @@ class BlenderLayers:
             simultaneously (in memory). Be careful save_visualisation applies only if specific BlenderLayer
             image and image_path are None"""
         if save_render_path is not None and self.dem_path is None:
-            raise Exception("rvt.blend.BlenderLayers.render_all_images: If you would like to save rendered image (blender), "
-                            "you have to define dem_path (BlenderLayers.add_dem_path())!")
+            raise Exception(
+                "rvt.blend.BlenderLayers.render_all_images: If you would like to save rendered image (blender), "
+                "you have to define dem_path (BlenderLayers.add_dem_path())!")
 
         # default is rvt.default.DefaultValues class
         if default is None:  # if not defined, predefined values are used
@@ -623,8 +605,9 @@ class BlenderLayers:
                                 "you have to define dem_path (BlenderLayers.add_dem_path())!")
             if not save_visualizations and self.dem_arr is None and self.dem_resolution is None and \
                     image_path is None and image is None:
-                raise Exception("rvt.blend.BlenderLayers.render_all_images: If you would like to compute visualizations, "
-                                "you have to define dem_arr and its resolution (BlenderLayers.add_dem_arr())!")
+                raise Exception(
+                    "rvt.blend.BlenderLayers.render_all_images: If you would like to compute visualizations, "
+                    "you have to define dem_arr and its resolution (BlenderLayers.add_dem_arr())!")
 
             # normalize images
             # if image is not presented and image_path is

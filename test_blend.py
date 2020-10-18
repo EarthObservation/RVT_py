@@ -58,11 +58,11 @@ render_arr = layers_manual.render_all_images(save_render_path=output_blend_path)
 # when save_visualizations=False, blending save every needed visualization in GeoTif in dem_path directory
 input_dem_path = r"test_data\TM1_564_146.tif"
 # Example file (for file_path) in dir settings: blender_file_example.txt
-blender_file = r"settings\blender_file_example.txt"
+blender_file = r"settings\blender_file_example.json"
 output_blend_path = r"test_data\TM1_564_146_test_blend_automatic.tif"
 layers_auto = rvt.blend.BlenderLayers()
 default = rvt.default.DefaultValues()
-default.read_default_from_file("settings\default_settings.txt")
+default.read_default_from_file(r"settings\default_settings.json")
 layers_auto.build_blender_layers_from_file(file_path=blender_file)  # build BlenderLayers from file
 # when building_blender from file single BlenderLayer image and image_path are None
 layers_auto.add_dem_path(input_dem_path)  # needed when save_visualizations is True and save_rander_path is not None
