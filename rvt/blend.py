@@ -30,7 +30,8 @@ import json
 
 
 def create_blender_file_example(file_path=None):
-    data = {"blender_layers": {"name": "VAT - Archeological",
+    """Create blender .json file example (can be changed and read). Example is VAT - Archaeological combination"""
+    data = {"blender_layers": {"name": "VAT - Archaeological",
                                "layers":
                                    [
                                        {"layer": "1", "visualization_method": "Sky-View Factor", "norm": "Value",
@@ -548,7 +549,7 @@ class BlenderLayers:
         self.layers = []
 
     def build_blender_layers_from_file(self, file_path):
-        """Fill layers from file."""
+        """Fill layers from .json file."""
         self.layers = []
         # Example file (for file_path) in dir settings: blender_file_example.txt
         dat = open(file_path, "r")
@@ -568,6 +569,21 @@ class BlenderLayers:
             opacity = layer["opacity"]
             self.add_layer(BlenderLayer(vis_method=vis_method, normalization=norm, minimum=norm_min, maximum=norm_max,
                                         blend_mode=blend_mode, opacity=opacity))
+        dat.close()
+
+    def save_blender_layers_to_file(self, file_path):
+        """Save layers (manually) to .json file. Param image and image_path have to be None, vis has to be correct!"""
+        data = {"blender_layers": {"name": "VAT - Archaeological",
+                                   "layers": []
+                                   }}
+        i = 1
+        for layer in self.layers:
+            data["blender_layers"]["layers"].append({"layer": str(i), "visualization_method": layer.vis,
+                                                     "norm": layer.normalization, "min": layer.min, "max": layer.max,
+                                                     "blend_mode": layer.blend_mode, "opacity": layer.opacity})
+            i += 1
+        dat = open(file_path, "w")
+        dat.write(json.dumps(data, indent=4))
         dat.close()
 
     def render_all_images(self, default=None, save_visualizations=False, save_render_path=None):

@@ -51,6 +51,11 @@ layers_manual.create_layer(vis_method="Hillshade", normalization="value", minimu
 layers_manual.create_layer(vis_method=None)
 # you can save to GeoTif if save_render_path presented else it only returns array
 render_arr = layers_manual.render_all_images(save_render_path=output_blend_path)
+
+# you can save layers combination to .json file, be aware image and image_path won't be saved
+# this is a problem when vis_method is non rvt visualization(is not correct)!
+layers_manual.save_blender_layers_to_file(r"settings\blender_custom_layers.json")
+
 #####
 
 #####
