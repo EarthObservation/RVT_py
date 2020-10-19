@@ -25,11 +25,6 @@ import rvt.vis
 import os
 
 
-# Working only when save_individual_vis_fn=False
-# Needs to be debugged for when save_individual_vis_fn=True
-# Needs to be debugged for when blending_from_file=True
-# Find out problems with for loop why layers contains more than 5 layers (layers.add_layer(layer))
-
 class RVTBlender:
     def __init__(self):
         self.name = "RVT Blender"
@@ -37,11 +32,10 @@ class RVTBlender:
         # default values
         self.dem_path = None
         self.default_val_file_path = os.path.normpath(os.path.join(os.path.dirname(os.path.realpath(__file__)),
-                                                                   "settings/default_settings.txt"))
-        self.save_individual_vis_fn = True
+                                                                   "settings/default_settings.json"))
         self.blend_from_file = False
         self.blend_file_path = os.path.normpath(os.path.join(os.path.dirname(os.path.realpath(__file__)),
-                                                             "settings/blender_file_example.txt"))
+                                                             "settings/blender_file_example.json"))
 
         self.layer1_vis = "Sky-View Factor"
         self.layer1_norm = "Value"
@@ -89,16 +83,6 @@ class RVTBlender:
                 'description': "Input raster for which to create the blender."
             },
             {
-                'name': 'save_individual_vis_fn',
-                'dataType': 'boolean',
-                'value': self.save_individual_vis_fn,
-                'required': False,
-                'displayName': "Save individual visualisation function",
-                'description': "If True (works faster) it saves individual visualization function (layer) in raster"
-                               " directory. If False (works very slow or crashes when"
-                               " dealing with big raster), it holds specific raster function result (raster) in memory."
-            },
-            {
                 'name': 'default_val_file_path',
                 'dataType': 'string',
                 'value': self.default_val_file_path,
@@ -106,7 +90,7 @@ class RVTBlender:
                 'displayName': "Visualisation functions parameter values file path",
                 'description': "File with parameter values for visualisation functions. If file doesn't exist"
                                " it takes default values and creates file"
-                               " python_file_location/settings/default_settings.txt."
+                               " python_file_location/settings/default_settings.json."
             },
             {
                 'name': 'blend_from_file',
@@ -126,7 +110,7 @@ class RVTBlender:
                 'displayName': "Blend file path",
                 'description': "Useful only when blend from file is True. File where blending is defined. "
                                "If file doesn't exists and blend from file is true it creates default file in "
-                               "python_file_location/settings/blender_file_example.txt."
+                               "python_file_location/settings/blender_file_example.json."
             },
             {
                 'name': 'layer1_vis',
@@ -412,10 +396,7 @@ class RVTBlender:
         kwargs['output_info']['pixelType'] = 'f4'
         kwargs['output_info']['histogram'] = ()
         kwargs['output_info']['statistics'] = ()
-        # self.dem_path = str(kwargs.get("_cachedproperties").get("tifftag_documentname"))  # ASK ESRI how to get raster path?
-        self.dem_path = "D:/RVT_py/RVT_py/test_data/TM1_564_146.tif"
         self.prepare(default_val_file_path=kwargs.get("default_val_file_path"),
-                     save_individual_vis_fn=kwargs.get("save_individual_vis_fn"),
                      blend_from_file=kwargs.get("blend_from_file"),
                      blend_file_path=kwargs.get("blend_file_path"),
                      layer1_vis=kwargs.get("layer1_vis"), layer1_norm=kwargs.get("layer1_norm"),
@@ -445,28 +426,25 @@ class RVTBlender:
         # read visualisation parameters values in DefaultValues class
         default = rvt.default.DefaultValues()  # already contains default values
         layers = rvt.blend.BlenderLayers()  # containing layers
+        layers.add_dem_arr(dem, pixel_size[0])
 
         if os.path.isfile(self.default_val_file_path):  # if settings file exists change values from file
             default.read_default_from_file(self.default_val_file_path)
 
         else:  # if doesn't exist create one with default values
             default_file_out_path = os.path.normpath(os.path.join(os.path.dirname(os.path.realpath(__file__)),
-                                                                  "settings/default_settings.txt"))
+                                                                  "settings/default_settings.json"))
             if not os.path.exists(os.path.dirname(default_file_out_path)):
                 os.makedirs(os.path.dirname(default_file_out_path))
             default.save_default_to_file(file_path=default_file_out_path)
 
-        if self.blend_from_file:  # blending from parameters defined in file
+        if self.blend_from_file:  # blending from file (blend form file checkbox checked)
             if os.path.isfile(self.blend_file_path):
-                layers.build_blender_layers_from_file(dem_path=self.dem_path, file_path=self.blend_file_path,
-                                                      default=default)
-                blender = layers.render_all_images()  # calculate blender
-                pixelBlocks['output_pixels'] = blender.astype(props['pixelType'], copy=False)
-                return pixelBlocks
+                layers.build_blender_layers_from_file(file_path=self.blend_file_path)
 
             else:  # if blender file doesn't exist it creates example, which can be changed
                 blend_file_path = os.path.normpath(os.path.join(os.path.dirname(os.path.realpath(__file__)),
-                                                                "settings/blender_file_example.txt"))
+                                                                "settings/blender_file_example.json"))
                 if os.path.isfile(blend_file_path):
                     pass
                 else:
@@ -475,110 +453,23 @@ class RVTBlender:
                     rvt.blend.create_blender_file_example(file_path=blend_file_path)
 
         else:  # blending from parameters defined in ArcGIS Pro
-            vis_list = [self.layer1_vis, self.layer2_vis, self.layer3_vis, self.layer4_vis, self.layer5_vis]
-            norm_list = [self.layer1_norm, self.layer2_norm, self.layer3_norm, self.layer4_norm, self.layer5_norm]
-            min_list = [self.layer1_min, self.layer2_min, self.layer3_min, self.layer4_min, self.layer5_min]
-            max_list = [self.layer1_max, self.layer2_max, self.layer3_max, self.layer4_max, self.layer5_max]
-            blending_mode_list = [self.layer1_blending_mode, self.layer2_blending_mode, self.layer3_blending_mode,
-                                  self.layer4_blending_mode, self.layer5_blending_mode]
-            opacity_list = [self.layer1_opacity, self.layer2_opacity, self.layer3_opacity, self.layer4_opacity,
-                            self.layer5_opacity]
+            layers.create_layer(self.layer1_vis, self.layer1_norm, self.layer1_min, self.layer1_max,
+                                self.layer1_blending_mode, self.layer1_opacity)
+            layers.create_layer(self.layer2_vis, self.layer2_norm, self.layer2_min, self.layer2_max,
+                                self.layer2_blending_mode, self.layer2_opacity)
+            layers.create_layer(self.layer3_vis, self.layer3_norm, self.layer3_min, self.layer3_max,
+                                self.layer3_blending_mode, self.layer3_opacity)
+            layers.create_layer(self.layer4_vis, self.layer4_norm, self.layer4_min, self.layer4_max,
+                                self.layer4_blending_mode, self.layer4_opacity)
+            layers.create_layer(self.layer5_vis, self.layer5_norm, self.layer5_min, self.layer5_max,
+                                self.layer5_blending_mode, self.layer5_opacity)
 
-            for i_lyr in range(5):  # iterate trough all layers and saves them in layers (rvt.blend.BlenderLayers())
-                vis_method = vis_list[i_lyr]
-                normalization = norm_list[i_lyr]
-                minimum = min_list[i_lyr]
-                maximum = max_list[i_lyr]
-                blend_mode = blending_mode_list[i_lyr]
-                opacity = opacity_list[i_lyr]
-                image = None
-                image_path = None
-                if vis_method is not None:
-                    if vis_method.lower() == "slope gradient":
-                        if self.save_individual_vis_fn:  # save individually visualisation function output as raster (tif)
-                            default.save_slope(self.dem_path)
-                            image_path = default.get_slope_path(self.dem_path)
-                        else:
-                            image = default.get_slope(dem_arr=dem, resolution_x=pixel_size[0],
-                                                      resolution_y=pixel_size[1])["slope"]
-                    elif vis_method.lower() == "hillshade":
-                        if self.save_individual_vis_fn:  # save individually visualisation function output as raster (tif)
-                            default.save_hillshade(self.dem_path)
-                            image_path = default.get_hillshade_path(self.dem_path)
-                        else:
-                            image = default.get_hillshade(dem_arr=dem, resolution_x=pixel_size[0],
-                                                          resolution_y=pixel_size[1])
-                    elif vis_method.lower() == "multiple directions hillshade":
-                        if self.save_individual_vis_fn:  # save individually visualisation function output as raster (tif)
-                            default.save_multi_hillshade(self.dem_path)
-                            image_path = default.get_multi_hillshade_path(self.dem_path)
-                        else:
-                            image = default.get_multi_hillshade(dem_arr=dem, resolution_x=pixel_size[0],
-                                                                resolution_y=pixel_size[1])
-                    elif vis_method.lower() == "simple local relief model":
-                        if self.save_individual_vis_fn:  # save individually visualisation function output as raster (tif)
-                            default.save_slrm(self.dem_path)
-                            image_path = default.get_slrm_path(self.dem_path)
-                        else:
-                            image = default.get_slrm(dem_arr=dem)
-                    elif vis_method.lower() == "sky-view factor":
-                        if self.save_individual_vis_fn:  # save individually visualisation function output as raster (tif)
-                            default.save_sky_view_factor(self.dem_path, save_svf=True, save_asvf=False, save_opns=False)
-                            image_path = default.get_svf_path(self.dem_path)
-                        else:
-                            image = default.get_sky_view_factor(dem_arr=dem, resolution=pixel_size[0],
-                                                                compute_svf=True,
-                                                                compute_asvf=False, compute_opns=False)["svf"]
-                    elif vis_method.lower() == "anisotropic sky-view factor":
-                        if self.save_individual_vis_fn:  # save individually visualisation function output as raster (tif)
-                            default.save_sky_view_factor(self.dem_path, save_svf=False, save_asvf=True, save_opns=False)
-                            image_path = default.get_asvf_path(self.dem_path)
-                        else:
-                            image = default.get_sky_view_factor(dem_arr=dem, resolution=pixel_size[0],
-                                                                compute_svf=False,
-                                                                compute_asvf=True, compute_opns=False)["asvf"]
-                    elif vis_method.lower() == "openness - positive":
-                        if self.save_individual_vis_fn:  # save individually visualisation function output as raster (tif)
-                            default.save_sky_view_factor(self.dem_path, save_svf=False, save_asvf=False, save_opns=True)
-                            image_path = default.get_opns_path(self.dem_path)
-                        else:
-                            image = default.get_sky_view_factor(dem_arr=dem, resolution=pixel_size[0],
-                                                                compute_svf=False,
-                                                                compute_asvf=False, compute_opns=True)["opns"]
-                    elif vis_method.lower() == "openness - negative":
-                        if self.save_individual_vis_fn:  # save individually visualisation function output as raster (tif)
-                            default.save_neg_opns(self.dem_path)
-                            image_path = default.get_neg_opns_path(self.dem_path)
-                        else:
-                            image = default.get_neg_opns(dem_arr=dem, resolution=pixel_size[0])
-                    elif vis_method.lower() == "sky illumination":
-                        if self.save_individual_vis_fn:  # save individually visualisation function output as raster (tif)
-                            default.save_sky_illumination(self.dem_path)
-                            image_path = default.get_sky_illumination_path(self.dem_path)
-                        else:
-                            image = default.get_sky_illumination(dem_arr=dem, resolution=pixel_size[0])
-                    elif vis_method.lower() == "local dominance":
-                        if self.save_individual_vis_fn:  # save individually visualisation function output as raster (tif)
-                            default.save_local_dominance(self.dem_path)
-                            image_path = default.get_local_dominance_path(self.dem_path)
-                        else:
-                            image = default.get_local_dominance(dem_arr=dem)
+        blender = layers.render_all_images(default=default)  # calculate blender
+        pixelBlocks['output_pixels'] = blender.astype(props['pixelType'], copy=False)
+        return pixelBlocks
 
-                    layer = rvt.blend.BlenderLayer(vis_method=vis_method, normalization=normalization, minimum=minimum,
-                                                   maximum=maximum, blend_mode=blend_mode, opacity=opacity, image=image,
-                                                   image_path=image_path)
-                else:
-                    layer = rvt.blend.BlenderLayer(vis_method=None)
-
-                layers.add_layer(layer)
-
-            layers.layers = layers.layers[-5:]  # ASK ESRI why is there more elements than 5
-            blender = layers.render_all_images()  # calculate blender
-            pixelBlocks['output_pixels'] = blender.astype(props['pixelType'], copy=False)
-            return pixelBlocks
-
-    def prepare(self, default_val_file_path="settings/default_settings.txt", save_individual_vis_fn=True,
-                blend_from_file=False, blend_file_path="settings/blender_file_example.txt",
+    def prepare(self, default_val_file_path="settings/default_settings.json", save_individual_vis_fn=True,
+                blend_from_file=False, blend_file_path="settings/blender_file_example.json",
                 layer1_vis="Sky-View Factor", layer1_norm="Value", layer1_min=0.7, layer1_max=1.,
                 layer1_blending_mode="Multiply", layer1_opacity=25., layer2_vis="Openness - Positive",
                 layer2_norm="Value", layer2_min=68., layer2_max=93., layer2_blending_mode="Overlay",
@@ -589,7 +480,6 @@ class RVTBlender:
                 layer5_blending_mode="Normal", layer5_opacity=0):
 
         self.default_val_file_path = default_val_file_path
-        self.save_individual_vis_fn = save_individual_vis_fn
         self.blend_from_file = blend_from_file
         self.blend_file_path = blend_file_path
         if layer1_vis == "None":
