@@ -32,7 +32,12 @@ import scipy.ndimage
 #  (sky_view_factor, sky_view_det_move, sky_view_compute, morph_shade_move, morph_shade, sky_illumination)
 
 
-def byte_scale(data, c_min=None, c_max=None, high=255, low=0):
+def byte_scale(data, 
+               c_min=None, 
+               c_max=None, 
+               high=255, 
+               low=0,
+               ):
     """
     Remade old scipy function.
     Byte scales an array (image).
@@ -69,6 +74,7 @@ def byte_scale(data, c_min=None, c_max=None, high=255, low=0):
         c_scale = 1
 
     if data.dtype == np.uint8:
+        #TODO: the following line seems not good to me - if cmin=0, then that pixel will get negative value
         byte_data = (high + 1) * (data - c_min - 1) / (c_max - c_min)  # copied from IDL BYTSCL
         byte_data[byte_data > high] = high
         byte_data[byte_data < 0] = 0
@@ -83,7 +89,12 @@ def byte_scale(data, c_min=None, c_max=None, high=255, low=0):
     return np.cast[np.uint8](byte_data) + np.cast[np.uint8](low)
 
 
-def slope_aspect(dem, resolution_x, resolution_y, ve_factor=1, output_units="radian"):
+def slope_aspect(dem, 
+                 resolution_x, 
+                 resolution_y, 
+                 ve_factor=1, 
+                 output_units="radian",
+                 ):
     """
     Procedure can return terrain slope and aspect in radian units (default) or in alternative units (if specified).
     Slope is defined as 0 for Hz plane and pi/2 for vertical plane.
@@ -110,6 +121,7 @@ def slope_aspect(dem, resolution_x, resolution_y, ve_factor=1, output_units="rad
         raise Exception("RVT slope_aspect: resolution must be a positive number!")
     dem = dem.astype(np.float32)
     dem = dem * ve_factor
+    #TODO: padding makes here no sense, delete next 2 lines
     # add frame of 0 (additional row up bottom and column left right)
     dem = np.pad(dem, pad_width=1, mode="constant", constant_values=0)
 
@@ -139,6 +151,7 @@ def slope_aspect(dem, resolution_x, resolution_y, ve_factor=1, output_units="rad
     if output_units == "degree":
         aspect_out = np.rad2deg(aspect_out)
 
+    #TODO: no padding ==> delete these 3 lines too
     # remove the frame (padding)
     slope_out = slope_out[1:-1, 1:-1]
     aspect_out = aspect_out[1:-1, 1:-1]
@@ -156,8 +169,14 @@ def slope_aspect(dem, resolution_x, resolution_y, ve_factor=1, output_units="rad
     return {"slope": slope_out, "aspect": aspect_out}
 
 
-def hillshade(dem, resolution_x, resolution_y, sun_azimuth=315, sun_elevation=35,
-              slope=None, aspect=None):
+def hillshade(dem, 
+              resolution_x, 
+              resolution_y, 
+              sun_azimuth=315, 
+              sun_elevation=35,
+              slope=None, 
+              aspect=None,
+              ):
     """
     Compute hillshade.
 
@@ -204,11 +223,19 @@ def hillshade(dem, resolution_x, resolution_y, sun_azimuth=315, sun_elevation=35
     hillshade_out = np.cos(sun_zenith_rad) * np.cos(slope) + np.sin(sun_zenith_rad) * np.sin(slope) * np.cos(
         aspect - sun_azimuth_rad)
 
+    #TODO: here would make sense to set edges to -1 as well, because  I am not sure what will we get otherwise
+
     return hillshade_out
 
 
-def multi_hillshade(dem, resolution_x, resolution_y, nr_directions=16, sun_elevation=35,
-                    slope=None, aspect=None):
+def multi_hillshade(dem, 
+                    resolution_x, 
+                    resolution_y, 
+                    nr_directions=16, 
+                    sun_elevation=35,
+                    slope=None, 
+                    aspect=None,
+                    ):
     """
     Calculates hillshades from multiple directions.
 
@@ -258,7 +285,9 @@ def multi_hillshade(dem, resolution_x, resolution_y, nr_directions=16, sun_eleva
     return multi_hillshade_out
 
 
-def slrm(dem, radius_cell=20):
+def slrm(dem, 
+         radius_cell=20,
+         ):
     """
     Calculates Simple local relief model.
 
@@ -285,7 +314,11 @@ def slrm(dem, radius_cell=20):
     return slrm_out
 
 
-def azimuth(xa, ya, xb, yb):
+def azimuth(xa, 
+            ya, 
+            xb, 
+            yb,
+            ):
     """
     Determine the azimuth in the range of [0,2pi).
 
@@ -297,6 +330,7 @@ def azimuth(xa, ya, xb, yb):
     -------
     a : outputs the azimuth in radians
     """
+    #TODO, this is probably an obsolete function
     north = ya - yb
     east = xb - xa
     if north == 0:
