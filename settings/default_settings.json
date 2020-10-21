@@ -5,6 +5,10 @@
             "description": "Vertical exaggeration."
         },
         "Hillshade": {
+            "hs_compute": {
+                "value": true,
+                "description": "If compute Hillshade. Parameter for GUIs."
+            },
             "hs_sun_azi": {
                 "value": 315,
                 "description": "Solar azimuth angle (clockwise from North) in degrees."
@@ -15,6 +19,10 @@
             }
         },
         "Multiple directions hillshade": {
+            "mhs_compute": {
+                "value": false,
+                "description": "If compute Multiple directions hillshade. Parameter for GUIs."
+            },
             "mhs_nr_dir": {
                 "value": 16,
                 "description": "Number of solar azimuth angles (clockwise from North)."
@@ -25,18 +33,30 @@
             }
         },
         "Slope gradient": {
+            "slp_compute": {
+                "value": false,
+                "description": "If compute Slope. Parameter for GUIs."
+            },
             "slp_output_units": {
                 "value": "degree",
                 "description": "Slope output units [radian, degree, percent]."
             }
         },
         "Simple local relief model": {
+            "slrm_compute": {
+                "value": false,
+                "description": "If compute Simple local relief model. Parameter for GUIs."
+            },
             "slrm_rad_cell": {
                 "value": 20,
                 "description": "Radius for trend assessment in pixels."
             }
         },
         "Sky-View Factor": {
+            "svf_compute": {
+                "value": false,
+                "description": "If compute Sky-View Factor. Parameter for GUIs."
+            },
             "svf_n_dir": {
                 "value": 16,
                 "description": "Number of directions."
@@ -51,6 +71,10 @@
             }
         },
         "Anisotropic Sky-View Factor": {
+            "asvf_compute": {
+                "value": false,
+                "description": "If compute Anisotropic Sky-View Factor. Parameter for GUIs."
+            },
             "asvf_dir": {
                 "value": 315,
                 "description": "Direction of anisotropy in degrees."
@@ -60,7 +84,23 @@
                 "description": "Level of anisotropy [1-low, 2-high]."
             }
         },
+        "Openness - Positive": {
+            "pos_opns_compute": {
+                "value": false,
+                "description": "If compute Openness - Positive. Parameter for GUIs."
+            }
+        },
+        "Openness - Negative": {
+            "neg_opns_compute": {
+                "value": false,
+                "description": "If compute Openness - Negative. Parameter for GUIs."
+            }
+        },
         "Sky illumination": {
+            "sim_compute": {
+                "value": false,
+                "description": "If compute Sky illumination. Parameter for GUIs."
+            },
             "sim_sky_mod": {
                 "value": "overcast",
                 "description": "Sky model [overcast, uniform]."
@@ -83,6 +123,10 @@
             }
         },
         "Local dominance": {
+            "ld_compute": {
+                "value": false,
+                "description": "If compute Local dominance. Parameter for GUIs."
+            },
             "ld_min_rad": {
                 "value": 10,
                 "description": "Minimum radial distance (in pixels) at which the algorithm starts with visualization computation."

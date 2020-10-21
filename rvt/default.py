@@ -34,28 +34,46 @@ class DefaultValues():
     ----------
     ve_factor : float
         For all vis functions. Vertical exaggeration.
+    slp_compute : bool
+        If compute Slope. Parameter for GUIs.
     slp_output_units : str
         Slope. Output units [radian, degree, percent].
+    hs_compute : bool
+        If compute Hillshade. Parameter for GUIs.
     hs_sun_azi : int
         Hillshade. Solar azimuth angle (clockwise from North) in degrees.
     hs_sun_el : int
         Hillshade. Solar vertical angle (above the horizon) in degrees.
+    mhs_compute : bool
+        If compute Multi directional hillshade. Parameter for GUIs.
     mhs_nr_dir : int
         Multi directional hillshade. Number of solar azimuth angles (clockwise from North).
     mhs_sun_el : int
         Multi directional hillshade. Solar vertical angle (above the horizon) in degrees.
+    slrm_compute : bool
+        If compute Simple local relief model. Parameter for GUIs.
     slrm_rad_cell : int
         Simple local relief model. Radius for trend assessment in pixels.
+    svf_compute : bool
+        If compute Sky-View Factor. Parameter for GUIs.
     svf_n_dir : int
         Sky-View Factor (Anisotropic Sky-View Factor, Openness). Number of directions.
     svf_r_max : int
         Sky-View Factor (Anisotropic Sky-View Factor, Openness). Maximal search radius in pixels.
     svf_noise : int
         Sky-View Factor (Anisotropic Sky-View Factor, Openness). The level of noise remove [0-don't remove, 1-low, 2-med, 3-high].
+    asvf_compute : bool
+        If compute Anisotropic Sky-View Factor. Parameter for GUIs.
     asvf_dir : int
         Anisotropic Sky-View Factor. Direction of anisotropy in degrees.
     asvf_level : int
         Anisotropic Sky-View Factor. Level of anisotropy [1-low, 2-high].
+    pos_opns_compute : bool
+        If compute Positive Openness. Parameter for GUIs.
+    neg_opns_compute : bool
+        If compute Negative Openness. Parameter for GUIs.
+    sim_compute : bool
+        If compute Sky illumination. Parameter for GUIs.
     sim_sky_mod : str
         Sky illumination. Sky model [overcast, uniform].
     sim_samp_pnts : int
@@ -66,6 +84,8 @@ class DefaultValues():
         Sky illumination. Shadow azimuth in degrees.
     sim_shadow_el : int
         Sky illumination. Shadow elevation in degrees.
+    ld_compute : bool
+        If compute Local dominance. Parameter for GUIs.
     ld_min_rad : int
         Local dominance. Minimum radial distance (in pixels) at which the algorithm starts with visualization computation.
     ld_max_rad : int
@@ -81,28 +101,41 @@ class DefaultValues():
     def __init__(self):
         self.ve_factor = 1
         # slope gradient
+        self.slp_compute = False
         self.slp_output_units = "degree"
         # hillshade
+        self.hs_compute = True
         self.hs_sun_azi = 315
         self.hs_sun_el = 35
         # multi hillshade
+        self.mhs_compute = False
         self.mhs_nr_dir = 16
         self.mhs_sun_el = 35
         # simple local relief model
+        self.slrm_compute = False
         self.slrm_rad_cell = 20
-        # sky_view_factor
+        # sky view factor
+        self.svf_compute = False
         self.svf_n_dir = 16
         self.svf_r_max = 10
         self.svf_noise = 0
+        # anisotropic sky-view factor
+        self.asvf_compute = False
         self.asvf_dir = 315
         self.asvf_level = 1
+        # positive openness
+        self.pos_opns_compute = False
+        # negative openness
+        self.neg_opns_compute = False
         # sky_illum
+        self.sim_compute = False
         self.sim_sky_mod = "overcast"
         self.sim_samp_pnts = 250
         self.sim_shadow_dist = 100
         self.sim_shadow_az = 315
         self.sim_shadow_el = 35
         # local dominance
+        self.ld_compute = False
         self.ld_min_rad = 10
         self.ld_max_rad = 20
         self.ld_rad_inc = 1
@@ -115,6 +148,8 @@ class DefaultValues():
                                     "value" : self.ve_factor,
                                     "description" : "Vertical exaggeration."},
                                      "Hillshade": {
+                                         "hs_compute": {"value": self.hs_compute,
+                                                        "description": "If compute Hillshade. Parameter for GUIs."},
                                          "hs_sun_azi": {"value": self.hs_sun_azi,
                                                         "description": "Solar azimuth angle (clockwise from North) in "
                                                                        "degrees."},
@@ -123,6 +158,9 @@ class DefaultValues():
                                                                       "degrees."}
                                      },
                                      "Multiple directions hillshade": {
+                                         "mhs_compute": {"value": self.mhs_compute,
+                                                         "description": "If compute Multiple directions hillshade."
+                                                                        " Parameter for GUIs."},
                                          "mhs_nr_dir": {"value": self.mhs_nr_dir,
                                                         "description": "Number of solar azimuth angles (clockwise "
                                                                        "from North)."},
@@ -131,15 +169,23 @@ class DefaultValues():
                                                                        "degrees."}
                                      },
                                      "Slope gradient": {
+                                         "slp_compute": {"value": self.slp_compute,
+                                                         "description": "If compute Slope. Parameter for GUIs."},
                                          "slp_output_units": {"value": self.slp_output_units,
                                                               "description": "Slope output units [radian, degree, "
                                                                              "percent]."}
                                      },
                                      "Simple local relief model": {
+                                         "slrm_compute": {"value": self.slrm_compute,
+                                                          "description": "If compute Simple local relief model. "
+                                                                         "Parameter for GUIs."},
                                          "slrm_rad_cell": {"value": self.slrm_rad_cell,
                                                            "description": "Radius for trend assessment in pixels."}
                                      },
                                      "Sky-View Factor": {
+                                         "svf_compute": {"value": self.svf_compute,
+                                                         "description": "If compute Sky-View Factor."
+                                                                        " Parameter for GUIs."},
                                          "svf_n_dir": {"value": self.svf_n_dir, "description": "Number of directions."},
                                          "svf_r_max": {"value": self.svf_r_max, "description": "Maximal search "
                                                                                                "radious in pixels."},
@@ -148,12 +194,28 @@ class DefaultValues():
                                                                       "1-low, 2-med, 3-high]."}
                                      },
                                      "Anisotropic Sky-View Factor": {
+                                         "asvf_compute": {"value": self.asvf_compute,
+                                                          "description": "If compute Anisotropic Sky-View Factor."
+                                                                         " Parameter for GUIs."},
                                          "asvf_dir": {"value": self.asvf_dir,
                                                       "description": "Direction of anisotropy in degrees."},
                                          "asvf_level": {"value": self.asvf_level,
                                                         "description": "Level of anisotropy [1-low, 2-high]."}
                                      },
+                                    "Openness - Positive": {
+                                        "pos_opns_compute": {"value": self.pos_opns_compute,
+                                                             "description": "If compute Openness - Positive. "
+                                                                            "Parameter for GUIs."}
+                                    },
+                                    "Openness - Negative": {
+                                        "neg_opns_compute": {"value": self.neg_opns_compute,
+                                                             "description": "If compute Openness - Negative. "
+                                                                            "Parameter for GUIs."}
+                                    },
                                      "Sky illumination": {
+                                         "sim_compute": {"value": self.sim_compute,
+                                                         "description": "If compute Sky illumination. Parameter for "
+                                                                        "GUIs."},
                                          "sim_sky_mod": {"value": self.sim_sky_mod,
                                                          "description": "Sky model [overcast, uniform]."},
                                          "sim_samp_pnts": {"value": self.sim_samp_pnts,
@@ -168,6 +230,9 @@ class DefaultValues():
                                                                                                        "degrees."}
                                      },
                                      "Local dominance": {
+                                         "ld_compute": {"value": self.ld_compute,
+                                                        "description": "If compute Local dominance. Parameter for "
+                                                                       "GUIs."},
                                          "ld_min_rad": {"value": self.ld_min_rad,
                                                         "description": "Minimum radial distance (in pixels) at which "
                                                                        "the algorithm starts with visualization "
@@ -213,57 +278,78 @@ class DefaultValues():
                 if len(line_list) == 2:
                     parameter_name = line_list[0].strip().lower()
                     parameter_value = line_list[1].strip()
+                    if parameter_name == "exaggeration_factor":
+                        self.ve_factor = float(parameter_value)
+                    elif parameter_name == "slope_gradient":
+                        self.slp_compute = int(parameter_value)
+                    elif parameter_name == "hillshading":
+                        self.hs_compute = int(parameter_value)
+                    elif parameter_name == "sun_azimuth":
+                        self.hs_sun_azi = int(parameter_value)
+                    elif parameter_name == "sun_elevation":
+                        self.hs_sun_el = int(parameter_value)
+                    elif parameter_name == "multiple_hillshading":
+                        self.mhs_compute = int(parameter_value)
+                    elif parameter_name == "hillshade_directions":
+                        self.mhs_nr_dir = int(parameter_value)
+                    elif parameter_name == "sun_elevation":
+                        self.mhs_sun_el = int(parameter_value)
+                    elif parameter_name == "simple_local_relief":
+                        self.slrm_compute = int(parameter_value)
+                    elif parameter_name == "trend_radius":
+                        self.slrm_rad_cell = int(parameter_value)
+                    elif parameter_name == "sky_view_factor":
+                        self.svf_compute = int(parameter_value)
+                    elif parameter_name == "svf_directions":
+                        self.svf_n_dir = int(parameter_value)
+                    elif parameter_name == "search_radius":
+                        self.svf_r_max = int(parameter_value)
+                    elif parameter_name == "remove_noise":
+                        if int(parameter_value) == 0:
+                            remove_noise = 0
+                            self.svf_noise = 0
+                        else:
+                            remove_noise = 1
+                    elif parameter_name == "noise_removal":
+                        if remove_noise != 0:
+                            if parameter_value == "low":
+                                self.svf_noise = 1
+                            elif parameter_value == "medium":
+                                self.svf_noise = 2
+                            elif parameter_value == "high":
+                                self.svf_noise = 3
+                    elif parameter_name == "anisotropic_svf":
+                        self.asvf_compute = int(parameter_value)
+                    elif parameter_name == "anisotropy_direction":
+                        self.asvf_dir = int(parameter_value)
+                    elif parameter_name == "anisotropy_level":
+                        if parameter_value == "low":
+                            self.asvf_level = 1
+                        elif parameter_value == "high":
+                            self.asvf_level = 2
+                    elif parameter_name == "positive_openness":
+                        self.pos_opns_compute = int(parameter_value)
+                    elif parameter_name == "negative_openness":
+                        self.neg_opns_compute = int(parameter_value)
+                    elif parameter_name == "sky_illumination":
+                        self.sim_compute = int(parameter_value)
+                    elif parameter_name == "sky_model":
+                        self.sim_sky_mod = parameter_value
+                    elif parameter_name == "number_points":
+                        self.sim_samp_pnts = int(parameter_value)
+                    elif parameter_name == "max_shadow_dist":
+                        self.sim_shadow_dist = int(parameter_value)
+                    elif parameter_name == "local_dominance":
+                        self.ld_compute = int(parameter_value)
+                    elif parameter_name == "min_radius":
+                        self.ld_min_rad = int(parameter_value)
+                    elif parameter_name == "max_radius":
+                        self.ld_max_rad = int(parameter_value)
+                    # else:
+                    #     warnings.warn("rvt.default.read_default_from_file: Line '{}' not used.".format(line))
                 else:
                     warnings.warn("rvt.default.read_default_from_file: Wrong line '{}'".format(line))
-                if parameter_name == "exaggeration_factor":
-                    self.ve_factor = float(parameter_value)
-                elif parameter_name == "sun_azimuth":
-                    self.hs_sun_azi = int(parameter_value)
-                elif parameter_name == "sun_elevation":
-                    self.hs_sun_el = int(parameter_value)
-                elif parameter_name == "hillshade_directions":
-                    self.mhs_nr_dir = int(parameter_value)
-                elif parameter_name == "sun_elevation":
-                    self.mhs_sun_el = int(parameter_value)
-                elif parameter_name == "trend_radius":
-                    self.slrm_rad_cell = int(parameter_value)
-                elif parameter_name == "svf_directions":
-                    self.svf_n_dir = int(parameter_value)
-                elif parameter_name == "search_radius":
-                    self.svf_r_max = int(parameter_value)
-                elif parameter_name == "remove_noise":
-                    if int(parameter_value) == 0:
-                        remove_noise = 0
-                        self.svf_noise = 0
-                    else:
-                        remove_noise = 1
-                elif parameter_name == "noise_removal":
-                    if remove_noise != 0:
-                        if parameter_value == "low":
-                            self.svf_noise = 1
-                        elif parameter_value == "medium":
-                            self.svf_noise = 2
-                        elif parameter_value == "high":
-                            self.svf_noise = 3
-                elif parameter_name == "anisotropy_direction":
-                    self.asvf_dir = int(parameter_value)
-                elif parameter_name == "anisotropy_level":
-                    if parameter_value == "low":
-                        self.asvf_level = 1
-                    elif parameter_value == "high":
-                        self.asvf_level = 2
-                elif parameter_name == "sky_model":
-                    self.sim_sky_mod = parameter_value
-                elif parameter_name == "number_points":
-                    self.sim_samp_pnts = int(parameter_value)
-                elif parameter_name == "max_shadow_dist":
-                    self.sim_shadow_dist = int(parameter_value)
-                elif parameter_name == "min_radius":
-                    self.ld_min_rad = int(parameter_value)
-                elif parameter_name == "max_radius":
-                    self.ld_max_rad = int(parameter_value)
-                # else:
-                #     warnings.warn("rvt.default.read_default_from_file: Line '{}' not used.".format(line))
+                    continue
             dat.close()
         elif extension == ".json":
             dat = open(file_path, "r")
@@ -271,29 +357,41 @@ class DefaultValues():
             default_data = data["default_settings"]
             self.ve_factor = float(default_data["ve_factor"]["value"])
             # Slope gradient
+            self.slp_compute = int(default_data["Slope gradient"]["slp_compute"]["value"])
             self.slp_output_units = str(default_data["Slope gradient"]["slp_output_units"]["value"])
             # Hillshade
+            self.hs_compute = int(default_data["Hillshade"]["hs_compute"]["value"])
             self.hs_sun_azi = int(default_data["Hillshade"]["hs_sun_azi"]["value"])
             self.hs_sun_el = int(default_data["Hillshade"]["hs_sun_el"]["value"])
             # Multiple directions hillshade
+            self.mhs_compute= int(default_data["Multiple directions hillshade"]["mhs_compute"]["value"])
             self.mhs_nr_dir = int(default_data["Multiple directions hillshade"]["mhs_nr_dir"]["value"])
             self.mhs_sun_el = int(default_data["Multiple directions hillshade"]["mhs_sun_el"]["value"])
             # Simple local relief model
+            self.slrm_compute = int(default_data["Simple local relief model"]["slrm_compute"]["value"])
             self.slrm_rad_cell = int(default_data["Simple local relief model"]["slrm_rad_cell"]["value"])
             # Sky-View Factor
+            self.svf_compute = int(default_data["Sky-View Factor"]["svf_compute"]["value"])
             self.svf_n_dir = int(default_data["Sky-View Factor"]["svf_n_dir"]["value"])
             self.svf_r_max = int(default_data["Sky-View Factor"]["svf_r_max"]["value"])
             self.svf_noise = int(default_data["Sky-View Factor"]["svf_noise"]["value"])
             # Anisotropic Sky-View Factor
+            self.asvf_compute = int(default_data["Anisotropic Sky-View Factor"]["asvf_compute"]["value"])
             self.asvf_dir = int(default_data["Anisotropic Sky-View Factor"]["asvf_dir"]["value"])
             self.asvf_level = int(default_data["Anisotropic Sky-View Factor"]["asvf_level"]["value"])
+            # Openness - Positive
+            self.pos_opns_compute = int(default_data["Openness - Positive"]["pos_opns_compute"]["value"])
+            # Openness - Negative
+            self.neg_opns_compute = int(default_data["Openness - Negative"]["neg_opns_compute"]["value"])
             # Sky illumination
+            self.sim_compute= int(default_data["Sky illumination"]["sim_compute"]["value"])
             self.sim_sky_mod = str(default_data["Sky illumination"]["sim_sky_mod"]["value"])
             self.sim_samp_pnts = int(default_data["Sky illumination"]["sim_samp_pnts"]["value"])
             self.sim_shadow_dist = int(default_data["Sky illumination"]["sim_shadow_dist"]["value"])
             self.sim_shadow_az = int(default_data["Sky illumination"]["sim_shadow_az"]["value"])
             self.sim_shadow_el = int(default_data["Sky illumination"]["sim_shadow_el"]["value"])
             # Local dominance
+            self.ld_compute = int(default_data["Local dominance"]["ld_compute"]["value"])
             self.ld_min_rad = int(default_data["Local dominance"]["ld_min_rad"]["value"])
             self.ld_max_rad = int(default_data["Local dominance"]["ld_max_rad"]["value"])
             self.ld_rad_inc = int(default_data["Local dominance"]["ld_rad_inc"]["value"])
