@@ -21,7 +21,7 @@ If you would like to use use Relief Visualization Toolbox in ArcGIS Pro, you hav
 
    .. image:: ./figures/rvt_esri_open.png
 
-#. In the toolbox set the function parameters.
+#. Set the function parameters in the toolbox.
 
    .. image:: ./figures/rvt_esri_menu.png
 
