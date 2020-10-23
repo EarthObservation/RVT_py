@@ -1,5 +1,9 @@
 {
     "default_settings": {
+        "overwrite": {
+            "value": 0,
+            "description": "When saving visualisation functions and file already exists, if 0 it doesn't compute it, if 1 it overwrites it."
+        },
         "ve_factor": {
             "value": 1,
             "description": "Vertical exaggeration."

@@ -22,7 +22,6 @@ Copyright:
 import numpy as np
 import warnings
 import rvt.default
-import rasterio as rio
 import matplotlib as mpl
 import matplotlib.cm
 import os
@@ -60,25 +59,6 @@ def create_blender_file_example(file_path=None):
     dat = open(file_path, "w")
     dat.write(json.dumps(data, indent=4))
     dat.close()
-
-
-def get_raster_array(raster_path):
-    raster_dataset = rio.open(raster_path)
-    raster_arr = raster_dataset.read()[0]
-    raster_dataset.close()
-    return raster_arr
-
-
-def save_rendered_image(rendered_image, dem_path, save_render_path):
-    dem_dataset = rio.open(dem_path)
-    profile = dem_dataset.profile
-    dem_dataset.close()
-    profile.update(dtype='float32')
-    rendered_img_dataset = rio.open(save_render_path, "w", **profile)
-    rendered_image = rendered_image.astype('float32')
-    rendered_img_dataset.write(np.array([rendered_image]))
-    rendered_img_dataset.close()
-
 
 def gray_scale_to_color_ramp(gray_scale, colormap, alpha=False):
     """
@@ -588,12 +568,12 @@ class BlenderLayers:
 
     def render_all_images(self, default=None, save_visualizations=False, save_render_path=None):
         """Render all layers and returns blended image. If specific layer (BlenderLayer) in layers has image
-            (is not None), method uses this image, if image is None and layer has image_path method reads image from path.
-            If both image and image_path are None method calculates visualization. If save_visualization is True method
-            needs dem_path and saves each visualization (if it doesn't exists) in directory of dem_path,
-            else (save_visualization=False) method needs dem_arr, dem_resolution and calculates each visualization
-            simultaneously (in memory). Be careful save_visualisation applies only if specific BlenderLayer
-            image and image_path are None"""
+        (is not None), method uses this image, if image is None and layer has image_path method reads image from
+        path. If both image and image_path are None method calculates visualization. If save_visualization is True
+        method needs dem_path and saves each visualization (if it doesn't exists) in directory of dem_path,
+        else (save_visualization=False) method needs dem_arr, dem_resolution and calculates each visualization
+        simultaneously (in memory). Be careful save_visualisation applies only if specific BlenderLayer
+        image and image_path are None"""
         if save_render_path is not None and self.dem_path is None:
             raise Exception(
                 "rvt.blend.BlenderLayers.render_all_images: If you would like to save rendered image (blender), "
@@ -628,7 +608,7 @@ class BlenderLayers:
             # normalize images
             # if image is not presented and image_path is
             if image is None and image_path is not None:
-                norm_image = normalize_image(visualization, get_raster_array(image_path), min_norm,
+                norm_image = normalize_image(visualization, rvt.default.get_raster_arr(image_path)["array"], min_norm,
                                              max_norm, normalization)
             # if image is presented
             elif image is not None:
@@ -639,8 +619,8 @@ class BlenderLayers:
                     if save_visualizations:
                         default.save_slope(dem_path=self.dem_path)
                         image_path = default.get_slope_path(self.dem_path)
-                        norm_image = normalize_image(visualization, get_raster_array(image_path), min_norm, max_norm,
-                                                     normalization)
+                        norm_image = normalize_image(visualization, rvt.default.get_raster_arr(image_path)["array"],
+                                                     min_norm, max_norm, normalization)
                     else:
                         image = default.get_slope(dem_arr=self.dem_arr, resolution_x=self.dem_resolution,
                                                   resolution_y=self.dem_resolution)["slope"]
@@ -649,8 +629,8 @@ class BlenderLayers:
                     if save_visualizations:
                         default.save_hillshade(dem_path=self.dem_path)
                         image_path = default.get_hillshade_path(self.dem_path)
-                        norm_image = normalize_image(visualization, get_raster_array(image_path), min_norm, max_norm,
-                                                     normalization)
+                        norm_image = normalize_image(visualization, rvt.default.get_raster_arr(image_path)["array"],
+                                                     min_norm, max_norm, normalization)
                     else:
                         image = default.get_hillshade(dem_arr=self.dem_arr, resolution_x=self.dem_resolution,
                                                       resolution_y=self.dem_resolution)
@@ -659,8 +639,8 @@ class BlenderLayers:
                     if save_visualizations:
                         default.save_multi_hillshade(dem_path=self.dem_path)
                         image_path = default.get_multi_hillshade_path(self.dem_path)
-                        norm_image = normalize_image(visualization, get_raster_array(image_path), min_norm, max_norm,
-                                                     normalization)
+                        norm_image = normalize_image(visualization, rvt.default.get_raster_arr(image_path)["array"],
+                                                     min_norm, max_norm, normalization)
                     else:
                         image = default.get_multi_hillshade(dem_arr=self.dem_arr, resolution_x=self.dem_resolution,
                                                             resolution_y=self.dem_resolution)
@@ -669,8 +649,8 @@ class BlenderLayers:
                     if save_visualizations:
                         default.save_slrm(dem_path=self.dem_path)
                         image_path = default.get_slrm_path(self.dem_path)
-                        norm_image = normalize_image(visualization, get_raster_array(image_path), min_norm, max_norm,
-                                                     normalization)
+                        norm_image = normalize_image(visualization, rvt.default.get_raster_arr(image_path)["array"],
+                                                     min_norm, max_norm, normalization)
                     else:
                         image = default.get_slrm(dem_arr=self.dem_arr)
                         norm_image = normalize_image(visualization, image, min_norm, max_norm, normalization)
@@ -679,8 +659,8 @@ class BlenderLayers:
                         default.save_sky_view_factor(dem_path=self.dem_path, save_svf=True, save_asvf=False,
                                                      save_opns=False)
                         image_path = default.get_svf_path(self.dem_path)
-                        norm_image = normalize_image(visualization, get_raster_array(image_path), min_norm, max_norm,
-                                                     normalization)
+                        norm_image = normalize_image(visualization, rvt.default.get_raster_arr(image_path)["array"],
+                                                     min_norm, max_norm, normalization)
                     else:
                         image = default.get_sky_view_factor(dem_arr=self.dem_arr, resolution=self.dem_resolution,
                                                             compute_svf=True, compute_asvf=False,
@@ -691,8 +671,8 @@ class BlenderLayers:
                         default.save_sky_view_factor(dem_path=self.dem_path, save_svf=False, save_asvf=True,
                                                      save_opns=False)
                         image_path = default.get_asvf_path(self.dem_path)
-                        norm_image = normalize_image(visualization, get_raster_array(image_path), min_norm, max_norm,
-                                                     normalization)
+                        norm_image = normalize_image(visualization, rvt.default.get_raster_arr(image_path)["array"],
+                                                     min_norm, max_norm, normalization)
                     else:
                         image = default.get_sky_view_factor(dem_arr=self.dem_arr, resolution=self.dem_resolution,
                                                             compute_svf=False, compute_asvf=True,
@@ -703,8 +683,8 @@ class BlenderLayers:
                         default.save_sky_view_factor(dem_path=self.dem_path, save_svf=False, save_asvf=False,
                                                      save_opns=True)
                         image_path = default.get_opns_path(self.dem_path)
-                        norm_image = normalize_image(visualization, get_raster_array(image_path), min_norm, max_norm,
-                                                     normalization)
+                        norm_image = normalize_image(visualization, rvt.default.get_raster_arr(image_path)["array"],
+                                                     min_norm, max_norm, normalization)
                     else:
                         image = default.get_sky_view_factor(dem_arr=self.dem_arr, resolution=self.dem_resolution,
                                                             compute_svf=False, compute_asvf=False,
@@ -714,8 +694,8 @@ class BlenderLayers:
                     if save_visualizations:
                         default.save_neg_opns(dem_path=self.dem_path)
                         image_path = default.get_neg_opns_path(self.dem_path)
-                        norm_image = normalize_image(visualization, get_raster_array(image_path), min_norm, max_norm,
-                                                     normalization)
+                        norm_image = normalize_image(visualization, rvt.default.get_raster_arr(image_path)["array"],
+                                                     min_norm, max_norm, normalization)
                     else:
                         image = default.get_neg_opns(dem_arr=self.dem_arr, resolution=self.dem_resolution)
                         norm_image = normalize_image(visualization, image, min_norm, max_norm, normalization)
@@ -723,8 +703,8 @@ class BlenderLayers:
                     if save_visualizations:
                         default.save_sky_illumination(dem_path=self.dem_path)
                         image_path = default.get_sky_illumination_path(self.dem_path)
-                        norm_image = normalize_image(visualization, get_raster_array(image_path), min_norm, max_norm,
-                                                     normalization)
+                        norm_image = normalize_image(visualization, rvt.default.get_raster_arr(image_path)["array"],
+                                                     min_norm, max_norm, normalization)
                     else:
                         image = default.get_sky_illumination(dem_arr=self.dem_arr, resolution=self.dem_resolution)
                         norm_image = normalize_image(visualization, image, min_norm, max_norm, normalization)
@@ -732,8 +712,8 @@ class BlenderLayers:
                     if save_visualizations:
                         default.save_local_dominance(dem_path=self.dem_path)
                         image_path = default.get_local_dominance_path(self.dem_path)
-                        norm_image = normalize_image(visualization, get_raster_array(image_path), min_norm, max_norm,
-                                                     normalization)
+                        norm_image = normalize_image(visualization, rvt.default.get_raster_arr(image_path)["array"],
+                                                     min_norm, max_norm, normalization)
                     else:
                         image = default.get_local_dominance(dem_arr=self.dem_arr)
                         norm_image = normalize_image(visualization, image, min_norm, max_norm, normalization)
@@ -758,5 +738,6 @@ class BlenderLayers:
                 if np.nanmin(background) < 0 or np.nanmax(background > 1):
                     warnings.warn("rvt.blend.BlenderLayers.render_all_images: Rendered image scale distorted")
         if save_render_path is not None:  # if paths presented it saves image
-            save_rendered_image(rendered_image, dem_path=self.dem_path, save_render_path=save_render_path)
+            rvt.default.save_raster(src_raster_path=self.dem_path, out_raster_path=save_render_path,
+                                    out_raster_arr=rendered_image)
         return rendered_image

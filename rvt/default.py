@@ -21,17 +21,19 @@ Copyright:
 import warnings
 import rvt.vis
 import os
-import rasterio as rio
+import gdal
 import numpy as np
 import json
 
 
-class DefaultValues():
+class DefaultValues:
     """
     Class which define layer for blending. BlenderLayer is basic element in BlenderLayers.layers list.
 
     Attributes
     ----------
+    overwrite : bool
+        When saving visualisation functions and file already exists, if 0 it doesn't compute it, if 1 it overwrites it.
     ve_factor : float
         For all vis functions. Vertical exaggeration.
     slp_compute : bool
@@ -61,7 +63,8 @@ class DefaultValues():
     svf_r_max : int
         Sky-View Factor (Anisotropic Sky-View Factor, Openness). Maximal search radius in pixels.
     svf_noise : int
-        Sky-View Factor (Anisotropic Sky-View Factor, Openness). The level of noise remove [0-don't remove, 1-low, 2-med, 3-high].
+        Sky-View Factor (Anisotropic Sky-View Factor, Openness). The level of noise remove [0-don't remove, 1-low, 2-med
+        , 3-high].
     asvf_compute : bool
         If compute Anisotropic Sky-View Factor. Parameter for GUIs.
     asvf_dir : int
@@ -87,7 +90,8 @@ class DefaultValues():
     ld_compute : bool
         If compute Local dominance. Parameter for GUIs.
     ld_min_rad : int
-        Local dominance. Minimum radial distance (in pixels) at which the algorithm starts with visualization computation.
+        Local dominance. Minimum radial distance (in pixels) at which the algorithm starts with visualization
+        computation.
     ld_max_rad : int
         Local dominance. Maximum radial distance (in pixels) at which the algorithm ends with visualization computation.
     ld_rad_inc : int
@@ -99,6 +103,7 @@ class DefaultValues():
     """
 
     def __init__(self):
+        self.overwrite = 0  # (0=False, 1=True)
         self.ve_factor = 1
         # slope gradient
         self.slp_compute = False
@@ -144,9 +149,14 @@ class DefaultValues():
 
     def save_default_to_file(self, file_path=None):
         """Saves default attributes into .json file."""
-        data = {"default_settings": {"ve_factor": {
-                                    "value" : self.ve_factor,
-                                    "description" : "Vertical exaggeration."},
+        data = {"default_settings": {"overwrite": {
+                                    "value": self.overwrite,
+                                    "description": "When saving visualisation functions and file already exists, if 0 "
+                                    "it doesn't compute it, if 1 it overwrites it."
+                                    },
+                                    "ve_factor": {
+                                    "value": self.ve_factor,
+                                    "description": "Vertical exaggeration."},
                                      "Hillshade": {
                                          "hs_compute": {"value": self.hs_compute,
                                                         "description": "If compute Hillshade. Parameter for GUIs."},
@@ -202,12 +212,12 @@ class DefaultValues():
                                          "asvf_level": {"value": self.asvf_level,
                                                         "description": "Level of anisotropy [1-low, 2-high]."}
                                      },
-                                    "Openness - Positive": {
+                                     "Openness - Positive": {
                                         "pos_opns_compute": {"value": self.pos_opns_compute,
                                                              "description": "If compute Openness - Positive. "
                                                                             "Parameter for GUIs."}
                                     },
-                                    "Openness - Negative": {
+                                     "Openness - Negative": {
                                         "neg_opns_compute": {"value": self.neg_opns_compute,
                                                              "description": "If compute Openness - Negative. "
                                                                             "Parameter for GUIs."}
@@ -278,7 +288,9 @@ class DefaultValues():
                 if len(line_list) == 2:
                     parameter_name = line_list[0].strip().lower()
                     parameter_value = line_list[1].strip()
-                    if parameter_name == "exaggeration_factor":
+                    if parameter_name == "overwrite":
+                        self.overwrite = int(parameter_value)
+                    elif parameter_name == "exaggeration_factor":
                         self.ve_factor = float(parameter_value)
                     elif parameter_name == "slope_gradient":
                         self.slp_compute = int(parameter_value)
@@ -355,6 +367,7 @@ class DefaultValues():
             dat = open(file_path, "r")
             data = json.load(dat)
             default_data = data["default_settings"]
+            self.overwrite = int(default_data["overwrite"]["value"])
             self.ve_factor = float(default_data["ve_factor"]["value"])
             # Slope gradient
             self.slp_compute = int(default_data["Slope gradient"]["slp_compute"]["value"])
@@ -364,7 +377,7 @@ class DefaultValues():
             self.hs_sun_azi = int(default_data["Hillshade"]["hs_sun_azi"]["value"])
             self.hs_sun_el = int(default_data["Hillshade"]["hs_sun_el"]["value"])
             # Multiple directions hillshade
-            self.mhs_compute= int(default_data["Multiple directions hillshade"]["mhs_compute"]["value"])
+            self.mhs_compute = int(default_data["Multiple directions hillshade"]["mhs_compute"]["value"])
             self.mhs_nr_dir = int(default_data["Multiple directions hillshade"]["mhs_nr_dir"]["value"])
             self.mhs_sun_el = int(default_data["Multiple directions hillshade"]["mhs_sun_el"]["value"])
             # Simple local relief model
@@ -384,7 +397,7 @@ class DefaultValues():
             # Openness - Negative
             self.neg_opns_compute = int(default_data["Openness - Negative"]["neg_opns_compute"]["value"])
             # Sky illumination
-            self.sim_compute= int(default_data["Sky illumination"]["sim_compute"]["value"])
+            self.sim_compute = int(default_data["Sky illumination"]["sim_compute"]["value"])
             self.sim_sky_mod = str(default_data["Sky illumination"]["sim_sky_mod"]["value"])
             self.sim_samp_pnts = int(default_data["Sky illumination"]["sim_samp_pnts"]["value"])
             self.sim_shadow_dist = int(default_data["Sky illumination"]["sim_shadow_dist"]["value"])
@@ -399,47 +412,106 @@ class DefaultValues():
             self.ld_observer_h = float(default_data["Local dominance"]["ld_observer_h"]["value"])
             dat.close()
 
+    def get_hillshade_file_name(self, dem_path):
+        """Returns Hillshade name, dem name (from dem_path) with added hillshade parameters."""
+        dem_name = os.path.basename(dem_path).split(".")[0]  # base name without extension
+        return "{}_HS_A{}_H{}.tif".format(dem_name, self.hs_sun_azi, self.hs_sun_el)
+
     def get_hillshade_path(self, dem_path):
-        dem_path_split = dem_path.split(".")  # split file type
-        return "{}_HS_A{}_H{}.tif".format(dem_path_split[0], self.hs_sun_azi, self.hs_sun_el)
+        """Returns path to Hillshade. Generates hillshade name (uses default attributes and dem name from dem_path) and
+        adds dem directory (dem_path) to it."""
+        return os.path.join(os.path.dirname(dem_path), self.get_hillshade_file_name(dem_path))
+
+    def get_slope_file_name(self, dem_path):
+        """Returns Slope name, dem name (from dem_path) with added slope parameters."""
+        dem_name = os.path.basename(dem_path).split(".")[0]  # base name without extension
+        return "{}_SLOPE.tif".format(dem_name)
 
     def get_slope_path(self, dem_path):
-        dem_path_split = dem_path.split(".")  # split file type
-        return "{}_SLOPE.tif".format(dem_path_split[0])
+        """Returns path to slope. Generates slope name and adds dem directory (dem_path) to it."""
+        return os.path.join(os.path.dirname(dem_path), self.get_slope_file_name(dem_path))
+
+    def get_multi_hillshade_file_name(self, dem_path):
+        """Returns Multiple directions hillshade name, dem name (from dem_path) with added
+        multi hillshade parameters."""
+        dem_name = os.path.basename(dem_path).split(".")[0]  # base name without extension
+        return "{}_MULTI-HS_D{}_H{}.tif".format(dem_name, self.mhs_nr_dir, self.mhs_sun_el)
 
     def get_multi_hillshade_path(self, dem_path):
-        dem_path_split = dem_path.split(".")  # split file type
-        return "{}_MULTI-HS_D{}_H{}.tif".format(dem_path_split[0], self.mhs_nr_dir, self.mhs_sun_el)
+        """Returns path to Multiple directions hillshade. Generates multi hillshade name (uses default attributes and
+        dem name from dem_path) and adds dem directory (dem_path) to it."""
+        return os.path.join(os.path.dirname(dem_path), self.get_multi_hillshade_file_name(dem_path))
+
+    def get_slrm_file_name(self, dem_path):
+        """Returns Simple local relief model name, dem name (from dem_path) with added slrm parameters."""
+        dem_name = os.path.basename(dem_path).split(".")[0]  # base name without extension
+        return "{}_SLRM_R{}.tif".format(dem_name, self.slrm_rad_cell)
 
     def get_slrm_path(self, dem_path):
-        dem_path_split = dem_path.split(".")  # split file type
-        return "{}_SLRM_R{}.tif".format(dem_path_split[0], self.slrm_rad_cell)
+        """Returns path to Simple local relief model. Generates slrm name (uses default attributes and dem name from
+        dem_path) and adds dem directory (dem_path) to it."""
+        return os.path.join(os.path.dirname(dem_path), self.get_slrm_file_name(dem_path))
+
+    def get_svf_file_name(self, dem_path):
+        """Returns Sky-view factor name, dem name (from dem_path) with added svf parameters."""
+        dem_name = os.path.basename(dem_path).split(".")[0]  # base name without extension
+        return "{}_SVF_R{}_D{}.tif".format(dem_name, self.svf_r_max, self.svf_n_dir)
 
     def get_svf_path(self, dem_path):
-        dem_path_split = dem_path.split(".")  # split file type
-        return "{}_SVF_R{}_D{}.tif".format(dem_path_split[0], self.svf_r_max, self.svf_n_dir)
+        """Returns path to Sky-view factor. Generates svf name (uses default attributes and dem name from
+        dem_path) and adds dem directory (dem_path) to it."""
+        return os.path.join(os.path.dirname(dem_path), self.get_svf_file_name(dem_path))
+
+    def get_asvf_file_name(self, dem_path):
+        """Returns Anisotropic Sky-view factor name, dem name (from dem_path) with added asvf parameters."""
+        dem_name = os.path.basename(dem_path).split(".")[0]  # base name without extension
+        return "{}_SVF-A_R{}_D{}_A{}.tif".format(dem_name, self.svf_r_max, self.svf_n_dir, self.asvf_dir)
 
     def get_asvf_path(self, dem_path):
-        dem_path_split = dem_path.split(".")  # split file type
-        return "{}_SVF-A_R{}_D{}_A{}.tif".format(dem_path_split[0], self.svf_r_max, self.svf_n_dir, self.asvf_dir)
+        """Returns path to Anisotropic Sky-view factor. Generates asvf name (uses default attributes and dem name from
+        dem_path) and adds dem directory (dem_path) to it."""
+        return os.path.join(os.path.dirname(dem_path), self.get_asvf_file_name(dem_path))
+
+    def get_opns_file_name(self, dem_path):
+        """Returns Positive Openness name, dem name (from dem_path) with added pos opns parameters."""
+        dem_name = os.path.basename(dem_path).split(".")[0]  # base name without extension
+        return "{}_OPEN-POS_R{}_D{}.tif".format(dem_name, self.svf_r_max, self.svf_n_dir)
 
     def get_opns_path(self, dem_path):
-        dem_path_split = dem_path.split(".")  # split file type
-        return "{}_OPEN-POS_R{}_D{}.tif".format(dem_path_split[0], self.svf_r_max, self.svf_n_dir)
+        """Returns path to Positive Openness. Generates pos opns name (uses default attributes and dem name from
+        dem_path) and adds dem directory (dem_path) to it."""
+        return os.path.join(os.path.dirname(dem_path), self.get_opns_file_name(dem_path))
+
+    def get_neg_opns_file_name(self, dem_path):
+        """Returns Negative Openness name, dem name (from dem_path) with added neg opns parameters."""
+        dem_name = os.path.basename(dem_path).split(".")[0]  # base name without extension
+        return "{}_OPEN-NEG_R{}_D{}.tif".format(dem_name, self.svf_r_max, self.svf_n_dir)
 
     def get_neg_opns_path(self, dem_path):
-        dem_path_split = dem_path.split(".")  # split file type
-        return "{}_OPEN-NEG_R{}_D{}.tif".format(dem_path_split[0], self.svf_r_max, self.svf_n_dir)
+        """Returns path to Negative Openness. Generates pos neg name (uses default attributes and dem name from
+        dem_path) and adds dem directory (dem_path) to it."""
+        return os.path.join(os.path.dirname(dem_path), self.get_neg_opns_file_name(dem_path))
+
+    def get_sky_illumination_file_name(self, dem_path):
+        """Returns Sky illumination name, dem name (from dem_path) with added sim parameters."""
+        dem_name = os.path.basename(dem_path).split(".")[0]  # base name without extension
+        return "{}_SIM_{}_{}sp_{}px.tif".format(dem_name, self.sim_sky_mod, self.sim_samp_pnts, self.sim_shadow_dist)
 
     def get_sky_illumination_path(self, dem_path):
-        dem_path_split = dem_path.split(".")  # split file type
-        return "{}_SIM_{}_{}sp_{}px.tif".format(dem_path_split[0], self.sim_sky_mod, self.sim_samp_pnts,
-                                                self.sim_shadow_dist)
+        """Returns path to Sky illumination. Generates sim name (uses default attributes and dem name from
+        dem_path) and adds dem directory (dem_path) to it."""
+        return os.path.join(os.path.dirname(dem_path), self.get_sky_illumination_file_name(dem_path))
+
+    def get_local_dominance_file_name(self, dem_path):
+        """Returns Local dominance name, dem name (from dem_path) with added ld parameters."""
+        dem_name = os.path.basename(dem_path).split(".")[0]  # base name without extension
+        return "{}_LD_R_M{}-{}_DI{}_A{}_OH{}.tif".format(dem_name, self.ld_min_rad, self.ld_max_rad,
+                                                         self.ld_rad_inc, self.ld_anglr_res, self.ld_observer_h)
 
     def get_local_dominance_path(self, dem_path):
-        dem_path_split = dem_path.split(".")  # split file type
-        return "{}_LD_R_M{}-{}_DI{}_A{}_OH{}.tif".format(dem_path_split[0], self.ld_min_rad, self.ld_max_rad,
-                                                         self.ld_rad_inc, self.ld_anglr_res, self.ld_observer_h)
+        """Returns path to Local dominance. Generates ld name (uses default attributes and dem name from
+        dem_path) and adds dem directory (dem_path) to it."""
+        return os.path.join(os.path.dirname(dem_path), self.get_local_dominance_file_name(dem_path))
 
     # get slope, aspect dict
     def get_slope(self, dem_arr, resolution_x, resolution_y):
@@ -448,25 +520,25 @@ class DefaultValues():
         return dict_slp_asp
 
     # save default slope gradient
-    def save_slope(self, dem_path):
-        slope_path = self.get_slope_path(dem_path)
-        if os.path.isfile(slope_path):
+    def save_slope(self, dem_path, custom_dir=None):
+        """Calculates and saves Slope from dem (dem_path) with default parameters. If custom_dir is None it saves
+        in dem directory else in custom_dir. If path to file already exists we can overwrite file (overwrite=0) or
+        not (overwrite=1)."""
+        if custom_dir is None:
+            slope_path = self.get_slope_path(dem_path)
+        else:
+            slope_path = os.path.join(custom_dir, self.get_slope_file_name(dem_path))
+        if os.path.isfile(slope_path) and not self.overwrite:  # if file already exists and overwrite=0
             return 0
         if not os.path.isfile(dem_path):
             raise Exception("rvt.default.DefaultValues.save_slope: dem_path doesn't exist!")
-        dem_dataset = rio.open(dem_path)
-        t = dem_dataset.transform
-        x_res = t[0]
-        y_res = -t[4]
-        dem_arr = dem_dataset.read()[0]
+        dict_arr_res = get_raster_arr(raster_path=dem_path)
+        dem_arr = dict_arr_res["array"]
+        x_res = dict_arr_res["resolution"][0]
+        y_res = dict_arr_res["resolution"][1]
         dict_slp_asp = self.get_slope(dem_arr=dem_arr, resolution_x=x_res, resolution_y=y_res)
         slope_arr = dict_slp_asp["slope"].astype('float32')
-        profile = dem_dataset.profile
-        profile.update(dtype='float32')
-        slope_dataset = rio.open(slope_path, "w", **profile)
-        slope_dataset.write(np.array([slope_arr]))
-        dem_dataset.close()
-        slope_dataset.close()
+        save_raster(src_raster_path=dem_path, out_raster_path=slope_path, out_raster_arr=slope_arr)
         return 1
 
     # get hillshade array
@@ -477,24 +549,24 @@ class DefaultValues():
         return hillshade_arr
 
     # save default hillshade
-    def save_hillshade(self, dem_path):
-        hillshade_path = self.get_hillshade_path(dem_path)
-        if os.path.isfile(hillshade_path):
+    def save_hillshade(self, dem_path, custom_dir=None):
+        """Calculates and saves Hillshade from dem (dem_path) with default parameters. If custom_dir is None it saves
+        in dem directory else in custom_dir. If path to file already exists we can overwrite file (overwrite=1)
+        or not (overwrite=0)."""
+        if custom_dir is None:
+            hillshade_path = self.get_hillshade_path(dem_path)
+        else:
+            hillshade_path = os.path.join(custom_dir, self.get_hillshade_file_name(dem_path))
+        if os.path.isfile(hillshade_path) and not self.overwrite:  # if file already exists and overwrite=0
             return 0
         if not os.path.isfile(dem_path):
             raise Exception("rvt.default.DefaultValues.save_hillshade: dem_path doesn't exist!")
-        dem_dataset = rio.open(dem_path)
-        t = dem_dataset.transform
-        x_res = t[0]
-        y_res = -t[4]
-        dem_arr = dem_dataset.read()[0]
+        dict_arr_res = get_raster_arr(raster_path=dem_path)
+        dem_arr = dict_arr_res["array"]
+        x_res = dict_arr_res["resolution"][0]
+        y_res = dict_arr_res["resolution"][1]
         hillshade_arr = self.get_hillshade(dem_arr=dem_arr, resolution_x=x_res, resolution_y=y_res).astype('float32')
-        profile = dem_dataset.profile
-        profile.update(dtype='float32')
-        hillshade_dataset = rio.open(hillshade_path, "w", **profile)
-        hillshade_dataset.write(np.array([hillshade_arr]))
-        dem_dataset.close()
-        hillshade_dataset.close()
+        save_raster(src_raster_path=dem_path, out_raster_path=hillshade_path, out_raster_arr=hillshade_arr)
         return 1
 
     # get multi hillshade array
@@ -504,47 +576,47 @@ class DefaultValues():
                                                       ve_factor=self.ve_factor)
         return multi_hillshade_arr
 
-    def save_multi_hillshade(self, dem_path):
-        multi_hillshade_path = self.get_multi_hillshade_path(dem_path)
-        if os.path.isfile(multi_hillshade_path):
+    def save_multi_hillshade(self, dem_path, custom_dir=None):
+        """Calculates and saves Multidirectional hillshade from dem (dem_path) with default parameters.
+        If custom_dir is None it saves in dem directory else in custom_dir. If path to file already exists we can
+        overwrite file (overwrite=1) or not (overwrite=0)."""
+        if custom_dir is None:
+            multi_hillshade_path = self.get_multi_hillshade_path(dem_path)
+        else:
+            multi_hillshade_path = os.path.join(custom_dir, self.get_multi_hillshade_file_name(dem_path))
+        if os.path.isfile(multi_hillshade_path) and not self.overwrite:  # if file already exists and overwrite=0
             return 0
         if not os.path.isfile(dem_path):
             raise Exception("rvt.default.DefaultValues.save_multi_hillshade: dem_path doesn't exist!")
-        dem_dataset = rio.open(dem_path)
-        t = dem_dataset.transform
-        x_res = t[0]
-        y_res = -t[4]
-        dem_arr = dem_dataset.read()[0]
+        dict_arr_res = get_raster_arr(raster_path=dem_path)
+        dem_arr = dict_arr_res["array"]
+        x_res = dict_arr_res["resolution"][0]
+        y_res = dict_arr_res["resolution"][1]
         multi_hillshade_arr = self.get_multi_hillshade(dem_arr=dem_arr, resolution_x=x_res,
                                                        resolution_y=y_res).astype('float32')
-        profile = dem_dataset.profile
-        profile.update(dtype='float32')
-        profile.update(count=16)
-        multi_hillshade_dataset = rio.open(multi_hillshade_path, "w", **profile)
-        multi_hillshade_dataset.write(multi_hillshade_arr)
-        dem_dataset.close()
-        multi_hillshade_dataset.close()
+        save_raster(src_raster_path=dem_path, out_raster_path=multi_hillshade_path, out_raster_arr=multi_hillshade_arr)
         return 1
 
     def get_slrm(self, dem_arr):
         slrm_arr = rvt.vis.slrm(dem=dem_arr, radius_cell=self.slrm_rad_cell, ve_factor=self.ve_factor)
         return slrm_arr
 
-    def save_slrm(self, dem_path):
-        slrm_path = self.get_slrm_path(dem_path)
-        if os.path.isfile(slrm_path):
+    def save_slrm(self, dem_path, custom_dir=None):
+        """Calculates and saves Simple local relief model from dem (dem_path) with default parameters.
+        If custom_dir is None it saves in dem directory else in custom_dir. If path to file already exists we can
+        overwrite file (overwrite=1) or not (overwrite=0)."""
+        if custom_dir is None:
+            slrm_path = self.get_slrm_path(dem_path)
+        else:
+            slrm_path = os.path.join(custom_dir, self.get_slrm_file_name(dem_path))
+        if os.path.isfile(slrm_path) and not self.overwrite:  # if file already exists and overwrite=0
             return 0
         if not os.path.isfile(dem_path):
             raise Exception("rvt.default.DefaultValues.save_slrm: dem_path doesn't exist!")
-        dem_dataset = rio.open(dem_path)
-        dem_arr = dem_dataset.read()[0]
+        dict_arr_res = get_raster_arr(raster_path=dem_path)
+        dem_arr = dict_arr_res["array"]
         slrm_arr = self.get_slrm(dem_arr=dem_arr).astype('float32')
-        profile = dem_dataset.profile
-        profile.update(dtype='float32')
-        slrm_dataset = rio.open(slrm_path, "w", **profile)
-        slrm_dataset.write(np.array([slrm_arr]))
-        dem_dataset.close()
-        slrm_dataset.close()
+        save_raster(src_raster_path=dem_path, out_raster_path=slrm_path, out_raster_arr=slrm_arr)
         return 1
 
     # get svf, asvf, opns dict
@@ -556,59 +628,60 @@ class DefaultValues():
                                                      asvf_level=self.asvf_level, ve_factor=self.ve_factor)
         return dict_svf_asvf_opns
 
-    def save_sky_view_factor(self, dem_path, save_svf=True, save_asvf=False, save_opns=False):
-        if save_svf:
-            svf_path = self.get_svf_path(dem_path)
-        if save_asvf:
-            asvf_path = self.get_asvf_path(dem_path)
-        if save_opns:
-            opns_path = self.get_opns_path(dem_path)
-
-        if save_svf and os.path.isfile(svf_path):  # svf already exists, don't need to compute
-            save_svf = False
-        if save_asvf and os.path.isfile(asvf_path):  # asvf already exists
-            save_asvf = False
-        if save_opns and os.path.isfile(opns_path):  # opns already exists
-            save_opns = False
-
-        if not save_svf and not save_asvf and not save_opns:
+    def save_sky_view_factor(self, dem_path, save_svf=True, save_asvf=False, save_opns=False, custom_dir=None):
+        """Calculates and saves Sky-view factor(save_svf=True), Anisotropic Sky-view factor(save_asvf=True) and
+        Positive Openness(save_opns=True) from dem (dem_path) with default parameters.
+        If custom_dir is None it saves in dem directory else in custom_dir. If path to file already exists we can
+        overwrite file (overwrite=1) or not (overwrite=0)."""
+        svf_path = ""
+        asvf_path = ""
+        opns_path = ""
+        if custom_dir is None:
+            if save_svf:
+                svf_path = self.get_svf_path(dem_path)
+            if save_asvf:
+                asvf_path = self.get_asvf_path(dem_path)
+            if save_opns:
+                opns_path = self.get_opns_path(dem_path)
+        else:
+            if save_svf:
+                svf_path = os.path.join(custom_dir, self.get_svf_file_name(dem_path))
+            if save_asvf:
+                asvf_path = os.path.join(custom_dir, self.get_asvf_file_name(dem_path))
+            if save_opns:
+                opns_path = os.path.join(custom_dir, self.get_opns_file_name(dem_path))
+        if os.path.isfile(svf_path) and os.path.isfile(asvf_path) and os.path.isfile(opns_path)\
+                and not self.overwrite:  # if file already exists and overwrite=0
             return 0
         if not os.path.isfile(dem_path):
             raise Exception("rvt.default.DefaultValues.save_sky_view_factor: dem_path doesn't exist!")
-        dem_dataset = rio.open(dem_path)
-        t = dem_dataset.transform
-        x_res = t[0]
-        y_res = -t[4]
+        dict_arr_res = get_raster_arr(raster_path=dem_path)
+        dem_arr = dict_arr_res["array"]
+        x_res = dict_arr_res["resolution"][0]
+        y_res = dict_arr_res["resolution"][1]
         if x_res != y_res:
-            raise Exception("rvt.default.DefaultValues.save_sky_view_factor: dem x resolution not equal y resolution")
-        dem_arr = dem_dataset.read()[0]
+            raise Exception("rvt.default.DefaultValues.save_sky_view_factor: dem resolution is not the same in x and y"
+                            " directions!")
         dict_svf_asvf_opns = self.get_sky_view_factor(dem_arr=dem_arr, resolution=x_res, compute_svf=save_svf,
                                                       compute_asvf=save_asvf, compute_opns=save_opns)
         if save_svf:
-            svf_arr = dict_svf_asvf_opns["svf"]
-            svf_arr = svf_arr.astype('float32')
-            profile = dem_dataset.profile
-            profile.update(dtype='float32')
-            svf_dataset = rio.open(svf_path, "w", **profile)
-            svf_dataset.write(np.array([svf_arr]))
-            svf_dataset.close()
+            if os.path.isfile(svf_path) and self.overwrite:  # svf file exists and overwrite=1
+                pass
+            else:  # svf_path, file doesn't exists or exists and overwrite=1
+                save_raster(src_raster_path=dem_path, out_raster_path=svf_path,
+                            out_raster_arr=dict_svf_asvf_opns["svf"].astype('float32'))
         if save_asvf:
-            asvf_arr = dict_svf_asvf_opns["asvf"]
-            asvf_arr = asvf_arr.astype('float32')
-            profile = dem_dataset.profile
-            profile.update(dtype='float32')
-            asvf_dataset = rio.open(asvf_path, "w", **profile)
-            asvf_dataset.write(np.array([asvf_arr]))
-            asvf_dataset.close()
+            if os.path.isfile(svf_path) and self.overwrite:  # svf file exists and overwrite=1
+                pass
+            else:  # asvf_path, file doesn't exists or exists and overwrite=1
+                save_raster(src_raster_path=dem_path, out_raster_path=asvf_path,
+                            out_raster_arr=dict_svf_asvf_opns["asvf"].astype('float32'))
         if save_opns:
-            opns_arr = dict_svf_asvf_opns["opns"]
-            opns_arr = opns_arr.astype('float32')
-            profile = dem_dataset.profile
-            profile.update(dtype='float32')
-            opns_dataset = rio.open(opns_path, "w", **profile)
-            opns_dataset.write(np.array([opns_arr]))
-            opns_dataset.close()
-        dem_dataset.close()
+            if os.path.isfile(svf_path) and self.overwrite:  # svf file exists and overwrite=1
+                pass
+            else:  # opns_path, file doesn't exists or exists and overwrite=1
+                save_raster(src_raster_path=dem_path, out_raster_path=opns_path,
+                            out_raster_arr=dict_svf_asvf_opns["opns"].astype('float32'))
         return 1
 
     def get_neg_opns(self, dem_arr, resolution):
@@ -620,26 +693,27 @@ class DefaultValues():
         neg_opns_arr = dict_neg_opns["opns"]
         return neg_opns_arr
 
-    def save_neg_opns(self, dem_path):  # negative openness is openness with negative dem (-dem)
-        neg_opns_path = self.get_neg_opns_path(dem_path)
-        if os.path.isfile(neg_opns_path):
+    def save_neg_opns(self, dem_path, custom_dir=None):
+        """Calculates and saves Negative Openness from dem (dem_path) with default parameters. If custom_dir is None
+        it saves in dem directory else in custom_dir. If path to file already exists we can
+        overwrite file (overwrite=1) or not (overwrite=0)."""
+        if custom_dir is None:
+            neg_opns_path = self.get_neg_opns_path(dem_path)
+        else:
+            neg_opns_path = os.path.join(custom_dir, self.get_neg_opns_file_name(dem_path))
+        if os.path.isfile(neg_opns_path) and not self.overwrite:  # if file already exists and overwrite=0
             return 0
         if not os.path.isfile(dem_path):
             raise Exception("rvt.default.DefaultValues.save_neg_opns: dem_path doesn't exist!")
-        dem_dataset = rio.open(dem_path)
-        t = dem_dataset.transform
-        x_res = t[0]
-        y_res = -t[4]
+        dict_arr_res = get_raster_arr(raster_path=dem_path)
+        dem_arr = dict_arr_res["array"]
+        x_res = dict_arr_res["resolution"][0]
+        y_res = dict_arr_res["resolution"][1]
         if x_res != y_res:
-            raise Exception("rvt.default.DefaultValues.save_sky_view_factor: dem x resolution not equal y resolution")
-        dem_arr = dem_dataset.read()[0]
+            raise Exception("rvt.default.DefaultValues.save_neg_opns: dem resolution is not the same in x and y"
+                            " directions!")
         neg_opns_arr = self.get_neg_opns(dem_arr=dem_arr, resolution=x_res).astype('float32')
-        profile = dem_dataset.profile
-        profile.update(dtype='float32')
-        neg_opns_dataset = rio.open(neg_opns_path, "w", **profile)
-        neg_opns_dataset.write(np.array([neg_opns_arr]))
-        dem_dataset.close()
-        neg_opns_dataset.close()
+        save_raster(src_raster_path=dem_path, out_raster_path=neg_opns_path, out_raster_arr=neg_opns_arr)
         return 1
 
     def get_sky_illumination(self, dem_arr, resolution):
@@ -650,26 +724,28 @@ class DefaultValues():
                                                         ve_factor=self.ve_factor)
         return sky_illumination_arr
 
-    def save_sky_illumination(self, dem_path):
-        sky_illumination_path = self.get_sky_illumination_path(dem_path)
-        if os.path.isfile(sky_illumination_path):
+    def save_sky_illumination(self, dem_path, custom_dir=None):
+        """Calculates and saves Sky illumination from dem (dem_path) with default parameters. If custom_dir is None
+        it saves in dem directory else in custom_dir. If path to file already exists we can
+        overwrite file (overwrite=1) or not (overwrite=0)."""
+        if custom_dir is None:
+            sky_illumination_path = self.get_sky_illumination_path(dem_path)
+        else:
+            sky_illumination_path = os.path.join(custom_dir, self.get_sky_illumination_file_name(dem_path))
+        if os.path.isfile(sky_illumination_path) and not self.overwrite:  # if file already exists and overwrite=0
             return 0
         if not os.path.isfile(dem_path):
-            raise Exception("rvt.default.DefaultValues.save_sky_view_factor: dem_path doesn't exist!")
-        dem_dataset = rio.open(dem_path)
-        t = dem_dataset.transform
-        x_res = t[0]
-        y_res = -t[4]
+            raise Exception("rvt.default.DefaultValues.save_sky_illumination: dem_path doesn't exist!")
+        dict_arr_res = get_raster_arr(raster_path=dem_path)
+        dem_arr = dict_arr_res["array"]
+        x_res = dict_arr_res["resolution"][0]
+        y_res = dict_arr_res["resolution"][1]
         if x_res != y_res:
-            raise Exception("rvt.default.DefaultValues.save_sky_view_factor: dem x resolution not equal y resolution")
-        dem_arr = dem_dataset.read()[0]
+            raise Exception("rvt.default.DefaultValues.save_sky_illumination: dem resolution is not the same in x and y"
+                            " directions!")
         sky_illumination_arr = self.get_sky_illumination(dem_arr=dem_arr, resolution=x_res).astype('float32')
-        profile = dem_dataset.profile
-        profile.update(dtype='float32')
-        sky_illumination_dataset = rio.open(sky_illumination_path, "w", **profile)
-        sky_illumination_dataset.write(np.array([sky_illumination_arr]))
-        dem_dataset.close()
-        sky_illumination_dataset.close()
+        save_raster(src_raster_path=dem_path, out_raster_path=sky_illumination_path,
+                    out_raster_arr=sky_illumination_arr)
         return 1
 
     def get_local_dominance(self, dem_arr):
@@ -678,39 +754,118 @@ class DefaultValues():
                                                       observer_height=self.ld_observer_h, ve_factor=self.ve_factor)
         return local_dominance_arr
 
-    def save_local_dominance(self, dem_path):
-        local_dominance_path = self.get_local_dominance_path(dem_path)
-        if os.path.isfile(local_dominance_path):
+    def save_local_dominance(self, dem_path, custom_dir=None):
+        """Calculates and saves Local dominance from dem (dem_path) with default parameters. If custom_dir is None
+        it saves in dem directory else in custom_dir. If path to file already exists we can
+        overwrite file (overwrite=1) or not (overwrite=0)."""
+        if custom_dir is None:
+            local_dominance_path = self.get_local_dominance_path(dem_path)
+        else:
+            local_dominance_path = os.path.join(custom_dir, self.get_local_dominance_file_name(dem_path))
+        if os.path.isfile(local_dominance_path) and not self.overwrite:  # if file already exists and overwrite=0
             return 0
         if not os.path.isfile(dem_path):
             raise Exception("rvt.default.DefaultValues.save_local_dominance: dem_path doesn't exist!")
-        dem_dataset = rio.open(dem_path)
-        dem_arr = dem_dataset.read()[0]
+        dict_arr_res = get_raster_arr(raster_path=dem_path)
+        dem_arr = dict_arr_res["array"]
         local_dominance_arr = self.get_local_dominance(dem_arr=dem_arr).astype('float32')
-        profile = dem_dataset.profile
-        profile.update(dtype='float32')
-        local_dominance_dataset = rio.open(local_dominance_path, "w", **profile)
-        local_dominance_dataset.write(np.array([local_dominance_arr]))
-        dem_dataset.close()
-        local_dominance_dataset.close()
+        save_raster(src_raster_path=dem_path, out_raster_path=local_dominance_path, out_raster_arr=local_dominance_arr)
         return 1
 
-    def save_visualizations(self, dem_path, sav_slope=True, sav_hillshade=True, sav_mulit_hillshade=True, sav_slrm=True,
-                            sav_svf=True, sav_asvf=True, sav_opns=True, sav_neg_opns=True, sav_sky_illumination=True,
-                            sav_local_dominance=True):
+    def save_visualizations(self, dem_path, custom_dir=None, sav_slope=True, sav_hillshade=True,
+                            sav_mulit_hillshade=True, sav_slrm=True, sav_svf=True, sav_asvf=True, sav_opns=True,
+                            sav_neg_opns=True, sav_sky_illumination=True, sav_local_dominance=True):
         if sav_slope:
-            self.save_slope(dem_path)
+            self.save_slope(dem_path, custom_dir=custom_dir)
         if sav_hillshade:
-            self.save_hillshade(dem_path)
+            self.save_hillshade(dem_path, custom_dir=custom_dir)
         if sav_mulit_hillshade:
-            self.save_multi_hillshade(dem_path)
+            self.save_multi_hillshade(dem_path, custom_dir=custom_dir)
         if sav_slrm:
-            self.save_slrm(dem_path)
+            self.save_slrm(dem_path, custom_dir=custom_dir)
         if sav_svf or sav_asvf or sav_opns:
-            self.save_sky_view_factor(dem_path, save_svf=sav_svf, save_asvf=sav_asvf, save_opns=sav_opns)
+            self.save_sky_view_factor(dem_path, save_svf=sav_svf, save_asvf=sav_asvf, save_opns=sav_opns,
+                                      custom_dir=custom_dir)
         if sav_neg_opns:
-            self.save_neg_opns(dem_path)
+            self.save_neg_opns(dem_path, custom_dir=custom_dir)
         if sav_sky_illumination:
-            self.save_neg_opns(dem_path)
+            self.save_neg_opns(dem_path, custom_dir=custom_dir)
         if sav_local_dominance:
-            self.save_local_dominance(dem_path)
+            self.save_local_dominance(dem_path, custom_dir=custom_dir)
+
+
+def get_raster_arr(raster_path):
+    """
+    Reads raster from raster_path and returns its array(value) and resolution.
+
+    Parameters
+    ----------
+    raster_path : str
+        Path to raster
+
+    Returns
+    {"array": array, "resolution": (x_res, y_res)} : dict("array": np.array, "resolution": tuple(float, float))
+        Returns dictionary with keys array and resolution, resolution is tuple where first element is x resolution and
+        second is y resolution.
+    -------
+
+    """
+    data_set = gdal.Open(raster_path)
+    gt = data_set.GetGeoTransform()
+    x_res = gt[1]
+    y_res = -gt[5]
+    bands = []
+    if data_set.RasterCount == 1:  # only one band
+        array = np.array(data_set.GetRasterBand(1).ReadAsArray())
+        data_set = None
+        return {"array": array, "resolution": (x_res, y_res)}
+    else:  # multiple bands
+        for i_band in range(data_set.RasterCount):
+            i_band += 1
+            band = np.array(data_set.GetRasterBand(i_band).ReadAsArray())
+            if band is None:
+                continue
+            else:
+                bands.append(band)
+        data_set = None  # close dataset
+        return {"array": np.array(bands), "resolution": (x_res, y_res)}
+
+
+def save_raster(src_raster_path, out_raster_path, out_raster_arr, e_type=6):
+    """Saves raster array (out_rast_arr) to out_raster_path (GTiff), using src_rast_path information.
+
+    Parameters
+    ----------
+    src_raster_path : str
+        Path to source raster.
+    out_raster_path : str
+        Path to new file, where to save raster (GTiff).
+    out_raster_arr : np.array (2D - one band, 3D - multiple bands)
+        Array with raster data.
+    e_type : GDALDataType
+        https://gdal.org/api/raster_c_api.html#_CPPv412GDALDataType, (GDT_Float32 = 6, GDT_UInt16 = 2, ...)
+    """
+    src_data_set = gdal.Open(src_raster_path)
+    gtiff_driver = gdal.GetDriverByName("GTiff")
+    if len(out_raster_arr.shape) == 2:  # 2D array, one band
+        out_data_set = gtiff_driver.Create(out_raster_path, xsize=out_raster_arr.shape[1],
+                                           ysize=out_raster_arr.shape[0],
+                                           bands=1,
+                                           eType=e_type)  # eType: 6 = GDT_Float32
+        out_data_set.SetProjection(src_data_set.GetProjection())
+        out_data_set.SetGeoTransform(src_data_set.GetGeoTransform())
+        out_data_set.GetRasterBand(1).WriteArray(out_raster_arr)
+
+    elif len(out_raster_arr.shape) == 3:  # 3D array, more bands
+        out_data_set = gtiff_driver.Create(out_raster_path, xsize=out_raster_arr.shape[2],
+                                           ysize=out_raster_arr.shape[1],
+                                           bands=out_raster_arr.shape[0],
+                                           eType=6)  # eType: 6 = GDT_Float32
+        out_data_set.SetProjection(src_data_set.GetProjection())
+        out_data_set.SetGeoTransform(src_data_set.GetGeoTransform())
+        for i_band in range(out_raster_arr.shape[0]):
+            out_data_set.GetRasterBand(i_band + 1).WriteArray(out_raster_arr[i_band, :, :])
+
+    out_data_set.FlushCache()
+    src_data_set = None  # Close source data set
+    out_data_set = None  # Close output data set
