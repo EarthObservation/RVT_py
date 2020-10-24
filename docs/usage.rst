@@ -67,7 +67,7 @@ Blend is module for blending different visualizations together. To import it we 
 
 We could use manual blending (we compute visualisations) or we could use automatic blending from file (automatically computed visualisations with ``rvt.vis`` and stored in location where DEM is).
 
-Manual blending depends on module ``rvt.default`` (see :ref:`module_default`) and ``rvt.vis``. To start blending we first need to create instance of class ``BlenderLayers()`` which contains list of layers (``BlenderLayer()``). Single layer is defined in ``BlenderLayer()`` class.
+Manual blending depends on module ``rvt.default`` (see :ref:`module_default`) and ``rvt.vis``. To start blending we first need to create instance of class ``BlenderCombination()`` which contains list of layers (``BlenderLayer()``). Single layer is defined in ``BlenderLayer()`` class.
 
 Additional info is in :ref:`rvt.blend`.
 
@@ -76,12 +76,12 @@ Manual blending
 
 .. code-block:: python
 
-    layers_manual = rvt.blend.BlenderLayers()  # create class which will hold layers
+    layers_manual = rvt.blend.BlenderCombination()  # create class which will hold layers
     # you have two options to add layer:
     # option 1, create with method
     layers_manual.create_layer(vis_method="Sky-View Factor", normalization="value", minimum=0.7, maximum=1,
                               blend_mode="multiply", opacity=25,
-                              image=svf_arr)  # automatically creates BlenderLayer() and appends it to BlenderLayers()
+                              image=svf_arr)  # automatically creates BlenderLayer() and appends it to BlenderCombination()
     # option 2, create class BlenderLayer instance and then add with method
     layer1 = rvt.blend.BlenderLayer(vis_method="Sky-View Factor", normalization="value", minimum=0.7, maximum=1,
                                     blend_mode="multiply", opacity=25,
@@ -122,7 +122,7 @@ Automatic blending depends on ``rvt.default``, so you have to import ``rvt.defau
     import rvt.blend
     import rvt.default
 
-Automatic blending is filling ``rvt.blender.BlenderLayers`` from file. To create example file where we can later change parameters we call function ``create_blender_file_example()``.
+Automatic blending is filling ``rvt.blender.BlenderCombination`` from file. To create example file where we can later change parameters we call function ``create_blender_file_example()``.
 
 .. code-block:: python
 
@@ -134,12 +134,12 @@ To blend from file we also need visualization function parameters values which w
 
     default = rvt.default.DefaultValues()
 
-To blend from file we create ``BlenderLayers()`` class, call method ``build_blender_layers_from_file()`` and then ``render_all_images()``. In ``render_all_images()`` method we can save (to dem_path directory) specific visualization if we set parameter ``save_visualization`` to True.
+To blend from file we create ``BlenderCombination()`` class, call method ``read_from_file()`` and then ``render_all_images()``. In ``render_all_images()`` method we can save (to dem_path directory) specific visualization if we set parameter ``save_visualization`` to True.
 
 .. code-block:: python
 
-    layers_auto = rvt.blend.BlenderLayers()
-    layers_auto.build_blender_layers_from_file(file_path=blender_file)   # we can make our own blender_file (change example)
+    layers_auto = rvt.blend.BlenderCombination()
+    layers_auto.read_from_file(file_path=blender_file)   # we can make our own blender_file (change example)
     layers_auto.add_dem_path(input_dem_path) # needed when save_visualizations is True, and we wish to save render (save_render_path is set)
     layers_auto.add_dem_arr(dem_arr=input_dem_arr, dem_resolution=x_res)  # needed when save_visualizations is False
     render_arr = layers_auto.render_all_images(save_visualizations=False, save_render_path=output_blend_path)

@@ -425,7 +425,7 @@ class RVTBlender:
 
         # read visualisation parameters values in DefaultValues class
         default = rvt.default.DefaultValues()  # already contains default values
-        layers = rvt.blend.BlenderLayers()  # containing layers
+        layers = rvt.blend.BlenderCombination()  # containing layers
         layers.add_dem_arr(dem, pixel_size[0])
 
         if os.path.isfile(self.default_val_file_path):  # if settings file exists change values from file
@@ -440,7 +440,7 @@ class RVTBlender:
 
         if self.blend_from_file:  # blending from file (blend form file checkbox checked)
             if os.path.isfile(self.blend_file_path):
-                layers.build_blender_layers_from_file(file_path=self.blend_file_path)
+                layers.read_from_file(file_path=self.blend_file_path)
 
             else:  # if blender file doesn't exist it creates example, which can be changed
                 blend_file_path = os.path.normpath(os.path.join(os.path.dirname(os.path.realpath(__file__)),

@@ -1,0 +1,167 @@
+{
+    "combinations": [
+        {
+            "combination": {
+                "name": "Archaeological (VAT)",
+                "layers": [
+                    {
+                        "layer": "1",
+                        "visualization_method": "Sky-View Factor",
+                        "norm": "Value",
+                        "min": 0.7,
+                        "max": 1.0,
+                        "blend_mode": "Multiply",
+                        "opacity": 25
+                    },
+                    {
+                        "layer": "2",
+                        "visualization_method": "Openness - Positive",
+                        "norm": "Value",
+                        "min": 68,
+                        "max": 93,
+                        "blend_mode": "Overlay",
+                        "opacity": 50
+                    },
+                    {
+                        "layer": "3",
+                        "visualization_method": "Slope gradient",
+                        "norm": "Value",
+                        "min": 0,
+                        "max": 50,
+                        "blend_mode": "Luminosity",
+                        "opacity": 50
+                    },
+                    {
+                        "layer": "4",
+                        "visualization_method": "Hillshade",
+                        "norm": "Value",
+                        "min": 0,
+                        "max": 1,
+                        "blend_mode": "Normal",
+                        "opacity": 100
+                    }
+                ]
+            }
+        },
+        {
+            "combination": {
+                "name": "Prismatic openness",
+                "layers": [
+                    {
+                        "layer": "1",
+                        "visualization_method": "Openness - Positive",
+                        "norm": "Value",
+                        "min": 68,
+                        "max": 93,
+                        "blend_mode": "Normal",
+                        "opacity": 50
+                    },
+                    {
+                        "layer": "2",
+                        "visualization_method": "Openness - Negative",
+                        "norm": "Value",
+                        "min": 68,
+                        "max": 95,
+                        "blend_mode": "Normal",
+                        "opacity": 50
+                    },
+                    {
+                        "layer": "3",
+                        "visualization_method": "Slope gradient",
+                        "norm": "Value",
+                        "min": 0,
+                        "max": 50,
+                        "blend_mode": "Luminosity",
+                        "opacity": 50
+                    }
+                ]
+            }
+        },
+        {
+            "combination": {
+                "name": "Geomorphological",
+                "layers": [
+                    {
+                        "layer": "1",
+                        "visualization_method": "Sky-View Factor",
+                        "norm": "Value",
+                        "min": 0.7,
+                        "max": 1.0,
+                        "blend_mode": "Multiply",
+                        "opacity": 25
+                    },
+                    {
+                        "layer": "2",
+                        "visualization_method": "Openness - Positive",
+                        "norm": "Value",
+                        "min": 68,
+                        "max": 93,
+                        "blend_mode": "Overlay",
+                        "opacity": 50
+                    },
+                    {
+                        "layer": "3",
+                        "visualization_method": "Slope gradient",
+                        "norm": "Value",
+                        "min": 0,
+                        "max": 50,
+                        "blend_mode": "Luminosity",
+                        "opacity": 50
+                    },
+                    {
+                        "layer": "4",
+                        "visualization_method": "Multiple directions hillshade",
+                        "norm": "Value",
+                        "min": 0,
+                        "max": 1,
+                        "blend_mode": "Normal",
+                        "opacity": 100
+                    }
+                ]
+            }
+        },
+        {
+            "combination": {
+                "name": "City",
+                "layers": [
+                    {
+                        "layer": "1",
+                        "visualization_method": "Sky-View Factor",
+                        "norm": "Value",
+                        "min": 0.7,
+                        "max": 1.0,
+                        "blend_mode": "Multiply",
+                        "opacity": 25
+                    },
+                    {
+                        "layer": "2",
+                        "visualization_method": "Openness - Positive",
+                        "norm": "Value",
+                        "min": 68,
+                        "max": 93,
+                        "blend_mode": "Overlay",
+                        "opacity": 50
+                    },
+                    {
+                        "layer": "3",
+                        "visualization_method": "Slope gradient",
+                        "norm": "Value",
+                        "min": 0,
+                        "max": 50,
+                        "blend_mode": "Luminosity",
+                        "opacity": 50
+                    },
+                    {
+                        "layer": "4",
+                        "visualization_method": "Hillshade",
+                        "norm": "Value",
+                        "min": 0,
+                        "max": 1,
+                        "blend_mode": "Normal",
+                        "opacity": 100
+                    }
+                ]
+            }
+        }
+    ]
+}

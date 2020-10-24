@@ -28,7 +28,7 @@ import json
 
 class DefaultValues:
     """
-    Class which define layer for blending. BlenderLayer is basic element in BlenderLayers.layers list.
+    Class which define layer for blending. BlenderLayer is basic element in BlenderCombination.layers list.
 
     Attributes
     ----------

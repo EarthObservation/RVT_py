@@ -1,6 +1,5 @@
 # rvt.blend quick TEST
 
-import rasterio as rio
 import rvt.default
 import rvt.vis
 import rvt.blend
@@ -14,16 +13,15 @@ import numpy as np
 # if you create_layer and don't input image or image_path then if vis_method is correct it automatically
 # calculates visualization in render_all_images
 
-layers_manual = rvt.blend.BlenderLayers()
-# read dem
+layers_manual = rvt.blend.BlenderCombination()
 input_dem_path = r"test_data\TM1_564_146.tif"
 layers_manual.add_dem_path(dem_path=input_dem_path)
 output_blend_path = r"test_data\TM1_564_146_test_blend_manual.tif"
-input_dem_dataset = rio.open(input_dem_path)
-t = input_dem_dataset.transform
-x_res = t[0]
-y_res = -t[4]
-input_dem_arr = input_dem_dataset.read()[0]
+dict_arr_res = rvt.default.get_raster_arr(input_dem_path)
+input_dem_arr = dict_arr_res["array"]
+x_res = dict_arr_res["resolution"][0]
+y_res = dict_arr_res["resolution"][1]
+
 # layers;vis_method;norm;min;max;blending_mode;opacity
 # 1;svf;value;0.7;1.0;multiply;25
 svf_dict = rvt.vis.sky_view_factor(dem=input_dem_arr, resolution=x_res, compute_svf=True, compute_opns=True)
@@ -54,7 +52,7 @@ render_arr = layers_manual.render_all_images(save_render_path=output_blend_path)
 
 # you can save layers combination to .json file, be aware image and image_path won't be saved
 # this is a problem when vis_method is non rvt visualization(is not correct)!
-layers_manual.save_blender_layers_to_file(r"settings\blender_custom_layers.json")
+layers_manual.save_to_file(r"settings\blender_custom_layers.json")
 
 #####
 
@@ -65,10 +63,10 @@ input_dem_path = r"test_data\TM1_564_146.tif"
 # Example file (for file_path) in dir settings: blender_file_example.txt
 blender_file = r"settings\blender_file_example.json"
 output_blend_path = r"test_data\TM1_564_146_test_blend_automatic.tif"
-layers_auto = rvt.blend.BlenderLayers()
+layers_auto = rvt.blend.BlenderCombination()
 default = rvt.default.DefaultValues()
 default.read_default_from_file(r"settings\default_settings.json")
-layers_auto.build_blender_layers_from_file(file_path=blender_file)  # build BlenderLayers from file
+layers_auto.read_from_file(file_path=blender_file)  # build BlenderCombination from file
 # when building_blender from file single BlenderLayer image and image_path are None
 layers_auto.add_dem_path(input_dem_path)  # needed when save_visualizations is True and save_rander_path is not None
 # render_all_images reads images simultaneously if layer (BlenderLayer) image is None and image_path is None it

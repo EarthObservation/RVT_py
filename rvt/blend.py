@@ -30,24 +30,24 @@ import json
 
 def create_blender_file_example(file_path=None):
     """Create blender .json file example (can be changed and read). Example is VAT - Archaeological combination"""
-    data = {"blender_layers": {"name": "VAT - Archaeological",
-                               "layers":
-                                   [
-                                       {"layer": "1", "visualization_method": "Sky-View Factor", "norm": "Value",
-                                        "min": 0.7, "max": 1.0,
-                                        "blend_mode": "Multiply", "opacity": 25},
-                                       {"layer": "2", "visualization_method": "Openness - Positive",
-                                        "norm": "Value", "min": 68, "max": 93,
-                                        "blend_mode": "Overlay", "opacity": 50},
-                                       {"layer": "3", "visualization_method": "Slope gradient", "norm": "Value",
-                                        "min": 0, "max": 50,
-                                        "blend_mode": "Luminosity", "opacity": 50},
-                                       {"layer": "4", "visualization_method": "Hillshade", "norm": "Value",
-                                        "min": 0, "max": 1,
-                                        "blend_mode": "Normal", "opacity": 100},
-                                       {"layer": "5", "visualization_method": "None"}
-                                   ]
-                               }}
+    data = {"combination": {"name": "VAT - Archaeological",
+                            "layers":
+                                [
+                                    {"layer": "1", "visualization_method": "Sky-View Factor", "norm": "Value",
+                                     "min": 0.7, "max": 1.0,
+                                     "blend_mode": "Multiply", "opacity": 25},
+                                    {"layer": "2", "visualization_method": "Openness - Positive",
+                                     "norm": "Value", "min": 68, "max": 93,
+                                     "blend_mode": "Overlay", "opacity": 50},
+                                    {"layer": "3", "visualization_method": "Slope gradient", "norm": "Value",
+                                     "min": 0, "max": 50,
+                                     "blend_mode": "Luminosity", "opacity": 50},
+                                    {"layer": "4", "visualization_method": "Hillshade", "norm": "Value",
+                                     "min": 0, "max": 1,
+                                     "blend_mode": "Normal", "opacity": 100},
+                                    {"layer": "5", "visualization_method": "None"}
+                                ]
+                            }}
     if file_path is None:
         file_path = r"settings\blender_file_example.json"
         if os.path.isfile(file_path):
@@ -59,6 +59,7 @@ def create_blender_file_example(file_path=None):
     dat = open(file_path, "w")
     dat.write(json.dumps(data, indent=4))
     dat.close()
+
 
 def gray_scale_to_color_ramp(gray_scale, colormap, alpha=False):
     """
@@ -414,7 +415,7 @@ def normalize_image(visualization, image, min_norm, max_norm, normalization):
 
 class BlenderLayer:
     """
-    Class which define layer for blending. BlenderLayer is basic element in BlenderLayers.layers list.
+    Class which define layer for blending. BlenderLayer is basic element in BlenderCombination.layers list.
 
     Attributes
     ----------
@@ -484,7 +485,7 @@ class BlenderLayer:
                                     "image_path you have to input known visualization method (vis)!")
 
 
-class BlenderLayers:
+class BlenderCombination:
     """
     Class for storing layers (rasters, parameters  for blending) and rendering(blending) into blended raster.
 
@@ -494,6 +495,8 @@ class BlenderLayers:
         Array with DEM data, needed for calculating visualization functions in memory.
     dem_path : str
         Path to DEM, needed for calculating visualization functions and saving them.
+    name : str
+        Name of BlenderCombination combination.
     layers : [BlenderLayer]
         List of BlenderLayer instances which will be blended together.
     """
@@ -502,6 +505,7 @@ class BlenderLayers:
         self.dem_arr = dem_arr
         self.dem_resolution = dem_resolution
         self.dem_path = dem_path
+        self.name = ""
         self.layers = []
 
     def add_dem_arr(self, dem_arr, dem_resolution):
@@ -528,13 +532,19 @@ class BlenderLayers:
         """Empties layers attribute."""
         self.layers = []
 
-    def build_blender_layers_from_file(self, file_path):
-        """Fill layers from .json file."""
-        self.layers = []
+    def read_from_file(self, file_path):
+        """Reads class attributes from .json file."""
         # Example file (for file_path) in dir settings: blender_file_example.txt
         dat = open(file_path, "r")
-        data = json.load(dat)
-        layers_data = data["blender_layers"]["layers"]
+        json_data = json.load(dat)
+        self.read_from_json(json_data)
+        dat.close()
+
+    def read_from_json(self, json_data):
+        """Fill class attributes with json data."""
+        self.layers = []
+        self.name = json_data["combination"]["name"]
+        layers_data = json_data["combination"]["layers"]
         for layer in layers_data:
             layer_name = layer["layer"]
             if layer["visualization_method"] == "None":
@@ -549,22 +559,28 @@ class BlenderLayers:
             opacity = layer["opacity"]
             self.add_layer(BlenderLayer(vis_method=vis_method, normalization=norm, minimum=norm_min, maximum=norm_max,
                                         blend_mode=blend_mode, opacity=opacity))
+
+    def save_to_file(self, file_path):
+        """Save layers (manually) to .json file. Parameters image and image_path in each layer have to be None,
+         vis has to be correct!"""
+        json_data = self.to_json()
+        dat = open(file_path, "w")
+        dat.write(json.dumps(json_data, indent=4))
         dat.close()
 
-    def save_blender_layers_to_file(self, file_path):
-        """Save layers (manually) to .json file. Param image and image_path have to be None, vis has to be correct!"""
-        data = {"blender_layers": {"name": "VAT - Archaeological",
-                                   "layers": []
-                                   }}
-        i = 1
+    def to_json(self):
+        """Outputs class attributes as json."""
+        json_data = {"combination": {"name": self.name,
+                                     "layers": []
+                                     }}
+        i_layer = 1
         for layer in self.layers:
-            data["blender_layers"]["layers"].append({"layer": str(i), "visualization_method": layer.vis,
-                                                     "norm": layer.normalization, "min": layer.min, "max": layer.max,
-                                                     "blend_mode": layer.blend_mode, "opacity": layer.opacity})
-            i += 1
-        dat = open(file_path, "w")
-        dat.write(json.dumps(data, indent=4))
-        dat.close()
+            json_data["combination"]["layers"].append({"layer": str(i_layer), "visualization_method": layer.vis,
+                                                       "norm": layer.normalization, "min": layer.min,
+                                                       "max": layer.max, "blend_mode": layer.blend_mode,
+                                                       "opacity": layer.opacity})
+            i_layer += 1
+        return json_data
 
     def render_all_images(self, default=None, save_visualizations=False, save_render_path=None):
         """Render all layers and returns blended image. If specific layer (BlenderLayer) in layers has image
@@ -576,8 +592,8 @@ class BlenderLayers:
         image and image_path are None"""
         if save_render_path is not None and self.dem_path is None:
             raise Exception(
-                "rvt.blend.BlenderLayers.render_all_images: If you would like to save rendered image (blender), "
-                "you have to define dem_path (BlenderLayers.add_dem_path())!")
+                "rvt.blend.BlenderCombination.render_all_images: If you would like to save rendered image (blender), "
+                "you have to define dem_path (BlenderCombination.add_dem_path())!")
 
         # default is rvt.default.DefaultValues class
         if default is None:  # if not defined, predefined values are used
@@ -597,13 +613,14 @@ class BlenderLayers:
             image_path = self.layers[i_img].image_path
 
             if save_visualizations and self.dem_path is None and image_path is None and image is None:
-                raise Exception("rvt.blend.BlenderLayers.render_all_images: If you would like to save visualizations, "
-                                "you have to define dem_path (BlenderLayers.add_dem_path())!")
+                raise Exception(
+                    "rvt.blend.BlenderCombination.render_all_images: If you would like to save visualizations, "
+                    "you have to define dem_path (BlenderCombination.add_dem_path())!")
             if not save_visualizations and self.dem_arr is None and self.dem_resolution is None and \
                     image_path is None and image is None:
                 raise Exception(
-                    "rvt.blend.BlenderLayers.render_all_images: If you would like to compute visualizations, "
-                    "you have to define dem_arr and its resolution (BlenderLayers.add_dem_arr())!")
+                    "rvt.blend.BlenderCombination.render_all_images: If you would like to compute visualizations, "
+                    "you have to define dem_arr and its resolution (BlenderCombination.add_dem_arr())!")
 
             # normalize images
             # if image is not presented and image_path is
@@ -736,8 +753,56 @@ class BlenderLayers:
                 rendered_image = render_images(top, background, opacity)
 
                 if np.nanmin(background) < 0 or np.nanmax(background > 1):
-                    warnings.warn("rvt.blend.BlenderLayers.render_all_images: Rendered image scale distorted")
+                    warnings.warn("rvt.blend.BlenderCombination.render_all_images: Rendered image scale distorted")
         if save_render_path is not None:  # if paths presented it saves image
             rvt.default.save_raster(src_raster_path=self.dem_path, out_raster_path=save_render_path,
                                     out_raster_arr=rendered_image)
         return rendered_image
+
+
+class BlenderCombinations:
+    """
+    Class for storing combinations.
+
+    Attributes
+    ----------
+    combinations : [BlenderCombination]
+        List of BlenderCombination instances.
+    """
+    def __init__(self):
+        self.combinations = []  # list of BlenderCombination
+
+    def add_combination(self, combination: BlenderCombination):
+        """Adds cobmination."""
+        self.combinations.append(combination)
+
+    def remove_all_combinations(self):
+        """Removes all combinations from self.combinations."""
+        self.combinations = []
+
+    def select_combination_by_name(self, name):
+        """Select first combination where self.combinations.BlenderCombination.name = name."""
+        for combination in self.combinations:
+            if combination.name == name:
+                return combination
+
+    def read_from_file(self, file_path):
+        """Reads combinations from .json file."""
+        self.combinations = []
+        dat = open(file_path, "r")
+        json_data = json.load(dat)
+        combinations_data = json_data["combinations"]
+        for combination_data in combinations_data:
+            combination = BlenderCombination()
+            combination.read_from_json(combination_data)
+            self.combinations.append(combination)
+        dat.close()
+
+    def save_to_file(self, file_path):
+        """Saves combination to .json file."""
+        json_data = {"combinations": []}
+        for combination in self.combinations:
+            json_data["combinations"].append(combination.to_json())
+        dat = open(file_path, "w")
+        dat.write(json.dumps(json_data, indent=4))
+        dat.close()
