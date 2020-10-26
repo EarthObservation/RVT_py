@@ -520,13 +520,15 @@ class BlenderCombination:
     def create_layer(self, vis_method=None, normalization="value", minimum=None, maximum=None,
                      blend_mode="normal", opacity=100, image=None, image_path=None):
         """Create BlenderLayer and adds it to layers attribute."""
-        layer = BlenderLayer(vis_method=vis_method, normalization=normalization, minimum=minimum, maximum=maximum,
-                             blend_mode=blend_mode, opacity=opacity, image=image, image_path=image_path)
-        self.layers.append(layer)
+        if vis_method is not None:
+            layer = BlenderLayer(vis_method=vis_method, normalization=normalization, minimum=minimum, maximum=maximum,
+                                 blend_mode=blend_mode, opacity=opacity, image=image, image_path=image_path)
+            self.layers.append(layer)
 
     def add_layer(self, layer: BlenderLayer):
         """Add BlenderLayer instance to layers attribute."""
-        self.layers.append(layer)
+        if layer.vis is not None:
+            self.layers.append(layer)
 
     def remove_all_layers(self):
         """Empties layers attribute."""
@@ -547,16 +549,17 @@ class BlenderCombination:
         layers_data = json_data["combination"]["layers"]
         for layer in layers_data:
             layer_name = layer["layer"]
-            if layer["visualization_method"] == "None":
-                vis_method = None
+            if layer["visualization_method"] is None:
+                continue
+            if layer["visualization_method"].lower() == "none" or layer["visualization_method"].lower() == "null":
                 continue
             else:
-                vis_method = layer["visualization_method"]
-            norm = layer["norm"]
-            norm_min = layer["min"]
-            norm_max = layer["max"]
-            blend_mode = layer["blend_mode"]
-            opacity = layer["opacity"]
+                vis_method = str(layer["visualization_method"])
+            norm = str(layer["norm"])
+            norm_min = float(layer["min"])
+            norm_max = float(layer["max"])
+            blend_mode = str(layer["blend_mode"])
+            opacity = int(layer["opacity"])
             self.add_layer(BlenderLayer(vis_method=vis_method, normalization=norm, minimum=norm_min, maximum=norm_max,
                                         blend_mode=blend_mode, opacity=opacity))
 
@@ -806,3 +809,32 @@ class BlenderCombinations:
         dat = open(file_path, "w")
         dat.write(json.dumps(json_data, indent=4))
         dat.close()
+
+    def combination_in_combinations(self, input_combination: BlenderCombination):
+        """If input_combination (BlenderCombination) has same attributes as one of the combinations (self), method
+         returns name of the combination (from combinations). If there is no equal one it returns None."""
+        for combination in self.combinations:
+            compare_bool = compare_2_combinations(input_combination, combination)
+            if compare_bool:
+                return combination.name
+        return None
+
+
+def compare_2_combinations(combination1: BlenderCombination, combination2: BlenderCombination):
+    combination1.layers
+    if len(combination1.layers) != len(combination2.layers):
+        return False
+    for i_layer in range(len(combination1.layers)):
+        if combination1.layers[i_layer].vis.lower() != combination2.layers[i_layer].vis.lower():
+            return False
+        if combination1.layers[i_layer].normalization.lower() != combination2.layers[i_layer].normalization.lower():
+            return False
+        if combination1.layers[i_layer].min != combination2.layers[i_layer].min:
+            return False
+        if combination1.layers[i_layer].max != combination2.layers[i_layer].max:
+            return False
+        if combination1.layers[i_layer].blend_mode.lower() != combination2.layers[i_layer].blend_mode.lower():
+            return False
+        if combination1.layers[i_layer].opacity != combination2.layers[i_layer].opacity:
+            return False
+    return True
