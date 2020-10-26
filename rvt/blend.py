@@ -447,7 +447,6 @@ class BlenderLayer:
         self.opacity = opacity
         self.image_path = image_path
         self.image = image
-        self.check_data()
 
     def check_data(self):
         """ Check Attributes """
@@ -585,6 +584,10 @@ class BlenderCombination:
             i_layer += 1
         return json_data
 
+    def check_data(self):
+        for layer in self.layers:
+            layer.check_data()
+
     def render_all_images(self, default=None, save_visualizations=False, save_render_path=None):
         """Render all layers and returns blended image. If specific layer (BlenderLayer) in layers has image
         (is not None), method uses this image, if image is None and layer has image_path method reads image from
@@ -593,6 +596,10 @@ class BlenderCombination:
         else (save_visualization=False) method needs dem_arr, dem_resolution and calculates each visualization
         simultaneously (in memory). Be careful save_visualisation applies only if specific BlenderLayer
         image and image_path are None"""
+
+        # check data
+        self.check_data()
+
         if save_render_path is not None and self.dem_path is None:
             raise Exception(
                 "rvt.blend.BlenderCombination.render_all_images: If you would like to save rendered image (blender), "
