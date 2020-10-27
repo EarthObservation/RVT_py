@@ -264,7 +264,7 @@ def equation_blend(blend_mode, active, background):
 def blend_multi_dim_images(blend_mode, active, background):
     a_rgb = len(active.shape) == 3  # bool, is active rgb
     b_rgb = len(background.shape) == 3  # bool, is background rgb
-
+    blended_image = None
     if a_rgb and b_rgb:
         blended_image = np.zeros(background.shape)
         for i in range(3):
@@ -419,8 +419,6 @@ class BlenderLayer:
 
     Attributes
     ----------
-    dem_arr : np.array (2D)
-        Array with DEM data, needed for calculating visualization functions in memory.
     vis : str
         Visualization method.
     normalization : str
@@ -634,6 +632,7 @@ class BlenderCombination:
 
             # normalize images
             # if image is not presented and image_path is
+            norm_image = None
             if image is None and image_path is not None:
                 norm_image = normalize_image(visualization, rvt.default.get_raster_arr(image_path)["array"], min_norm,
                                              max_norm, normalization)
@@ -770,6 +769,25 @@ class BlenderCombination:
         return rendered_image
 
 
+def compare_2_combinations(combination1: BlenderCombination, combination2: BlenderCombination):
+    if len(combination1.layers) != len(combination2.layers):
+        return False
+    for i_layer in range(len(combination1.layers)):
+        if combination1.layers[i_layer].vis.lower() != combination2.layers[i_layer].vis.lower():
+            return False
+        if combination1.layers[i_layer].normalization.lower() != combination2.layers[i_layer].normalization.lower():
+            return False
+        if combination1.layers[i_layer].min != combination2.layers[i_layer].min:
+            return False
+        if combination1.layers[i_layer].max != combination2.layers[i_layer].max:
+            return False
+        if combination1.layers[i_layer].blend_mode.lower() != combination2.layers[i_layer].blend_mode.lower():
+            return False
+        if combination1.layers[i_layer].opacity != combination2.layers[i_layer].opacity:
+            return False
+    return True
+
+
 class BlenderCombinations:
     """
     Class for storing combinations.
@@ -779,6 +797,7 @@ class BlenderCombinations:
     combinations : [BlenderCombination]
         List of BlenderCombination instances.
     """
+
     def __init__(self):
         self.combinations = []  # list of BlenderCombination
 
@@ -827,21 +846,301 @@ class BlenderCombinations:
         return None
 
 
-def compare_2_combinations(combination1: BlenderCombination, combination2: BlenderCombination):
-    combination1.layers
-    if len(combination1.layers) != len(combination2.layers):
-        return False
-    for i_layer in range(len(combination1.layers)):
-        if combination1.layers[i_layer].vis.lower() != combination2.layers[i_layer].vis.lower():
-            return False
-        if combination1.layers[i_layer].normalization.lower() != combination2.layers[i_layer].normalization.lower():
-            return False
-        if combination1.layers[i_layer].min != combination2.layers[i_layer].min:
-            return False
-        if combination1.layers[i_layer].max != combination2.layers[i_layer].max:
-            return False
-        if combination1.layers[i_layer].blend_mode.lower() != combination2.layers[i_layer].blend_mode.lower():
-            return False
-        if combination1.layers[i_layer].opacity != combination2.layers[i_layer].opacity:
-            return False
-    return True
+class TerrainSettings:
+    """Terrain settings for GUI."""
+
+    def __init__(self):
+        self.name = None
+
+        # slope gradient
+        self.slp_output_units = None
+        # hillshade
+        self.hs_sun_azi = None
+        self.hs_sun_el = None
+        # multi hillshade
+        self.mhs_nr_dir = None
+        self.mhs_sun_el = None
+        # simple local relief model
+        self.slrm_rad_cell = None
+        # sky view factor
+        self.svf_n_dir = None
+        self.svf_r_max = None
+        self.svf_noise = None
+        # anisotropic sky-view factor
+        self.asvf_dir = None
+        self.asvf_level = None
+        # positive openness
+        # negative openness
+        # sky_illum
+        self.sim_sky_mod = None
+        self.sim_samp_pnts = None
+        self.sim_shadow_dist = None
+        self.sim_shadow_az = None
+        self.sim_shadow_el = None
+        # local dominance
+        self.ld_min_rad = None
+        self.ld_max_rad = None
+        self.ld_rad_inc = None
+        self.ld_anglr_res = None
+        self.ld_observer_h = None
+
+        # linear histogram stretches tuple(min, max)
+        self.hs_stretch = None
+        self.mhs_stretch = None
+        self.slp_stretch = None
+        self.slrm_stretch = None
+        self.svf_stretch = None
+        self.asvf_stretch = None
+        self.pos_opns_stretch = None
+        self.neg_opns_stretch = None
+        self.sim_stretch = None
+        self.ld_stretch = None
+
+    def read_from_file(self, file_path):
+        """Reads combinations from .json file."""
+        dat = open(file_path, "r")
+        json_data = json.load(dat)
+        self.read_from_json(json_data)
+        dat.close()
+
+    def read_from_json(self, json_data):
+        """Reads json dict and fills self attributes."""
+        self.__init__()
+        terrain_data = json_data["terrain_settings"]
+        self.name = terrain_data["name"]
+        try:
+            self.slp_output_units = str(terrain_data["Slope gradient"]["slp_output_units"]["value"])
+        except KeyError:
+            pass
+        try:
+            self.hs_sun_azi = int(terrain_data["Hillshade"]["hs_sun_azi"]["value"])
+        except KeyError:
+            pass
+        try:
+            self.hs_sun_el = int(terrain_data["Hillshade"]["hs_sun_el"]["value"])
+        except KeyError:
+            pass
+        try:
+            self.mhs_nr_dir = int(terrain_data["Multiple directions hillshade"]["mhs_nr_dir"]["value"])
+        except KeyError:
+            pass
+        try:
+            self.mhs_sun_el = int(terrain_data["Multiple directions hillshade"]["mhs_sun_el"]["value"])
+        except KeyError:
+            pass
+        try:
+            self.slrm_rad_cell = int(terrain_data["Simple local relief model"]["slrm_rad_cell"]["value"])
+        except KeyError:
+            pass
+        try:
+            self.svf_n_dir = int(terrain_data["Sky-View Factor"]["svf_n_dir"]["value"])
+        except KeyError:
+            pass
+        try:
+            self.svf_r_max = int(terrain_data["Sky-View Factor"]["svf_r_max"]["value"])
+        except KeyError:
+            pass
+        try:
+            self.svf_noise = int(terrain_data["Sky-View Factor"]["svf_noise"]["value"])
+        except KeyError:
+            pass
+        try:
+            self.asvf_dir = int(terrain_data["Anisotropic Sky-View Factor"]["asvf_dir"]["value"])
+        except KeyError:
+            pass
+        try:
+            self.asvf_level = int(terrain_data["Anisotropic Sky-View Factor"]["asvf_level"]["value"])
+        except KeyError:
+            pass
+        try:
+            self.sim_sky_mod = str(terrain_data["Sky illumination"]["sim_sky_mod"]["value"])
+        except KeyError:
+            pass
+        try:
+            self.sim_samp_pnts = int(terrain_data["Sky illumination"]["sim_samp_pnts"]["value"])
+        except KeyError:
+            pass
+        try:
+            self.sim_shadow_dist = int(terrain_data["Sky illumination"]["sim_shadow_dist"]["value"])
+        except KeyError:
+            pass
+        try:
+            self.sim_shadow_az = int(terrain_data["Sky illumination"]["sim_shadow_az"]["value"])
+        except KeyError:
+            pass
+        try:
+            self.sim_shadow_el = int(terrain_data["Sky illumination"]["sim_shadow_el"]["value"])
+        except KeyError:
+            pass
+        try:
+            self.ld_min_rad = int(terrain_data["Local dominance"]["ld_min_rad"]["value"])
+        except KeyError:
+            pass
+        try:
+            self.ld_max_rad = int(terrain_data["Local dominance"]["ld_max_rad"]["value"])
+        except KeyError:
+            pass
+        try:
+            self.ld_rad_inc = int(terrain_data["Local dominance"]["ld_rad_inc"]["value"])
+        except KeyError:
+            pass
+        try:
+            self.ld_anglr_res = int(terrain_data["Local dominance"]["ld_anglr_res"]["value"])
+        except KeyError:
+            pass
+        try:
+            self.ld_observer_h = float(terrain_data["Local dominance"]["ld_observer_h"]["value"])
+        except KeyError:
+            pass
+        try:
+            self.slp_stretch = {float(terrain_data["Slope gradient"]["stretch"]["min"]),
+                                float(terrain_data["Slope gradient"]["stretch"]["max"])}
+        except KeyError:
+            pass
+        try:
+            self.hs_stretch = {float(terrain_data["Hillshade"]["stretch"]["min"]),
+                               float(terrain_data["Hillshade"]["stretch"]["max"])}
+        except KeyError:
+            pass
+        try:
+            self.mhs_stretch = {float(terrain_data["Multiple directions hillshade"]["stretch"]["min"]),
+                                float(terrain_data["Multiple directions hillshade"]["stretch"]["max"])}
+        except KeyError:
+            pass
+        try:
+            self.slrm_stretch = {float(terrain_data["Simple local relief model"]["stretch"]["min"]),
+                                 float(terrain_data["Simple local relief model"]["stretch"]["max"])}
+        except KeyError:
+            pass
+        try:
+            self.svf_stretch = {float(terrain_data["Sky-View Factor"]["stretch"]["min"]),
+                                float(terrain_data["Sky-View Factor"]["stretch"]["max"])}
+        except KeyError:
+            pass
+        try:
+            self.asvf_stretch = {float(terrain_data["Anisotropic Sky-View Factor"]["stretch"]["min"]),
+                                 float(terrain_data["Anisotropic Sky-View Factor"]["stretch"]["max"])}
+        except KeyError:
+            pass
+        try:
+            self.pos_opns_stretch = {float(terrain_data["Openness - Positive"]["stretch"]["min"]),
+                                     float(terrain_data["Openness - Positive"]["stretch"]["max"])}
+        except KeyError:
+            pass
+        try:
+            self.neg_opns_stretch = {float(terrain_data["Openness - Negative"]["stretch"]["min"]),
+                                     float(terrain_data["Openness - Negative"]["stretch"]["max"])}
+        except KeyError:
+            pass
+        try:
+            self.neg_opns_stretch = {float(terrain_data["Sky illumination"]["stretch"]["min"]),
+                                     float(terrain_data["Sky illumination"]["stretch"]["max"])}
+        except KeyError:
+            pass
+        try:
+            self.neg_opns_stretch = {float(terrain_data["Local dominance"]["stretch"]["min"]),
+                                     float(terrain_data["Local dominance"]["stretch"]["max"])}
+        except KeyError:
+            pass
+
+    def apply_terrain(self, default: rvt.default.DefaultValues, combination: BlenderCombination):
+        """It overwrites default (DefaultValues) and combination (BlenderCombination),
+         with self values that are not None."""
+        if self.slp_output_units is not None:
+            default.slp_output_units = self.slp_output_units
+        if self.hs_sun_azi is not None:
+            default.hs_sun_azi = self.hs_sun_azi
+        if self.hs_sun_el is not None:
+            default.hs_sun_el = self.hs_sun_el
+        if self.mhs_nr_dir is not None:
+            default.mhs_nr_dir = self.mhs_nr_dir
+        if self.mhs_sun_el is not None:
+            default.mhs_sun_el = self.mhs_sun_el
+        if self.slrm_rad_cell is not None:
+            default.slrm_rad_cell = self.slrm_rad_cell
+        if self.svf_n_dir is not None:
+            default.svf_n_dir = self.svf_n_dir
+        if self.svf_r_max is not None:
+            default.svf_r_max = self.svf_r_max
+        if self.svf_noise is not None:
+            default.svf_noise = self.svf_noise
+        if self.asvf_dir is not None:
+            default.asvf_dir = self.asvf_dir
+        if self.asvf_level is not None:
+            default.asvf_level = self.asvf_level
+        if self.sim_sky_mod is not None:
+            default.sim_sky_mod = self.sim_sky_mod
+        if self.sim_samp_pnts is not None:
+            default.sim_samp_pnts = self.sim_samp_pnts
+        if self.sim_shadow_dist is not None:
+            default.sim_shadow_dist = self.sim_shadow_dist
+        if self.sim_shadow_az is not None:
+            default.sim_shadow_az = self.sim_shadow_az
+        if self.sim_shadow_el is not None:
+            default.sim_shadow_el = self.sim_shadow_el
+        if self.ld_min_rad is not None:
+            default.ld_min_rad = self.ld_min_rad
+        if self.ld_max_rad is not None:
+            default.ld_max_rad = self.ld_max_rad
+        if self.ld_rad_inc is not None:
+            default.ld_rad_inc = self.ld_rad_inc
+        if self.ld_anglr_res is not None:
+            default.ld_anglr_res = self.ld_anglr_res
+        if self.ld_observer_h is not None:
+            default.ld_observer_h = self.ld_observer_h
+
+        # linear histogram stretches, combination values overwrite
+        for layer in combination.layers:
+            if layer.vis.lower() == "slope gradient" and self.slp_stretch is not None:
+                layer.min = self.slp_stretch[0]
+                layer.max = self.slp_stretch[1]
+            elif layer.vis.lower() == "hillshade" and self.hs_stretch is not None:
+                layer.min = self.hs_stretch[0]
+                layer.max = self.hs_stretch[1]
+            elif layer.vis.lower() == "multiple directions hillshade" and self.mhs_stretch is not None:
+                layer.min = self.mhs_stretch[0]
+                layer.max = self.mhs_stretch[1]
+            elif layer.vis.lower() == "simple local relief model" and self.slrm_stretch is not None:
+                layer.min = self.slrm_stretch[0]
+                layer.max = self.slrm_stretch[1]
+            elif layer.vis.lower() == "sky-view factor" and self.svf_stretch is not None:
+                layer.min = self.svf_stretch[0]
+                layer.max = self.svf_stretch[1]
+            elif layer.vis.lower() == "anisotropic sky-view factor" and self.asvf_stretch is not None:
+                layer.min = self.asvf_stretch[0]
+                layer.max = self.asvf_stretch[1]
+            elif layer.vis.lower() == "openness - positive" and self.pos_opns_stretch is not None:
+                layer.min = self.pos_opns_stretch[0]
+                layer.max = self.pos_opns_stretch[1]
+            elif layer.vis.lower() == "openness - negative" and self.neg_opns_stretch is not None:
+                layer.min = self.neg_opns_stretch[0]
+                layer.max = self.neg_opns_stretch[1]
+            elif layer.vis.lower() == "sky illumination" and self.sim_stretch is not None:
+                layer.min = self.sim_stretch[0]
+                layer.max = self.sim_stretch[1]
+            elif layer.vis.lower() == "local dominance" and self.ld_stretch is not None:
+                layer.min = self.ld_stretch[0]
+                layer.max = self.ld_stretch[1]
+
+
+class TerrainsSettings:
+    """Multiple Terrain settings."""
+    def __init__(self):
+        self.terrains_settings = []
+
+    def read_from_file(self, file_path):
+        """Reads combinations from .json file."""
+        dat = open(file_path, "r")
+        json_data = json.load(dat)
+        terrains_settings_json = json_data["terrains_settings"]
+        for terrain_json in terrains_settings_json:
+            terrain_settings = TerrainSettings()
+            terrain_settings.read_from_json(terrain_json)
+            self.terrains_settings.append(terrain_settings)
+        dat.close()
+
+    def select_terrain_settings_by_name(self, name):
+        """Select first combination where self.combinations.BlenderCombination.name = name."""
+        for terrain_setting in self.terrains_settings:
+            if terrain_setting.name == name:
+                return terrain_setting

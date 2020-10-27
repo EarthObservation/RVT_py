@@ -1,0 +1,117 @@
+{
+	"terrains_settings": [
+		{	
+			"terrain_settings": {
+				"name": "general",
+				"Slope gradient": {
+					"stretch": {"min": 0, "max": 50} 
+				},
+				"Hillshade": {
+					"stretch": {"min": 0, "max": 1},
+					"hs_sun_el": {"value": 35}
+				},
+				"Multiple directions hillshade": {
+					"stretch": {"min": 0, "max": 1},
+					"mhs_sun_el": {"value": 35}
+				},
+				"Simple local relief model": {
+					"stretch": {"min": -1, "max": 1},
+					"slrm_rad_cell": {"value": 20}
+				},
+				"Sky-View Factor": {
+					"stretch": {"min": 0.7, "max": 1},
+					"svf_r_max": {"value": 10},
+					"svf_noise": {"value": 0}
+				},
+				"Anisotropic Sky-View Factor": {
+					"stretch": {"min": 0.65, "max": 1}
+				},
+				"Openness - Positive": {
+					"stretch": {"min": 68, "max": 93}
+				},
+				"Openness - Negative": {
+					"stretch": {"min": 60, "max": 95}
+				},
+				"Sky illumination": {
+					"stretch": {"min": 0.25, "max": 0.3}
+				},
+				"Local dominance": {
+					"stretch": {"min": 0.5, "max": 1.8},
+					"ld_min_rad": {"value": 10},
+					"ld_max_rad": {"value": 20},
+					"ld_observer_h": {"value": 1.7}
+				}
+			}
+			
+		},
+		{	
+			"terrain_settings": {
+				"name": "flat",
+				"Slope gradient": {
+					"stretch": {"min": 0, "max": 15} 
+				},
+				"Hillshade": {
+					"hs_sun_el": {"value": 15}
+				},
+				"Multiple directions hillshade": {
+					"mhs_sun_el": {"value": 15}
+				},
+				"Simple local relief model": {
+					"slrm_rad_cell": {"value": 10}
+				},
+				"Sky-View Factor": {
+					"stretch": {"min": 0.9, "max": 1},
+					"svf_r_max": {"value": 20},
+					"svf_noise": {"value": 3}
+				},
+				"Openness - Positive": {
+					"stretch": {"min": 85, "max": 93}
+				},
+				"Openness - Negative": {
+					"stretch": {"min": 75, "max": 95}
+				},
+				"Local dominance": {
+					"stretch": {"min": 0.5, "max": 3},
+					"ld_min_rad": {"value": 10},
+					"ld_max_rad": {"value": 20},
+					"ld_observer_h": {"value": 1.7}
+				}
+			}
+		},
+		{	
+			"terrain_settings": {
+				"name": "steep",
+				"Slope gradient": {
+					"stretch": {"min": 0, "max": 60} 
+				},
+				"Hillshade": {
+					"hs_sun_el": {"value": 55}
+				},
+				"Multiple directions hillshade": {
+					"mhs_sun_el": {"value": 55}
+				},
+				"Simple local relief model": {
+					"slrm_rad_cell": {"value": 10}
+				},
+				"Sky-View Factor": {
+					"stretch": {"min": 0.55, "max": 1},
+					"svf_r_max": {"value": 10},
+					"svf_noise": {"value": 0}
+				},
+				"Openness - Positive": {
+					"stretch": {"min": 55, "max": 95}
+				},
+				"Openness - Negative": {
+					"stretch": {"min": 45, "max": 95}
+				},
+				"Local dominance": {
+					"stretch": {"min": 0.55, "max": 0.95},
+					"ld_min_rad": {"value": 10},
+					"ld_max_rad": {"value": 10},
+					"ld_observer_h": {"value": 16}
+				}
+			}
+			
+		}
+	]
+}
