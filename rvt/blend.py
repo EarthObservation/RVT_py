@@ -775,12 +775,12 @@ def compare_2_combinations(combination1: BlenderCombination, combination2: Blend
     for i_layer in range(len(combination1.layers)):
         if combination1.layers[i_layer].vis.lower() != combination2.layers[i_layer].vis.lower():
             return False
-        if combination1.layers[i_layer].normalization.lower() != combination2.layers[i_layer].normalization.lower():
-            return False
-        if combination1.layers[i_layer].min != combination2.layers[i_layer].min:
-            return False
-        if combination1.layers[i_layer].max != combination2.layers[i_layer].max:
-            return False
+        # if combination1.layers[i_layer].normalization.lower() != combination2.layers[i_layer].normalization.lower():
+        #     return False
+        # if combination1.layers[i_layer].min != combination2.layers[i_layer].min:
+        #     return False
+        # if combination1.layers[i_layer].max != combination2.layers[i_layer].max:
+        #     return False
         if combination1.layers[i_layer].blend_mode.lower() != combination2.layers[i_layer].blend_mode.lower():
             return False
         if combination1.layers[i_layer].opacity != combination2.layers[i_layer].opacity:
@@ -993,53 +993,53 @@ class TerrainSettings:
         except KeyError:
             pass
         try:
-            self.slp_stretch = {float(terrain_data["Slope gradient"]["stretch"]["min"]),
-                                float(terrain_data["Slope gradient"]["stretch"]["max"])}
+            self.slp_stretch = (float(terrain_data["Slope gradient"]["stretch"]["min"]),
+                                float(terrain_data["Slope gradient"]["stretch"]["max"]))
         except KeyError:
             pass
         try:
-            self.hs_stretch = {float(terrain_data["Hillshade"]["stretch"]["min"]),
-                               float(terrain_data["Hillshade"]["stretch"]["max"])}
+            self.hs_stretch = (float(terrain_data["Hillshade"]["stretch"]["min"]),
+                               float(terrain_data["Hillshade"]["stretch"]["max"]))
         except KeyError:
             pass
         try:
-            self.mhs_stretch = {float(terrain_data["Multiple directions hillshade"]["stretch"]["min"]),
-                                float(terrain_data["Multiple directions hillshade"]["stretch"]["max"])}
+            self.mhs_stretch = (float(terrain_data["Multiple directions hillshade"]["stretch"]["min"]),
+                                float(terrain_data["Multiple directions hillshade"]["stretch"]["max"]))
         except KeyError:
             pass
         try:
-            self.slrm_stretch = {float(terrain_data["Simple local relief model"]["stretch"]["min"]),
-                                 float(terrain_data["Simple local relief model"]["stretch"]["max"])}
+            self.slrm_stretch = (float(terrain_data["Simple local relief model"]["stretch"]["min"]),
+                                 float(terrain_data["Simple local relief model"]["stretch"]["max"]))
         except KeyError:
             pass
         try:
-            self.svf_stretch = {float(terrain_data["Sky-View Factor"]["stretch"]["min"]),
-                                float(terrain_data["Sky-View Factor"]["stretch"]["max"])}
+            self.svf_stretch = (float(terrain_data["Sky-View Factor"]["stretch"]["min"]),
+                                float(terrain_data["Sky-View Factor"]["stretch"]["max"]))
         except KeyError:
             pass
         try:
-            self.asvf_stretch = {float(terrain_data["Anisotropic Sky-View Factor"]["stretch"]["min"]),
-                                 float(terrain_data["Anisotropic Sky-View Factor"]["stretch"]["max"])}
+            self.asvf_stretch = (float(terrain_data["Anisotropic Sky-View Factor"]["stretch"]["min"]),
+                                 float(terrain_data["Anisotropic Sky-View Factor"]["stretch"]["max"]))
         except KeyError:
             pass
         try:
-            self.pos_opns_stretch = {float(terrain_data["Openness - Positive"]["stretch"]["min"]),
-                                     float(terrain_data["Openness - Positive"]["stretch"]["max"])}
+            self.pos_opns_stretch = (float(terrain_data["Openness - Positive"]["stretch"]["min"]),
+                                     float(terrain_data["Openness - Positive"]["stretch"]["max"]))
         except KeyError:
             pass
         try:
-            self.neg_opns_stretch = {float(terrain_data["Openness - Negative"]["stretch"]["min"]),
-                                     float(terrain_data["Openness - Negative"]["stretch"]["max"])}
+            self.neg_opns_stretch = (float(terrain_data["Openness - Negative"]["stretch"]["min"]),
+                                     float(terrain_data["Openness - Negative"]["stretch"]["max"]))
         except KeyError:
             pass
         try:
-            self.neg_opns_stretch = {float(terrain_data["Sky illumination"]["stretch"]["min"]),
-                                     float(terrain_data["Sky illumination"]["stretch"]["max"])}
+            self.neg_opns_stretch = (float(terrain_data["Sky illumination"]["stretch"]["min"]),
+                                     float(terrain_data["Sky illumination"]["stretch"]["max"]))
         except KeyError:
             pass
         try:
-            self.neg_opns_stretch = {float(terrain_data["Local dominance"]["stretch"]["min"]),
-                                     float(terrain_data["Local dominance"]["stretch"]["max"])}
+            self.neg_opns_stretch = (float(terrain_data["Local dominance"]["stretch"]["min"]),
+                                     float(terrain_data["Local dominance"]["stretch"]["max"]))
         except KeyError:
             pass
 
