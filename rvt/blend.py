@@ -840,18 +840,15 @@ class BlenderCombinations:
         """If input_combination (BlenderCombination) has same attributes as one of the combinations (self), method
          returns name of the combination (from combinations). If there is no equal one it returns None."""
         for combination in self.combinations:
-            compare_bool = compare_2_combinations(input_combination, combination)
-            if compare_bool:
+            if compare_2_combinations(input_combination, combination):
                 return combination.name
         return None
 
 
 class TerrainSettings:
     """Terrain settings for GUI."""
-
     def __init__(self):
         self.name = None
-
         # slope gradient
         self.slp_output_units = None
         # hillshade
@@ -883,7 +880,6 @@ class TerrainSettings:
         self.ld_rad_inc = None
         self.ld_anglr_res = None
         self.ld_observer_h = None
-
         # linear histogram stretches tuple(min, max)
         self.hs_stretch = None
         self.mhs_stretch = None
@@ -1144,3 +1140,22 @@ class TerrainsSettings:
         for terrain_setting in self.terrains_settings:
             if terrain_setting.name == name:
                 return terrain_setting
+
+    def terrain_sett_in_terrains_sett(self, input_terrain_sett: TerrainSettings):
+        """Checks if terrain consist one of default terrains in terrains."""
+        for terrain_sett in self.terrains_settings:
+            if compare_2_terrains_settings(terrain_sett=input_terrain_sett, default_terrain_sett=terrain_sett):
+                return terrain_sett.name
+        return None
+
+
+def compare_2_terrains_settings(terrain_sett: TerrainSettings, default_terrain_sett: TerrainSettings):
+    """Checks if terrain consist elements of default terrain. Loop ignores default terrain None attributes."""
+    class_attributes = list(vars(TerrainSettings()).keys())
+    dict_terrain_sett = vars(terrain_sett)  # all class attributes to dict
+    dict_default_terrain_sett = vars(default_terrain_sett)  # all class attributes to dict
+    for attribute in class_attributes:
+        if dict_default_terrain_sett[attribute] is not None and \
+                dict_default_terrain_sett[attribute] != dict_terrain_sett[attribute]:
+            return False
+    return True
