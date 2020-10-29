@@ -1152,6 +1152,7 @@ class TerrainsSettings:
 def compare_2_terrains_settings(terrain_sett: TerrainSettings, default_terrain_sett: TerrainSettings):
     """Checks if terrain consist elements of default terrain. Loop ignores default terrain None attributes."""
     class_attributes = list(vars(TerrainSettings()).keys())
+    class_attributes.remove("name")  # remove name, they could have different names
     dict_terrain_sett = vars(terrain_sett)  # all class attributes to dict
     dict_default_terrain_sett = vars(default_terrain_sett)  # all class attributes to dict
     for attribute in class_attributes:
