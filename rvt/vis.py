@@ -446,7 +446,7 @@ def sky_view_factor_compute(height_arr,
     compute_opns : if true it computes and outputs opns
     a_main_direction : main direction of anisotropy
     a_poly_level : level of polynomial that determines the anisotropy
-    a_min_wight : weight to consider anisotropy:
+    a_min_weight : weight to consider anisotropy:
                  0 - low anisotropy, 
                  1 - high  anisotropy (no illumination from the direction opposite the main direction)
 
@@ -875,7 +875,13 @@ def sky_illumination(dem, resolution, sky_model="overcast", sampling_points=250,
         return sky_illum_out
 
 
-def local_dominance(dem, min_rad=10, max_rad=20, rad_inc=1, angular_res=15, observer_height=1.7, ve_factor=1):
+def local_dominance(dem,
+                    min_rad=10,
+                    max_rad=20,
+                    rad_inc=1,
+                    angular_res=15,
+                    observer_height=1.7,
+                    ve_factor=1):
     """
     Compute Local Dominance dem visualization.
     Adapted from original version that is part of the Lida Visualisation Toolbox LiVT developed by Ralf Hesse.
