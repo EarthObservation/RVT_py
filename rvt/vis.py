@@ -26,7 +26,12 @@ import scipy.ndimage
 #  (sky_view_factor, sky_view_det_move, sky_view_compute, morph_shade_move, morph_shade, sky_illumination)
 
 
-def byte_scale(data, c_min=None, c_max=None, high=255, low=0):
+def byte_scale(data, 
+               c_min=None, 
+               c_max=None, 
+               high=255, 
+               low=0,
+               ):
     """
     Remade old scipy function.
     Byte scales an array (image).
@@ -63,6 +68,7 @@ def byte_scale(data, c_min=None, c_max=None, high=255, low=0):
         c_scale = 1
 
     if data.dtype == np.uint8:
+        #TODO: the following line seems not good to me - if cmin=0, then that pixel will get negative value
         byte_data = (high + 1) * (data - c_min - 1) / (c_max - c_min)  # copied from IDL BYTSCL
         byte_data[byte_data > high] = high
         byte_data[byte_data < 0] = 0
@@ -77,7 +83,12 @@ def byte_scale(data, c_min=None, c_max=None, high=255, low=0):
     return np.cast[np.uint8](byte_data) + np.cast[np.uint8](low)
 
 
-def slope_aspect(dem, resolution_x, resolution_y, ve_factor=1, output_units="radian"):
+def slope_aspect(dem, 
+                 resolution_x, 
+                 resolution_y, 
+                 ve_factor=1, 
+                 output_units="radian",
+                 ):
     """
     Procedure can return terrain slope and aspect in radian units (default) or in alternative units (if specified).
     Slope is defined as 0 for Hz plane and pi/2 for vertical plane.
@@ -104,6 +115,8 @@ def slope_aspect(dem, resolution_x, resolution_y, ve_factor=1, output_units="rad
         raise Exception("rvt.vis.slope_aspect: resolution must be a positive number!")
 
     dem = dem.astype(np.float32)
+    dem = dem * ve_factor
+    
     if ve_factor != 1:
         dem = dem * ve_factor
 
@@ -145,16 +158,19 @@ def slope_aspect(dem, resolution_x, resolution_y, ve_factor=1, output_units="rad
     slope_out[0, :] = -1
     slope_out[:, -1] = -1
     slope_out[-1, :] = -1
-    aspect_out[:, 0] = -1
-    aspect_out[0, :] = -1
-    aspect_out[:, -1] = -1
-    aspect_out[-1, :] = -1
 
     return {"slope": slope_out, "aspect": aspect_out}
 
 
-def hillshade(dem, resolution_x, resolution_y, sun_azimuth=315, sun_elevation=35,
-              slope=None, aspect=None, ve_factor=1):
+def hillshade(dem, 
+              resolution_x, 
+              resolution_y, 
+              sun_azimuth=315, 
+              sun_elevation=35,
+              slope=None, 
+              aspect=None,
+              ve_factor=1
+              ):
     """
     Compute hillshade.
 
@@ -183,8 +199,7 @@ def hillshade(dem, resolution_x, resolution_y, sun_azimuth=315, sun_elevation=35
         raise Exception("rvt.vis.analytical_hillshading: resolution must be a positive number!")
 
     dem = dem.astype(np.float32)
-    if ve_factor != 1:
-        dem = dem * ve_factor
+    dem = dem * ve_factor
 
     # Convert solar position (degrees) to radians
     sun_azimuth_rad = np.deg2rad(sun_azimuth)
@@ -208,8 +223,15 @@ def hillshade(dem, resolution_x, resolution_y, sun_azimuth=315, sun_elevation=35
     return hillshade_out
 
 
-def multi_hillshade(dem, resolution_x, resolution_y, nr_directions=16, sun_elevation=35,
-                    slope=None, aspect=None, ve_factor=1):
+def multi_hillshade(dem, 
+                    resolution_x, 
+                    resolution_y, 
+                    nr_directions=16, 
+                    sun_elevation=35,
+                    slope=None, 
+                    aspect=None,
+                    ve_factor=1
+                    ):
     """
     Calculates hillshades from multiple directions.
 
@@ -242,8 +264,7 @@ def multi_hillshade(dem, resolution_x, resolution_y, nr_directions=16, sun_eleva
         raise Exception("rvt.vis.slope_aspect: ve_factor must be a positive number!")
 
     dem = dem.astype(np.float32)
-    if ve_factor != 1:
-        dem = dem * ve_factor
+    dem = dem * ve_factor
 
     # calculates slope and aspect if they are not added
     if slope is None or aspect is None:  # slope and aspect are the same, so we have to calculate it once
@@ -263,7 +284,10 @@ def multi_hillshade(dem, resolution_x, resolution_y, nr_directions=16, sun_eleva
     return multi_hillshade_out
 
 
-def slrm(dem, radius_cell=20, ve_factor=1):
+def slrm(dem, 
+         radius_cell=20,
+         ve_factor=1
+         ):
     """
     Calculates Simple local relief model.
 
@@ -296,7 +320,11 @@ def slrm(dem, radius_cell=20, ve_factor=1):
     return slrm_out
 
 
-def azimuth(xa, ya, xb, yb):
+def azimuth(xa, 
+            ya, 
+            xb, 
+            yb,
+            ):
     """
     Determine the azimuth in the range of [0,2pi).
 
@@ -308,6 +336,7 @@ def azimuth(xa, ya, xb, yb):
     -------
     a : outputs the azimuth in radians
     """
+    #TODO, this is probably an obsolete function
     north = ya - yb
     east = xb - xa
     if north == 0:
@@ -329,240 +358,184 @@ def azimuth(xa, ya, xb, yb):
     return a
 
 
-def sky_view_det_move(num_directions, radius_cell, n_col):
+def horizon_shift_vector(num_directions=16, 
+                         radius_pixels=10, 
+                         min_radius=1,
+                         ):
+    
     """
-    Calculates Sky-View determination movement matrix.
+    Calculates Sky-View determination movements.
 
     Parameters
     ----------
     num_directions : number of directions as input
-    radius_cell : radius to consider in cells (not in meters)
-    n_col : number of columns of the input DEM
+    radius_pixels : radius to consider in pixels (not in meters)
+    min_radius : radius to start searching for horizon in pixels (not in meters)
+
 
     Returns
     -------
-    move : 2D numpy array movement matrix
+    shift : dict with keys corresponding to the directions of search azimuths rounded to 1 decimal number
+            - for each key, a subdict contains a key "shift":
+                values for this key is a list of tuples prepared for np.roll - shift along lines and columns
+            - the second key is "distance":
+                values for this key is a list of search radius used for the computation of the elevation angle 
     """
+    
+    # Initialize the output dict
+    shift = {}
 
-    # parameters
-    look_angle = 2 * np.pi / num_directions
+    # Generate angles and corresponding normal shifts in X (columns)
+    # and Y (lines) direction
+    angles = (2 * np.pi / num_directions) * np.arange(num_directions) 
+    x = np.cos(angles)
+    y = np.sin(angles)
+    angles = np.round(np.degrees(angles), decimals=1)
+    
+    # Generate a range of radius values in pixels.
+    # Make it finer for the selcted scaling.
+    # By adding the last constant we make sure that we do not start with
+    # point (0,0).
+    scale = 3.
+    radii = np.arange((radius_pixels-min_radius)*scale+1) / scale + min_radius
 
-    # matrix initialization
-    move = np.zeros((3, radius_cell + 1, num_directions), dtype=np.float32)
+    # For each direction compute all possible horizont point position
+    # and round them to integers
+    for i in range(num_directions):
+        x_int = np.round(x[i] * radii, decimals=0)
+        y_int = np.round(y[i] * radii, decimals=0)
+        # consider only the minimal number of points
+        # use the trick with set and complex nuber as the input
+        coord_complex = set(x_int + 1j * y_int)
+        # to sort proportional with increasing radius, 
+        # set has to be converted to numpy array
+        shift_pairs = np.array([(k.real, k.imag) for k in coord_complex]).astype(int)
+        distance = np.sqrt(np.sum(shift_pairs**2, axis=1))
+        sort_index = np.argsort(distance)
+        # write for each direction shifts and corresponding distances
+        shift[angles[i]] = {
+            "shift": [(k[0],k[1]) for k in shift_pairs[sort_index]],
+            "distance": distance[sort_index],
+            }
 
-    # for each direction
-    for i_direction in range(num_directions):
-        angle = i_direction * look_angle
-        d = 0
-        x0 = 0
-        y0 = 0
-        xt = x0
-        yt = y0
-        rad = 0
-
-        if 0 <= angle < np.pi / 2:
-            quad = 1
-        elif np.pi / 2 <= angle < np.pi:
-            quad = 2
-        elif np.pi <= angle < 3 * np.pi / 2:
-            quad = 3
-        elif 3 * np.pi / 2 <= angle < 2 * np.pi:
-            quad = 4
-
-        # while within range
-        while d <= radius_cell:
-            # compute direction
-            if quad == 1:
-                # Right
-                xa = xt + 1
-                ya = yt
-                # Up
-                xb = xt
-                yb = yt - 1
-                # diagonal right up
-                xc = xt + 1
-                yc = yt - 1
-            elif quad == 2:
-                # Right
-                xa = xt + 1
-                ya = yt
-                # Diagonal right down
-                xb = xt + 1
-                yb = yt + 1
-                # Down
-                xc = xt
-                yc = yt + 1
-            elif quad == 3:
-                # Left
-                xa = xt - 1
-                ya = yt
-                # Diagonal left down
-                xb = xt - 1
-                yb = yt + 1
-                # Down
-                xc = xt
-                yc = yt + 1
-            elif quad == 4:
-                # Left
-                xa = xt - 1
-                ya = yt
-                # Up
-                xb = xt
-                yb = yt - 1
-                # Diagonal left up
-                xc = xt - 1
-                yc = yt - 1
-
-            # azimuths of possible movements (nearest neighbor, no interpolation)
-            k_a = azimuth(x0, y0, xa, ya)
-            k_b = azimuth(x0, y0, xb, yb)
-            k_c = azimuth(x0, y0, xc, yc)
-
-            # Minimum difference in angle for new point
-            if abs(k_a - angle) <= abs(k_b - angle):
-                if abs(k_a - angle) <= abs(k_c - angle):
-                    xt = xa
-                    yt = ya
-                else:
-                    xt = xc
-                    yt = yc
-            else:
-                if abs(k_b - angle) <= abs(k_c - angle):
-                    xt = xb
-                    yt = yb
-                else:
-                    xt = xc
-                    yt = yc
-
-            # Output
-            move[0, rad, i_direction] = xt - x0
-            move[1, rad, i_direction] = yt - y0
-            d = np.sqrt((xt - x0) ** 2 + (yt - y0) ** 2)
-            move[2, rad, i_direction] = d
-
-            # next cell
-            rad += 1
-
-    # reformat the radius:
-    # first row tells you, how many valid cells are available, bellow is actual radius in cells
-    move[2, 1:radius_cell + 1, :] = move[2, 0:radius_cell, :]
-    for i_direction in range(num_directions):
-        tmp = move[2, 1:radius_cell + 1, i_direction]
-        if tmp[tmp > radius_cell].size > 0:
-            move[2, 0, i_direction] = np.min(tmp[tmp > radius_cell])
-        else:
-            move[2, 0, i_direction] = radius_cell
-
-    # convert 2D index into 1D index
-    move_t = np.zeros((2, radius_cell + 1, num_directions), dtype=np.float32)
-    move_t[0, :, :] = move[1, :, :] * n_col + move[0, :, :]
-    move_t[1, :, :] = move[2, :, :]
-    move = move_t
-
-    return move
+    return shift
 
 
-def sky_view_factor_compute(height_arr, i_valid, radius_max, radius_min, num_directions,
-                            a_main_direction, a_poly_level, a_min_weight, compute_svf=True, compute_asvf=False,
-                            compute_opns=False):
+def sky_view_factor_compute(height_arr, 
+                            radius_max=10, 
+                            radius_min=1, 
+                            num_directions=16,
+                            compute_svf=True, 
+                            compute_opns=False,
+                            compute_asvf=False, 
+                            a_main_direction=315., 
+                            a_poly_level=4, 
+                            a_min_weight=0.4,
+                            ):
     """
-    Calculates Sky-View 1D vectors.
+    Calculates horizon based visualizations: Sky-view factor, Anisotopic SVF and Openess.
 
     Parameters
     ----------
     height_arr : elevation (DEM) as 2D numpy array
-    i_valid : index of valid pixels to be processed
     radius_max : maximal search radius in pixels/cells (not in meters)
     radius_min : minimal search radius in pixels/cells (not in meters), for noise reduction
     num_directions : number of directions as input
-    a_main_direction : main direction of anisotropy
-    a_poly_level : level of polynomial that determines the anisotropy
-    a_min_wight : weight to consider anisotropy (0 - isotropic, 1 - no illumination from the direction
-                                                             opposite the main direction)
     compute_svf : if true it computes and outputs svf
     compute_asvf : if true it computes and outputs asvf
     compute_opns : if true it computes and outputs opns
+    a_main_direction : main direction of anisotropy
+    a_poly_level : level of polynomial that determines the anisotropy
+    a_min_wight : weight to consider anisotropy:
+                 0 - low anisotropy, 
+                 1 - high  anisotropy (no illumination from the direction opposite the main direction)
 
     Returns
     -------
     {"svf": svf_out, "asvf": asvf_out, "opns": opns_out} : dictionary
-    svf_out, skyview factor : 1D numpy vector of skyview factor.
-    asvf_out, anisotropic skyview factor : 1D numpy vector of anisotropic skyview factor.
-    opns_out, openness : 1D numpy openness (elevation angle of horizon)
+        svf_out, skyview factor : 2D array of skyview factor.
+        asvf_out, anisotropic skyview factor : 2D array of anisotropic skyview factor.
+        opns_out, openness : 2D array openness (elevation angle of horizon)
     """
 
-    height = height_arr
+    # pad the array for the radius_max on all 4 sides
+    height = np.pad(height_arr, radius_max, mode='symmetric')
 
-    svf_out = None  # if compute_svf is False then function doesn't compute svf and returns False
-    asvf_out = None  # if compute_asvf is False then function doesn't compute asvf and returns False
-    opns_out = None  # if compute_opns is False then function doesn't compute opns and returns False
+    # compute the vector of movement and corresponding distances
+    move = horizon_shift_vector(num_directions=num_directions, radius_pixels=radius_max, min_radius=radius_min)
+    print(move)
 
-    # directional step
-    dir_step = 2 * np.pi / num_directions
-
-    # vector of movement
-    n_col = height.shape[1]  # number of columns
-    count_height = i_valid[0].size  # number of all elements
-    move = sky_view_det_move(num_directions=num_directions, radius_cell=radius_max, n_col=n_col)
-
-    # init the outputs
+    # init the output for usual SVF
     if compute_svf:
-        svf_out = np.zeros(count_height, dtype=np.float32)
-    if compute_opns:
-        opns_out = np.zeros(count_height, dtype=np.float32)
+        svf_out = np.zeros(height.shape, dtype=np.float32)
+    else:
+        svf_out = None
+    # init the output for azimuth dependent SVF
     if compute_asvf:
-        asvf_out = np.zeros(count_height, dtype=np.float32)
-        w_m = a_min_weight  # compute weights
+        asvf_out = np.zeros(height.shape, dtype=np.float32)
+        w_m = a_min_weight
         w_a = np.deg2rad(a_main_direction)
-        weight = np.arange(num_directions) * dir_step
+        weight = np.arange(num_directions) * (2 * np.pi / num_directions)
         weight = (1 - w_m) * (np.cos((weight - w_a) / 2)) ** a_poly_level + w_m
-
-    # look into each direction...
-    for i_dir in range(num_directions):
-        # reset maximum at each iteration - at each new direction
-        max_slope = np.zeros(count_height, dtype=np.float32) - 1000
-
-        # ... and to the search radius - this depends on the direction - radius is written in the first row
-        for i_rad in range(1, int(move[1, 0, i_dir])):
-            # TODO: Krištof
-            # ignore radios if smaller than minimal defined radius
-            if radius_min > move[1, i_rad, i_dir]:
-                continue
-            # search for max (sky)
-            h_flt = height.flatten()
-            np.seterr(divide='ignore', invalid='ignore')  # ignore warnings for dividing with zero
-            m_slp = (h_flt[i_valid[0] + int(move[0, int(i_rad - 1), i_dir])] - h_flt[i_valid[0]]) / move[
-                1, i_rad, i_dir]
-            np.seterr(divide='warn', invalid='warn')  # reset warnings
-            if np.isnan(m_slp).any():  # skip non existing m_slp
-                continue
-            np.clip(a=max_slope, a_min=m_slp, a_max=None, out=max_slope)
-
-        max_slope = np.arctan(max_slope)
-
-        if compute_opns:
-            opns_out = opns_out + max_slope
-        if compute_svf:
-            svf_out = svf_out + (1 - np.sin(np.clip(a=max_slope, a_min=0, a_max=None)))
-        if compute_asvf:
-            asvf_out = asvf_out + (1 - np.sin(np.clip(a=max_slope, a_min=0, a_max=None))) * weight[i_dir]
-
-    # Normalize to the number of directions / weights
-    if compute_svf:
-        svf_out = svf_out / num_directions
-    if compute_asvf:
-        asvf_out = asvf_out / np.sum(weight)
+    else:
+        asvf_out = None
+    # init the output for Openess
     if compute_opns:
-        opns_out = np.pi / 2 - (opns_out / num_directions)
+        opns_out = np.zeros(height.shape, dtype=np.float32)
+    else:
+        opns_out = None 
 
+    # search for horizon in each direction...
+    for i_dir, direction in enumerate(move):
+        # reset maximum at each iteration (direction)
+        max_slope = np.zeros(height.shape, dtype=np.float32) - 1000
+
+        # ... and to the search radius
+        for i_rad, radius in enumerate(move[direction]["distance"]):
+            # get shift index from move dictionary
+            shift_indx = move[direction]["shift"][i_rad]
+            # estimate the slope
+            _ = (np.roll(height, shift_indx, axis=(0,1)) - height) / radius
+            # compare to the previus max slope and keep the larges
+            max_slope = np.maximum(max_slope, _)
+        
+        # convert to angle in radians and compute directional output
+        _ = np.arctan(max_slope)
+        if compute_svf:
+            svf_out = svf_out + (1 - np.sin(np.maximum(_,0)))
+        if compute_asvf:
+            asvf_out = asvf_out + (1 - np.sin(np.maximum(_,0))) * weight[i_dir]
+        if compute_opns:
+            opns_out = opns_out + _
+
+    # cut to original extent and 
+    # average the directional output over all directions
+    if compute_svf:
+        svf_out = svf_out[radius_max:-radius_max, radius_max:-radius_max] / num_directions
+    if compute_asvf:
+        asvf_out = asvf_out[radius_max:-radius_max, radius_max:-radius_max]  / np.sum(weight)
+    if compute_opns:
+        opns_out = np.rad2deg(0.5 * np.pi - (opns_out[radius_max:-radius_max, radius_max:-radius_max] / num_directions))
+
+    # return results within dict
     dict_svf_asvf_opns = {"svf": svf_out, "asvf": asvf_out, "opns": opns_out}
     dict_svf_asvf_opns = {k: v for k, v in dict_svf_asvf_opns.items() if v is not None}  # filter out none
 
     return dict_svf_asvf_opns
 
 
-def sky_view_factor(dem, resolution, compute_svf=True, compute_opns=False, compute_asvf=False,
-                    svf_n_dir=16, svf_r_max=10, svf_noise=0, asvf_dir=315, asvf_level=1, ve_factor=1):
+def sky_view_factor(dem, 
+                    resolution, 
+                    compute_svf=True, 
+                    compute_opns=False, 
+                    compute_asvf=False,
+                    svf_n_dir=16, 
+                    svf_r_max=10, 
+                    svf_noise=0, 
+                    asvf_dir=315, 
+                    asvf_level=1,
+                    ve_factor=1
+                    ):
     """
     Prepare the data, call sky_view_factor_compute, reformat and return back 2D arrays.
 
@@ -597,9 +570,9 @@ def sky_view_factor(dem, resolution, compute_svf=True, compute_opns=False, compu
     if ve_factor <= 0:
         raise Exception("rvt.vis.slope_aspect: ve_factor must be a positive number!")
 
+    #TODO: proper ceck of input data: DEM 2D nummeric array, resolution, max_radius....
     dem = dem.astype(np.float32)
-    if ve_factor != 1:
-        dem = dem * ve_factor
+    dem = dem * ve_factor
 
     # CONSTANTS
     # level of polynomial that determines the anisotropy, selected with in_asvf_level (1 - low, 2 - high)
@@ -611,50 +584,25 @@ def sky_view_factor(dem, resolution, compute_svf=True, compute_opns=False, compu
 
     # pixel size
     dem = dem / resolution
-    # increase edge - visualization foes to edge, so mirror them, leave blank corners
-    n_col = dem.shape[1]
-    n_lin = dem.shape[0]
-    tmp = np.zeros((n_lin + 2 * svf_r_max, n_col + 2 * svf_r_max), dtype=np.float32)
 
-    # prepare indx for output
-    tmp[svf_r_max:n_lin + svf_r_max, svf_r_max:n_col + svf_r_max] = 1
-
-    indx_all = np.where(tmp.flatten() == 1)
-
-    # fill center
-    tmp[svf_r_max:n_lin + svf_r_max, svf_r_max:n_col + svf_r_max] = dem
-
-    # final dem with increased edges
-    dem = tmp
-    del tmp
-
-    # minimal search radious depends on the noise level
-    svf_r_min = svf_r_max * sc_svf_r_min[svf_noise] * 0.01
+    # minimal search radious depends on the noise level, it has to be an integer not smaller than 1
+    svf_r_min = max(np.round(svf_r_max * sc_svf_r_min[svf_noise] * 0.01, decimals=0), 1)
 
     # set anisotropy parameters
     poly_level = sc_asvf_pol[asvf_level - 1]
     min_weight = sc_asvf_min[asvf_level - 1]
 
-    svf_out = None
-    asvf_out = None
-    opns_out = None
-
-    dict_svf_asvf_opns = sky_view_factor_compute(height_arr=dem, i_valid=indx_all, radius_max=svf_r_max,
-                                                 radius_min=svf_r_min, num_directions=svf_n_dir,
-                                                 a_main_direction=asvf_dir, a_poly_level=poly_level,
-                                                 a_min_weight=min_weight, compute_svf=compute_svf,
-                                                 compute_asvf=compute_asvf, compute_opns=compute_opns)
-    # reshape 1D to 2D
-    if compute_svf:
-        svf_out = dict_svf_asvf_opns["svf"].reshape((n_lin, n_col))
-    if compute_asvf:
-        asvf_out = dict_svf_asvf_opns["asvf"].reshape((n_lin, n_col))
-    if compute_opns:
-        opns_out = dict_svf_asvf_opns["opns"].reshape((n_lin, n_col))
-        opns_out = np.rad2deg(opns_out)
-
-    dict_svf_asvf_opns = {"svf": svf_out, "asvf": asvf_out, "opns": opns_out}
-    dict_svf_asvf_opns = {k: v for k, v in dict_svf_asvf_opns.items() if v is not None}  # filter out none
+    dict_svf_asvf_opns = sky_view_factor_compute(height_arr=dem, 
+                                                 radius_max=svf_r_max,
+                                                 radius_min=svf_r_min,
+                                                 num_directions=svf_n_dir,                         
+                                                 compute_svf=compute_svf, 
+                                                 compute_opns=compute_opns,
+                                                 compute_asvf=compute_asvf, 
+                                                 a_main_direction=asvf_dir, 
+                                                 a_poly_level=poly_level, 
+                                                 a_min_weight=min_weight,
+                                                 )
 
     return dict_svf_asvf_opns
 
@@ -759,9 +707,6 @@ def morph_shade_move(d_max, angle):
                 yt = yc
 
         # Output
-        # TODO: Krištof
-        # This is just a function to determine the direction of horizon search.
-        # It is called only once, so there is no need to make any optimization here.
         move[i_rad, 0] = xt - x0
         move[i_rad, 1] = yt - y0
         d = np.sqrt((xt - x0) ** 2 + (yt - y0) ** 2)
@@ -799,8 +744,7 @@ def morph_shade(height, sol_z, sol_a, d_max, nrows, ncols, resolution):
     tmp[d_max:(nrows + d_max), d_max:(ncols + d_max)] = height
     height = tmp
     del tmp
-    # TODO: Krištof
-    # determine the direction of movment
+
     move = morph_shade_move(d_max, sol_a)
     move_s = move.shape
     move1di = move[:, 1] * (ncols + 2 * d_max) + move[:, 0]
