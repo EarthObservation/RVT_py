@@ -23,13 +23,11 @@ import scipy.ndimage
 
 # TODO: check speed sky_ilumination
 # TODO: check IDL vectorisation remains:
-#  (sky_view_factor, sky_view_det_move, sky_view_compute, morph_shade_move, morph_shade, sky_illumination)
 
-
-def byte_scale(data, 
-               c_min=None, 
-               c_max=None, 
-               high=255, 
+def byte_scale(data,
+               c_min=None,
+               c_max=None,
+               high=255,
                low=0,
                ):
     """
@@ -68,7 +66,7 @@ def byte_scale(data,
         c_scale = 1
 
     if data.dtype == np.uint8:
-        #TODO: the following line seems not good to me - if cmin=0, then that pixel will get negative value
+        # TODO: the following line seems not good to me - if cmin=0, then that pixel will get negative value
         byte_data = (high + 1) * (data - c_min - 1) / (c_max - c_min)  # copied from IDL BYTSCL
         byte_data[byte_data > high] = high
         byte_data[byte_data < 0] = 0
@@ -83,10 +81,10 @@ def byte_scale(data,
     return np.cast[np.uint8](byte_data) + np.cast[np.uint8](low)
 
 
-def slope_aspect(dem, 
-                 resolution_x, 
-                 resolution_y, 
-                 ve_factor=1, 
+def slope_aspect(dem,
+                 resolution_x,
+                 resolution_y,
+                 ve_factor=1,
                  output_units="radian",
                  ):
     """
@@ -107,18 +105,15 @@ def slope_aspect(dem,
     -------
     {"slope": slope_out, "aspect": aspect_out} : dictionaries with 2D numpy arrays
     """
-
+    if dem.ndim != 2:
+        raise Exception("rvt.vis.slope_aspect: dem has to be 2D np.array!")
     if ve_factor <= 0:
         raise Exception("rvt.vis.slope_aspect: ve_factor must be a positive number!")
-
     if resolution_x < 0 or resolution_y < 0:
         raise Exception("rvt.vis.slope_aspect: resolution must be a positive number!")
 
     dem = dem.astype(np.float32)
     dem = dem * ve_factor
-    
-    if ve_factor != 1:
-        dem = dem * ve_factor
 
     # add frame of 0 (additional row up bottom and column left right)
     dem = np.pad(dem, pad_width=1, mode="constant", constant_values=0)
@@ -162,12 +157,12 @@ def slope_aspect(dem,
     return {"slope": slope_out, "aspect": aspect_out}
 
 
-def hillshade(dem, 
-              resolution_x, 
-              resolution_y, 
-              sun_azimuth=315, 
+def hillshade(dem,
+              resolution_x,
+              resolution_y,
+              sun_azimuth=315,
               sun_elevation=35,
-              slope=None, 
+              slope=None,
               aspect=None,
               ve_factor=1
               ):
@@ -189,12 +184,12 @@ def hillshade(dem,
     -------
     hillshade_out : result numpy array
     """
+    if dem.ndim != 2:
+        raise Exception("rvt.vis.hillshade: dem has to be 2D np.array!")
     if ve_factor <= 0:
-        raise Exception("rvt.vis.slope_aspect: ve_factor must be a positive number!")
-
+        raise Exception("rvt.vis.hillshade: ve_factor must be a positive number!")
     if sun_azimuth > 360 or sun_elevation > 90 or sun_azimuth < 0 or sun_elevation < 0:
         raise Exception("rvt.vis.analytical_hillshading: sun_azimuth must be [0-360] and sun_elevation [0-90]!")
-
     if resolution_x < 0 or resolution_y < 0:
         raise Exception("rvt.vis.analytical_hillshading: resolution must be a positive number!")
 
@@ -223,12 +218,12 @@ def hillshade(dem,
     return hillshade_out
 
 
-def multi_hillshade(dem, 
-                    resolution_x, 
-                    resolution_y, 
-                    nr_directions=16, 
+def multi_hillshade(dem,
+                    resolution_x,
+                    resolution_y,
+                    nr_directions=16,
                     sun_elevation=35,
-                    slope=None, 
+                    slope=None,
                     aspect=None,
                     ve_factor=1
                     ):
@@ -250,18 +245,16 @@ def multi_hillshade(dem,
     -------
     multi_hillshade_out : numpy array containing numpy_arrays of hillshades in different directions
     """
-
+    if dem.ndim != 2:
+        raise Exception("rvt.vis.multi_hillshade: dem has to be 2D np.array!")
     if sun_elevation > 90 or sun_elevation < 0:
-        raise Exception("rvt.vis.multiple_directions_hillshading: sun_elevation must be [0-90]!")
-
+        raise Exception("rvt.vis.multi_hillshade: sun_elevation must be [0-90]!")
     if resolution_x < 0 or resolution_y < 0:
-        raise Exception("rvt.vis.multiple_directions_hillshading: resolution must be a positive number!")
-
+        raise Exception("rvt.vis.multi_hillshade: resolution must be a positive number!")
     if nr_directions < 1:
-        raise Exception("rvt.vis.multiple_directions_hillshading: nr_directions must be a positive number!")
-
+        raise Exception("rvt.vis.multi_hillshade: nr_directions must be a positive number!")
     if ve_factor <= 0:
-        raise Exception("rvt.vis.slope_aspect: ve_factor must be a positive number!")
+        raise Exception("rvt.vis.multi_hillshade: ve_factor must be a positive number!")
 
     dem = dem.astype(np.float32)
     dem = dem * ve_factor
@@ -284,7 +277,7 @@ def multi_hillshade(dem,
     return multi_hillshade_out
 
 
-def slrm(dem, 
+def slrm(dem,
          radius_cell=20,
          ve_factor=1
          ):
@@ -301,15 +294,17 @@ def slrm(dem,
     -------
     slrm_out : slrm 2D numpy array
     """
+    if dem.ndim != 2:
+        raise Exception("rvt.vis.slrm: dem has to be 2D np.array!")
+
     if radius_cell < 10 or radius_cell > 50:
         raise Exception("rvt.vis.slrm: Radius for trend assessment needs to be in interval 10-50 pixels!")
 
     if ve_factor <= 0:
-        raise Exception("rvt.vis.slope_aspect: ve_factor must be a positive number!")
+        raise Exception("rvt.vis.slrm: ve_factor must be a positive number!")
 
     dem = dem.astype(np.float32)
-    if ve_factor != 1:
-        dem = dem * ve_factor
+    dem = dem * ve_factor
 
     dem[dem < -1200] = np.float64(np.NaN)
     dem[dem > 2000] = np.float64(np.NaN)
@@ -320,9 +315,9 @@ def slrm(dem,
     return slrm_out
 
 
-def azimuth(xa, 
-            ya, 
-            xb, 
+def azimuth(xa,
+            ya,
+            xb,
             yb,
             ):
     """
@@ -336,7 +331,7 @@ def azimuth(xa,
     -------
     a : outputs the azimuth in radians
     """
-    #TODO, this is probably an obsolete function
+    # TODO, this is probably an obsolete function
     north = ya - yb
     east = xb - xa
     if north == 0:
@@ -358,11 +353,10 @@ def azimuth(xa,
     return a
 
 
-def horizon_shift_vector(num_directions=16, 
-                         radius_pixels=10, 
+def horizon_shift_vector(num_directions=16,
+                         radius_pixels=10,
                          min_radius=1,
                          ):
-    
     """
     Calculates Sky-View determination movements.
 
@@ -381,23 +375,23 @@ def horizon_shift_vector(num_directions=16,
             - the second key is "distance":
                 values for this key is a list of search radius used for the computation of the elevation angle 
     """
-    
+
     # Initialize the output dict
     shift = {}
 
     # Generate angles and corresponding normal shifts in X (columns)
     # and Y (lines) direction
-    angles = (2 * np.pi / num_directions) * np.arange(num_directions) 
+    angles = (2 * np.pi / num_directions) * np.arange(num_directions)
     x = np.cos(angles)
     y = np.sin(angles)
     angles = np.round(np.degrees(angles), decimals=1)
-    
+
     # Generate a range of radius values in pixels.
     # Make it finer for the selcted scaling.
     # By adding the last constant we make sure that we do not start with
     # point (0,0).
     scale = 3.
-    radii = np.arange((radius_pixels-min_radius)*scale+1) / scale + min_radius
+    radii = np.arange((radius_pixels - min_radius) * scale + 1) / scale + min_radius
 
     # For each direction compute all possible horizont point position
     # and round them to integers
@@ -410,26 +404,26 @@ def horizon_shift_vector(num_directions=16,
         # to sort proportional with increasing radius, 
         # set has to be converted to numpy array
         shift_pairs = np.array([(k.real, k.imag) for k in coord_complex]).astype(int)
-        distance = np.sqrt(np.sum(shift_pairs**2, axis=1))
+        distance = np.sqrt(np.sum(shift_pairs ** 2, axis=1))
         sort_index = np.argsort(distance)
         # write for each direction shifts and corresponding distances
         shift[angles[i]] = {
-            "shift": [(k[0],k[1]) for k in shift_pairs[sort_index]],
+            "shift": [(k[0], k[1]) for k in shift_pairs[sort_index]],
             "distance": distance[sort_index],
-            }
+        }
 
     return shift
 
 
-def sky_view_factor_compute(height_arr, 
-                            radius_max=10, 
-                            radius_min=1, 
+def sky_view_factor_compute(height_arr,
+                            radius_max=10,
+                            radius_min=1,
                             num_directions=16,
-                            compute_svf=True, 
+                            compute_svf=True,
                             compute_opns=False,
-                            compute_asvf=False, 
-                            a_main_direction=315., 
-                            a_poly_level=4, 
+                            compute_asvf=False,
+                            a_main_direction=315.,
+                            a_poly_level=4,
                             a_min_weight=0.4,
                             ):
     """
@@ -463,7 +457,6 @@ def sky_view_factor_compute(height_arr,
 
     # compute the vector of movement and corresponding distances
     move = horizon_shift_vector(num_directions=num_directions, radius_pixels=radius_max, min_radius=radius_min)
-    print(move)
 
     # init the output for usual SVF
     if compute_svf:
@@ -483,9 +476,9 @@ def sky_view_factor_compute(height_arr,
     if compute_opns:
         opns_out = np.zeros(height.shape, dtype=np.float32)
     else:
-        opns_out = None 
+        opns_out = None
 
-    # search for horizon in each direction...
+        # search for horizon in each direction...
     for i_dir, direction in enumerate(move):
         # reset maximum at each iteration (direction)
         max_slope = np.zeros(height.shape, dtype=np.float32) - 1000
@@ -495,16 +488,16 @@ def sky_view_factor_compute(height_arr,
             # get shift index from move dictionary
             shift_indx = move[direction]["shift"][i_rad]
             # estimate the slope
-            _ = (np.roll(height, shift_indx, axis=(0,1)) - height) / radius
+            _ = (np.roll(height, shift_indx, axis=(0, 1)) - height) / radius
             # compare to the previus max slope and keep the larges
             max_slope = np.maximum(max_slope, _)
-        
+
         # convert to angle in radians and compute directional output
         _ = np.arctan(max_slope)
         if compute_svf:
-            svf_out = svf_out + (1 - np.sin(np.maximum(_,0)))
+            svf_out = svf_out + (1 - np.sin(np.maximum(_, 0)))
         if compute_asvf:
-            asvf_out = asvf_out + (1 - np.sin(np.maximum(_,0))) * weight[i_dir]
+            asvf_out = asvf_out + (1 - np.sin(np.maximum(_, 0))) * weight[i_dir]
         if compute_opns:
             opns_out = opns_out + _
 
@@ -513,7 +506,7 @@ def sky_view_factor_compute(height_arr,
     if compute_svf:
         svf_out = svf_out[radius_max:-radius_max, radius_max:-radius_max] / num_directions
     if compute_asvf:
-        asvf_out = asvf_out[radius_max:-radius_max, radius_max:-radius_max]  / np.sum(weight)
+        asvf_out = asvf_out[radius_max:-radius_max, radius_max:-radius_max] / np.sum(weight)
     if compute_opns:
         opns_out = np.rad2deg(0.5 * np.pi - (opns_out[radius_max:-radius_max, radius_max:-radius_max] / num_directions))
 
@@ -524,15 +517,15 @@ def sky_view_factor_compute(height_arr,
     return dict_svf_asvf_opns
 
 
-def sky_view_factor(dem, 
-                    resolution, 
-                    compute_svf=True, 
-                    compute_opns=False, 
+def sky_view_factor(dem,
+                    resolution,
+                    compute_svf=True,
+                    compute_opns=False,
                     compute_asvf=False,
-                    svf_n_dir=16, 
-                    svf_r_max=10, 
-                    svf_noise=0, 
-                    asvf_dir=315, 
+                    svf_n_dir=16,
+                    svf_r_max=10,
+                    svf_noise=0,
+                    asvf_dir=315,
                     asvf_level=1,
                     ve_factor=1
                     ):
@@ -566,11 +559,20 @@ def sky_view_factor(dem,
         asvf_out, anisotropic skyview factor : 2D numpy vector of anisotropic skyview factor.
         opns_out, openness : 2D numpy openness (elevation angle of horizon)
     """
-
+    if dem.ndim != 2:
+        raise Exception("rvt.vis.sky_view_factor: dem has to be 2D np.array!")
     if ve_factor <= 0:
-        raise Exception("rvt.vis.slope_aspect: ve_factor must be a positive number!")
+        raise Exception("rvt.vis.sky_view_factor: ve_factor must be a positive number!")
+    if svf_noise != 0 and svf_noise != 1 and svf_noise != 2 and svf_noise != 3:
+        raise Exception("rvt.vis.sky_view_factor: svf_noise must be one of the following values (0-don't remove, 1-low,"
+                        " 2-med, 3-high)!")
+    if asvf_level != 1 and asvf_level != 2:
+        raise Exception("rvt.vis.sky_view_factor: asvf_leve must be one of the following values (1-low, 2-high)!")
+    if not compute_svf and not compute_asvf and not compute_opns:
+        raise Exception("rvt.vis.sky_view_factor: All computes are false!")
 
-    #TODO: proper ceck of input data: DEM 2D nummeric array, resolution, max_radius....
+    # TODO: proper check of input data: DEM 2D nummeric array, resolution, max_radius....
+
     dem = dem.astype(np.float32)
     dem = dem * ve_factor
 
@@ -592,15 +594,15 @@ def sky_view_factor(dem,
     poly_level = sc_asvf_pol[asvf_level - 1]
     min_weight = sc_asvf_min[asvf_level - 1]
 
-    dict_svf_asvf_opns = sky_view_factor_compute(height_arr=dem, 
+    dict_svf_asvf_opns = sky_view_factor_compute(height_arr=dem,
                                                  radius_max=svf_r_max,
                                                  radius_min=svf_r_min,
-                                                 num_directions=svf_n_dir,                         
-                                                 compute_svf=compute_svf, 
+                                                 num_directions=svf_n_dir,
+                                                 compute_svf=compute_svf,
                                                  compute_opns=compute_opns,
-                                                 compute_asvf=compute_asvf, 
-                                                 a_main_direction=asvf_dir, 
-                                                 a_poly_level=poly_level, 
+                                                 compute_asvf=compute_asvf,
+                                                 a_main_direction=asvf_dir,
+                                                 a_poly_level=poly_level,
                                                  a_min_weight=min_weight,
                                                  )
 
@@ -796,17 +798,17 @@ def sky_illumination(dem, resolution, sky_model="overcast", sampling_points=250,
     -------
     sky_illum_out : 2D numpy result array
     """
-
+    if dem.ndim != 2:
+        raise Exception("rvt.vis.sky_illumination: dem has to be 2D np.array!")
     if sampling_points != 250 and sampling_points != 500:
         raise Exception("rvt.vis.sky_illumination: sampling_points needs to be 250 or 500!")
     if sky_model != "overcast" and sky_model != "uniform":
         raise Exception("rvt.vis.sky_illumination: sky_model needs to be overcast or uniform!")
     if ve_factor <= 0:
-        raise Exception("rvt.vis.slope_aspect: ve_factor must be a positive number!")
+        raise Exception("rvt.vis.sky_illumination: ve_factor must be a positive number!")
 
     dem = dem.astype(np.float32)
-    if ve_factor != 1:
-        dem = dem * ve_factor
+    dem = dem * ve_factor
 
     indx_no_values = np.where(dem < 0)
     dem[indx_no_values[0], indx_no_values[1]] = np.float64(np.NaN)
@@ -900,12 +902,14 @@ def local_dominance(dem,
     -------
     local_dom_out - 2D numpy array of local dominance
     """
+    if dem.ndim != 2:
+        raise Exception("rvt.vis.local_dominance: dem has to be 2D np.array!")
     if ve_factor <= 0:
-        raise Exception("rvt.vis.slope_aspect: ve_factor must be a positive number!")
+        raise Exception("rvt.vis.local_dominance: ve_factor must be a positive number!")
 
     dem = dem.astype(np.float32)
-    if ve_factor != 1:
-        dem = dem * ve_factor
+    dem = dem * ve_factor
+
     # create a vector with possible distances
     n_dist = int((max_rad - min_rad) / rad_inc + 1)
     distances = np.arange(n_dist * rad_inc, step=rad_inc) + min_rad
@@ -935,7 +939,6 @@ def local_dominance(dem,
     local_dom_out = local_dom_out / norma
 
     return local_dom_out
-
 
 # If we don't fix morp_shade we could use adams_shadows function (for that we would need to use numba)
 # https://github.com/jacobdadams/general_scripts/blob/master/raster_chunk_processing.py
