@@ -672,13 +672,13 @@ class DefaultValues:
                 save_raster(src_raster_path=dem_path, out_raster_path=svf_path,
                             out_raster_arr=dict_svf_asvf_opns["svf"].astype('float32'))
         if save_asvf:
-            if os.path.isfile(svf_path) and self.overwrite:  # svf file exists and overwrite=1
+            if os.path.isfile(asvf_path) and self.overwrite:  # svf file exists and overwrite=1
                 pass
             else:  # asvf_path, file doesn't exists or exists and overwrite=1
                 save_raster(src_raster_path=dem_path, out_raster_path=asvf_path,
                             out_raster_arr=dict_svf_asvf_opns["asvf"].astype('float32'))
         if save_opns:
-            if os.path.isfile(svf_path) and self.overwrite:  # svf file exists and overwrite=1
+            if os.path.isfile(opns_path) and self.overwrite:  # svf file exists and overwrite=1
                 pass
             else:  # opns_path, file doesn't exists or exists and overwrite=1
                 save_raster(src_raster_path=dem_path, out_raster_path=opns_path,
