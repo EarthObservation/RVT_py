@@ -543,8 +543,7 @@ def sky_view_factor(dem,
     svf_noise : the level of noise remove (0-don't remove, 1-low, 2-med, 3-high)
     compute_asvf : compute anisotropic SVF (True) or not (False)
     asvf_level : level of anisotropy, 1-low, 2-high,
-    a_min_weight : weight to consider anisotropy (0 - isotropic, 1 - no illumination from the direction
-                   opposite the main direction)
+    asvf_dir : dirction of anisotropy
     ve_factor : vertical exaggeration factor (must be greater than 0)
         CONSTANTS:
             sc_asvf_min : level of polynomial that determines the anisotropy, selected with in_asvf_level
@@ -731,6 +730,8 @@ def morph_shade(height, sol_z, sol_a, d_max, nrows, ncols, resolution):
     sol_z : solar zenith angle in rad (0 for vertical and pi/2 for horizontal surface)
     sol_a : solar azimuth angle
     d_max : maximum search distance in pixels
+    ncols : number of columns
+    nrows : number of rows
     resolution : pixel size
 
     Returns
