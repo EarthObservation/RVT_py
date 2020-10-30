@@ -24,6 +24,7 @@ import os
 import gdal
 import numpy as np
 import json
+import datetime
 
 
 class DefaultValues:
@@ -150,115 +151,115 @@ class DefaultValues:
     def save_default_to_file(self, file_path=None):
         """Saves default attributes into .json file."""
         data = {"default_settings": {"overwrite": {
-                                    "value": self.overwrite,
-                                    "description": "When saving visualisation functions and file already exists, if 0 "
-                                    "it doesn't compute it, if 1 it overwrites it."
-                                    },
-                                    "ve_factor": {
-                                    "value": self.ve_factor,
-                                    "description": "Vertical exaggeration."},
-                                     "Hillshade": {
-                                         "hs_compute": {"value": self.hs_compute,
-                                                        "description": "If compute Hillshade. Parameter for GUIs."},
-                                         "hs_sun_azi": {"value": self.hs_sun_azi,
-                                                        "description": "Solar azimuth angle (clockwise from North) in "
-                                                                       "degrees."},
-                                         "hs_sun_el": {"value": self.hs_sun_el,
-                                                       "description": "Solar vertical angle (above the horizon) in "
-                                                                      "degrees."}
-                                     },
-                                     "Multiple directions hillshade": {
-                                         "mhs_compute": {"value": self.mhs_compute,
-                                                         "description": "If compute Multiple directions hillshade."
-                                                                        " Parameter for GUIs."},
-                                         "mhs_nr_dir": {"value": self.mhs_nr_dir,
-                                                        "description": "Number of solar azimuth angles (clockwise "
-                                                                       "from North)."},
-                                         "mhs_sun_el": {"value": self.mhs_sun_el,
-                                                        "description": "Solar vertical angle (above the horizon) in "
-                                                                       "degrees."}
-                                     },
-                                     "Slope gradient": {
-                                         "slp_compute": {"value": self.slp_compute,
-                                                         "description": "If compute Slope. Parameter for GUIs."},
-                                         "slp_output_units": {"value": self.slp_output_units,
-                                                              "description": "Slope output units [radian, degree, "
-                                                                             "percent]."}
-                                     },
-                                     "Simple local relief model": {
-                                         "slrm_compute": {"value": self.slrm_compute,
-                                                          "description": "If compute Simple local relief model. "
-                                                                         "Parameter for GUIs."},
-                                         "slrm_rad_cell": {"value": self.slrm_rad_cell,
-                                                           "description": "Radius for trend assessment in pixels."}
-                                     },
-                                     "Sky-View Factor": {
-                                         "svf_compute": {"value": self.svf_compute,
-                                                         "description": "If compute Sky-View Factor."
-                                                                        " Parameter for GUIs."},
-                                         "svf_n_dir": {"value": self.svf_n_dir, "description": "Number of directions."},
-                                         "svf_r_max": {"value": self.svf_r_max, "description": "Maximal search "
-                                                                                               "radious in pixels."},
-                                         "svf_noise": {"value": self.svf_noise,
-                                                       "description": "The level of noise remove [0-don't remove, "
-                                                                      "1-low, 2-med, 3-high]."}
-                                     },
-                                     "Anisotropic Sky-View Factor": {
-                                         "asvf_compute": {"value": self.asvf_compute,
-                                                          "description": "If compute Anisotropic Sky-View Factor."
-                                                                         " Parameter for GUIs."},
-                                         "asvf_dir": {"value": self.asvf_dir,
-                                                      "description": "Direction of anisotropy in degrees."},
-                                         "asvf_level": {"value": self.asvf_level,
-                                                        "description": "Level of anisotropy [1-low, 2-high]."}
-                                     },
-                                     "Openness - Positive": {
-                                        "pos_opns_compute": {"value": self.pos_opns_compute,
-                                                             "description": "If compute Openness - Positive. "
-                                                                            "Parameter for GUIs."}
-                                    },
-                                     "Openness - Negative": {
-                                        "neg_opns_compute": {"value": self.neg_opns_compute,
-                                                             "description": "If compute Openness - Negative. "
-                                                                            "Parameter for GUIs."}
-                                    },
-                                     "Sky illumination": {
-                                         "sim_compute": {"value": self.sim_compute,
-                                                         "description": "If compute Sky illumination. Parameter for "
-                                                                        "GUIs."},
-                                         "sim_sky_mod": {"value": self.sim_sky_mod,
-                                                         "description": "Sky model [overcast, uniform]."},
-                                         "sim_samp_pnts": {"value": self.sim_samp_pnts,
-                                                           "description": "Number of sampling points [250 or 500]."},
-                                         "sim_shadow_dist": {"value": self.sim_shadow_dist,
-                                                             "description": "Max shadow modeling distance in pixels."},
-                                         "sim_shadow_az": {"value": self.sim_shadow_az, "description": "Shadow "
-                                                                                                       "azimuth in "
-                                                                                                       "degrees."},
-                                         "sim_shadow_el": {"value": self.sim_shadow_el, "description": "Shadow "
-                                                                                                       "elevation in "
-                                                                                                       "degrees."}
-                                     },
-                                     "Local dominance": {
-                                         "ld_compute": {"value": self.ld_compute,
-                                                        "description": "If compute Local dominance. Parameter for "
-                                                                       "GUIs."},
-                                         "ld_min_rad": {"value": self.ld_min_rad,
-                                                        "description": "Minimum radial distance (in pixels) at which "
-                                                                       "the algorithm starts with visualization "
-                                                                       "computation."},
-                                         "ld_max_rad": {"value": self.ld_max_rad,
-                                                        "description": "Maximum radial distance (in pixels) at which "
-                                                                       "the algorithm ends with visualization "
-                                                                       "computation."},
-                                         "ld_rad_inc": {"value": self.ld_rad_inc, "description": "Radial distance "
-                                                                                                 "steps in pixels."},
-                                         "ld_anglr_res": {"value": self.ld_anglr_res,
-                                                          "description": "Angular step for determination of number of "
-                                                                         "angular directions."},
-                                         "ld_observer_h": {"value": self.ld_observer_h,
-                                                           "description": "Height at which we observe the terrain."}
-                                     }}}
+            "value": self.overwrite,
+            "description": "When saving visualisation functions and file already exists, if 0 "
+                           "it doesn't compute it, if 1 it overwrites it."
+        },
+            "ve_factor": {
+                "value": self.ve_factor,
+                "description": "Vertical exaggeration."},
+            "Hillshade": {
+                "hs_compute": {"value": self.hs_compute,
+                               "description": "If compute Hillshade. Parameter for GUIs."},
+                "hs_sun_azi": {"value": self.hs_sun_azi,
+                               "description": "Solar azimuth angle (clockwise from North) in "
+                                              "degrees."},
+                "hs_sun_el": {"value": self.hs_sun_el,
+                              "description": "Solar vertical angle (above the horizon) in "
+                                             "degrees."}
+            },
+            "Multiple directions hillshade": {
+                "mhs_compute": {"value": self.mhs_compute,
+                                "description": "If compute Multiple directions hillshade."
+                                               " Parameter for GUIs."},
+                "mhs_nr_dir": {"value": self.mhs_nr_dir,
+                               "description": "Number of solar azimuth angles (clockwise "
+                                              "from North)."},
+                "mhs_sun_el": {"value": self.mhs_sun_el,
+                               "description": "Solar vertical angle (above the horizon) in "
+                                              "degrees."}
+            },
+            "Slope gradient": {
+                "slp_compute": {"value": self.slp_compute,
+                                "description": "If compute Slope. Parameter for GUIs."},
+                "slp_output_units": {"value": self.slp_output_units,
+                                     "description": "Slope output units [radian, degree, "
+                                                    "percent]."}
+            },
+            "Simple local relief model": {
+                "slrm_compute": {"value": self.slrm_compute,
+                                 "description": "If compute Simple local relief model. "
+                                                "Parameter for GUIs."},
+                "slrm_rad_cell": {"value": self.slrm_rad_cell,
+                                  "description": "Radius for trend assessment in pixels."}
+            },
+            "Sky-View Factor": {
+                "svf_compute": {"value": self.svf_compute,
+                                "description": "If compute Sky-View Factor."
+                                               " Parameter for GUIs."},
+                "svf_n_dir": {"value": self.svf_n_dir, "description": "Number of directions."},
+                "svf_r_max": {"value": self.svf_r_max, "description": "Maximal search "
+                                                                      "radious in pixels."},
+                "svf_noise": {"value": self.svf_noise,
+                              "description": "The level of noise remove [0-don't remove, "
+                                             "1-low, 2-med, 3-high]."}
+            },
+            "Anisotropic Sky-View Factor": {
+                "asvf_compute": {"value": self.asvf_compute,
+                                 "description": "If compute Anisotropic Sky-View Factor."
+                                                " Parameter for GUIs."},
+                "asvf_dir": {"value": self.asvf_dir,
+                             "description": "Direction of anisotropy in degrees."},
+                "asvf_level": {"value": self.asvf_level,
+                               "description": "Level of anisotropy [1-low, 2-high]."}
+            },
+            "Openness - Positive": {
+                "pos_opns_compute": {"value": self.pos_opns_compute,
+                                     "description": "If compute Openness - Positive. "
+                                                    "Parameter for GUIs."}
+            },
+            "Openness - Negative": {
+                "neg_opns_compute": {"value": self.neg_opns_compute,
+                                     "description": "If compute Openness - Negative. "
+                                                    "Parameter for GUIs."}
+            },
+            "Sky illumination": {
+                "sim_compute": {"value": self.sim_compute,
+                                "description": "If compute Sky illumination. Parameter for "
+                                               "GUIs."},
+                "sim_sky_mod": {"value": self.sim_sky_mod,
+                                "description": "Sky model [overcast, uniform]."},
+                "sim_samp_pnts": {"value": self.sim_samp_pnts,
+                                  "description": "Number of sampling points [250 or 500]."},
+                "sim_shadow_dist": {"value": self.sim_shadow_dist,
+                                    "description": "Max shadow modeling distance in pixels."},
+                "sim_shadow_az": {"value": self.sim_shadow_az, "description": "Shadow "
+                                                                              "azimuth in "
+                                                                              "degrees."},
+                "sim_shadow_el": {"value": self.sim_shadow_el, "description": "Shadow "
+                                                                              "elevation in "
+                                                                              "degrees."}
+            },
+            "Local dominance": {
+                "ld_compute": {"value": self.ld_compute,
+                               "description": "If compute Local dominance. Parameter for "
+                                              "GUIs."},
+                "ld_min_rad": {"value": self.ld_min_rad,
+                               "description": "Minimum radial distance (in pixels) at which "
+                                              "the algorithm starts with visualization "
+                                              "computation."},
+                "ld_max_rad": {"value": self.ld_max_rad,
+                               "description": "Maximum radial distance (in pixels) at which "
+                                              "the algorithm ends with visualization "
+                                              "computation."},
+                "ld_rad_inc": {"value": self.ld_rad_inc, "description": "Radial distance "
+                                                                        "steps in pixels."},
+                "ld_anglr_res": {"value": self.ld_anglr_res,
+                                 "description": "Angular step for determination of number of "
+                                                "angular directions."},
+                "ld_observer_h": {"value": self.ld_observer_h,
+                                  "description": "Height at which we observe the terrain."}
+            }}}
         if file_path is None:
             file_path = r"settings\default_settings.json"
             if os.path.isfile(file_path):
@@ -650,7 +651,7 @@ class DefaultValues:
                 asvf_path = os.path.join(custom_dir, self.get_asvf_file_name(dem_path))
             if save_opns:
                 opns_path = os.path.join(custom_dir, self.get_opns_file_name(dem_path))
-        if os.path.isfile(svf_path) and os.path.isfile(asvf_path) and os.path.isfile(opns_path)\
+        if os.path.isfile(svf_path) and os.path.isfile(asvf_path) and os.path.isfile(opns_path) \
                 and not self.overwrite:  # if file already exists and overwrite=0
             return 0
         if not os.path.isfile(dem_path):
@@ -792,6 +793,143 @@ class DefaultValues:
             self.save_neg_opns(dem_path, custom_dir=custom_dir)
         if sav_local_dominance:
             self.save_local_dominance(dem_path, custom_dir=custom_dir)
+
+    def create_log_file(self, dem_path, custom_dir=None, computation_time=None):
+        """Creates log file in custom_dir, if custom_dir=None it creates it in dem directory (dem_path)."""
+        dict_arr_res = get_raster_arr(raster_path=dem_path)
+        resolution = dict_arr_res["resolution"]
+        arr_shape = np.array(dict_arr_res["array"]).shape
+        del dict_arr_res
+        nr_bands = 0
+        nr_cols = 0
+        nr_rows = 0
+        if len(arr_shape) == 3:
+            nr_bands = arr_shape[0]
+            nr_rows = arr_shape[1]
+            nr_cols = arr_shape[2]
+        elif len(arr_shape) == 2:
+            nr_bands = 1
+            nr_rows = arr_shape[0]
+            nr_cols = arr_shape[1]
+        dem_dir = os.path.dirname(dem_path)
+        log_dir = dem_dir
+        if custom_dir is not None:
+            log_dir = custom_dir
+        dem_name = os.path.splitext(os.path.basename(dem_path))[0]
+        log_file_time = datetime.datetime.now()
+        log_file_time_str = log_file_time.strftime("%Y-%m-%d_%H-%M-%S")
+        log_name = "{}_vis_log_{}".format(dem_name, log_file_time_str)
+        log_path = os.path.join(log_dir, log_name)
+        dat = open(log_path, "w")
+        dat.write(
+            "===============================================================================================\n"
+            "Relief Visualization Toolbox (python), visualizations log\n"
+            "Copyright:\n"
+            "\tResearch Centre of the Slovenian Academy of Sciences and Arts\n"
+            "\tUniversity of Ljubljana, Faculty of Civil and Geodetic Engineering\n"
+            "===============================================================================================\n")
+        dat.write("\n\n\n")
+
+        dat.write("Processing info about visualizations\n"
+                  "===============================================================================================\n\n")
+        dat.write("# Metadata of the input file\n\n")
+        dat.write("\tInput filename:\t\t{}\n".format(dem_path))
+        dat.write("\tNumber of rows:\t\t{}\n".format(nr_rows))
+        dat.write("\tNumber of columns:\t{}\n".format(nr_cols))
+        dat.write("\tNumber of bands:\t{}\n".format(nr_bands))
+        dat.write("\tResolution (x, y):\t{}, {}\n".format(resolution[0], resolution[1]))
+        dat.write("\n")
+
+        dat.write("# Selected visualization parameters\n")
+        dat.write("\tOverwrite: {}\n".format(self.overwrite))
+        dat.write("\tVertical exaggeration factor: {}\n".format(self.ve_factor))
+        dat.write("\n")
+
+        dat.write("# The following visualizations have been preformed:\n\n")
+        if self.hs_compute:
+            dat.write("\tHillshade\n")
+            dat.write("\t\ths_sun_el=\t\t{}\n".format(self.hs_sun_el))
+            dat.write("\t\ths_sun_azi=\t\t{}\n".format(self.hs_sun_azi))
+            dat.write("\t\t>> Output file:\n")
+            dat.write("\t\t\t{}\n".format(os.path.join(log_dir, self.get_hillshade_file_name(dem_path))))
+            dat.write("\n")
+        if self.mhs_compute:
+            dat.write("\tMultiple directions hillshade\n")
+            dat.write("\t\tmhs_sun_el=\t\t{}\n".format(self.mhs_sun_el))
+            dat.write("\t\tmhs_nr_dir=\t\t{}\n".format(self.mhs_nr_dir))
+            dat.write("\t\t>> Output file:\n")
+            dat.write("\t\t\t{}\n".format(os.path.join(log_dir, self.get_multi_hillshade_file_name(dem_path))))
+            dat.write("\n")
+        if self.slp_compute:
+            dat.write("\tSlope gradient\n")
+            dat.write("\t\tslp_output_units=\t\t{}\n".format(self.slp_output_units))
+            dat.write("\t\t>> Output file:\n")
+            dat.write("\t\t\t{}\n".format(os.path.join(log_dir, self.get_slope_file_name(dem_path))))
+            dat.write("\n")
+        if self.slrm_compute:
+            dat.write("\tSimple local relief model\n")
+            dat.write("\t\tslrm_rad_cell=\t\t{}\n".format(self.slrm_rad_cell))
+            dat.write("\t\t>> Output file:\n")
+            dat.write("\t\t\t{}\n".format(os.path.join(log_dir, self.get_slrm_file_name(dem_path))))
+            dat.write("\n")
+        if self.svf_compute:
+            dat.write("\tSky-View Factor\n")
+            dat.write("\t\tsvf_n_dir=\t\t{}\n".format(self.svf_n_dir))
+            dat.write("\t\tsvf_noise=\t\t{}\n".format(self.svf_noise))
+            dat.write("\t\tsvf_r_max=\t\t{}\n".format(self.svf_r_max))
+            dat.write("\t\t>> Output file:\n")
+            dat.write("\t\t\t{}\n".format(os.path.join(log_dir, self.get_svf_file_name(dem_path))))
+            dat.write("\n")
+        if self.asvf_compute:
+            dat.write("\tAnisotropic Sky-View Factor\n")
+            dat.write("\t\tsvf_n_dir=\t\t{}\n".format(self.svf_n_dir))
+            dat.write("\t\tsvf_noise=\t\t{}\n".format(self.svf_noise))
+            dat.write("\t\tsvf_r_max=\t\t{}\n".format(self.svf_r_max))
+            dat.write("\t\tasvf_level=\t\t{}\n".format(self.asvf_level))
+            dat.write("\t\tasvf_dir=\t\t{}\n".format(self.asvf_dir))
+            dat.write("\t\t>> Output file:\n")
+            dat.write("\t\t\t{}\n".format(os.path.join(log_dir, self.get_asvf_file_name(dem_path))))
+            dat.write("\n")
+        if self.pos_opns_compute:
+            dat.write("\tOpenness - Positive\n")
+            dat.write("\t\tsvf_n_dir=\t\t{}\n".format(self.svf_n_dir))
+            dat.write("\t\tsvf_noise=\t\t{}\n".format(self.svf_noise))
+            dat.write("\t\tsvf_r_max=\t\t{}\n".format(self.svf_r_max))
+            dat.write("\t\t>> Output file:\n")
+            dat.write("\t\t\t{}\n".format(os.path.join(log_dir, self.get_opns_file_name(dem_path))))
+            dat.write("\n")
+        if self.neg_opns_compute:
+            dat.write("\tOpenness - Negative\n")
+            dat.write("\t\tsvf_n_dir=\t\t{}\n".format(self.svf_n_dir))
+            dat.write("\t\tsvf_noise=\t\t{}\n".format(self.svf_noise))
+            dat.write("\t\tsvf_r_max=\t\t{}\n".format(self.svf_r_max))
+            dat.write("\t\t>> Output file:\n")
+            dat.write("\t\t\t{}\n".format(os.path.join(log_dir, self.get_neg_opns_file_name(dem_path))))
+            dat.write("\n")
+        if self.sim_compute:
+            dat.write("\tSky illumination\n")
+            dat.write("\t\tsim_sky_mod=\t\t{}\n".format(self.sim_sky_mod))
+            dat.write("\t\tsim_shadow_az=\t\t{}\n".format(self.sim_shadow_az))
+            dat.write("\t\tsim_shadow_el=\t\t{}\n".format(self.sim_shadow_el))
+            dat.write("\t\tsim_samp_pnts=\t\t{}\n".format(self.sim_samp_pnts))
+            dat.write("\t\tsim_shadow_dist=\t\t{}\n".format(self.sim_shadow_dist))
+            dat.write("\t\t>> Output file:\n")
+            dat.write("\t\t\t{}\n".format(os.path.join(log_dir, self.get_sky_illumination_file_name(dem_path))))
+            dat.write("\n")
+        if self.ld_compute:
+            dat.write("\tLocal dominance\n")
+            dat.write("\t\tld_rad_inc=\t\t{}\n".format(self.ld_rad_inc))
+            dat.write("\t\tld_min_rad=\t\t{}\n".format(self.ld_min_rad))
+            dat.write("\t\tld_max_rad=\t\t{}\n".format(self.ld_max_rad))
+            dat.write("\t\tld_anglr_res=\t\t{}\n".format(self.ld_anglr_res))
+            dat.write("\t\tld_observer_h=\t\t{}\n".format(self.ld_observer_h))
+            dat.write("\t\t>> Output file:\n")
+            dat.write("\t\t\t{}\n".format(os.path.join(log_dir, self.get_local_dominance_file_name(dem_path))))
+            dat.write("\n")
+
+        if computation_time is not None:
+            dat.write("# Computation time: {}".format(computation_time))
+        dat.close()
 
 
 def get_raster_arr(raster_path):

@@ -26,6 +26,7 @@ import matplotlib as mpl
 import matplotlib.cm
 import os
 import json
+import datetime
 
 
 def create_blender_file_example(file_path=None):
@@ -767,6 +768,120 @@ class BlenderCombination:
             rvt.default.save_raster(src_raster_path=self.dem_path, out_raster_path=save_render_path,
                                     out_raster_arr=rendered_image)
         return rendered_image
+
+    def create_log_file(self, dem_path, combination_name, render_path, default: rvt.default.DefaultValues,
+                        terrain_sett_name=None, custom_dir=None, computation_time=None):
+        """Creates log file in custom_dir, if custom_dir=None it creates it in dem directory (dem_path)."""
+        dict_arr_res = rvt.default.get_raster_arr(raster_path=dem_path)
+        resolution = dict_arr_res["resolution"]
+        arr_shape = np.array(dict_arr_res["array"]).shape
+        del dict_arr_res
+        nr_bands = 0
+        nr_cols = 0
+        nr_rows = 0
+        if len(arr_shape) == 3:
+            nr_bands = arr_shape[0]
+            nr_rows = arr_shape[1]
+            nr_cols = arr_shape[2]
+        elif len(arr_shape) == 2:
+            nr_bands = 1
+            nr_rows = arr_shape[0]
+            nr_cols = arr_shape[1]
+        dem_dir = os.path.dirname(dem_path)
+        log_dir = dem_dir
+        if custom_dir is not None:
+            log_dir = custom_dir
+        dem_name = os.path.splitext(os.path.basename(dem_path))[0]
+        log_file_time = datetime.datetime.now()
+        log_file_time_str = log_file_time.strftime("%Y-%m-%d_%H-%M-%S")
+        log_name = "{}_blend_log_{}".format(dem_name, log_file_time_str)
+        log_path = os.path.join(log_dir, log_name)
+        dat = open(log_path, "w")
+        dat.write(
+            "===============================================================================================\n"
+            "Relief Visualization Toolbox (python), blender log\n"
+            "Copyright:\n"
+            "\tResearch Centre of the Slovenian Academy of Sciences and Arts\n"
+            "\tUniversity of Ljubljana, Faculty of Civil and Geodetic Engineering\n"
+            "===============================================================================================\n")
+        dat.write("\n\n\n")
+
+        dat.write("Processing info about visualizations\n"
+                  "===============================================================================================\n\n")
+        dat.write("# Metadata of the input file\n\n")
+        dat.write("\tInput filename:\t\t{}\n".format(dem_path))
+        dat.write("\tNumber of rows:\t\t{}\n".format(nr_rows))
+        dat.write("\tNumber of columns:\t{}\n".format(nr_cols))
+        dat.write("\tNumber of bands:\t{}\n".format(nr_bands))
+        dat.write("\tResolution (x, y):\t{}, {}\n".format(resolution[0], resolution[1]))
+        dat.write("\n")
+
+        dat.write("# Selected visualization parameters\n")
+        dat.write("\tOverwrite: {}\n".format(default.overwrite))
+        dat.write("\tVertical exaggeration factor: {}\n".format(default.ve_factor))
+        dat.write("\n")
+
+        dat.write("# Combination:\n\n")
+        dat.write("Combination name: {}\n".format(combination_name))
+        if terrain_sett_name is not None:
+            dat.write("Terrain settings: {}\n".format(terrain_sett_name))
+        dat.write("\t>> Output render file:\n")
+        dat.write("\t\t{}\n\n".format(render_path))
+        dat.write("=== LAYERS ===\n\n")
+        i_layer = 1
+        for layer in self.layers:
+            dat.write("Layer: {}\n".format(i_layer))
+            dat.write("Visualization: {}\n".format(layer.vis))
+            if layer.vis.lower() == "hillshade":
+                dat.write("\ths_sun_el=\t\t{}\n".format(default.hs_sun_el))
+                dat.write("\ths_sun_azi=\t\t{}\n".format(default.hs_sun_azi))
+            elif layer.vis.lower() == "multiple directions hillshade":
+                dat.write("\tmhs_sun_el=\t\t{}\n".format(default.mhs_sun_el))
+                dat.write("\tmhs_nr_dir=\t\t{}\n".format(default.mhs_nr_dir))
+            elif layer.vis.lower() == "slope gradient":
+                dat.write("\tslp_output_units=\t\t{}\n".format(default.slp_output_units))
+            elif layer.vis.lower() == "simple local relief model":
+                dat.write("\tslrm_rad_cell=\t\t{}\n".format(default.slrm_rad_cell))
+            elif layer.vis.lower() == "sky-view factor":
+                dat.write("\tsvf_n_dir=\t\t{}\n".format(default.svf_n_dir))
+                dat.write("\tsvf_noise=\t\t{}\n".format(default.svf_noise))
+                dat.write("\tsvf_r_max=\t\t{}\n".format(default.svf_r_max))
+            elif layer.vis.lower() == "anisotropic sky-view factor":
+                dat.write("\tsvf_n_dir=\t\t{}\n".format(default.svf_n_dir))
+                dat.write("\tsvf_noise=\t\t{}\n".format(default.svf_noise))
+                dat.write("\tsvf_r_max=\t\t{}\n".format(default.svf_r_max))
+                dat.write("\tasvf_level=\t\t{}\n".format(default.asvf_level))
+                dat.write("\tasvf_dir=\t\t{}\n".format(default.asvf_dir))
+            elif layer.vis.lower() == "openness - positive":
+                dat.write("\tsvf_n_dir=\t\t{}\n".format(default.svf_n_dir))
+                dat.write("\tsvf_noise=\t\t{}\n".format(default.svf_noise))
+                dat.write("\tsvf_r_max=\t\t{}\n".format(default.svf_r_max))
+            elif layer.vis.lower() == "openness - negative":
+                dat.write("\tsvf_n_dir=\t\t{}\n".format(default.svf_n_dir))
+                dat.write("\tsvf_noise=\t\t{}\n".format(default.svf_noise))
+                dat.write("\tsvf_r_max=\t\t{}\n".format(default.svf_r_max))
+            elif layer.vis.lower() == "sky illumination":
+                dat.write("\tsim_sky_mod=\t\t{}\n".format(default.sim_sky_mod))
+                dat.write("\tsim_shadow_az=\t\t{}\n".format(default.sim_shadow_az))
+                dat.write("\tsim_shadow_el=\t\t{}\n".format(default.sim_shadow_el))
+                dat.write("\tsim_samp_pnts=\t\t{}\n".format(default.sim_samp_pnts))
+                dat.write("\tsim_shadow_dist=\t\t{}\n".format(default.sim_shadow_dist))
+            elif layer.vis.lower() == "local dominance":
+                dat.write("\t\tld_rad_inc=\t\t{}\n".format(default.ld_rad_inc))
+                dat.write("\t\tld_min_rad=\t\t{}\n".format(default.ld_min_rad))
+                dat.write("\t\tld_max_rad=\t\t{}\n".format(default.ld_max_rad))
+                dat.write("\t\tld_anglr_res=\t\t{}\n".format(default.ld_anglr_res))
+                dat.write("\t\tld_observer_h=\t\t{}\n".format(default.ld_observer_h))
+            dat.write("Norm: {}\n".format(layer.normalization))
+            dat.write("Linear normalization, min: {}, max: {}\n".format(layer.min, layer.max))
+            dat.write("Opacity: {}\n".format(layer.opacity))
+            dat.write("\n")
+
+            i_layer += 1
+
+        if computation_time is not None:
+            dat.write("# Computation time: {}".format(computation_time))
+        dat.close()
 
 
 def compare_2_combinations(combination1: BlenderCombination, combination2: BlenderCombination):
