@@ -115,9 +115,6 @@ def slope_aspect(dem,
     dem = dem.astype(np.float32)
     dem = dem * ve_factor
 
-    # add frame of 0 (additional row up bottom and column left right)
-    dem = np.pad(dem, pad_width=1, mode="constant", constant_values=0)
-
     # derivatives in X and Y direction
     dzdx = ((np.roll(dem, 1, axis=1) - np.roll(dem, -1, axis=1)) / 2) / resolution_x
     dzdy = ((np.roll(dem, -1, axis=0) - np.roll(dem, 1, axis=0)) / 2) / resolution_y
@@ -143,10 +140,6 @@ def slope_aspect(dem,
     aspect_out = np.arctan2(dzdx, dzdy)  # atan2 took care of the quadrants
     if output_units == "degree":
         aspect_out = np.rad2deg(aspect_out)
-
-    # remove the frame (padding)
-    slope_out = slope_out[1:-1, 1:-1]
-    aspect_out = aspect_out[1:-1, 1:-1]
 
     # edges to -1
     slope_out[:, 0] = -1
@@ -214,6 +207,12 @@ def hillshade(dem,
     # Compute solar incidence angle, hillshading
     hillshade_out = np.cos(sun_zenith_rad) * np.cos(slope) + np.sin(sun_zenith_rad) * np.sin(slope) * np.cos(
         aspect - sun_azimuth_rad)
+
+    # edges to -1
+    hillshade_out[:, 0] = -1
+    hillshade_out[0, :] = -1
+    hillshade_out[:, -1] = -1
+    hillshade_out[-1, :] = -1
 
     return hillshade_out
 
