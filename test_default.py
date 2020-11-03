@@ -18,4 +18,4 @@ default.save_neg_opns(r"test_data\TM1_564_146.tif", save_float=True, save_8bit=T
 default.save_local_dominance(r"test_data\TM1_564_146.tif", save_float=True, save_8bit=True)
 
 # save all visualization functions
-default.save_visualizations(r"test_data\TM1_564_146.tif", sav_sky_illumination=False, save_float=True, save_8bit=True)
+default.save_visualizations(r"test_data\TM1_564_146.tif")

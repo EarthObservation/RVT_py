@@ -10,7 +10,7 @@
         },
         "Hillshade": {
             "hs_compute": {
-                "value": true,
+                "value": 1,
                 "description": "If compute Hillshade. Parameter for GUIs."
             },
             "hs_sun_azi": {
@@ -20,11 +20,24 @@
             "hs_sun_el": {
                 "value": 35,
                 "description": "Solar vertical angle (above the horizon) in degrees."
+            },
+            "hs_save_float": {
+                "value": 1,
+                "description": "If 1 it saves float raster, if 0 it doesn't."
+            },
+            "hs_save_8bit": {
+                "value": 0,
+                "description": "If 1 it saves 8bit raster, if 0 it doesn't."
+            },
+            "hs_bytscl": {
+                "min": 0.0,
+                "max": 1.0,
+                "description": "Byte scale min and max values for 8bit raster."
             }
         },
         "Multiple directions hillshade": {
             "mhs_compute": {
-                "value": false,
+                "value": 0,
                 "description": "If compute Multiple directions hillshade. Parameter for GUIs."
             },
             "mhs_nr_dir": {
@@ -34,31 +47,70 @@
             "mhs_sun_el": {
                 "value": 35,
                 "description": "Solar vertical angle (above the horizon) in degrees."
+            },
+            "mhs_save_float": {
+                "value": 1,
+                "description": "If 1 it saves float raster, if 0 it doesn't."
+            },
+            "mhs_save_8bit": {
+                "value": 0,
+                "description": "If 1 it saves 8bit raster, if 0 it doesn't."
+            },
+            "mhs_bytscl": {
+                "min": 0.0,
+                "max": 1.0,
+                "description": "Byte scale min and max values for 8bit raster."
             }
         },
         "Slope gradient": {
             "slp_compute": {
-                "value": false,
+                "value": 0,
                 "description": "If compute Slope. Parameter for GUIs."
             },
             "slp_output_units": {
                 "value": "degree",
                 "description": "Slope output units [radian, degree, percent]."
+            },
+            "slp_save_float": {
+                "value": 1,
+                "description": "If 1 it saves float raster, if 0 it doesn't."
+            },
+            "slp_save_8bit": {
+                "value": 0,
+                "description": "If 1 it saves 8bit raster, if 0 it doesn't."
+            },
+            "slp_bytscl": {
+                "min": 0.0,
+                "max": 51.0,
+                "description": "Byte scale min and max values for 8bit raster."
             }
         },
         "Simple local relief model": {
             "slrm_compute": {
-                "value": false,
+                "value": 0,
                 "description": "If compute Simple local relief model. Parameter for GUIs."
             },
             "slrm_rad_cell": {
                 "value": 20,
                 "description": "Radius for trend assessment in pixels."
+            },
+            "slrm_save_float": {
+                "value": 1,
+                "description": "If 1 it saves float raster, if 0 it doesn't."
+            },
+            "slrm_save_8bit": {
+                "value": 0,
+                "description": "If 1 it saves 8bit raster, if 0 it doesn't."
+            },
+            "slrm_bytscl": {
+                "min": -2.0,
+                "max": 2.0,
+                "description": "Byte scale min and max values for 8bit raster."
             }
         },
         "Sky-View Factor": {
             "svf_compute": {
-                "value": false,
+                "value": 0,
                 "description": "If compute Sky-View Factor. Parameter for GUIs."
             },
             "svf_n_dir": {
@@ -72,11 +124,24 @@
             "svf_noise": {
                 "value": 0,
                 "description": "The level of noise remove [0-don't remove, 1-low, 2-med, 3-high]."
+            },
+            "svf_save_float": {
+                "value": 1,
+                "description": "If 1 it saves float raster, if 0 it doesn't."
+            },
+            "svf_save_8bit": {
+                "value": 0,
+                "description": "If 1 it saves 8bit raster, if 0 it doesn't."
+            },
+            "svf_bytscl": {
+                "min": 0.6375,
+                "max": 1.0,
+                "description": "Byte scale min and max values for 8bit raster."
             }
         },
         "Anisotropic Sky-View Factor": {
             "asvf_compute": {
-                "value": false,
+                "value": 0,
                 "description": "If compute Anisotropic Sky-View Factor. Parameter for GUIs."
             },
             "asvf_dir": {
@@ -86,23 +151,46 @@
             "asvf_level": {
                 "value": 1,
                 "description": "Level of anisotropy [1-low, 2-high]."
+            },
+            "asvf_bytscl": {
+                "min": 0.6375,
+                "max": 1.0,
+                "description": "Byte scale min and max values for 8bit raster."
             }
         },
         "Openness - Positive": {
             "pos_opns_compute": {
-                "value": false,
+                "value": 0,
                 "description": "If compute Openness - Positive. Parameter for GUIs."
+            },
+            "pos_opns_bytscl": {
+                "min": 60,
+                "max": 95.0,
+                "description": "Byte scale min and max values for 8bit raster."
             }
         },
         "Openness - Negative": {
             "neg_opns_compute": {
-                "value": false,
+                "value": 0,
                 "description": "If compute Openness - Negative. Parameter for GUIs."
+            },
+            "neg_opns_save_float": {
+                "value": 1,
+                "description": "If 1 it saves float raster, if 0 it doesn't."
+            },
+            "neg_opns_save_8bit": {
+                "value": 0,
+                "description": "If 1 it saves 8bit raster, if 0 it doesn't."
+            },
+            "neg_opns_bytscl": {
+                "min": 60,
+                "max": 95.0,
+                "description": "Byte scale min and max values for 8bit raster."
             }
         },
         "Sky illumination": {
             "sim_compute": {
-                "value": false,
+                "value": 0,
                 "description": "If compute Sky illumination. Parameter for GUIs."
             },
             "sim_sky_mod": {
@@ -124,11 +212,24 @@
             "sim_shadow_el": {
                 "value": 35,
                 "description": "Shadow elevation in degrees."
+            },
+            "sim_save_float": {
+                "value": 1,
+                "description": "If 1 it saves float raster, if 0 it doesn't."
+            },
+            "sim_save_8bit": {
+                "value": 0,
+                "description": "If 1 it saves 8bit raster, if 0 it doesn't."
+            },
+            "sim_bytscl": {
+                "min": 0.25,
+                "max": 0.0,
+                "description": "Byte scale min and max values for 8bit raster."
             }
         },
         "Local dominance": {
             "ld_compute": {
-                "value": false,
+                "value": 0,
                 "description": "If compute Local dominance. Parameter for GUIs."
             },
             "ld_min_rad": {
@@ -150,6 +251,19 @@
             "ld_observer_h": {
                 "value": 1.7,
                 "description": "Height at which we observe the terrain."
+            },
+            "ld_save_float": {
+                "value": 1,
+                "description": "If 1 it saves float raster, if 0 it doesn't."
+            },
+            "ld_save_8bit": {
+                "value": 0,
+                "description": "If 1 it saves 8bit raster, if 0 it doesn't."
+            },
+            "ld_bytscl": {
+                "min": 0.5,
+                "max": 1.8,
+                "description": "Byte scale min and max values for 8bit raster."
             }
         }
     }
