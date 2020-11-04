@@ -15,7 +15,6 @@ AUTHORS:
 
 COPYRIGHT:
     Research Centre of the Slovenian Academy of Sciences and Arts
-    Space-SI
     University of Ljubljana, Faculty of Civil and Geodetic Engineering
 """
 

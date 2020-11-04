@@ -33,4 +33,3 @@ The result is computed and displayed in the viewer.
 
 The modules are the same as described in :ref:`usage`.
 
-For ``rvt_esri_blender.py`` you will need to install ``rasterio`` into Python ArcGIS Pro conda environment. To do that, open ArcGIS Pro, click ``Project → Python`` then click ``Manage Environments`` and clone the default environment. After that, activate the environment and click ``OK``. Then click ``Add Packages``, search for ``rasterio`` and install it. In case you have problems try older version of rasterio.

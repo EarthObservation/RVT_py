@@ -32,6 +32,5 @@ ArcGIS Raster functions implementation is described in :ref:`arcgis`.
 
 QGIS Plugin
 -----------
-.. # TODO Describe, web portal
 
-QGIS plugin can be installed from the QGIS plugins web portal. The installation and usage is described in :ref:`qgis`.
+QGIS RVT plugin installation and usage is described in :ref:`qgis`.
