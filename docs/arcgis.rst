@@ -29,7 +29,7 @@ If you would like to use use Relief Visualization Toolbox in ArcGIS Pro, you hav
 
 The result is computed and displayed in the viewer.
 
-.. image:: ./figures/rvt_esri_svf.png
+   .. image:: ./figures/rvt_esri_svf.png
 
 The modules are the same as described in :ref:`usage`.
 

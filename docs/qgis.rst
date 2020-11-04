@@ -7,10 +7,9 @@ QGIS Plugin
 
 QGIS plugin will be available at the QGIS Plugins web portal soon. Please stay tuned.
 
-The development version of the plugin is available in:  
-`<https://github.com/EarthObservation/rvt-qgis>`_
+The development version of the plugin is available in `GIthib <https://github.com/EarthObservation/rvt-qgis>`_. There are also installation instructions.
 
-Once the plugin is installed, it can be used from the Raster menu. Check that the plugin is available in the Plugins menu.
+Once the plugin is installed, it can be accessed from the Raster menu. First, check that the plugin is available in the Plugins menu.
 
    .. image:: ./figures/rvt_qgis_plugins.png
 
@@ -18,11 +17,11 @@ Once the plugin is installed, it can be used from the Raster menu. Check that th
 
    .. image:: ./figures/rvt_qgis_dem.png
 
-#. Select Raster - Relief Visualization Toolbox.
+#. Select ````Raster → Relief Visualization Toolbox``.
 
    .. image:: ./figures/rvt_qgis_menu.png
 
-#. Choose the options.
+#. Choose the options and visualizations.
 
    .. image:: ./figures/rvt_qgis_toolbox.png
 
@@ -32,3 +31,4 @@ The visualizations are computed and displayed in the main QGIS window. Files are
 
    .. image:: ./figures/rvt_qgis_svf.png
 
+The visualisation arefin described in :ref:`usage`.
