@@ -5,7 +5,14 @@ import multiprocessing as mp
 import time
 
 
-def save_multiprocess_vis(dem_path, vis_path, vis, offset, x_block_size, y_block_size):
+class rasterVisBlock:
+    def __init__(self, array, x, y):
+        self.array = array
+        self.x = x
+        self.y = y
+
+
+def save_multiprocess_vis(dem_path, vis_path, vis, overlap, x_block_size, y_block_size):
     data_set = gdal.Open(dem_path)
     if data_set.RasterCount != 1:
         raise Exception("rvt.multiproc. : Input raster has more bands than 1!")
@@ -21,15 +28,15 @@ def save_multiprocess_vis(dem_path, vis_path, vis, offset, x_block_size, y_block
     # create out raster
     create_blank_raster(in_data_set=data_set, out_raster_path=vis_path)
 
-    # multiprocess
-    manager = mp.Manager()
-    queue = manager.Queue()  # parameters: vis_block_arr, out_data_set, x, y
-    pool = mp.Pool(mp.cpu_count() + 2)
-
     # listener for saving data
-    watcher = pool.apply_async(save_block_visualization, (queue,))
+    manager = mp.Manager()
+    blocks_to_save = manager.list()
 
-    blocks_pools = []
+    save_process = mp.Process(target=save_block_visualization, args=(vis_path, blocks_to_save))
+    save_process.start()
+
+    # list with processes
+    blocks_processes = []
 
     # slice raster to blocks
     for y in range(0, y_size, y_block_size):
@@ -43,31 +50,31 @@ def save_multiprocess_vis(dem_path, vis_path, vis, offset, x_block_size, y_block
             else:
                 cols = x_size - x
 
-            # get offset for each block, check edges
+            # get overlap for each block, check edges
             left_offset = 0
             right_offset = 0
             top_offset = 0
             bottom_offset = 0
-            if x != 0:  # left offset
-                if x - offset < 0:  # left overlap
+            if x != 0:  # left overlap
+                if x - overlap < 0:  # left overlap
                     left_offset = x
                 else:
-                    left_offset = offset
-            if x + cols != x_size:  # right offset
-                if x + cols + offset > x_size:  # right overlap
+                    left_offset = overlap
+            if x + cols != x_size:  # right overlap
+                if x + cols + overlap > x_size:  # right overlap
                     right_offset = x_size - x - cols
                 else:
-                    right_offset = offset
-            if y != 0:  # apply top offset
-                if y - offset < 0:  # top overlap
+                    right_offset = overlap
+            if y != 0:  # apply top overlap
+                if y - overlap < 0:  # top overlap
                     top_offset = y
                 else:
-                    top_offset = offset
-            if y + rows != y_size:  # bottom offset
-                if y + rows + offset > y_size:  # bottom overlap
+                    top_offset = overlap
+            if y + rows != y_size:  # bottom overlap
+                if y + rows + overlap > y_size:  # bottom overlap
                     bottom_offset = y_size - y - rows
                 else:
-                    bottom_offset = offset
+                    bottom_offset = overlap
 
             # reads block
             x_off = x - left_offset
@@ -76,29 +83,28 @@ def save_multiprocess_vis(dem_path, vis_path, vis, offset, x_block_size, y_block
             rows_off = rows + top_offset + bottom_offset
             block_array = np.array(data_set.GetRasterBand(1).ReadAsArray(x_off, y_off, cols_off, rows_off))
 
-            block_pool = pool.apply_async(calculate_and_save_block_vis, (block_array, vis_path, x, y,
-                                                                         left_offset, right_offset, top_offset,
-                                                                         bottom_offset, vis, x_res, y_res, queue))
-            blocks_pools.append(block_pool)
-
+            block_process = mp.Process(target=calculate_and_save_block_vis, args=(blocks_to_save, block_array,
+                                                                                  x, y, left_offset, right_offset,
+                                                                                  top_offset, bottom_offset, vis, x_res,
+                                                                                  y_res))
+            block_process.start()
+            blocks_processes.append(block_process)
             blocks += 1
 
-    # collect results from the blocks through the pool result queue
-    for block_pool in blocks_pools:
-        block_pool.get()
-
-    queue.put("kill")
-    pool.close()
-    pool.join()
-    del data_set
+    for block_process in blocks_processes:
+        block_process.join()
+    blocks_to_save.append("kill")
+    save_process.join()
+    data_set = None
 
 
-def calculate_and_save_block_vis(block_array, vis_path, x, y, left_offset, right_offset, top_offset,
-                                 bottom_offset, vis, x_res, y_res, queue):
+def calculate_and_save_block_vis(blocks_to_save, block_array, x, y, left_offset, right_offset, top_offset,
+                                 bottom_offset, vis, x_res, y_res):
     # calculate block visualization
     vis_block_array = calculate_block_visualization(dem_block_arr=block_array, vis=vis, x_res=x_res,
                                                     y_res=y_res)
-    # remove offset from visualization block
+    del block_array
+    # remove overlap from visualization block
     if right_offset == 0 and bottom_offset == 0:
         vis_block_array = vis_block_array[top_offset:, left_offset:]
     elif right_offset == 0:
@@ -108,9 +114,8 @@ def calculate_and_save_block_vis(block_array, vis_path, x, y, left_offset, right
     else:
         vis_block_array = vis_block_array[top_offset:-bottom_offset, left_offset:-right_offset]
 
-    # save block
-    # save_block_visualization(vis_block_arr=vis_block_array, out_data_set=out_data_set, x=x, y=y)
-    queue.put([vis_block_array, vis_path, x, y])
+    vis_block = rasterVisBlock(vis_block_array, x, y)
+    blocks_to_save.append(vis_block)
 
     del vis_block_array
 
@@ -122,55 +127,43 @@ def calculate_block_visualization(dem_block_arr, vis, x_res, y_res):
     return vis_arr
 
 
-def save_block_visualization(queue):
-    # vis_block_arr, out_data_set, x, y
+def save_block_visualization(vis_path, blocks_to_save):
+    out_data_set = gdal.Open(vis_path, gdal.GA_Update)
     while 1:
-        list_of_arg = queue.get()
-        # if kill stop saving data
-        if list_of_arg == 'kill':
-            break
-        # read parameters from queue
-        vis_block_arr = list_of_arg[0]
-        vis_path = list_of_arg[1]
-        x = list_of_arg[2]
-        y = list_of_arg[3]
-        try:
-            out_data_set = gdal.Open(vis_path, gdal.GA_Update)
-            out_data_set.GetRasterBand(1).WriteArray(vis_block_arr, x, y)
+        if len(blocks_to_save) > 0:
+            if blocks_to_save[0] == "kill":
+                out_data_set = None
+                break
+            # read parameters from queue
+            out_data_set.GetRasterBand(1).WriteArray(blocks_to_save[0].array, blocks_to_save[0].x,
+                                                     blocks_to_save[0].y)
             out_data_set.FlushCache()
-        except:  # TODO: solve it is not pythonic!
-            time.sleep(0.2)
-            out_data_set = gdal.Open(vis_path, gdal.GA_Update)
-            out_data_set.GetRasterBand(1).WriteArray(vis_block_arr, x, y)
-            out_data_set.FlushCache()
-        del vis_block_arr
-        del out_data_set
-        del list_of_arg
+            del blocks_to_save[0]
 
 
-def create_blank_raster(in_data_set, out_raster_path, bands=1, eType=6):
+def create_blank_raster(in_data_set, out_raster_path, bands=1, e_type=6):
     """Takes input data set and creates new raster. It copies input data set size, projection and geo info."""
     gtiff_driver = gdal.GetDriverByName("GTiff")
     band = in_data_set.GetRasterBand(1)
     x_size = band.XSize  # number of columns
     y_size = band.YSize  # number of rows
-    out_data_set = gtiff_driver.Create(out_raster_path, xsize=x_size, ysize=y_size, bands=1, eType=6,
+    out_data_set = gtiff_driver.Create(out_raster_path, xsize=x_size, ysize=y_size, bands=bands, eType=e_type,
                                        options=["BIGTIFF=IF_NEEDED"])
     out_data_set.SetProjection(in_data_set.GetProjection())
     out_data_set.SetGeoTransform(in_data_set.GetGeoTransform())
     out_data_set.FlushCache()
-    del out_data_set
+    out_data_set = None
 
 
 if __name__ == "__main__":
     start_time = time.time()
-    x_block_size = 1000
-    y_block_size = 1000
+    x_block_size = 2000
+    y_block_size = 2000
     save_multiprocess_vis(dem_path=r"D:\RVT_py\test\multiproces_test\srtm_39and40_03.tif",
                           vis_path=r"D:\RVT_py\test\multiproces_test\srtm_39and40_03_mp{}x{}.tif".format(x_block_size,
                                                                                                          y_block_size),
                           vis="hillshade",
-                          offset=5,
+                          overlap=5,
                           x_block_size=x_block_size,
                           y_block_size=y_block_size)
     end_time = time.time()
