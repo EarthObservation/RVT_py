@@ -7,14 +7,43 @@ import time
 
 
 class RasterVisBlock:
+    """Class for saving raster visualization block and its position in original raster."""
     def __init__(self, array, x, y):
         self.array = array
         self.x = x
         self.y = y
 
 
-def save_multiprocess_vis(dem_path, vis_path, vis, default, overlap, x_block_size, y_block_size):
-    data_set = gdal.Open(dem_path)
+def save_multiprocess_vis(dem_path, vis_path, vis, default, offset, x_block_size, y_block_size):
+    """
+    Function reads and splits dem raster to blocks and parallel compute selected visualization on each block.
+    Function is also parallel saving each block into output visualization raster. This function is suitable for really
+    big rasters, 10000x10000 or bigger.
+
+    Parameters
+    ----------
+    dem_path : str
+        Path to input dem file.
+    vis_path : str
+        Path to output visualization file (where you want to save output, file needs .tif ending).
+    vis : str
+        Selected visualization you want to compute: "hillshade, slope gradient, multiple directions hillshade,
+        simple local relief model, sky-view factor, anisotropic sky-view factor, openness - positive,
+        openness - negative, sky illumination, local dominance"
+    default : rvt.default.DefaultValues
+        Class where are all visualization parameters stored.
+    offset : int
+        Additional number of pixels on each side of a block when computing visualization (to remove block edges).
+    x_block_size : int
+        Size of a block in x direction.
+    y_block_size : int
+        Size of a block in y direction
+
+    Returns
+    -------
+    Function saves output visualization GTiff in vis_path.
+    """
+    data_set = gdal.Open(dem_path)  # Open dem raster
     if data_set.RasterCount != 1:
         raise Exception("rvt.multiproc.save_multiprocess_vis: Input raster has more bands than 1!")
     gt = data_set.GetGeoTransform()
@@ -29,13 +58,14 @@ def save_multiprocess_vis(dem_path, vis_path, vis, default, overlap, x_block_siz
     if vis == "multiple directions hillshade":
         nr_bands = default.mhs_nr_dir
 
-    # create out raster
+    # create blank out raster
     create_blank_raster(in_data_set=data_set, out_raster_path=vis_path, nr_bands=nr_bands, e_type=6)
 
-    # listener for saving data
+    # manager allows processes to all access same blocks_to_save list
     manager = mp.Manager()
-    blocks_to_save = manager.list()
+    blocks_to_save = manager.list()  # list where all processes are saving computed visualization blocks
 
+    # parallel process which is saving visualization blocks in output raster
     save_process = mp.Process(target=save_block_visualization, args=(vis_path, blocks_to_save, nr_bands))
     save_process.start()
 
@@ -54,31 +84,31 @@ def save_multiprocess_vis(dem_path, vis_path, vis, default, overlap, x_block_siz
             else:
                 cols = x_size - x
 
-            # get overlap for each block, check edges
+            # get offset for each block, check edges
             left_offset = 0
             right_offset = 0
             top_offset = 0
             bottom_offset = 0
-            if x != 0:  # left overlap
-                if x - overlap < 0:  # left overlap
+            if x != 0:  # left offset
+                if x - offset < 0:  # left overlap
                     left_offset = x
                 else:
-                    left_offset = overlap
-            if x + cols != x_size:  # right overlap
-                if x + cols + overlap > x_size:  # right overlap
+                    left_offset = offset
+            if x + cols != x_size:  # right offset
+                if x + cols + offset > x_size:  # right overlap
                     right_offset = x_size - x - cols
                 else:
-                    right_offset = overlap
-            if y != 0:  # apply top overlap
-                if y - overlap < 0:  # top overlap
+                    right_offset = offset
+            if y != 0:  # apply top offset
+                if y - offset < 0:  # top overlap
                     top_offset = y
                 else:
-                    top_offset = overlap
-            if y + rows != y_size:  # bottom overlap
-                if y + rows + overlap > y_size:  # bottom overlap
+                    top_offset = offset
+            if y + rows != y_size:  # bottom offset
+                if y + rows + offset > y_size:  # bottom overlap
                     bottom_offset = y_size - y - rows
                 else:
-                    bottom_offset = overlap
+                    bottom_offset = offset
 
             # reads block
             x_off = x - left_offset
@@ -87,35 +117,38 @@ def save_multiprocess_vis(dem_path, vis_path, vis, default, overlap, x_block_siz
             rows_off = rows + top_offset + bottom_offset
             block_array = np.array(data_set.GetRasterBand(1).ReadAsArray(x_off, y_off, cols_off, rows_off))
 
-            block_process = mp.Process(target=calculate_and_save_block_vis, args=(blocks_to_save, block_array, default,
-                                                                                  x, y, left_offset, right_offset,
-                                                                                  top_offset, bottom_offset, vis, x_res,
-                                                                                  y_res))
+            # create process for each block
+            block_process = mp.Process(target=calc_add_vis_block, args=(blocks_to_save, block_array, default, x, y,
+                                                                        left_offset, right_offset, top_offset,
+                                                                        bottom_offset, vis, x_res, y_res))
+            # start each process
             block_process.start()
+            # add block to blocks_processes from where save_process is saving them
             blocks_processes.append(block_process)
             blocks += 1
 
     for block_process in blocks_processes:
-        block_process.join()
-    blocks_to_save.append("kill")
+        block_process.join()  # wait block_process to finish
+    blocks_to_save.append("kill")  # when block_process finished stop saving process
     save_process.join()
     data_set = None
 
 
-def calculate_and_save_block_vis(blocks_to_save, block_array, default, x, y, left_offset, right_offset, top_offset,
-                                 bottom_offset, vis, x_res, y_res):
+def calc_add_vis_block(blocks_to_save, block_array, default, x, y, left_offset, right_offset, top_offset,
+                       bottom_offset, vis, x_res, y_res):
+    """Function calculates visualization on block, removes offset and adds block to list from where block is saved."""
     # calculate block visualization
     vis_block_array = calculate_block_visualization(dem_block_arr=block_array, vis=vis, default=default, x_res=x_res,
                                                     y_res=y_res)
     del block_array
-    # remove overlap from visualization block
+    # remove offset from visualization block
     if vis_block_array.ndim == 2:  # 2D array
         if right_offset == 0 and bottom_offset == 0:
             vis_block_array = vis_block_array[top_offset:, left_offset:]
         elif right_offset == 0:
             vis_block_array = vis_block_array[top_offset:-bottom_offset, left_offset:]
         elif bottom_offset == 0:
-            vis_block_array = vis_block_array[top_offset:, left_offset:-right_offset]
+            vis_block_array = vis_block_array[top_offset:, left_offset :-right_offset]
         else:
             vis_block_array = vis_block_array[top_offset:-bottom_offset, left_offset:-right_offset]
     else:  # 3D array, multi hillshade
@@ -135,6 +168,7 @@ def calculate_and_save_block_vis(blocks_to_save, block_array, default, x, y, lef
 
 
 def calculate_block_visualization(dem_block_arr, vis, default, x_res, y_res):
+    """Calculate visualization on Block."""
     vis_arr = None
     if vis.lower() == "hillshade":
         vis_arr = default.get_hillshade(dem_arr=dem_block_arr, resolution_x=x_res, resolution_y=y_res)
@@ -168,23 +202,24 @@ def calculate_block_visualization(dem_block_arr, vis, default, x_res, y_res):
 
 
 def save_block_visualization(vis_path, blocks_to_save, nr_bands=1):
+    """Takes first block from blocks_to_save list and saves it to output raster then
+     removes it form list."""
     out_data_set = gdal.Open(vis_path, gdal.GA_Update)
     while 1:
         if len(blocks_to_save) > 0:
-            if blocks_to_save[0] == "kill":
+            if blocks_to_save[0] == "kill":  # stops function/process
                 out_data_set = None
                 break
-            # read parameters from queue
-            if nr_bands == 1:
+            if nr_bands == 1:  # one band
                 out_data_set.GetRasterBand(1).WriteArray(blocks_to_save[0].array, blocks_to_save[0].x,
                                                          blocks_to_save[0].y)
                 out_data_set.FlushCache()
-            else:
+            else:  # multiple bands
                 for i_band in range(nr_bands):
                     band = i_band + 1
                     out_data_set.GetRasterBand(band).WriteArray(blocks_to_save[0].array[i_band], blocks_to_save[0].x,
                                                                 blocks_to_save[0].y)
-            del blocks_to_save[0]
+            del blocks_to_save[0]  # remove block from blocks_to_save list
 
 
 def create_blank_raster(in_data_set, out_raster_path, nr_bands=1, e_type=6):
@@ -206,12 +241,12 @@ if __name__ == "__main__":
     start_time = time.time()
     x_block_size = 256
     y_block_size = 256
-    save_multiprocess_vis(dem_path=r"test_data\TM1_564_146.tif",
-                          vis_path=r"test_data\TM1_564_146_multi_proc_tst.tif".format(
+    save_multiprocess_vis(dem_path=r"..\test_data\TM1_564_146.tif",
+                          vis_path=r"..\test_data\TM1_564_146_multi_proc_tst.tif".format(
                               x_block_size, y_block_size),
                           vis="hillshade",
                           default=default,
-                          overlap=5,
+                          offset=5,
                           x_block_size=x_block_size,
                           y_block_size=y_block_size)
     end_time = time.time()
