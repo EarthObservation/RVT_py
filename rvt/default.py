@@ -1474,7 +1474,7 @@ class DefaultValues:
 
     def create_log_file(self, dem_path, custom_dir=None, compute_time=None):
         """Creates log file in custom_dir, if custom_dir=None it creates it in dem directory (dem_path).
-        Be aware, all default parameters have to be right!"""
+        Be aware, all default parameters have to be right! Parameter compute_time is in seconds."""
         dict_arr_res = get_raster_arr(raster_path=dem_path)
         resolution = dict_arr_res["resolution"]
         arr_shape = np.array(dict_arr_res["array"]).shape
@@ -1683,7 +1683,7 @@ class DefaultValues:
             dat.write("\n")
 
         if compute_time is not None:
-            dat.write("# Computation time: {}".format(compute_time))
+            dat.write("# Computation time: {:.3f}s".format(compute_time))
         dat.close()
 
 
