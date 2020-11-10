@@ -558,17 +558,14 @@ def create_blank_raster(in_data_set, out_raster_path, nr_bands=1, e_type=6):
     out_data_set.FlushCache()
     out_data_set = None
 
+# TEST
 # if __name__ == "__main__":
 #     default = rvt.default.DefaultValues()
 #     start_time = time.time()
 #     x_block_size = 256
 #     y_block_size = 256
 #     save_multiprocess_vis(dem_path=r"..\test_data\TM1_564_146.tif",
-#                           vis_float_path=r"..\test_data\TM1_564_146_multi_proc_tst.tif".format(
-#                               x_block_size, y_block_size),
-#                           vis_8bit_path=r"..\test_data\TM1_564_146_multi_proc_8bit_tst.tif".format(
-#                               x_block_size, y_block_size),
-#                           vis="local dominance",
+#                           vis="hillshade",
 #                           default=default,
 #                           save_float=True,
 #                           save_8bit=True,
