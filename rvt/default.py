@@ -204,7 +204,7 @@ class DefaultValues:
         self.ld_bytscl = (0.5, 1.8)
         # multiprocessing
         self.multiproc_size_limit = 10000*10000  # if arr size > multiproc_size_limit, it uses multiprocessing
-        self.multiproc_block_size = (5000, 5000)  # size of single block (x_size, y_size)
+        self.multiproc_block_size = (4000, 4000)  # size of single block (x_size, y_size)
 
     def save_default_to_file(self, file_path=None):
         """Saves default attributes into .json file."""
@@ -707,6 +707,63 @@ class DefaultValues:
         return os.path.normpath(os.path.join(os.path.dirname(dem_path),
                                              self.get_local_dominance_file_name(dem_path, bit8)))
 
+    def get_vis_file_name(self, dem_path, vis, bit8=False):
+        """Returns vis (visualization) file name. Dem name (from dem_path) with added vis parameters.
+        If bit8 it returns 8bit file name. Parameter vis can be: "hillshade", "slope gradient",
+        "multiple directions hillshade", "simple local relief model", "sky-view factor", "anisotropic sky-view factor",
+        "openness - positive", "openness - negative", "sky illumination", "local dominance"."""
+        if vis.lower() == "hillshade":
+            return self.get_hillshade_file_name(dem_path=dem_path, bit8=bit8)
+        elif vis.lower() == "multiple directions hillshade":
+            return self.get_multi_hillshade_file_name(dem_path=dem_path, bit8=bit8)
+        elif vis.lower() == "slope gradient":
+            return self.get_slope_file_name(dem_path=dem_path, bit8=bit8)
+        elif vis.lower() == "simple local relief model":
+            return self.get_slrm_file_name(dem_path=dem_path, bit8=bit8)
+        elif vis.lower() == "sky-view factor":
+            return self.get_svf_file_name(dem_path=dem_path, bit8=bit8)
+        elif vis.lower() == "anisotropic sky-view factor":
+            return self.get_asvf_file_name(dem_path=dem_path, bit8=bit8)
+        elif vis.lower() == "openness - positive":
+            return self.get_opns_file_name(dem_path=dem_path, bit8=bit8)
+        elif vis.lower() == "openness - negative":
+            return self.get_neg_opns_file_name(dem_path=dem_path, bit8=bit8)
+        elif vis.lower() == "sky illumination":
+            return self.get_sky_illumination_file_name(dem_path=dem_path, bit8=bit8)
+        elif vis.lower() == "local dominance":
+            return self.get_local_dominance_file_name(dem_path=dem_path, bit8=bit8)
+        else:
+            raise Exception("rvt.default.DefaultValues.get_vis_file_name: Wrong vis (visualization) parameter!")
+
+    def get_vis_path(self, dem_path, vis, bit8=False):
+        """Returns vis (visualization) path. Generates vis name which is dem name (from dem_path) with added vis
+        parameters. Vis name added in the same directory as dem (dem_path). If bit8 it returns 8bit path.
+        Parameter vis can be: "hillshade", "slope gradient", "multiple directions hillshade",
+        simple local relief model", "sky-view factor", "anisotropic sky-view factor", "openness - positive",
+        "openness - negative", "sky illumination", "local dominance"."""
+        if vis.lower() == "hillshade":
+            return self.get_hillshade_path(dem_path=dem_path, bit8=bit8)
+        elif vis.lower() == "multiple directions hillshade":
+            return self.get_multi_hillshade_path(dem_path=dem_path, bit8=bit8)
+        elif vis.lower() == "slope gradient":
+            return self.get_slope_path(dem_path=dem_path, bit8=bit8)
+        elif vis.lower() == "simple local relief model":
+            return self.get_slrm_path(dem_path=dem_path, bit8=bit8)
+        elif vis.lower() == "sky-view factor":
+            return self.get_svf_path(dem_path=dem_path, bit8=bit8)
+        elif vis.lower() == "anisotropic sky-view factor":
+            return self.get_asvf_path(dem_path=dem_path, bit8=bit8)
+        elif vis.lower() == "openness - positive":
+            return self.get_opns_path(dem_path=dem_path, bit8=bit8)
+        elif vis.lower() == "openness - negative":
+            return self.get_neg_opns_path(dem_path=dem_path, bit8=bit8)
+        elif vis.lower() == "sky illumination":
+            return self.get_sky_illumination_path(dem_path=dem_path, bit8=bit8)
+        elif vis.lower() == "local dominance":
+            return self.get_local_dominance_path(dem_path=dem_path, bit8=bit8)
+        else:
+            raise Exception("rvt.default.DefaultValues.get_vis_file_name: Wrong vis (visualization) parameter!")
+
     def float_to_8bit(self, float_arr, vis, x_res=None, y_res=None):
         """Converts (byte scale) float visualization to 8bit. Resolution (x_res, y_res) needed only for multiple
          directions hillshade"""
@@ -789,8 +846,8 @@ class DefaultValues:
         dem_size = get_raster_size(raster_path=dem_path)
         if dem_size[0] * dem_size[1] > self.multiproc_size_limit:  # multiprocess, calculating on blocks
             rvt.multiproc.save_multiprocess_vis(dem_path=dem_path, vis="slope gradient", default=self,
-                                                save_float=save_float, save_8bit=save_8bit, vis_float_path=slope_path,
-                                                vis_8bit_path=slope_8bit_path,
+                                                custom_dir=custom_dir,
+                                                save_float=save_float, save_8bit=save_8bit,
                                                 x_block_size=self.multiproc_block_size[0],
                                                 y_block_size=self.multiproc_block_size[1])
             return 1
@@ -861,9 +918,8 @@ class DefaultValues:
         dem_size = get_raster_size(raster_path=dem_path)
         if dem_size[0] * dem_size[1] > self.multiproc_size_limit:  # multiprocess, calculating on blocks
             rvt.multiproc.save_multiprocess_vis(dem_path=dem_path, vis="hillshade", default=self,
+                                                custom_dir=custom_dir,
                                                 save_float=save_float, save_8bit=save_8bit,
-                                                vis_float_path=hillshade_path,
-                                                vis_8bit_path=hillshade_8bit_path,
                                                 x_block_size=self.multiproc_block_size[0],
                                                 y_block_size=self.multiproc_block_size[1])
             return 1
@@ -935,9 +991,8 @@ class DefaultValues:
         dem_size = get_raster_size(raster_path=dem_path)
         if dem_size[0] * dem_size[1] > self.multiproc_size_limit:  # multiprocess, calculating on blocks
             rvt.multiproc.save_multiprocess_vis(dem_path=dem_path, vis="multiple directions hillshade", default=self,
+                                                custom_dir=custom_dir,
                                                 save_float=save_float, save_8bit=save_8bit,
-                                                vis_float_path=multi_hillshade_path,
-                                                vis_8bit_path=multi_hillshade_8bit_path,
                                                 x_block_size=self.multiproc_block_size[0],
                                                 y_block_size=self.multiproc_block_size[1])
             return 1
@@ -1008,9 +1063,8 @@ class DefaultValues:
         dem_size = get_raster_size(raster_path=dem_path)
         if dem_size[0] * dem_size[1] > self.multiproc_size_limit:  # multiprocess, calculating on blocks
             rvt.multiproc.save_multiprocess_vis(dem_path=dem_path, vis="simple local relief model", default=self,
+                                                custom_dir=custom_dir,
                                                 save_float=save_float, save_8bit=save_8bit,
-                                                vis_float_path=slrm_path,
-                                                vis_8bit_path=slrm_8bit_path,
                                                 x_block_size=self.multiproc_block_size[0],
                                                 y_block_size=self.multiproc_block_size[1])
             return 1
@@ -1103,59 +1157,70 @@ class DefaultValues:
                     and not self.overwrite:
                 return 0
 
-        dict_arr_res = get_raster_arr(raster_path=dem_path)
-        dem_arr = dict_arr_res["array"]
-        x_res = dict_arr_res["resolution"][0]
-        y_res = dict_arr_res["resolution"][1]
-        if x_res != y_res:
-            raise Exception("rvt.default.DefaultValues.save_sky_view_factor: dem resolution is not the same in x and y"
-                            " directions!")
-        dict_svf_asvf_opns = self.get_sky_view_factor(dem_arr=dem_arr, resolution=x_res, compute_svf=save_svf,
-                                                      compute_asvf=save_asvf, compute_opns=save_opns)
-        if save_float:
-            if save_svf:
-                if os.path.isfile(svf_path) and not self.overwrite:  # file exists and overwrite=0
-                    pass
-                else:  # svf_path, file doesn't exists or exists and overwrite=1
-                    save_raster(src_raster_path=dem_path, out_raster_path=svf_path,
-                                out_raster_arr=dict_svf_asvf_opns["svf"].astype('float32'))
-            if save_asvf:
-                if os.path.isfile(asvf_path) and not self.overwrite:  # file exists and overwrite=0
-                    pass
-                else:  # asvf_path, file doesn't exists or exists and overwrite=1
-                    save_raster(src_raster_path=dem_path, out_raster_path=asvf_path,
-                                out_raster_arr=dict_svf_asvf_opns["asvf"].astype('float32'))
-            if save_opns:
-                if os.path.isfile(opns_path) and not self.overwrite:  # file exists and overwrite=0
-                    pass
-                else:  # opns_path, file doesn't exists or exists and overwrite=1
-                    save_raster(src_raster_path=dem_path, out_raster_path=opns_path,
-                                out_raster_arr=dict_svf_asvf_opns["opns"].astype('float32'))
-        if save_8bit:
-            if save_svf:
-                if os.path.isfile(svf_8bit_path) and not self.overwrite:  # file exists and overwrite=0
-                    pass
-                else:  # svf_8bit_path, file doesn't exists or exists and overwrite=1
-                    svf_8bit_arr = self.float_to_8bit(float_arr=dict_svf_asvf_opns["svf"], vis="sky-view factor")
-                    save_raster(src_raster_path=dem_path, out_raster_path=svf_8bit_path,
-                                out_raster_arr=svf_8bit_arr, e_type=1)
-            if save_asvf:
-                if os.path.isfile(asvf_8bit_path) and not self.overwrite:  # file exists and overwrite=0
-                    pass
-                else:  # asvf_8bit_path, file doesn't exists or exists and overwrite=1
-                    asvf_8bit_arr = self.float_to_8bit(float_arr=dict_svf_asvf_opns["asvf"],
-                                                      vis="anisotropic sky-view factor")
-                    save_raster(src_raster_path=dem_path, out_raster_path=asvf_8bit_path,
-                                out_raster_arr=asvf_8bit_arr, e_type=1)
-            if save_opns:
-                if os.path.isfile(opns_8bit_path) and not self.overwrite:  # file exists and overwrite=0
-                    pass
-                else:  # opns_8bit_path, file doesn't exists or exists and overwrite=1
-                    opns_8bit_arr = self.float_to_8bit(float_arr=dict_svf_asvf_opns["opns"],
-                                                       vis="openness - positive")
-                    save_raster(src_raster_path=dem_path, out_raster_path=opns_8bit_path,
-                                out_raster_arr=opns_8bit_arr, e_type=1)
-        return 1
+        dem_size = get_raster_size(raster_path=dem_path)
+        if dem_size[0] * dem_size[1] > self.multiproc_size_limit:  # multiprocess, calculating on blocks
+            self.svf_compute = int(save_svf)
+            self.asvf_compute = int(save_asvf)
+            self.pos_opns_compute = int(save_opns)
+            rvt.multiproc.save_multiprocess_vis(dem_path=dem_path, vis="sky-view factor default", default=self,
+                                                custom_dir=custom_dir, save_float=save_float, save_8bit=save_8bit,
+                                                x_block_size=self.multiproc_block_size[0],
+                                                y_block_size=self.multiproc_block_size[1])
+            return 1
+        else:
+            dict_arr_res = get_raster_arr(raster_path=dem_path)
+            dem_arr = dict_arr_res["array"]
+            x_res = dict_arr_res["resolution"][0]
+            y_res = dict_arr_res["resolution"][1]
+            if x_res != y_res:
+                raise Exception("rvt.default.DefaultValues.save_sky_view_factor: dem resolution is not the same in x and y"
+                                " directions!")
+            dict_svf_asvf_opns = self.get_sky_view_factor(dem_arr=dem_arr, resolution=x_res, compute_svf=save_svf,
+                                                          compute_asvf=save_asvf, compute_opns=save_opns)
+            if save_float:
+                if save_svf:
+                    if os.path.isfile(svf_path) and not self.overwrite:  # file exists and overwrite=0
+                        pass
+                    else:  # svf_path, file doesn't exists or exists and overwrite=1
+                        save_raster(src_raster_path=dem_path, out_raster_path=svf_path,
+                                    out_raster_arr=dict_svf_asvf_opns["svf"].astype('float32'))
+                if save_asvf:
+                    if os.path.isfile(asvf_path) and not self.overwrite:  # file exists and overwrite=0
+                        pass
+                    else:  # asvf_path, file doesn't exists or exists and overwrite=1
+                        save_raster(src_raster_path=dem_path, out_raster_path=asvf_path,
+                                    out_raster_arr=dict_svf_asvf_opns["asvf"].astype('float32'))
+                if save_opns:
+                    if os.path.isfile(opns_path) and not self.overwrite:  # file exists and overwrite=0
+                        pass
+                    else:  # opns_path, file doesn't exists or exists and overwrite=1
+                        save_raster(src_raster_path=dem_path, out_raster_path=opns_path,
+                                    out_raster_arr=dict_svf_asvf_opns["opns"].astype('float32'))
+            if save_8bit:
+                if save_svf:
+                    if os.path.isfile(svf_8bit_path) and not self.overwrite:  # file exists and overwrite=0
+                        pass
+                    else:  # svf_8bit_path, file doesn't exists or exists and overwrite=1
+                        svf_8bit_arr = self.float_to_8bit(float_arr=dict_svf_asvf_opns["svf"], vis="sky-view factor")
+                        save_raster(src_raster_path=dem_path, out_raster_path=svf_8bit_path,
+                                    out_raster_arr=svf_8bit_arr, e_type=1)
+                if save_asvf:
+                    if os.path.isfile(asvf_8bit_path) and not self.overwrite:  # file exists and overwrite=0
+                        pass
+                    else:  # asvf_8bit_path, file doesn't exists or exists and overwrite=1
+                        asvf_8bit_arr = self.float_to_8bit(float_arr=dict_svf_asvf_opns["asvf"],
+                                                          vis="anisotropic sky-view factor")
+                        save_raster(src_raster_path=dem_path, out_raster_path=asvf_8bit_path,
+                                    out_raster_arr=asvf_8bit_arr, e_type=1)
+                if save_opns:
+                    if os.path.isfile(opns_8bit_path) and not self.overwrite:  # file exists and overwrite=0
+                        pass
+                    else:  # opns_8bit_path, file doesn't exists or exists and overwrite=1
+                        opns_8bit_arr = self.float_to_8bit(float_arr=dict_svf_asvf_opns["opns"],
+                                                           vis="openness - positive")
+                        save_raster(src_raster_path=dem_path, out_raster_path=opns_8bit_path,
+                                    out_raster_arr=opns_8bit_arr, e_type=1)
+            return 1
 
     def get_neg_opns(self, dem_arr, resolution):
         dem_arr = -1 * dem_arr
@@ -1206,9 +1271,7 @@ class DefaultValues:
         dem_size = get_raster_size(raster_path=dem_path)
         if dem_size[0] * dem_size[1] > self.multiproc_size_limit:  # multiprocess, calculating on blocks
             rvt.multiproc.save_multiprocess_vis(dem_path=dem_path, vis="openness - negative", default=self,
-                                                save_float=save_float, save_8bit=save_8bit,
-                                                vis_float_path=neg_opns_path,
-                                                vis_8bit_path=neg_opns_8bit_path,
+                                                custom_dir=custom_dir, save_float=save_float, save_8bit=save_8bit,
                                                 x_block_size=self.multiproc_block_size[0],
                                                 y_block_size=self.multiproc_block_size[1])
             return 1
@@ -1285,9 +1348,7 @@ class DefaultValues:
         dem_size = get_raster_size(raster_path=dem_path)
         if dem_size[0] * dem_size[1] > self.multiproc_size_limit:  # multiprocess, calculating on blocks
             rvt.multiproc.save_multiprocess_vis(dem_path=dem_path, vis="sky illumination", default=self,
-                                                save_float=save_float, save_8bit=save_8bit,
-                                                vis_float_path=sky_illumination_path,
-                                                vis_8bit_path=sky_illumination_8bit_path,
+                                                custom_dir=custom_dir, save_float=save_float, save_8bit=save_8bit,
                                                 x_block_size=self.multiproc_block_size[0],
                                                 y_block_size=self.multiproc_block_size[1])
             return 1
@@ -1363,9 +1424,7 @@ class DefaultValues:
         dem_size = get_raster_size(raster_path=dem_path)
         if dem_size[0] * dem_size[1] > self.multiproc_size_limit:  # multiprocess, calculating on blocks
             rvt.multiproc.save_multiprocess_vis(dem_path=dem_path, vis="local dominance", default=self,
-                                                save_float=save_float, save_8bit=save_8bit,
-                                                vis_float_path=local_dominance_path,
-                                                vis_8bit_path=local_dominance_8bit_path,
+                                                custom_dir=custom_dir, save_float=save_float, save_8bit=save_8bit,
                                                 x_block_size=self.multiproc_block_size[0],
                                                 y_block_size=self.multiproc_block_size[1])
             return 1
