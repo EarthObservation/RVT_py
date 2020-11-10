@@ -90,10 +90,10 @@ def save_multiprocess_vis(dem_path, vis, default, custom_dir=None, save_float=Tr
             vis_8bit_path = default.get_vis_path(dem_path=dem_path, vis=vis, bit8=True)
         else:
             vis_float_path = os.path.abspath(os.path.join(
-                os.path.basename(dem_path),
+                os.path.dirname(dem_path),
                 default.get_vis_file_name(dem_path=dem_path, vis=vis, bit8=False)))
             vis_8bit_path = os.path.abspath(os.path.join(
-                os.path.basename(dem_path),
+                os.path.dirname(dem_path),
                 default.get_vis_file_name(dem_path=dem_path, vis=vis, bit8=True)))
         # create blank out raster
         if save_float:
@@ -110,10 +110,10 @@ def save_multiprocess_vis(dem_path, vis, default, custom_dir=None, save_float=Tr
                 vis_svf_8bit_path = default.get_vis_path(dem_path=dem_path, vis="sky-view factor", bit8=True)
             else:
                 vis_svf_float_path = os.path.abspath(os.path.join(
-                    os.path.basename(dem_path),
+                    os.path.dirname(dem_path),
                     default.get_vis_file_name(dem_path=dem_path, vis="sky-view factor", bit8=False)))
                 vis_svf_8bit_path = os.path.abspath(os.path.join(
-                    os.path.basename(dem_path),
+                    os.path.dirname(dem_path),
                     default.get_vis_file_name(dem_path=dem_path, vis="sky-view factor", bit8=True)))
             # create blank out raster
             if save_float:
@@ -132,10 +132,10 @@ def save_multiprocess_vis(dem_path, vis, default, custom_dir=None, save_float=Tr
                                                           bit8=True)
             else:
                 vis_asvf_float_path = os.path.abspath(os.path.join(
-                    os.path.basename(dem_path),
+                    os.path.dirname(dem_path),
                     default.get_vis_file_name(dem_path=dem_path, vis="anisotropic sky-view factor", bit8=False)))
                 vis_asvf_8bit_path = os.path.abspath(os.path.join(
-                    os.path.basename(dem_path),
+                    os.path.dirname(dem_path),
                     default.get_vis_file_name(dem_path=dem_path, vis="anisotropic sky-view factor", bit8=True)))
             # create blank out raster
             if save_float:
@@ -154,10 +154,10 @@ def save_multiprocess_vis(dem_path, vis, default, custom_dir=None, save_float=Tr
                                                               bit8=True)
             else:
                 vis_pos_opns_float_path = os.path.abspath(os.path.join(
-                    os.path.basename(dem_path),
+                    os.path.dirname(dem_path),
                     default.get_vis_file_name(dem_path=dem_path, vis="openness - positive", bit8=False)))
                 vis_pos_opns_8bit_path = os.path.abspath(os.path.join(
-                    os.path.basename(dem_path),
+                    os.path.dirname(dem_path),
                     default.get_vis_file_name(dem_path=dem_path, vis="openness - positive", bit8=True)))
             # create blank out raster
             if save_float:
