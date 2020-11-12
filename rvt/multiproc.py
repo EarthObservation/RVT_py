@@ -191,8 +191,6 @@ def save_multiprocess_vis(dem_path, vis, default, custom_dir=None, save_float=Tr
                                                                                       nr_bands_8bit))
                 save_8bit_process.start()
         else:  # vis == "sky-view factor default"
-            # manager allows processes to all access same blocks_to_save list
-            manager = mp.Manager()
             if save_svf:
                 if save_float:
                     save_svf_float_process = mp.Process(target=save_block_visualization, args=(vis_svf_float_path,
