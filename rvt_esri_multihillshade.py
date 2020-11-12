@@ -21,7 +21,7 @@ import numpy as np
 import rvt.vis
 
 
-class RVTMultiHillshade():
+class RVTMultiHillshade:
     def __init__(self):
         self.name = "RVT multi hillshade"
         self.description = "Calculates multiple directions hillshade."
@@ -29,6 +29,7 @@ class RVTMultiHillshade():
         self.nr_directions = 16.
         self.elevation = 35.
         self.calc_8_bit = False
+        self.padding = 1
 
     def getParameterInfo(self):
         return [
@@ -74,14 +75,14 @@ class RVTMultiHillshade():
             'invalidateProperties': 2 | 4 | 8,
             'inputMask': False,
             'resampling': False,
-            'padding': 0
+            'padding': self.padding
         }
 
     def updateRasterInfo(self, **kwargs):
         kwargs['output_info']['noData'] = -3.4028235e+038
         kwargs['output_info']['pixelType'] = 'f4'
         kwargs['output_info']['histogram'] = ()
-        kwargs['output_info']['statistics'] = int(self.nr_directions) * ({'minimum': -1, 'maximum': 1}, )
+        kwargs['output_info']['statistics'] = int(self.nr_directions) * ({'minimum': -1, 'maximum': 1},)
         self.prepare(nr_directions=kwargs.get('nr_directions'), elevation=kwargs.get("sun_elevation"),
                      calc_8_bit=kwargs.get("calc_8_bit"))
         if self.calc_8_bit:
@@ -108,17 +109,17 @@ class RVTMultiHillshade():
                                             sun_azimuth=90, sun_elevation=self.elevation,
                                             slope=dict_slp_asp["slope"], aspect=dict_slp_asp["aspect"])
             hillshade_rgb = np.array([hillshade_r, hillshade_g, hillshade_b])
+            hillshade_rgb = hillshade_rgb[:, self.padding:-self.padding, self.padding:-self.padding]  # remove padding
             pixelBlocks['output_pixels'] = hillshade_rgb.astype(props['pixelType'], copy=False)
-            return pixelBlocks
         else:  # calc nr_directions
             multihillshade = rvt.vis.multi_hillshade(dem=dem, resolution_x=pixel_size[0], resolution_y=pixel_size[1],
-                                                 nr_directions=self.nr_directions, sun_elevation=self.elevation,
-                                                 slope=dict_slp_asp["slope"], aspect=dict_slp_asp["aspect"])
+                                                     nr_directions=self.nr_directions, sun_elevation=self.elevation,
+                                                     slope=dict_slp_asp["slope"], aspect=dict_slp_asp["aspect"])
+            multihillshade = multihillshade[:, self.padding:-self.padding, self.padding:-self.padding]  # remove padding
             pixelBlocks['output_pixels'] = multihillshade.astype(props['pixelType'], copy=False)
-            return pixelBlocks
+        return pixelBlocks
 
     def prepare(self, nr_directions=16, elevation=35, calc_8_bit=False):
         self.nr_directions = int(nr_directions)
         self.elevation = elevation
         self.calc_8_bit = calc_8_bit
-

@@ -21,13 +21,14 @@ import numpy as np
 import rvt.vis
 
 
-class RVTSlope():
+class RVTSlope:
     def __init__(self):
         self.name = "RVT slope"
         self.description = "Calculates slope(gradient)."
         # default values
         self.ve_factor = 1.
         self.output_unit = "degree"
+        self.padding = 1
 
     def getParameterInfo(self):
         return [
@@ -65,7 +66,7 @@ class RVTSlope():
             'invalidateProperties': 2 | 4 | 8,
             'inputMask': False,
             'resampling': False,
-            'padding': 0
+            'padding': self.padding
         }
 
     def updateRasterInfo(self, **kwargs):
@@ -86,7 +87,7 @@ class RVTSlope():
 
         dict_slp_asp = rvt.vis.slope_aspect(dem=dem, resolution_x=pixel_size[0], resolution_y=pixel_size[1],
                                             ve_factor=self.ve_factor, output_units=self.output_unit)
-        slope = dict_slp_asp["slope"]
+        slope = dict_slp_asp["slope"][self.padding:-self.padding, self.padding:-self.padding]
 
         pixelBlocks['output_pixels'] = slope.astype(props['pixelType'], copy=False)
         return pixelBlocks

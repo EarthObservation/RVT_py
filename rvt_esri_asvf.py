@@ -32,6 +32,7 @@ class RVTASvf:
         self.noise = "0-don't remove"  # in prepare changed to int
         self.level = "1-low"  # in prepare changed to int
         self.direction = 315.
+        self.padding = int(self.max_rad/2)
 
     def getParameterInfo(self):
         return [
@@ -94,7 +95,7 @@ class RVTASvf:
             'invalidateProperties': 2 | 4 | 8,
             'inputMask': False,
             'resampling': False,
-            'padding': 0
+            'padding': self.padding
         }
 
     def updateRasterInfo(self, **kwargs):
@@ -118,7 +119,7 @@ class RVTASvf:
         dict_asvf = rvt.vis.sky_view_factor(dem=dem, resolution=pixel_size[0], compute_svf=False, compute_asvf=True,
                                             compute_opns=False, svf_n_dir=self.nr_directions, svf_r_max=self.max_rad,
                                             svf_noise=self.noise, asvf_level=self.level, asvf_dir=self.direction)
-        asvf = dict_asvf["asvf"]
+        asvf = dict_asvf["asvf"][self.padding:-self.padding, self.padding:-self.padding]  # remove padding
         pixelBlocks['output_pixels'] = asvf.astype(props['pixelType'], copy=False)
         return pixelBlocks
 
@@ -128,3 +129,4 @@ class RVTASvf:
         self.noise = int(noise[0])
         self.direction = int(direction)
         self.level = int(level[0])
+        self.padding = int(max_rad/2)

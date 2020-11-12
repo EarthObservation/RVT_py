@@ -21,13 +21,14 @@ import numpy as np
 import rvt.vis
 
 
-class RVTHillshade():
+class RVTHillshade:
     def __init__(self):
         self.name = "RVT hillshade"
         self.description = "Calculates hillshade."
         # default values
         self.azimuth = 315.
         self.elevation = 35.
+        self.padding = 1
 
     def getParameterInfo(self):
         return [
@@ -64,7 +65,7 @@ class RVTHillshade():
             'invalidateProperties': 2 | 4 | 8,
             'inputMask': False,
             'resampling': False,
-            'padding': 0
+            'padding': self.padding
         }
 
     def updateRasterInfo(self, **kwargs):
@@ -85,6 +86,7 @@ class RVTHillshade():
         hillshade = rvt.vis.hillshade(dem=dem, resolution_x=pixel_size[0],
                                       resolution_y=pixel_size[1], sun_azimuth=self.azimuth,
                                       sun_elevation=self.elevation)
+        hillshade = hillshade[self.padding:-self.padding, self.padding:-self.padding]  # remove padding
         pixelBlocks['output_pixels'] = hillshade.astype(props['pixelType'], copy=False)
         return pixelBlocks
 

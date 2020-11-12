@@ -32,6 +32,7 @@ class RVTLocalDominance:
         self.rad_inc = 1.
         self.anglr_res = 15.
         self.observer_h = 1.7
+        self.padding = int(self.max_rad/2)
 
     def getParameterInfo(self):
         return [
@@ -94,7 +95,7 @@ class RVTLocalDominance:
             'invalidateProperties': 2 | 4 | 8,
             'inputMask': False,
             'resampling': False,
-            'padding': 0
+            'padding': self.padding
         }
 
     def updateRasterInfo(self, **kwargs):
@@ -116,6 +117,7 @@ class RVTLocalDominance:
         local_dominance = rvt.vis.local_dominance(dem=dem, min_rad=self.min_rad, max_rad=self.max_rad,
                                                   rad_inc=self.rad_inc, angular_res=self.anglr_res,
                                                   observer_height=self.observer_h)
+        local_dominance = local_dominance[self.padding:-self.padding, self.padding:-self.padding ]  # remove padding
         pixelBlocks['output_pixels'] = local_dominance.astype(props['pixelType'], copy=False)
         return pixelBlocks
 
@@ -125,3 +127,4 @@ class RVTLocalDominance:
         self.rad_inc = int(rad_inc)
         self.anglr_res = int(anglr_res)
         self.observer_h = float(observer_h)
+        self.padding = int(max_rad/2)

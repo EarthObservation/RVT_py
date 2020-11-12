@@ -30,6 +30,7 @@ class RVTOpenness:
         self.max_rad = 10.
         self.noise = "0-don't remove"
         self.pos_neg = "Positive"
+        self.padding = int(self.max_rad/2)
 
     def getParameterInfo(self):
         return [
@@ -85,7 +86,7 @@ class RVTOpenness:
             'invalidateProperties': 2 | 4 | 8,
             'inputMask': False,
             'resampling': False,
-            'padding': 0
+            'padding': self.padding
         }
 
     def updateRasterInfo(self, **kwargs):
@@ -111,7 +112,7 @@ class RVTOpenness:
         dict_opns = rvt.vis.sky_view_factor(dem=dem, resolution=pixel_size[0], compute_svf=False, compute_asvf=False,
                                             compute_opns=True, svf_n_dir=self.nr_directions, svf_r_max=self.max_rad,
                                             svf_noise=self.noise)
-        opns = dict_opns["opns"]
+        opns = dict_opns["opns"][self.padding:-self.padding, self.padding:-self.padding]
 
         pixelBlocks['output_pixels'] = opns.astype(props['pixelType'], copy=False)
         return pixelBlocks
@@ -121,3 +122,4 @@ class RVTOpenness:
         self.max_rad = int(max_rad)
         self.noise = int(noise[0])
         self.pos_neg = pos_neg
+        self.padding = int(max_rad/2)
