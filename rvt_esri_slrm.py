@@ -28,7 +28,7 @@ class RVTSlrm:
         self.description = "Calculates simple local relief model."
         # default values
         self.radius_cell = 20.
-        self.padding = int(self.radius_cell/2)
+        self.padding = int(self.radius_cell)
 
     def getParameterInfo(self):
         return [
@@ -79,5 +79,5 @@ class RVTSlrm:
 
     def prepare(self, radius_cell=20.):
         self.radius_cell = int(radius_cell)
-        self.padding = int(radius_cell/2)
+        self.padding = int(radius_cell)
 
