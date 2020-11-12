@@ -309,21 +309,21 @@ def slrm(dem,
     dem[dem > 2000] = np.float64(np.NaN)
 
     # mean filter
-    nr_rolls = int(radius_cell)  # number of rools in each direction
-    dem_padded = np.pad(array=dem, pad_width=nr_rolls, mode="edge")  # padding
+    radius_cell = int(radius_cell)  # nr_rolls in each direction
+    dem_padded = np.pad(array=dem, pad_width=radius_cell, mode="edge")  # padding
     slrm_out = np.copy(dem_padded)
-    for i_y_roll in range(nr_rolls):
+    for i_y_roll in range(radius_cell):
         roll = i_y_roll + 1  # y direction roll
         slrm_out += np.roll(np.copy(dem_padded), roll, axis=0)  # roll positive direction
         slrm_out += np.roll(np.copy(dem_padded), -roll, axis=0)  # roll negative direction
     y_rolls_sum = np.copy(slrm_out)  # sum of all rolls in y direction
-    for i_x_roll in range(nr_rolls):  # x direction roll
+    for i_x_roll in range(radius_cell):  # x direction roll
         roll = i_x_roll + 1
         slrm_out += np.roll(np.copy(y_rolls_sum), roll, axis=1)  # roll positive direction
         slrm_out += np.roll(np.copy(y_rolls_sum), -roll, axis=1)  # roll negative direction
     del y_rolls_sum
-    slrm_out = slrm_out / ((2*nr_rolls+1)**2)  # calculate mean radius_cell*radius_cell
-    slrm_out = slrm_out[nr_rolls:-nr_rolls, nr_rolls:-nr_rolls]
+    slrm_out = slrm_out / ((2*radius_cell+1)**2)  # calculate mean, 1=current pixel
+    slrm_out = slrm_out[radius_cell:-radius_cell, radius_cell:-radius_cell]  # remove padding
     slrm_out = dem - slrm_out
     return slrm_out
 
