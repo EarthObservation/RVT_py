@@ -305,9 +305,6 @@ def slrm(dem,
     dem = dem.astype(np.float32)
     dem = dem * ve_factor
 
-    dem[dem < -1200] = np.float64(np.NaN)
-    dem[dem > 2000] = np.float64(np.NaN)
-
     # mean filter
     radius_cell = int(radius_cell)  # nr_rolls in each direction
     dem_padded = np.pad(array=dem, pad_width=radius_cell, mode="edge")  # padding

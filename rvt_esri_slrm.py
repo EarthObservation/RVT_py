@@ -22,13 +22,11 @@ import rvt.vis
 
 
 class RVTSlrm:
-
     def __init__(self):
         self.name = "RVT simple local relief model."
         self.description = "Calculates simple local relief model."
         # default values
         self.radius_cell = 20.
-        self.padding = int(self.radius_cell)
 
     def getParameterInfo(self):
         return [
@@ -57,7 +55,7 @@ class RVTSlrm:
             'invalidateProperties': 2 | 4 | 8,
             'inputMask': False,
             'resampling': False,
-            'padding': self.padding
+            'padding': 0
         }
 
     def updateRasterInfo(self, **kwargs):
@@ -73,11 +71,8 @@ class RVTSlrm:
     def updatePixels(self, tlc, shape, props, **pixelBlocks):
         dem = np.array(pixelBlocks['raster_pixels'], dtype='f4', copy=False)[0]  # Input pixel array.
         slrm = rvt.vis.slrm(dem=dem, radius_cell=self.radius_cell)
-        slrm = slrm[self.padding:-self.padding, self.padding:-self.padding]
         pixelBlocks['output_pixels'] = slrm.astype(props['pixelType'], copy=False)
         return pixelBlocks
 
     def prepare(self, radius_cell=20.):
         self.radius_cell = int(radius_cell)
-        self.padding = int(radius_cell)
-
