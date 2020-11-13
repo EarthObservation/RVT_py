@@ -604,7 +604,10 @@ class BlenderCombination:
                 "rvt.blend.BlenderCombination.render_all_images: If you would like to save rendered image (blender), "
                 "you have to define dem_path (BlenderCombination.add_dem_path())!")
 
-        save_render_directory = os.path.abspath(os.path.basename(save_render_path))
+        if save_render_path is not None:
+            save_render_directory = os.path.abspath(os.path.dirname(save_render_path))
+        else:
+            save_render_directory = None
 
         # default is rvt.default.DefaultValues class
         if default is None:  # if not defined, predefined values are used
