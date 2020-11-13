@@ -32,7 +32,7 @@ def byte_scale(data,
                ):
     """
     Remade old scipy function.
-    Byte scales an array (image).
+    Byte scales an array (image). Linear scale.
 
     Byte scaling means converting the input image to uint8 dtype and scaling
     the range to ``(low, high)`` (default 0-255).

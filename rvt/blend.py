@@ -604,6 +604,8 @@ class BlenderCombination:
                 "rvt.blend.BlenderCombination.render_all_images: If you would like to save rendered image (blender), "
                 "you have to define dem_path (BlenderCombination.add_dem_path())!")
 
+        save_render_directory = os.path.abspath(os.path.basename(save_render_path))
+
         # default is rvt.default.DefaultValues class
         if default is None:  # if not defined, predefined values are used
             default = rvt.default.DefaultValues()
@@ -644,7 +646,8 @@ class BlenderCombination:
             else:
                 if self.layers[i_img].vis.lower() == "slope gradient":
                     if save_visualizations:
-                        default.save_slope(dem_path=self.dem_path)
+                        default.save_slope(dem_path=self.dem_path, custom_dir=save_render_directory, save_float=True,
+                                           save_8bit=False)
                         image_path = default.get_slope_path(self.dem_path)
                         norm_image = normalize_image(visualization, rvt.default.get_raster_arr(image_path)["array"],
                                                      min_norm, max_norm, normalization)
@@ -654,7 +657,8 @@ class BlenderCombination:
                         norm_image = normalize_image(visualization, image, min_norm, max_norm, normalization)
                 elif self.layers[i_img].vis.lower() == "hillshade":
                     if save_visualizations:
-                        default.save_hillshade(dem_path=self.dem_path)
+                        default.save_hillshade(dem_path=self.dem_path, custom_dir=save_render_directory,
+                                               save_float=True, save_8bit=False)
                         image_path = default.get_hillshade_path(self.dem_path)
                         norm_image = normalize_image(visualization, rvt.default.get_raster_arr(image_path)["array"],
                                                      min_norm, max_norm, normalization)
@@ -664,7 +668,8 @@ class BlenderCombination:
                         norm_image = normalize_image(visualization, image, min_norm, max_norm, normalization)
                 elif self.layers[i_img].vis.lower() == "multiple directions hillshade":
                     if save_visualizations:
-                        default.save_multi_hillshade(dem_path=self.dem_path)
+                        default.save_multi_hillshade(dem_path=self.dem_path, custom_dir=save_render_directory,
+                                                     save_float=True, save_8bit=False)
                         image_path = default.get_multi_hillshade_path(self.dem_path)
                         norm_image = normalize_image(visualization, rvt.default.get_raster_arr(image_path)["array"],
                                                      min_norm, max_norm, normalization)
@@ -674,7 +679,8 @@ class BlenderCombination:
                         norm_image = normalize_image(visualization, image, min_norm, max_norm, normalization)
                 elif self.layers[i_img].vis.lower() == "simple local relief model":
                     if save_visualizations:
-                        default.save_slrm(dem_path=self.dem_path)
+                        default.save_slrm(dem_path=self.dem_path, custom_dir=save_render_directory, save_float=True,
+                                          save_8bit=False)
                         image_path = default.get_slrm_path(self.dem_path)
                         norm_image = normalize_image(visualization, rvt.default.get_raster_arr(image_path)["array"],
                                                      min_norm, max_norm, normalization)
@@ -684,7 +690,8 @@ class BlenderCombination:
                 elif self.layers[i_img].vis.lower() == "sky-view factor":
                     if save_visualizations:
                         default.save_sky_view_factor(dem_path=self.dem_path, save_svf=True, save_asvf=False,
-                                                     save_opns=False)
+                                                     save_opns=False, custom_dir=save_render_directory, save_float=True,
+                                                     save_8bit=False)
                         image_path = default.get_svf_path(self.dem_path)
                         norm_image = normalize_image(visualization, rvt.default.get_raster_arr(image_path)["array"],
                                                      min_norm, max_norm, normalization)
@@ -696,7 +703,8 @@ class BlenderCombination:
                 elif self.layers[i_img].vis.lower() == "anisotropic sky-view factor":
                     if save_visualizations:
                         default.save_sky_view_factor(dem_path=self.dem_path, save_svf=False, save_asvf=True,
-                                                     save_opns=False)
+                                                     save_opns=False, custom_dir=save_render_directory, save_float=True,
+                                                     save_8bit=False)
                         image_path = default.get_asvf_path(self.dem_path)
                         norm_image = normalize_image(visualization, rvt.default.get_raster_arr(image_path)["array"],
                                                      min_norm, max_norm, normalization)
@@ -708,7 +716,8 @@ class BlenderCombination:
                 elif self.layers[i_img].vis.lower() == "openness - positive":
                     if save_visualizations:
                         default.save_sky_view_factor(dem_path=self.dem_path, save_svf=False, save_asvf=False,
-                                                     save_opns=True)
+                                                     save_opns=True, custom_dir=save_render_directory, save_float=True,
+                                                     save_8bit=False)
                         image_path = default.get_opns_path(self.dem_path)
                         norm_image = normalize_image(visualization, rvt.default.get_raster_arr(image_path)["array"],
                                                      min_norm, max_norm, normalization)
@@ -719,7 +728,8 @@ class BlenderCombination:
                         norm_image = normalize_image(visualization, image, min_norm, max_norm, normalization)
                 elif self.layers[i_img].vis.lower() == "openness - negative":
                     if save_visualizations:
-                        default.save_neg_opns(dem_path=self.dem_path)
+                        default.save_neg_opns(dem_path=self.dem_path, custom_dir=save_render_directory, save_float=True,
+                                              save_8bit=False)
                         image_path = default.get_neg_opns_path(self.dem_path)
                         norm_image = normalize_image(visualization, rvt.default.get_raster_arr(image_path)["array"],
                                                      min_norm, max_norm, normalization)
@@ -728,7 +738,8 @@ class BlenderCombination:
                         norm_image = normalize_image(visualization, image, min_norm, max_norm, normalization)
                 elif self.layers[i_img].vis.lower() == "sky illumination":
                     if save_visualizations:
-                        default.save_sky_illumination(dem_path=self.dem_path)
+                        default.save_sky_illumination(dem_path=self.dem_path, custom_dir=save_render_directory,
+                                                      save_float=True, save_8bit=False)
                         image_path = default.get_sky_illumination_path(self.dem_path)
                         norm_image = normalize_image(visualization, rvt.default.get_raster_arr(image_path)["array"],
                                                      min_norm, max_norm, normalization)
@@ -737,7 +748,8 @@ class BlenderCombination:
                         norm_image = normalize_image(visualization, image, min_norm, max_norm, normalization)
                 elif self.layers[i_img].vis.lower() == "local dominance":
                     if save_visualizations:
-                        default.save_local_dominance(dem_path=self.dem_path)
+                        default.save_local_dominance(dem_path=self.dem_path, custom_dir=save_render_directory,
+                                                     save_float=True, save_8bit=False)
                         image_path = default.get_local_dominance_path(self.dem_path)
                         norm_image = normalize_image(visualization, rvt.default.get_raster_arr(image_path)["array"],
                                                      min_norm, max_norm, normalization)
@@ -962,6 +974,7 @@ class BlenderCombinations:
 
 class TerrainSettings:
     """Terrain settings for GUI."""
+
     def __init__(self):
         self.name = None
         # slope gradient
@@ -1236,6 +1249,7 @@ class TerrainSettings:
 
 class TerrainsSettings:
     """Multiple Terrain settings."""
+
     def __init__(self):
         self.terrains_settings = []
 
