@@ -27,6 +27,7 @@ class RVTSlrm:
         self.description = "Calculates simple local relief model."
         # default values
         self.radius_cell = 20.
+        self.padding = int(self.radius_cell)
 
     def getParameterInfo(self):
         return [
@@ -55,7 +56,7 @@ class RVTSlrm:
             'invalidateProperties': 2 | 4 | 8,
             'inputMask': False,
             'resampling': False,
-            'padding': 0
+            'padding': self.padding
         }
 
     def updateRasterInfo(self, **kwargs):
@@ -70,9 +71,18 @@ class RVTSlrm:
 
     def updatePixels(self, tlc, shape, props, **pixelBlocks):
         dem = np.array(pixelBlocks['raster_pixels'], dtype='f4', copy=False)[0]  # Input pixel array.
+        dem = change_0_pad_to_edge_pad(dem=dem, pad_width=self.padding)  # change padding
         slrm = rvt.vis.slrm(dem=dem, radius_cell=self.radius_cell)
+        slrm = slrm[self.padding:-self.padding, self.padding:-self.padding]
         pixelBlocks['output_pixels'] = slrm.astype(props['pixelType'], copy=False)
         return pixelBlocks
 
     def prepare(self, radius_cell=20.):
         self.radius_cell = int(radius_cell)
+        self.padding = int(radius_cell)
+
+
+def change_0_pad_to_edge_pad(dem, pad_width):
+    dem = dem[pad_width:-pad_width, pad_width:-pad_width]  # remove esri 0 padding
+    dem = np.pad(array=dem, pad_width=pad_width, mode="edge")  # add new edge padding
+    return dem
