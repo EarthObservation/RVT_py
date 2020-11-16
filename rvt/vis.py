@@ -950,3 +950,312 @@ def local_dominance(dem,
     local_dom_out = local_dom_out / norma
 
     return local_dom_out
+
+
+def horizon_generate_coarse_dem(dem_fine,
+                                pyramid_scale,
+                                conv_from,
+                                conv_to,
+                                max_radius,
+                                ):
+
+    # first reduce the size for the edge required for horizon search 
+    dem_fine = dem_fine[max_radius:-max_radius, max_radius:-max_radius]
+    
+    # get and adjust the array sizes
+    in_shape = dem_fine.shape
+    n_col_fine = in_shape[1]
+    n_lin_fine = in_shape[0]
+    n_lin_coarse = int(np.floor(n_lin_fine / pyramid_scale)) + 1
+    n_col_coarse = int(np.floor(n_col_fine / pyramid_scale)) + 1
+    # The corner points must fit in the new grid.
+    # This is always the case with the left most column or the upper line.
+    # But you have to adjust ne number of columns to the right and number of lines below.
+    # The final number of columns/lines has to fullfil:
+    #     n_coarse = pyramid_scale * n_fine + 1
+    # columns
+    mod_col = n_col_fine % pyramid_scale
+    pad_col = 0
+    if mod_col!=1:
+        pad_col = np.abs(1 - mod_col)
+    # lines
+    mod_lin = n_lin_fine % pyramid_scale
+    pad_lin = 0
+    if mod_lin!=1:
+        pad_lin = np.abs(1 - mod_lin)
+    # Here we extend it to right and below, so padding with edge is OK
+    # Edge-mode otherwise creates artefacts on left and above.
+    dem_fine = np.pad(dem_fine, ((0, pad_lin), (0, pad_col)), mode="edge")
+    
+    # Once you have data in the shape appropriate for resizing,
+    # pad the data to support np.move.
+    dem_fine = np.pad(dem_fine, ((-conv_from, conv_to), (-conv_from, conv_to)), mode="symmetric")
+    
+    # Convolution (keep maximum)
+    dem_convolve = np.zeros(dem_fine.shape)
+    for i in np.arange(pyramid_scale)+conv_from:
+        for j in np.arange(pyramid_scale)+conv_from:
+            dem_convolve = np.maximum(dem_convolve, np.roll(dem_fine, (i,j), axis=(0,1)))
+    # Divide by pyramid_scale to account for the chage of resolution
+    # (important for the angle computation later on)
+    dem_convolve = dem_convolve / pyramid_scale
+    
+    # Consider only the selceted convoluted points according to the scale change.
+    # As we select slice's end point make sure to consider at least 1 point more 
+    # to the right / below to really include it (Python way of considering end index).
+    dem_coarse = dem_convolve[-conv_from:(n_lin_coarse*pyramid_scale+1):pyramid_scale, -conv_from:(n_col_coarse*pyramid_scale+1):pyramid_scale]
+    
+    # Final padding to enable searching the horizon over the edge:
+    # use constant-mode set to the minimal height, so it doesn't 
+    # affect the horizon estimation.
+    dem_coarse = np.pad(dem_coarse, ((max_radius, max_radius), (max_radius, max_radius)), mode="constant", constant_values=dem_coarse.min())
+
+    return dem_coarse
+
+
+    def horizon_generate_pyramids(dem,
+                              num_directions=4,
+                              max_fine_radius=100,
+                              max_pyramid_radius=10,
+                              pyramid_scale=5,
+                              ):
+
+    # In the levels higher than 1, determin the minimal search distance 
+    # and number of search distances.
+    # If you have for instance 
+    #     pyramid_scale = 3
+    #     max_pyramid_radius = 10
+    #     num_directions = 8
+    # then you have original distances in level 0:
+    # 1, 2, 3, ... 9, 10
+    # In level 1, your resolution is 3-times coarser.
+    # The first pixel that takes that this new resolution,
+    # has in original distance value 12 (in coarse resolution 4):
+    # 12->4, 15->5, 18->6 ... 27->9, 30->10
+    # So you start in the level 1 with tmin_pyramid_radius=4
+    # and you search from 4 to 10 distances (n_pyramid_radius=7)
+    min_pyramid_radius = int(np.floor(max_pyramid_radius / pyramid_scale)) + 1
+    n_pyramid_radius = max_pyramid_radius - min_pyramid_radius + 1
+
+    # get the convolution window indices
+    conv_to = int(np.floor(pyramid_scale/2.))
+    if (pyramid_scale%2)==0:
+        conv_from = 1 - conv_to
+    else:
+        conv_from = -conv_to
+
+    # initializations
+    pyramid_levels = 0
+    work = True
+    pyramid = {}
+
+    # Determine the number of levels and
+    # the last radius to be used in the highest level.
+    while work==True:
+        _ = max_fine_radius / pyramid_scale**pyramid_levels
+        if _ > max_pyramid_radius:
+            pyramid_levels = pyramid_levels + 1
+        else:
+            work = False
+            last_radius = np.round(max_fine_radius / pyramid_scale**pyramid_levels, decimals=0)
+
+
+    # fill out the pyramid dict with the metadata required for horizont searching.
+    for level in np.arange(pyramid_levels+1):
+            # the level 0 contains the other min_radius as the rest of levels 
+            if level==0:
+                min_radius = 1
+                dem_fine = np.copy(np.pad(dem, max_pyramid_radius, mode="constant", constant_values=dem.min()))
+            else:
+                min_radius = min_pyramid_radius
+                dem_fine = np.copy(dem_coarse)
+            # the last level contains the other radius_pixels as the rest of levels
+            if level == pyramid_levels:
+                max_radius = last_radius
+            else:
+                max_radius = max_pyramid_radius
+            # determine the dict of shifts
+            shift = horizon_shift_vector(num_directions, max_radius, min_radius)
+            dem_coarse = horizon_generate_coarse_dem(dem_fine, pyramid_scale, conv_from, conv_to, max_pyramid_radius)
+            i_lin = np.arange(dem_fine.shape[0])
+            i_col = np.arange(dem_fine.shape[1])
+            
+            pyramid[level] = {
+                "num_directions": num_directions,
+                "radius_pixels": max_radius,
+                "min_radius": min_radius,
+                "shift": shift,
+                "dem": dem_fine,
+                "i_lin": i_lin,
+                "i_col": i_col,
+                }
+
+    return pyramid
+
+
+    def new_illumination(height,
+                     resolution, 
+                     compute_overcast=False,
+                     compute_shadow=False, 
+                     max_fine_radius=100,
+                     num_directions=32,
+                     shadow_az=315, 
+                     shadow_el=35, 
+                     ve_factor=1,
+                    ):
+    """
+    Compute topographic corrections for sky illumination.
+
+    Parameters
+    ----------
+    height : numpy 2D array of elevation (DEM)
+    resolution : dem pixel size
+    compute_overcast : bool overcast model
+    compute_uniform : bool uniform model
+    compute_shadow : bool compute shadow
+    max_fine_radius : max shadow modeling distance [pixels]
+    num_directions : number of directions to search for horizon
+    shadow_az : shadow azimuth
+    shadow_el : shadow elevation
+    ve_factor : vertical exaggeration factor (must be greater than 0)
+
+    Returns
+    -------
+    sky_illum_out : 2D numpy result array
+    """
+    # standard pyramid settings
+    pyramid_scale=3
+    max_pyramid_radius=10
+    
+    if ve_factor <= 0:
+        raise Exception("rvt.vis.slope_aspect: ve_factor must be a positive number!")
+
+    height = height.astype(np.float32)
+    if ve_factor != 1:
+        height = height * ve_factor
+
+    # generate slope and aspect
+    _ = slope_aspect(np.pad(height, max_pyramid_radius, mode="symmetric"), resolution, resolution)
+    slope = _["slope"]
+    aspect = _["aspect"]
+
+    # build DEM pyramids
+    pyramid = horizon_generate_pyramids(height,
+                                        num_directions=num_directions,
+                                        max_fine_radius=max_fine_radius,
+                                        max_pyramid_radius=max_pyramid_radius,
+                                        pyramid_scale=pyramid_scale,)
+    n_levels = np.max([i for i in pyramid])
+    
+    # get the convolution window indices
+    conv_to = int(np.floor(pyramid_scale/2.))
+    if (pyramid_scale%2)==0:
+        conv_from = 1 - conv_to
+    else:
+        conv_from = -conv_to
+    # directional halve-resolution for integration limits
+    da = np.pi / num_directions
+
+    
+    # init the intermediate results for uniform SI
+    uniform_a = np.zeros((height.shape[0]+2*max_pyramid_radius, height.shape[1]+2*max_pyramid_radius), dtype=np.float32)
+    uniform_b = np.copy(uniform_a)
+    # init the output for overcast SI
+    if compute_overcast:
+        overcast_out = np.zeros(height.shape, dtype=np.float32)
+        overcast_c = np.zeros((height.shape[0]+2*max_pyramid_radius, height.shape[1]+2*max_pyramid_radius), dtype=np.float32)
+        overcast_d = np.copy(overcast_c)
+    else:
+        overcast_out = None
+    # init the output for shadows
+    if compute_shadow:
+        # use closest direction from pyramids as proxy for shadow azimuth
+        # (just in case it is not the same as standard directions)
+        _ = np.array([d for d in pyramid[0]["shift"]])
+        i = np.argmin(np.abs(_ - (360-shadow_az)))
+        shadow_az = _[i]
+        # binary shadows
+        shadow_out = np.zeros(height.shape, dtype=np.float32)
+        # height of horizon in degrees
+        horizon_out = np.zeros(height.shape, dtype=np.float32)
+        # overcast model + binary shadow
+        if compute_overcast:
+            overcast_sh_out = np.zeros(height.shape, dtype=np.float32)
+        else:
+            overcast_sh_out = None
+        # uniform model + binary shadow
+        uniform_sh_out = np.zeros(height.shape, dtype=np.float32)
+    else:
+        shadow_out = None
+        horizon_out = None
+        overcast_sh_out = None
+        uniform_sh_out = None
+
+    # search for horizon in each direction...
+    for i_dir, direction in enumerate(pyramid[0]["shift"]):
+        dir_rad = np.radians(direction)
+        # reset maximum at each iteration (direction)
+        max_slope = np.zeros(pyramid[n_levels]["dem"].shape, dtype=np.float32) - 1000
+
+        for i_level in reversed(range(n_levels+1)):
+            height = pyramid[i_level]["dem"]
+            move = pyramid[i_level]["shift"]
+
+            # ... and to the search radius
+            for i_rad, radius in enumerate(move[direction]["distance"]):
+                # get shift index from move dictionary
+                shift_indx = move[direction]["shift"][i_rad]
+                # estimate the slope
+                _ = (np.roll(height, shift_indx, axis=(0,1)) - height) / radius
+                # compare to the previus max slope and keep the larges
+                max_slope = np.maximum(max_slope, _)
+
+            # resample the max_slope to a lower pyramid level
+            if i_level > 0:
+                lin_fine = pyramid[i_level-1]["i_lin"] + (conv_from + max_pyramid_radius*pyramid_scale - max_pyramid_radius)
+                col_fine = pyramid[i_level-1]["i_col"] + (conv_from + max_pyramid_radius*pyramid_scale - max_pyramid_radius)
+                lin_coarse = pyramid[i_level]["i_lin"] * pyramid_scale
+                col_coarse = pyramid[i_level]["i_col"] * pyramid_scale
+                interp_spline = RectBivariateSpline(lin_coarse, col_coarse, max_slope)
+                max_slope = interp_spline(lin_fine, col_fine)
+
+        # convert to angle in radians and compute directional output
+        _ = np.arctan(max_slope)
+        uniform_a = uniform_a + (np.cos(_))**2
+        _d_aspect = np.sin((dir_rad-da) - aspect) - np.sin((dir_rad+da) - aspect)
+        uniform_b = uniform_b + _d_aspect * (np.pi/4. - _/2. - np.sin(2.*_)/4.)
+        if compute_overcast:
+            _cos3 = (np.cos(_))**3
+            overcast_c = overcast_c + _cos3
+            overcast_d = overcast_d + _d_aspect * (2./3. - np.cos(_) + _cos3 / 3.)
+        if compute_shadow and (direction==shadow_az):
+            horizon_out = np.degrees(_[max_pyramid_radius:-max_pyramid_radius, max_pyramid_radius:-max_pyramid_radius])
+            shadow_out = (horizon_out < shadow_el) * 1
+        
+    # because of numeric stabilty check if the uniform_b is less then pi and greater than 0
+    uniform_out = (da) * np.cos(slope) * uniform_a + np.sin(slope) * np.minimum(np.maximum(uniform_b, 0), np.pi)
+    uniform_out = uniform_out[max_pyramid_radius:-max_pyramid_radius, max_pyramid_radius:-max_pyramid_radius] 
+    if compute_overcast:
+        overcast_out = (2.*da/3.) * np.cos(slope) * overcast_c + np.sin(slope) * overcast_d
+        overcast_out = overcast_out[max_pyramid_radius:-max_pyramid_radius, max_pyramid_radius:-max_pyramid_radius] 
+        overcast_out = 0.33 * uniform_out + 0.67 * overcast_out
+        overcast_out = overcast_out / overcast_out.max()
+    if compute_shadow:
+        uniform_sh_out =  (0.8*uniform_out + 0.2*shadow_out)
+        if compute_overcast:
+            overcast_sh_out =  (0.8*overcast_out + 0.2*shadow_out)
+            
+    # normalize
+    uniform_out = uniform_out / np.pi
+
+    # return results within dict
+    dict_sky_illumination= {"uniform": uniform_out, 
+                            "overcast": overcast_out, 
+                            "shadow": shadow_out,
+                            "horizon": horizon_out,
+                            "uniform_shaded": uniform_sh_out,
+                            "overcast_shaded": overcast_sh_out,
+                           }
+    dict_sky_illumination = {k: v for k, v in dict_sky_illumination.items() if v is not None}  # filter out none
+    
+    return dict_sky_illumination
