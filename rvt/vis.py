@@ -1236,6 +1236,7 @@ def horizon_generate_coarse_dem(dem_fine,
     uniform_out = (da) * np.cos(slope) * uniform_a + np.sin(slope) * np.minimum(np.maximum(uniform_b, 0), np.pi)
     uniform_out = uniform_out[max_pyramid_radius:-max_pyramid_radius, max_pyramid_radius:-max_pyramid_radius] 
     if compute_overcast:
+        # because of numeric stabilty check if the uniform_b is less then pi and greater than 0
         overcast_out = (2.*da/3.) * np.cos(slope) * overcast_c + np.sin(slope) * np.maximum(overcast_d, 0)
         overcast_out = overcast_out[max_pyramid_radius:-max_pyramid_radius, max_pyramid_radius:-max_pyramid_radius] 
         overcast_out = 0.33 * uniform_out + 0.67 * overcast_out
