@@ -16,7 +16,7 @@ if __name__ == "__main__":
     default.save_sky_view_factor(r"test_data\TM1_564_146.tif", save_svf=True, save_asvf=True, save_opns=True,
                                  save_float=True, save_8bit=True)
     default.save_neg_opns(r"test_data\TM1_564_146.tif", save_float=True, save_8bit=True)
-    #default.save_sky_illumination(r"test_data\test.tif", save_float=True, save_8bit=True)
+    default.save_sky_illumination(r"test_data\TM1_564_146.tif", save_float=True, save_8bit=True)
     default.save_local_dominance(r"test_data\TM1_564_146.tif", save_float=True, save_8bit=True)
 
     # save all visualization functions

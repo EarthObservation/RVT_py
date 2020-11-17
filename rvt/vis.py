@@ -18,7 +18,7 @@ Copyright:
 
 # python libraries
 import numpy as np
-import scipy.ndimage
+import scipy.interpolate
 
 
 # TODO: check speed sky_ilumination
@@ -319,48 +319,10 @@ def slrm(dem,
         slrm_out += np.roll(np.copy(y_rolls_sum), roll, axis=1)  # roll positive direction
         slrm_out += np.roll(np.copy(y_rolls_sum), -roll, axis=1)  # roll negative direction
     del y_rolls_sum
-    slrm_out = slrm_out / ((2*radius_cell+1)**2)  # calculate mean, 1=current pixel
+    slrm_out = slrm_out / ((2 * radius_cell + 1) ** 2)  # calculate mean, 1=current pixel
     slrm_out = slrm_out[radius_cell:-radius_cell, radius_cell:-radius_cell]  # remove padding
     slrm_out = dem - slrm_out
     return slrm_out
-
-
-def azimuth(xa,
-            ya,
-            xb,
-            yb,
-            ):
-    """
-    Determine the azimuth in the range of [0,2pi).
-
-    Parameters
-    ----------
-    xa, ya, xb, yb (point coordinates)
-
-    Returns
-    -------
-    a : outputs the azimuth in radians
-    """
-    # TODO, this is probably an obsolete function
-    north = ya - yb
-    east = xb - xa
-    if north == 0:
-        if east > 0:
-            a = np.pi / 2
-        else:
-            if east < 0:
-                a = 3 * np.pi / 2
-            else:
-                a = np.float64(np.NaN)
-    else:
-        a0 = np.arctan(east / north)
-        if north > 0 and east >= 0:
-            a = a0
-        elif north < 0:
-            a = a0 + np.pi
-        else:
-            a = a0 + 2 * np.pi
-    return a
 
 
 def horizon_shift_vector(num_directions=16,
@@ -618,276 +580,6 @@ def sky_view_factor(dem,
     return dict_svf_asvf_opns
 
 
-def morph_shade_move(d_max, angle):
-    """
-    Calculates morph_shade movement matrix for sky illumination.
-
-    Parameters
-    ----------
-    d_max : maximum search distance in pixels
-    angle
-
-    Returns
-    -------
-    move
-    """
-
-    # init
-    move = np.zeros((d_max + 1, 3), dtype=np.float32)
-    d = 0
-    x0 = 0
-    y0 = 0
-    xt = x0
-    yt = y0
-    i_rad = 0
-    quad = 0
-
-    # determine quadrant number
-    if 0 <= angle < np.pi / 2:
-        quad = 1
-    elif np.pi / 2 <= angle < np.pi:
-        quad = 2
-    elif np.pi <= angle < 3 * np.pi / 2:
-        quad = 3
-    elif 3 * np.pi / 2 <= angle < 2 * np.pi:
-        quad = 4
-
-    # while within range
-    while d <= d_max:
-        # compute direction
-        if quad == 1:
-            # Right
-            xa = xt + 1
-            ya = yt
-            # Up
-            xb = xt
-            yb = yt - 1
-            # diagonal right up
-            xc = xt + 1
-            yc = yt - 1
-        elif quad == 2:
-            # Right
-            xa = xt + 1
-            ya = yt
-            # Diagonal right down
-            xb = xt + 1
-            yb = yt + 1
-            # Down
-            xc = xt
-            yc = yt + 1
-        elif quad == 3:
-            # Left
-            xa = xt - 1
-            ya = yt
-            # Diagonal left down
-            xb = xt - 1
-            yb = yt + 1
-            # Down
-            xc = xt
-            yc = yt + 1
-        elif quad == 4:
-            # Left
-            xa = xt - 1
-            ya = yt
-            # Up
-            xb = xt
-            yb = yt - 1
-            # Diagonal left up
-            xc = xt - 1
-            yc = yt - 1
-
-        # azimuths of possible movements (nearest neighbor, no interpolation)
-        k_a = azimuth(x0, y0, xa, ya)
-        k_b = azimuth(x0, y0, xb, yb)
-        k_c = azimuth(x0, y0, xc, yc)
-
-        # Minimum difference in angle for new point
-        if abs(k_a - angle) <= abs(k_b - angle):
-            if abs(k_a - angle) <= abs(k_c - angle):
-                xt = xa
-                yt = ya
-            else:
-                xt = xc
-                yt = yc
-        else:
-            if abs(k_b - angle) <= abs(k_c - angle):
-                xt = xb
-                yt = yb
-            else:
-                xt = xc
-                yt = yc
-
-        # Output
-        move[i_rad, 0] = xt - x0
-        move[i_rad, 1] = yt - y0
-        d = np.sqrt((xt - x0) ** 2 + (yt - y0) ** 2)
-        move[i_rad, 2] = d
-
-        # next cell
-        i_rad += 1
-
-    move = move[0:i_rad, :]
-    return move
-
-
-def morph_shade(height, sol_z, sol_a, d_max, nrows, ncols, resolution):
-    """
-    Compute topographic corrections for sky illumination.
-
-    Parameters
-    ----------
-    height : elevation 2D np array
-    sol_z : solar zenith angle in rad (0 for vertical and pi/2 for horizontal surface)
-    sol_a : solar azimuth angle
-    d_max : maximum search distance in pixels
-    ncols : number of columns
-    nrows : number of rows
-    resolution : pixel size
-
-    Returns
-    -------
-    mask : determines those cells that are in its own (hillshade) or thrown (cast shade) shadow
-    """
-
-    # initialize the results
-    mask = np.zeros((nrows + 2 * d_max, ncols + 2 * d_max), dtype=np.float32)
-    mask[d_max:(nrows + d_max), d_max:(ncols + d_max)] = 1
-    i_valid = np.where(mask.flatten() == 1)
-    tmp = np.zeros((nrows + 2 * d_max, ncols + 2 * d_max), dtype=np.float32)
-    tmp[d_max:(nrows + d_max), d_max:(ncols + d_max)] = height
-    height = tmp
-    del tmp
-
-    move = morph_shade_move(d_max, sol_a)
-    move_s = move.shape
-    move1di = move[:, 1] * (ncols + 2 * d_max) + move[:, 0]
-    move1dd = move[:, 2]
-    # set the maximal allowed horizon angle (if it is greater, then the area in the shadow)
-    max_slope = 0
-    for i_rad in range(int(move_s[0])):
-        height_flt = height.flatten()
-        # m_slp = ((height_flt[i_valid[0]+int(move1di[i_rad])] - height_flt[i_valid[0]]) / move1dd[i_rad])
-        sel = i_valid[0] + int(move1di[i_rad])
-        nr_zeros = sel[sel > height_flt.size].size  # can't call indexes that are bigger than num of elements
-        zeros = np.zeros(nr_zeros, dtype=np.float32)
-        sel = sel[sel <= height_flt.size]
-        m_slp = ((height_flt[sel] - height_flt[i_valid[0][:sel.size]]) / move1dd[i_rad])
-        m_slp = np.append(m_slp, zeros)  # add zeros, for non existing indexes
-        max_slope = np.clip(a=max_slope, a_min=m_slp, a_max=None)
-
-    # update mask
-    max_slope = np.arctan(max_slope / resolution)
-    indx_mask = np.where(max_slope > (np.pi / 2 - sol_z))
-
-    if indx_mask[0].size > 0:
-        mask_size = mask.shape
-        mask_flt = mask.flatten()
-        mask_flt[i_valid[0][indx_mask[0]]] = 0
-        mask = mask_flt.reshape((mask_size[0], mask_size[1]))
-    mask = mask[d_max:(nrows + d_max), d_max:(ncols + d_max)]
-    return mask
-
-
-def sky_illumination(dem, resolution, sky_model="overcast", sampling_points=250, shadow_dist=100,
-                     shadow_az=315, shadow_el=35, shadow_only=False, ve_factor=1):
-    """
-    Compute topographic corrections for sky illumination.
-
-    Parameters
-    ----------
-    dem : numpy 2D array of elevation (DEM)
-    resolution : dem pixel size
-    sky_model : sky model [overcast, uniform]
-    sampling_points : number of sampling points
-    shadow_dist : max shadow modeling distance [pixels]
-    shadow_az : shadow azimuth
-    shadow_el : shadow elevation
-    shadow_only : bool compute shadow only
-    ve_factor : vertical exaggeration factor (must be greater than 0)
-
-    Returns
-    -------
-    sky_illum_out : 2D numpy result array
-    """
-    if dem.ndim != 2:
-        raise Exception("rvt.vis.sky_illumination: dem has to be 2D np.array!")
-    if sampling_points != 250 and sampling_points != 500:
-        raise Exception("rvt.vis.sky_illumination: sampling_points needs to be 250 or 500!")
-    if sky_model != "overcast" and sky_model != "uniform":
-        raise Exception("rvt.vis.sky_illumination: sky_model needs to be overcast or uniform!")
-    if ve_factor <= 0:
-        raise Exception("rvt.vis.sky_illumination: ve_factor must be a positive number!")
-
-    dem = dem.astype(np.float32)
-    dem = dem * ve_factor
-
-    indx_no_values = np.where(dem < 0)
-    dem[indx_no_values[0], indx_no_values[1]] = np.float64(np.NaN)
-
-    # determine the max search distance in pixels
-    h_min = np.nanmin(dem)
-    h_max = np.nanmax(dem)
-    dh = h_max - h_min
-    dem_size = dem.shape
-    dem[indx_no_values[0], indx_no_values[1]] = 0
-
-    if shadow_az and shadow_el:
-        sh_z = np.pi / 2 - np.deg2rad(shadow_el)
-        sh_az = np.deg2rad(shadow_az)
-        d_max = 1
-        d_max = round(d_max * dh * np.tan(sh_z) / resolution)
-        dem_tmp = dem
-        out_shadow = morph_shade(dem_tmp, sh_z, sh_az, d_max, dem_size[0], dem_size[1], resolution)
-        # out_shadow = adams_shadows(in_array=dem, az=shadow_az, alt=shadow_el, res=resolution, overlap=d_max)
-
-    if shadow_only:
-        dem[indx_no_values[0], indx_no_values[1]] = np.float64(np.NaN)
-        return out_shadow
-
-    else:
-        dat_hillset = open(r'settings\{}_{}sp.txt'.format(sky_model, sampling_points), 'r')
-        sky_illum_out = np.zeros((dem_size[0], dem_size[1]), dtype=np.float32)
-        dict_slope_aspect = slope_aspect(dem=dem, resolution_x=resolution,
-                                         resolution_y=resolution,
-                                         ve_factor=1, output_units="radian")
-        slope = dict_slope_aspect["slope"]
-        aspect = dict_slope_aspect["aspect"]
-
-        for line in dat_hillset:
-            if line.strip() == "":  # empty line
-                continue
-            print(line)
-            d_max = 1
-            line = line.rstrip().split(",")
-            azim = int(line[0])
-            elev = int(line[1])
-            weight = float(line[2])
-            hillshade_tmp = hillshade(dem=dem, resolution_x=resolution, resolution_y=resolution,
-                                      sun_azimuth=azim, sun_elevation=elev, slope=slope, aspect=aspect)
-            sh_z = np.pi / 2 - np.deg2rad(elev)
-            sh_az = np.deg2rad(azim)
-            d_max = round(d_max * dh * np.tan(sh_z) / resolution)
-
-            if d_max > 1:
-                if shadow_dist != 'unlimited':
-                    if d_max < int(shadow_dist):
-                        d_max = int(shadow_dist)
-                dem_tmp = dem
-                out_shadow = morph_shade(dem_tmp, sh_z, sh_az, d_max, dem_size[0], dem_size[1], resolution)
-                # out_shadow = adams_shadows(in_array=dem, az=azim, alt=elev, res=resolution, overlap=d_max)
-                sky_illum_out += hillshade_tmp * out_shadow * weight
-            else:
-                sky_illum_out += hillshade_tmp * weight
-        del hillshade_tmp
-
-        if shadow_az and shadow_el:
-            sky_illum_out = 0.8 * sky_illum_out + 0.2 * out_shadow
-
-        dem[indx_no_values[0], indx_no_values[1]] = np.float64(np.NaN)
-
-        return sky_illum_out
-
-
 def local_dominance(dem,
                     min_rad=10,
                     max_rad=20,
@@ -958,10 +650,9 @@ def horizon_generate_coarse_dem(dem_fine,
                                 conv_to,
                                 max_radius,
                                 ):
-
-    # first reduce the size for the edge required for horizon search 
+    # first reduce the size for the edge required for horizon search
     dem_fine = dem_fine[max_radius:-max_radius, max_radius:-max_radius]
-    
+
     # get and adjust the array sizes
     in_shape = dem_fine.shape
     n_col_fine = in_shape[1]
@@ -976,53 +667,54 @@ def horizon_generate_coarse_dem(dem_fine,
     # columns
     mod_col = n_col_fine % pyramid_scale
     pad_col = 0
-    if mod_col!=1:
+    if mod_col != 1:
         pad_col = np.abs(1 - mod_col)
     # lines
     mod_lin = n_lin_fine % pyramid_scale
     pad_lin = 0
-    if mod_lin!=1:
+    if mod_lin != 1:
         pad_lin = np.abs(1 - mod_lin)
     # Here we extend it to right and below, so padding with edge is OK
     # Edge-mode otherwise creates artefacts on left and above.
     dem_fine = np.pad(dem_fine, ((0, pad_lin), (0, pad_col)), mode="edge")
-    
+
     # Once you have data in the shape appropriate for resizing,
     # pad the data to support np.move.
     dem_fine = np.pad(dem_fine, ((-conv_from, conv_to), (-conv_from, conv_to)), mode="symmetric")
-    
+
     # Convolution (keep maximum)
     dem_convolve = np.zeros(dem_fine.shape)
-    for i in np.arange(pyramid_scale)+conv_from:
-        for j in np.arange(pyramid_scale)+conv_from:
-            dem_convolve = np.maximum(dem_convolve, np.roll(dem_fine, (i,j), axis=(0,1)))
+    for i in np.arange(pyramid_scale) + conv_from:
+        for j in np.arange(pyramid_scale) + conv_from:
+            dem_convolve = np.maximum(dem_convolve, np.roll(dem_fine, (i, j), axis=(0, 1)))
     # Divide by pyramid_scale to account for the chage of resolution
     # (important for the angle computation later on)
     dem_convolve = dem_convolve / pyramid_scale
-    
+
     # Consider only the selceted convoluted points according to the scale change.
     # As we select slice's end point make sure to consider at least 1 point more 
     # to the right / below to really include it (Python way of considering end index).
-    dem_coarse = dem_convolve[-conv_from:(n_lin_coarse*pyramid_scale+1):pyramid_scale, -conv_from:(n_col_coarse*pyramid_scale+1):pyramid_scale]
-    
+    dem_coarse = dem_convolve[-conv_from:(n_lin_coarse * pyramid_scale + 1):pyramid_scale,
+                 -conv_from:(n_col_coarse * pyramid_scale + 1):pyramid_scale]
+
     # Final padding to enable searching the horizon over the edge:
     # use constant-mode set to the minimal height, so it doesn't 
     # affect the horizon estimation.
-    dem_coarse = np.pad(dem_coarse, ((max_radius, max_radius), (max_radius, max_radius)), mode="constant", constant_values=dem_coarse.min())
+    dem_coarse = np.pad(dem_coarse, ((max_radius, max_radius), (max_radius, max_radius)), mode="constant",
+                        constant_values=dem_coarse.min())
 
     return dem_coarse
 
 
-    def horizon_generate_pyramids(dem,
+def horizon_generate_pyramids(dem,
                               num_directions=4,
                               max_fine_radius=100,
                               max_pyramid_radius=10,
                               pyramid_scale=5,
                               ):
-
-    # In the levels higher than 1, determin the minimal search distance 
+    # In the levels higher than 1, determine the minimal search distance
     # and number of search distances.
-    # If you have for instance 
+    # If you have for instance
     #     pyramid_scale = 3
     #     max_pyramid_radius = 10
     #     num_directions = 8
@@ -1038,8 +730,8 @@ def horizon_generate_coarse_dem(dem_fine,
     n_pyramid_radius = max_pyramid_radius - min_pyramid_radius + 1
 
     # get the convolution window indices
-    conv_to = int(np.floor(pyramid_scale/2.))
-    if (pyramid_scale%2)==0:
+    conv_to = int(np.floor(pyramid_scale / 2.))
+    if (pyramid_scale % 2) == 0:
         conv_from = 1 - conv_to
     else:
         conv_from = -conv_to
@@ -1051,67 +743,65 @@ def horizon_generate_coarse_dem(dem_fine,
 
     # Determine the number of levels and
     # the last radius to be used in the highest level.
-    while work==True:
-        _ = max_fine_radius / pyramid_scale**pyramid_levels
+    while work == True:
+        _ = max_fine_radius / pyramid_scale ** pyramid_levels
         if _ > max_pyramid_radius:
             pyramid_levels = pyramid_levels + 1
         else:
             work = False
-            last_radius = np.round(max_fine_radius / pyramid_scale**pyramid_levels, decimals=0)
-
+            last_radius = np.round(max_fine_radius / pyramid_scale ** pyramid_levels, decimals=0)
 
     # fill out the pyramid dict with the metadata required for horizont searching.
-    for level in np.arange(pyramid_levels+1):
-            # the level 0 contains the other min_radius as the rest of levels 
-            if level==0:
-                min_radius = 1
-                dem_fine = np.copy(np.pad(dem, max_pyramid_radius, mode="constant", constant_values=dem.min()))
-            else:
-                min_radius = min_pyramid_radius
-                dem_fine = np.copy(dem_coarse)
-            # the last level contains the other radius_pixels as the rest of levels
-            if level == pyramid_levels:
-                max_radius = last_radius
-            else:
-                max_radius = max_pyramid_radius
-            # determine the dict of shifts
-            shift = horizon_shift_vector(num_directions, max_radius, min_radius)
-            dem_coarse = horizon_generate_coarse_dem(dem_fine, pyramid_scale, conv_from, conv_to, max_pyramid_radius)
-            i_lin = np.arange(dem_fine.shape[0])
-            i_col = np.arange(dem_fine.shape[1])
-            
-            pyramid[level] = {
-                "num_directions": num_directions,
-                "radius_pixels": max_radius,
-                "min_radius": min_radius,
-                "shift": shift,
-                "dem": dem_fine,
-                "i_lin": i_lin,
-                "i_col": i_col,
-                }
+    for level in np.arange(pyramid_levels + 1):
+        # the level 0 contains the other min_radius as the rest of levels
+        if level == 0:
+            min_radius = 1
+            dem_fine = np.copy(np.pad(dem, max_pyramid_radius, mode="constant", constant_values=dem.min()))
+        else:
+            min_radius = min_pyramid_radius
+            dem_fine = np.copy(dem_coarse)
+        # the last level contains the other radius_pixels as the rest of levels
+        if level == pyramid_levels:
+            max_radius = last_radius
+        else:
+            max_radius = max_pyramid_radius
+        # determine the dict of shifts
+        shift = horizon_shift_vector(num_directions, max_radius, min_radius)
+        dem_coarse = horizon_generate_coarse_dem(dem_fine, pyramid_scale, conv_from, conv_to, max_pyramid_radius)
+        i_lin = np.arange(dem_fine.shape[0])
+        i_col = np.arange(dem_fine.shape[1])
+
+        pyramid[level] = {
+            "num_directions": num_directions,
+            "radius_pixels": max_radius,
+            "min_radius": min_radius,
+            "shift": shift,
+            "dem": dem_fine,
+            "i_lin": i_lin,
+            "i_col": i_col,
+        }
 
     return pyramid
 
 
-    def new_illumination(height,
-                     resolution, 
-                     compute_overcast=False,
-                     compute_shadow=False, 
+def sky_illumination(dem,
+                     resolution,
+                     sky_model="overcast",
+                     compute_shadow=True,
                      max_fine_radius=100,
                      num_directions=32,
-                     shadow_az=315, 
-                     shadow_el=35, 
+                     shadow_az=315,
+                     shadow_el=35,
                      ve_factor=1,
-                    ):
+                     ):
     """
     Compute topographic corrections for sky illumination.
 
     Parameters
     ----------
-    height : numpy 2D array of elevation (DEM)
+    dem : numpy 2D array of elevation (DEM)
     resolution : dem pixel size
-    compute_overcast : bool overcast model
-    compute_uniform : bool uniform model
+    sky_model : sky model, it can be 'overcast' or 'uniform'
     compute_shadow : bool compute shadow
     max_fine_radius : max shadow modeling distance [pixels]
     num_directions : number of directions to search for horizon
@@ -1124,46 +814,56 @@ def horizon_generate_coarse_dem(dem_fine,
     sky_illum_out : 2D numpy result array
     """
     # standard pyramid settings
-    pyramid_scale=3
-    max_pyramid_radius=10
-    
-    if ve_factor <= 0:
-        raise Exception("rvt.vis.slope_aspect: ve_factor must be a positive number!")
+    pyramid_scale = 3
+    max_pyramid_radius = 10
 
-    height = height.astype(np.float32)
+    if ve_factor <= 0:
+        raise Exception("rvt.vis.sky_illumination: ve_factor must be a positive number!")
+
+    dem = dem.astype(np.float32)
     if ve_factor != 1:
-        height = height * ve_factor
+        dem = dem * ve_factor
+
+    if sky_model.lower() == "overcast":
+        compute_overcast = True
+    elif sky_model.lower() == "uniform":
+        compute_overcast = False
+        compute_uniform = True
+    else:
+        raise Exception("rvt.vis.sky_illumination: sky_model must be overcast or uniform!")
+
 
     # generate slope and aspect
-    _ = slope_aspect(np.pad(height, max_pyramid_radius, mode="symmetric"), resolution, resolution)
+    _ = slope_aspect(np.pad(dem, max_pyramid_radius, mode="symmetric"), resolution, resolution)
     slope = _["slope"]
     aspect = _["aspect"]
 
     # build DEM pyramids
-    pyramid = horizon_generate_pyramids(height,
+    pyramid = horizon_generate_pyramids(dem,
                                         num_directions=num_directions,
                                         max_fine_radius=max_fine_radius,
                                         max_pyramid_radius=max_pyramid_radius,
-                                        pyramid_scale=pyramid_scale,)
+                                        pyramid_scale=pyramid_scale, )
     n_levels = np.max([i for i in pyramid])
-    
+
     # get the convolution window indices
-    conv_to = int(np.floor(pyramid_scale/2.))
-    if (pyramid_scale%2)==0:
+    conv_to = int(np.floor(pyramid_scale / 2.))
+    if (pyramid_scale % 2) == 0:
         conv_from = 1 - conv_to
     else:
         conv_from = -conv_to
     # directional halve-resolution for integration limits
     da = np.pi / num_directions
 
-    
     # init the intermediate results for uniform SI
-    uniform_a = np.zeros((height.shape[0]+2*max_pyramid_radius, height.shape[1]+2*max_pyramid_radius), dtype=np.float32)
+    uniform_a = np.zeros((dem.shape[0] + 2 * max_pyramid_radius, dem.shape[1] + 2 * max_pyramid_radius),
+                         dtype=np.float32)
     uniform_b = np.copy(uniform_a)
     # init the output for overcast SI
     if compute_overcast:
-        overcast_out = np.zeros(height.shape, dtype=np.float32)
-        overcast_c = np.zeros((height.shape[0]+2*max_pyramid_radius, height.shape[1]+2*max_pyramid_radius), dtype=np.float32)
+        overcast_out = np.zeros(dem.shape, dtype=np.float32)
+        overcast_c = np.zeros((dem.shape[0] + 2 * max_pyramid_radius, dem.shape[1] + 2 * max_pyramid_radius),
+                              dtype=np.float32)
         overcast_d = np.copy(overcast_c)
     else:
         overcast_out = None
@@ -1172,19 +872,19 @@ def horizon_generate_coarse_dem(dem_fine,
         # use closest direction from pyramids as proxy for shadow azimuth
         # (just in case it is not the same as standard directions)
         _ = np.array([d for d in pyramid[0]["shift"]])
-        i = np.argmin(np.abs(_ - (360-shadow_az)))
+        i = np.argmin(np.abs(_ - (360 - shadow_az)))
         shadow_az = _[i]
         # binary shadows
-        shadow_out = np.zeros(height.shape, dtype=np.float32)
+        shadow_out = np.zeros(dem.shape, dtype=np.float32)
         # height of horizon in degrees
-        horizon_out = np.zeros(height.shape, dtype=np.float32)
+        horizon_out = np.zeros(dem.shape, dtype=np.float32)
         # overcast model + binary shadow
         if compute_overcast:
-            overcast_sh_out = np.zeros(height.shape, dtype=np.float32)
+            overcast_sh_out = np.zeros(dem.shape, dtype=np.float32)
         else:
             overcast_sh_out = None
         # uniform model + binary shadow
-        uniform_sh_out = np.zeros(height.shape, dtype=np.float32)
+        uniform_sh_out = np.zeros(dem.shape, dtype=np.float32)
     else:
         shadow_out = None
         horizon_out = None
@@ -1197,7 +897,7 @@ def horizon_generate_coarse_dem(dem_fine,
         # reset maximum at each iteration (direction)
         max_slope = np.zeros(pyramid[n_levels]["dem"].shape, dtype=np.float32) - 1000
 
-        for i_level in reversed(range(n_levels+1)):
+        for i_level in reversed(range(n_levels + 1)):
             height = pyramid[i_level]["dem"]
             move = pyramid[i_level]["shift"]
 
@@ -1206,57 +906,68 @@ def horizon_generate_coarse_dem(dem_fine,
                 # get shift index from move dictionary
                 shift_indx = move[direction]["shift"][i_rad]
                 # estimate the slope
-                _ = (np.roll(height, shift_indx, axis=(0,1)) - height) / radius
+                _ = (np.roll(height, shift_indx, axis=(0, 1)) - height) / radius
                 # compare to the previus max slope and keep the larges
                 max_slope = np.maximum(max_slope, _)
 
             # resample the max_slope to a lower pyramid level
             if i_level > 0:
-                lin_fine = pyramid[i_level-1]["i_lin"] + (conv_from + max_pyramid_radius*pyramid_scale - max_pyramid_radius)
-                col_fine = pyramid[i_level-1]["i_col"] + (conv_from + max_pyramid_radius*pyramid_scale - max_pyramid_radius)
+                lin_fine = pyramid[i_level - 1]["i_lin"] + (
+                            conv_from + max_pyramid_radius * pyramid_scale - max_pyramid_radius)
+                col_fine = pyramid[i_level - 1]["i_col"] + (
+                            conv_from + max_pyramid_radius * pyramid_scale - max_pyramid_radius)
                 lin_coarse = pyramid[i_level]["i_lin"] * pyramid_scale
                 col_coarse = pyramid[i_level]["i_col"] * pyramid_scale
-                interp_spline = RectBivariateSpline(lin_coarse, col_coarse, max_slope)
+                interp_spline = scipy.interpolate.RectBivariateSpline(lin_coarse, col_coarse, max_slope)
                 max_slope = interp_spline(lin_fine, col_fine)
 
         # convert to angle in radians and compute directional output
         _ = np.arctan(max_slope)
-        uniform_a = uniform_a + (np.cos(_))**2
-        _d_aspect = np.sin((dir_rad-da) - aspect) - np.sin((dir_rad+da) - aspect)
-        uniform_b = uniform_b + _d_aspect * (np.pi/4. - _/2. - np.sin(2.*_)/4.)
+        uniform_a = uniform_a + (np.cos(_)) ** 2
+        _d_aspect = np.sin((dir_rad - da) - aspect) - np.sin((dir_rad + da) - aspect)
+        uniform_b = uniform_b + _d_aspect * (np.pi / 4. - _ / 2. - np.sin(2. * _) / 4.)
         if compute_overcast:
-            _cos3 = (np.cos(_))**3
+            _cos3 = (np.cos(_)) ** 3
             overcast_c = overcast_c + _cos3
-            overcast_d = overcast_d + _d_aspect * (2./3. - np.cos(_) + _cos3 / 3.)
-        if compute_shadow and (direction==shadow_az):
+            overcast_d = overcast_d + _d_aspect * (2. / 3. - np.cos(_) + _cos3 / 3.)
+        if compute_shadow and (direction == shadow_az):
             horizon_out = np.degrees(_[max_pyramid_radius:-max_pyramid_radius, max_pyramid_radius:-max_pyramid_radius])
             shadow_out = (horizon_out < shadow_el) * 1
-        
+
     # because of numeric stabilty check if the uniform_b is less then pi and greater than 0
     uniform_out = (da) * np.cos(slope) * uniform_a + np.sin(slope) * np.minimum(np.maximum(uniform_b, 0), np.pi)
-    uniform_out = uniform_out[max_pyramid_radius:-max_pyramid_radius, max_pyramid_radius:-max_pyramid_radius] 
+    uniform_out = uniform_out[max_pyramid_radius:-max_pyramid_radius, max_pyramid_radius:-max_pyramid_radius]
     if compute_overcast:
         # because of numeric stabilty check if the uniform_b is less then pi and greater than 0
-        overcast_out = (2.*da/3.) * np.cos(slope) * overcast_c + np.sin(slope) * np.maximum(overcast_d, 0)
-        overcast_out = overcast_out[max_pyramid_radius:-max_pyramid_radius, max_pyramid_radius:-max_pyramid_radius] 
+        overcast_out = (2. * da / 3.) * np.cos(slope) * overcast_c + np.sin(slope) * np.maximum(overcast_d, 0)
+        overcast_out = overcast_out[max_pyramid_radius:-max_pyramid_radius, max_pyramid_radius:-max_pyramid_radius]
         overcast_out = 0.33 * uniform_out + 0.67 * overcast_out
         overcast_out = overcast_out / overcast_out.max()
     if compute_shadow:
-        uniform_sh_out =  (0.8*uniform_out + 0.2*shadow_out)
+        uniform_sh_out = (0.8 * uniform_out + 0.2 * shadow_out)
         if compute_overcast:
-            overcast_sh_out =  (0.8*overcast_out + 0.2*shadow_out)
-            
+            overcast_sh_out = (0.8 * overcast_out + 0.2 * shadow_out)
+
     # normalize
     uniform_out = uniform_out / np.pi
 
-    # return results within dict
-    dict_sky_illumination= {"uniform": uniform_out, 
-                            "overcast": overcast_out, 
-                            "shadow": shadow_out,
-                            "horizon": horizon_out,
-                            "uniform_shaded": uniform_sh_out,
-                            "overcast_shaded": overcast_sh_out,
-                           }
-    dict_sky_illumination = {k: v for k, v in dict_sky_illumination.items() if v is not None}  # filter out none
-    
-    return dict_sky_illumination
+    # # return results within dict
+    # dict_sky_illumination = {"uniform": uniform_out,
+    #                          "overcast": overcast_out,
+    #                          "shadow": shadow_out,
+    #                          "horizon": horizon_out,
+    #                          "uniform_shaded": uniform_sh_out,
+    #                          "overcast_shaded": overcast_sh_out,
+    #                          }
+    # dict_sky_illumination = {k: v for k, v in dict_sky_illumination.items() if v is not None}  # filter out none
+    # return dict_sky_illumination
+
+    # output
+    if sky_model == "uniform" and not compute_shadow:
+        return uniform_out
+    elif sky_model == "uniform" and compute_shadow:
+        return uniform_sh_out
+    elif sky_model == "overcast" and not compute_shadow:
+        return overcast_out
+    elif sky_model == "overcast" and compute_shadow:
+        return overcast_sh_out

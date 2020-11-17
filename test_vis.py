@@ -115,7 +115,7 @@ def test_sky_illumination(input_dem_path, output_path):
     x_res = t[0]
     y_res = -t[4]
     input_dem_arr = input_dem_dataset.read()[0]
-    skyillumination_arr = rvt.vis.sky_illumination(dem=input_dem_arr, resolution=x_res)
+    skyillumination_arr = rvt.vis.sky_illumination(dem=input_dem_arr, resolution=x_res, compute_shadow=True)
     skyillumination_arr = skyillumination_arr.astype('float32')
     profile = input_dem_dataset.profile
     profile.update(dtype='float32')

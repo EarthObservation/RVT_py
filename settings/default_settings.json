@@ -197,13 +197,17 @@
                 "value": "overcast",
                 "description": "Sky model [overcast, uniform]."
             },
-            "sim_samp_pnts": {
-                "value": 250,
-                "description": "Number of sampling points [250 or 500]."
+            "sim_compute_shadow": {
+                "value": 1,
+                "description": "If 1 it computes shadows, if 0 it doesn't."
             },
             "sim_shadow_dist": {
                 "value": 100,
                 "description": "Max shadow modeling distance in pixels."
+            },
+            "sim_nr_dir": {
+                "value": 32,
+                "description": "Number of directions to search for horizon"
             },
             "sim_shadow_az": {
                 "value": 315,
@@ -222,8 +226,8 @@
                 "description": "If 1 it saves 8bit raster, if 0 it doesn't."
             },
             "sim_bytscl": {
-                "min": 0.25,
-                "max": 0.0,
+                "min": 0.7,
+                "max": 1,
                 "description": "Byte scale min and max values for 8bit raster."
             }
         },

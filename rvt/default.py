@@ -82,8 +82,10 @@ class DefaultValues:
         If compute Sky illumination. Parameter for GUIs.
     sim_sky_mod : str
         Sky illumination. Sky model [overcast, uniform].
-    sim_samp_pnts : int
-        Sky illumination. Number of sampling points [250 or 500].
+    sim_compute_shadow : int
+        Sky illumination. If 1 it computes shadows, if 0 it doesn't.
+    sim_nr_dir : int
+        Sky illumination. Number of directions.
     sim_shadow_dist : int
         Sky illumination. Max shadow modeling distance in pixels.
     sim_shadow_az : int
@@ -162,8 +164,9 @@ class DefaultValues:
         # sky_illum
         self.sim_compute = 0
         self.sim_sky_mod = "overcast"
-        self.sim_samp_pnts = 250
+        self.sim_compute_shadow = 1
         self.sim_shadow_dist = 100
+        self.sim_nr_dir = 32
         self.sim_shadow_az = 315
         self.sim_shadow_el = 35
         # local dominance
@@ -200,10 +203,10 @@ class DefaultValues:
         self.asvf_bytscl = (0.6375, 1.00)
         self.pos_opns_bytscl = (60, 95.)
         self.neg_opns_bytscl = (60, 95.)
-        self.sim_bytscl = (0.25, 0.)
+        self.sim_bytscl = (0.7, 1)
         self.ld_bytscl = (0.5, 1.8)
         # multiprocessing
-        self.multiproc_size_limit = 10000*10000  # if arr size > multiproc_size_limit, it uses multiprocessing
+        self.multiproc_size_limit = 10000 * 10000  # if arr size > multiproc_size_limit, it uses multiprocessing
         self.multiproc_block_size = (4000, 4000)  # size of single block (x_size, y_size)
 
     def save_default_to_file(self, file_path=None):
@@ -327,10 +330,12 @@ class DefaultValues:
                                                "GUIs."},
                 "sim_sky_mod": {"value": self.sim_sky_mod,
                                 "description": "Sky model [overcast, uniform]."},
-                "sim_samp_pnts": {"value": self.sim_samp_pnts,
-                                  "description": "Number of sampling points [250 or 500]."},
+                "sim_compute_shadow": {"value": self.sim_compute_shadow,
+                                       "description": "If 1 it computes shadows, if 0 it doesn't."},
                 "sim_shadow_dist": {"value": self.sim_shadow_dist,
                                     "description": "Max shadow modeling distance in pixels."},
+                "sim_nr_dir": {"value": self.sim_nr_dir,
+                               "description": "Number of directions to search for horizon"},
                 "sim_shadow_az": {"value": self.sim_shadow_az, "description": "Shadow "
                                                                               "azimuth in "
                                                                               "degrees."},
@@ -458,8 +463,6 @@ class DefaultValues:
                         self.sim_compute = int(parameter_value)
                     elif parameter_name == "sky_model":
                         self.sim_sky_mod = parameter_value
-                    elif parameter_name == "number_points":
-                        self.sim_samp_pnts = int(parameter_value)
                     elif parameter_name == "max_shadow_dist":
                         self.sim_shadow_dist = int(parameter_value)
                     elif parameter_name == "local_dominance":
@@ -538,7 +541,8 @@ class DefaultValues:
             # Sky illumination
             self.sim_compute = int(default_data["Sky illumination"]["sim_compute"]["value"])
             self.sim_sky_mod = str(default_data["Sky illumination"]["sim_sky_mod"]["value"])
-            self.sim_samp_pnts = int(default_data["Sky illumination"]["sim_samp_pnts"]["value"])
+            self.sim_compute_shadow = int(default_data["Sky illumination"]["sim_compute_shadow"]["value"])
+            self.sim_nr_dir = int(default_data["Sky illumination"]["sim_nr_dir"]["value"])
             self.sim_shadow_dist = int(default_data["Sky illumination"]["sim_shadow_dist"]["value"])
             self.sim_shadow_az = int(default_data["Sky illumination"]["sim_shadow_az"]["value"])
             self.sim_shadow_el = int(default_data["Sky illumination"]["sim_shadow_el"]["value"])
@@ -677,11 +681,11 @@ class DefaultValues:
         If bit8 it returns 8bit file name."""
         dem_name = os.path.basename(dem_path).split(".")[0]  # base name without extension
         if bit8:
-            return "{}_SIM_{}_{}sp_{}px_8bit.tif".format(dem_name, self.sim_sky_mod, self.sim_samp_pnts,
-                                                         self.sim_shadow_dist)
+            return "{}_SIM_{}_D{}_{}px_8bit.tif".format(dem_name, self.sim_sky_mod, self.sim_nr_dir,
+                                                        self.sim_shadow_dist)
         else:
-            return "{}_SIM_{}_{}sp_{}px.tif".format(dem_name, self.sim_sky_mod, self.sim_samp_pnts,
-                                                    self.sim_shadow_dist)
+            return "{}_SIM_{}_D{}_{}px.tif".format(dem_name, self.sim_sky_mod, self.sim_nr_dir,
+                                                   self.sim_shadow_dist)
 
     def get_sky_illumination_path(self, dem_path, bit8=False):
         """Returns path to Sky illumination. Generates sim name (uses default attributes and dem name from
@@ -868,7 +872,8 @@ class DefaultValues:
                     pass
                 else:
                     slope_8bit_arr = self.float_to_8bit(float_arr=slope_arr, vis="slope gradient")
-                    save_raster(src_raster_path=dem_path, out_raster_path=slope_8bit_path, out_raster_arr=slope_8bit_arr,
+                    save_raster(src_raster_path=dem_path, out_raster_path=slope_8bit_path,
+                                out_raster_arr=slope_8bit_arr,
                                 e_type=1)
             return 1
 
@@ -928,7 +933,8 @@ class DefaultValues:
             dem_arr = dict_arr_res["array"]
             x_res = dict_arr_res["resolution"][0]
             y_res = dict_arr_res["resolution"][1]
-            hillshade_arr = self.get_hillshade(dem_arr=dem_arr, resolution_x=x_res, resolution_y=y_res).astype('float32')
+            hillshade_arr = self.get_hillshade(dem_arr=dem_arr, resolution_x=x_res, resolution_y=y_res).astype(
+                'float32')
             if save_float:
                 if os.path.isfile(hillshade_path) and not self.overwrite:  # file exists and overwrite=0
                     pass
@@ -1013,7 +1019,8 @@ class DefaultValues:
                 if os.path.isfile(multi_hillshade_8bit_path) and not self.overwrite:  # file exists and overwrite=0
                     pass
                 else:
-                    multi_hillshade_8bit_arr = self.float_to_8bit(float_arr=dem_arr, vis="multiple directions hillshade",
+                    multi_hillshade_8bit_arr = self.float_to_8bit(float_arr=dem_arr,
+                                                                  vis="multiple directions hillshade",
                                                                   x_res=x_res, y_res=y_res)
                     save_raster(src_raster_path=dem_path, out_raster_path=multi_hillshade_8bit_path,
                                 out_raster_arr=multi_hillshade_8bit_arr, e_type=1)
@@ -1173,8 +1180,9 @@ class DefaultValues:
             x_res = dict_arr_res["resolution"][0]
             y_res = dict_arr_res["resolution"][1]
             if x_res != y_res:
-                raise Exception("rvt.default.DefaultValues.save_sky_view_factor: dem resolution is not the same in x and y"
-                                " directions!")
+                raise Exception(
+                    "rvt.default.DefaultValues.save_sky_view_factor: dem resolution is not the same in x and y"
+                    " directions!")
             dict_svf_asvf_opns = self.get_sky_view_factor(dem_arr=dem_arr, resolution=x_res, compute_svf=save_svf,
                                                           compute_asvf=save_asvf, compute_opns=save_opns)
             if save_float:
@@ -1209,7 +1217,7 @@ class DefaultValues:
                         pass
                     else:  # asvf_8bit_path, file doesn't exists or exists and overwrite=1
                         asvf_8bit_arr = self.float_to_8bit(float_arr=dict_svf_asvf_opns["asvf"],
-                                                          vis="anisotropic sky-view factor")
+                                                           vis="anisotropic sky-view factor")
                         save_raster(src_raster_path=dem_path, out_raster_path=asvf_8bit_path,
                                     out_raster_arr=asvf_8bit_arr, e_type=1)
                 if save_opns:
@@ -1300,10 +1308,10 @@ class DefaultValues:
 
     def get_sky_illumination(self, dem_arr, resolution):
         sky_illumination_arr = rvt.vis.sky_illumination(dem=dem_arr, resolution=resolution, sky_model=self.sim_sky_mod,
-                                                        sampling_points=self.sim_samp_pnts,
-                                                        shadow_dist=self.sim_shadow_dist,
-                                                        shadow_az=self.sim_shadow_az, shadow_el=self.sim_shadow_el,
-                                                        ve_factor=self.ve_factor)
+                                                        compute_shadow=bool(self.sim_compute_shadow),
+                                                        max_fine_radius=self.sim_shadow_dist,
+                                                        num_directions=self.sim_nr_dir, shadow_az=self.sim_shadow_az,
+                                                        shadow_el=self.sim_shadow_el, ve_factor=self.ve_factor)
         return sky_illumination_arr
 
     def save_sky_illumination(self, dem_path, custom_dir=None, save_float=None, save_8bit=None):
@@ -1358,8 +1366,9 @@ class DefaultValues:
             x_res = dict_arr_res["resolution"][0]
             y_res = dict_arr_res["resolution"][1]
             if x_res != y_res:
-                raise Exception("rvt.default.DefaultValues.save_sky_illumination: dem resolution is not the same in x and y"
-                                " directions!")
+                raise Exception(
+                    "rvt.default.DefaultValues.save_sky_illumination: dem resolution is not the same in x and y"
+                    " directions!")
             sky_illumination_arr = self.get_sky_illumination(dem_arr=dem_arr, resolution=x_res).astype('float32')
             if save_float:
                 if os.path.isfile(sky_illumination_path) and not self.overwrite:  # file exists and overwrite=0
@@ -1371,7 +1380,8 @@ class DefaultValues:
                 if os.path.isfile(sky_illumination_8bit_path) and not self.overwrite:  # file exists and overwrite=0
                     pass
                 else:
-                    sky_illumination_8bit_arr = self.float_to_8bit(float_arr=sky_illumination_arr, vis="sky illumination")
+                    sky_illumination_8bit_arr = self.float_to_8bit(float_arr=sky_illumination_arr,
+                                                                   vis="sky illumination")
                     save_raster(src_raster_path=dem_path, out_raster_path=sky_illumination_8bit_path,
                                 out_raster_arr=sky_illumination_8bit_arr, e_type=1)
             return 1
@@ -1522,10 +1532,10 @@ class DefaultValues:
         dat.write("# Selected visualization parameters\n")
         dat.write("\tOverwrite: {}\n".format(self.overwrite))
         dat.write("\tVertical exaggeration factor: {}\n".format(self.ve_factor))
-        if nr_rows*nr_cols > self.multiproc_size_limit:
+        if nr_rows * nr_cols > self.multiproc_size_limit:
             dat.write("\tMultiprocessing: {}\n".format("ON"))
             dat.write("\t\tMultiprocess block size: {}x{}\n".format(self.multiproc_block_size[0],
-                                                                  self.multiproc_block_size[0]))
+                                                                    self.multiproc_block_size[0]))
         else:
             dat.write("\tMultiprocessing: {}\n".format("OFF"))
 
@@ -1652,7 +1662,7 @@ class DefaultValues:
             dat.write("\t\tsim_sky_mod=\t\t{}\n".format(self.sim_sky_mod))
             dat.write("\t\tsim_shadow_az=\t\t{}\n".format(self.sim_shadow_az))
             dat.write("\t\tsim_shadow_el=\t\t{}\n".format(self.sim_shadow_el))
-            dat.write("\t\tsim_samp_pnts=\t\t{}\n".format(self.sim_samp_pnts))
+            dat.write("\t\tsim_nr_dir=\t\t{}\n".format(self.sim_nr_dir))
             dat.write("\t\tsim_shadow_dist=\t\t{}\n".format(self.sim_shadow_dist))
             if self.sim_save_float:
                 dat.write("\t\t>> Output file:\n")
