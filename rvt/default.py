@@ -1475,7 +1475,7 @@ class DefaultValues:
         if self.neg_opns_compute:
             self.save_neg_opns(dem_path, custom_dir=custom_dir)
         if self.sim_compute:
-            self.save_neg_opns(dem_path, custom_dir=custom_dir)
+            self.save_sky_illumination(dem_path, custom_dir=custom_dir)
         if self.ld_compute:
             self.save_local_dominance(dem_path, custom_dir=custom_dir)
         end_time = time.time()
