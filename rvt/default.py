@@ -1660,6 +1660,7 @@ class DefaultValues:
         if self.sim_compute:
             dat.write("\tSky illumination\n")
             dat.write("\t\tsim_sky_mod=\t\t{}\n".format(self.sim_sky_mod))
+            dat.write("\t\tsim_compute_shadow=\t\t{}\n".format(self.sim_compute_shadow))
             dat.write("\t\tsim_shadow_az=\t\t{}\n".format(self.sim_shadow_az))
             dat.write("\t\tsim_shadow_el=\t\t{}\n".format(self.sim_shadow_el))
             dat.write("\t\tsim_nr_dir=\t\t{}\n".format(self.sim_nr_dir))

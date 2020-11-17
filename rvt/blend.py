@@ -524,9 +524,10 @@ class BlenderCombination:
                 dat.write("\tsvf_r_max=\t\t{}\n".format(default.svf_r_max))
             elif layer.vis.lower() == "sky illumination":
                 dat.write("\tsim_sky_mod=\t\t{}\n".format(default.sim_sky_mod))
+                dat.write("\tsim_compute_shadow=\t\t{}\n".format(default.sim_compute_shadow))
                 dat.write("\tsim_shadow_az=\t\t{}\n".format(default.sim_shadow_az))
                 dat.write("\tsim_shadow_el=\t\t{}\n".format(default.sim_shadow_el))
-                dat.write("\tsim_samp_pnts=\t\t{}\n".format(default.sim_samp_pnts))
+                dat.write("\tsim_nr_dir=\t\t{}\n".format(default.sim_nr_dir))
                 dat.write("\tsim_shadow_dist=\t\t{}\n".format(default.sim_shadow_dist))
             elif layer.vis.lower() == "local dominance":
                 dat.write("\t\tld_rad_inc=\t\t{}\n".format(default.ld_rad_inc))
@@ -648,7 +649,8 @@ class TerrainSettings:
         # negative openness
         # sky_illum
         self.sim_sky_mod = None
-        self.sim_samp_pnts = None
+        self.sim_compute_shadow = None
+        self.sim_nr_dir = None
         self.sim_shadow_dist = None
         self.sim_shadow_az = None
         self.sim_shadow_el = None
@@ -731,7 +733,11 @@ class TerrainSettings:
         except KeyError:
             pass
         try:
-            self.sim_samp_pnts = int(terrain_data["Sky illumination"]["sim_samp_pnts"]["value"])
+            self.sim_compute_shadow = int(terrain_data["Sky illumination"]["sim_compute_shadow"]["value"])
+        except KeyError:
+            pass
+        try:
+            self.sim_nr_dir = int(terrain_data["Sky illumination"]["sim_nr_dir"]["value"])
         except KeyError:
             pass
         try:
@@ -844,8 +850,10 @@ class TerrainSettings:
             default.asvf_level = self.asvf_level
         if self.sim_sky_mod is not None:
             default.sim_sky_mod = self.sim_sky_mod
-        if self.sim_samp_pnts is not None:
-            default.sim_samp_pnts = self.sim_samp_pnts
+        if self.sim_compute_shadow is not None:
+            default.sim_compute_shadow = self.sim_compute_shadow
+        if self.sim_nr_dir is not None:
+            default.sim_nr_dir = self.sim_nr_dir
         if self.sim_shadow_dist is not None:
             default.sim_shadow_dist = self.sim_shadow_dist
         if self.sim_shadow_az is not None:
