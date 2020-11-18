@@ -20,6 +20,7 @@ Copyright:
 
 import warnings
 import rvt.vis
+import rvt.blend_func
 import rvt.multiproc
 import os
 import gdal
@@ -105,26 +106,36 @@ class DefaultValues:
         Local dominance. Angular step for determination of number of angular directions.
     ld_observer_h : float
         Local dominance. Height at which we observe the terrain.
-    slp_bytscl : tuple(min, max)
-        Slope, bytescale min and max.
-    hs_bytscl : tuple(min, max)
-        Hillshade, bytescale min and max.
-    mhs_bytscl : tuple(min, max)
-        Multi directional hillshade, bytescale min and max.
-    slrm_bytscl : tuple(min, max)
-        Simplified local relief model, bytescale min and max.
-    svf_bytscl : tuple(min, max)
-        Sky-view factor, bytescale min and max.
-    asvf_bytscl : tuple(min, max)
-        Anisotropic Sky-view factor, bytescale min and max.
-    pos_opns_bytscl : tuple(min, max)
-        Positive Openness, bytescale min and max.
-    neg_opns_bytscl : tuple(min, max)
-        Negative Openness, bytescale min and max.
-    sim_bytscl : tuple(min, max)
-        Sky illumination, bytescale min and max.
-    ld_bytscl : tuple(min, max)
-        Local dominance, bytescale min and max.
+    slp_bytscl : tuple(mode, min, max)
+        Slope, bytescale (0-255) for 8bit raster. Mode can be 'value' (linear stretch) or 'percent'
+        (histogram equalization, cut-off). Values min and max define stretch/cut-off borders.
+    hs_bytscl : tuple(mode, min, max)
+        Hillshade, linear stretch, bytescale (0-255) for 8bit raster. Mode can be 'value' or 'percent'
+        (cut-off units). Values min and max define stretch borders (in mode units).
+    mhs_bytscl : tuple(mode, min, max)
+        Multi directional hillshade, linear stretch, bytescale (0-255) for 8bit raster. Mode can be 'value' or 'percent'
+        (cut-off units). Values min and max define stretch borders (in mode units).
+    slrm_bytscl : tuple(mode, min, max)
+        Simplified local relief model, linear stretch, bytescale (0-255) for 8bit raster. Mode can be 'value' or
+        'percent' (cut-off units). Values min and max define stretch borders (in mode units).
+    svf_bytscl : tuple(mode, min, max)
+        Sky-view factor, linear stretch, bytescale (0-255) for 8bit raster. Mode can be 'value' or 'percent'
+        (cut-off units). Values min and max define stretch borders (in mode units).
+    asvf_bytscl : tuple(mode, min, max)
+        Anisotropic Sky-view factor, linear stretch, bytescale (0-255) for 8bit raster. Mode can be 'value' or 'percent'
+        (cut-off units). Values min and max define stretch borders (in mode units).
+    pos_opns_bytscl : tuple(mode, min, max)
+        Positive Openness, linear stretch, bytescale (0-255) for 8bit raster. Mode can be 'value' or 'percent'
+        (cut-off units). Values min and max define stretch borders (in mode units).
+    neg_opns_bytscl : tuple(mode, min, max)
+        Negative Openness, linear stretch, bytescale (0-255) for 8bit raster. Mode can be 'value' or 'percent'
+        (cut-off units). Values min and max define stretch borders (in mode units).
+    sim_bytscl : tuple(mode, min, max)
+        Sky illumination, linear stretch, bytescale (0-255) for 8bit raster. Mode can be 'value' or 'percent'
+        (cut-off units). Values min and max define stretch borders (in mode units).
+    ld_bytscl : tuple(mode, min, max)
+        Local dominance, linear stretch, bytescale (0-255) for 8bit raster. Mode can be 'value' or 'percent'
+        (cut-off units). Values min and max define stretch borders (in mode units).
     multiproc_size_limit : int
         If array size bigger than multiproc_size_limit it uses multiprocessing.
     multiproc_block_size : tuple(x_size, y_size)
@@ -195,16 +206,16 @@ class DefaultValues:
         self.sim_save_8bit = 0
         self.ld_save_8bit = 0
         # 8-bit bytescale parameters
-        self.slp_bytscl = (0., 51.)
-        self.hs_bytscl = (0.00, 1.00)
-        self.mhs_bytscl = (0.00, 1.00)
-        self.slrm_bytscl = (-2., 2.)
-        self.svf_bytscl = (0.6375, 1.00)
-        self.asvf_bytscl = (0.6375, 1.00)
-        self.pos_opns_bytscl = (60, 95.)
-        self.neg_opns_bytscl = (60, 95.)
-        self.sim_bytscl = (0.7, 1)
-        self.ld_bytscl = (0.5, 1.8)
+        self.slp_bytscl = ("value", 0., 51.)
+        self.hs_bytscl = ("value", 0.00, 1.00)
+        self.mhs_bytscl = ("value", 0.00, 1.00)
+        self.slrm_bytscl = ("percent", 0.02, 0.02)
+        self.svf_bytscl = ("value", 0.6375, 1.00)
+        self.asvf_bytscl = ("percent", 0.02, 0.02)
+        self.pos_opns_bytscl = ("value", 60, 95.)
+        self.neg_opns_bytscl = ("value", 60, 95.)
+        self.sim_bytscl = ("percent", 0.025, 0)
+        self.ld_bytscl = ("value", 0.5, 1.8)
         # multiprocessing
         self.multiproc_size_limit = 10000 * 10000  # if arr size > multiproc_size_limit, it uses multiprocessing
         self.multiproc_block_size = (4000, 4000)  # size of single block (x_size, y_size)
@@ -232,8 +243,10 @@ class DefaultValues:
                                   "description": "If 1 it saves float raster, if 0 it doesn't."},
                 "hs_save_8bit": {"value": self.hs_save_8bit,
                                  "description": "If 1 it saves 8bit raster, if 0 it doesn't."},
-                "hs_bytscl": {"min": self.hs_bytscl[0], "max": self.hs_bytscl[1],
-                              "description": "Byte scale min and max values for 8bit raster."}
+                "hs_bytscl": {"mode": self.hs_bytscl[0], "min": self.hs_bytscl[1], "max": self.hs_bytscl[2],
+                              "description": "Linear stretch and byte scale (0-255) for 8bit raster. "
+                                             "Mode can be 'value' or 'percent' (cut-off units). "
+                                             "Values min and max define stretch borders (in mode units)."}
             },
             "Multiple directions hillshade": {
                 "mhs_compute": {"value": self.mhs_compute,
@@ -249,8 +262,10 @@ class DefaultValues:
                                    "description": "If 1 it saves float raster, if 0 it doesn't."},
                 "mhs_save_8bit": {"value": self.mhs_save_8bit,
                                   "description": "If 1 it saves 8bit raster, if 0 it doesn't."},
-                "mhs_bytscl": {"min": self.mhs_bytscl[0], "max": self.mhs_bytscl[1],
-                               "description": "Byte scale min and max values for 8bit raster."}
+                "mhs_bytscl": {"mode": self.mhs_bytscl[0], "min": self.mhs_bytscl[1], "max": self.mhs_bytscl[2],
+                               "description": "Linear stretch and byte scale (0-255) for 8bit raster. "
+                                              "Mode can be 'value' or 'percent' (cut-off units). "
+                                              "Values min and max define stretch borders (in mode units)."}
             },
             "Slope gradient": {
                 "slp_compute": {"value": self.slp_compute,
@@ -262,8 +277,10 @@ class DefaultValues:
                                    "description": "If 1 it saves float raster, if 0 it doesn't."},
                 "slp_save_8bit": {"value": self.slp_save_8bit,
                                   "description": "If 1 it saves 8bit raster, if 0 it doesn't."},
-                "slp_bytscl": {"min": self.slp_bytscl[0], "max": self.slp_bytscl[1],
-                               "description": "Byte scale min and max values for 8bit raster."}
+                "slp_bytscl": {"mode": self.slp_bytscl[0], "min": self.slp_bytscl[1], "max": self.slp_bytscl[2],
+                               "description": "Linear stretch and byte scale (0-255) for 8bit raster. "
+                                              "Mode can be 'value' or 'percent' (cut-off units). "
+                                              "Values min and max define stretch borders (in mode units)."}
             },
             "Simple local relief model": {
                 "slrm_compute": {"value": self.slrm_compute,
@@ -275,8 +292,10 @@ class DefaultValues:
                                     "description": "If 1 it saves float raster, if 0 it doesn't."},
                 "slrm_save_8bit": {"value": self.slrm_save_8bit,
                                    "description": "If 1 it saves 8bit raster, if 0 it doesn't."},
-                "slrm_bytscl": {"min": self.slrm_bytscl[0], "max": self.slrm_bytscl[1],
-                                "description": "Byte scale min and max values for 8bit raster."}
+                "slrm_bytscl": {"mode": self.slrm_bytscl[0], "min": self.slrm_bytscl[1], "max": self.slrm_bytscl[2],
+                                "description": "Linear stretch and byte scale (0-255) for 8bit raster. "
+                                               "Mode can be 'value' or 'percent' (cut-off units). "
+                                               "Values min and max define stretch borders (in mode units)."}
             },
             "Sky-View Factor": {
                 "svf_compute": {"value": self.svf_compute,
@@ -292,8 +311,10 @@ class DefaultValues:
                                    "description": "If 1 it saves float raster, if 0 it doesn't."},
                 "svf_save_8bit": {"value": self.svf_save_8bit,
                                   "description": "If 1 it saves 8bit raster, if 0 it doesn't."},
-                "svf_bytscl": {"min": self.svf_bytscl[0], "max": self.svf_bytscl[1],
-                               "description": "Byte scale min and max values for 8bit raster."}
+                "svf_bytscl": {"mode": self.svf_bytscl[0], "min": self.svf_bytscl[1], "max": self.svf_bytscl[2],
+                               "description": "Linear stretch and byte scale (0-255) for 8bit raster. "
+                                              "Mode can be 'value' or 'percent' (cut-off units). "
+                                              "Values min and max define stretch borders (in mode units)."}
             },
             "Anisotropic Sky-View Factor": {
                 "asvf_compute": {"value": self.asvf_compute,
@@ -303,15 +324,20 @@ class DefaultValues:
                              "description": "Direction of anisotropy in degrees."},
                 "asvf_level": {"value": self.asvf_level,
                                "description": "Level of anisotropy [1-low, 2-high]."},
-                "asvf_bytscl": {"min": self.asvf_bytscl[0], "max": self.asvf_bytscl[1],
-                                "description": "Byte scale min and max values for 8bit raster."}
+                "asvf_bytscl": {"mode": self.asvf_bytscl[0], "min": self.asvf_bytscl[1], "max": self.asvf_bytscl[2],
+                                "description": "Linear stretch and byte scale (0-255) for 8bit raster. "
+                                               "Mode can be 'value' or 'percent' (cut-off units). "
+                                               "Values min and max define stretch borders (in mode units)."}
             },
             "Openness - Positive": {
                 "pos_opns_compute": {"value": self.pos_opns_compute,
                                      "description": "If compute Openness - Positive. "
                                                     "Parameter for GUIs."},
-                "pos_opns_bytscl": {"min": self.pos_opns_bytscl[0], "max": self.pos_opns_bytscl[1],
-                                    "description": "Byte scale min and max values for 8bit raster."}
+                "pos_opns_bytscl": {"mode": self.pos_opns_bytscl[0], "min": self.pos_opns_bytscl[1],
+                                    "max": self.pos_opns_bytscl[2],
+                                    "description": "Linear stretch and byte scale (0-255) for 8bit raster. "
+                                                   "Mode can be 'value' or 'percent' (cut-off units). "
+                                                   "Values min and max define stretch borders (in mode units)."}
             },
             "Openness - Negative": {
                 "neg_opns_compute": {"value": self.neg_opns_compute,
@@ -321,8 +347,11 @@ class DefaultValues:
                                         "description": "If 1 it saves float raster, if 0 it doesn't."},
                 "neg_opns_save_8bit": {"value": self.neg_opns_save_8bit,
                                        "description": "If 1 it saves 8bit raster, if 0 it doesn't."},
-                "neg_opns_bytscl": {"min": self.neg_opns_bytscl[0], "max": self.neg_opns_bytscl[1],
-                                    "description": "Byte scale min and max values for 8bit raster."}
+                "neg_opns_bytscl": {"mode": self.neg_opns_bytscl[0], "min": self.neg_opns_bytscl[1],
+                                    "max": self.neg_opns_bytscl[2],
+                                    "description": "Linear stretch and byte scale (0-255) for 8bit raster. "
+                                                   "Mode can be 'value' or 'percent' (cut-off units). "
+                                                   "Values min and max define stretch borders (in mode units)."}
             },
             "Sky illumination": {
                 "sim_compute": {"value": self.sim_compute,
@@ -346,8 +375,10 @@ class DefaultValues:
                                    "description": "If 1 it saves float raster, if 0 it doesn't."},
                 "sim_save_8bit": {"value": self.sim_save_8bit,
                                   "description": "If 1 it saves 8bit raster, if 0 it doesn't."},
-                "sim_bytscl": {"min": self.sim_bytscl[0], "max": self.sim_bytscl[1],
-                               "description": "Byte scale min and max values for 8bit raster."}
+                "sim_bytscl": {"mode": self.sim_bytscl[0], "min": self.sim_bytscl[1], "max": self.sim_bytscl[2],
+                               "description": "Linear stretch and byte scale (0-255) for 8bit raster. "
+                                              "Mode can be 'value' or 'percent' (cut-off units). "
+                                              "Values min and max define stretch borders (in mode units)."}
             },
             "Local dominance": {
                 "ld_compute": {"value": self.ld_compute,
@@ -372,8 +403,10 @@ class DefaultValues:
                                   "description": "If 1 it saves float raster, if 0 it doesn't."},
                 "ld_save_8bit": {"value": self.ld_save_8bit,
                                  "description": "If 1 it saves 8bit raster, if 0 it doesn't."},
-                "ld_bytscl": {"min": self.ld_bytscl[0], "max": self.ld_bytscl[1],
-                              "description": "Byte scale min and max values for 8bit raster."}
+                "ld_bytscl": {"mode": self.ld_bytscl[0], "min": self.ld_bytscl[1], "max": self.ld_bytscl[2],
+                              "description": "Linear stretch and byte scale (0-255) for 8bit raster. "
+                                             "Mode can be 'value' or 'percent' (cut-off units). "
+                                             "Values min and max define stretch borders (in mode units)."}
             }}}
         if file_path is None:
             file_path = r"settings\default_settings.json"
@@ -488,7 +521,8 @@ class DefaultValues:
             self.slp_output_units = str(default_data["Slope gradient"]["slp_output_units"]["value"])
             self.slp_save_float = int(default_data["Slope gradient"]["slp_save_float"]["value"])
             self.slp_save_8bit = int(default_data["Slope gradient"]["slp_save_8bit"]["value"])
-            self.slp_bytscl = (float(default_data["Slope gradient"]["slp_bytscl"]["min"]),
+            self.slp_bytscl = (str(default_data["Slope gradient"]["slp_bytscl"]["mode"]),
+                               float(default_data["Slope gradient"]["slp_bytscl"]["min"]),
                                float(default_data["Slope gradient"]["slp_bytscl"]["max"]))
             # Hillshade
             self.hs_compute = int(default_data["Hillshade"]["hs_compute"]["value"])
@@ -496,7 +530,8 @@ class DefaultValues:
             self.hs_sun_el = int(default_data["Hillshade"]["hs_sun_el"]["value"])
             self.hs_save_float = int(default_data["Hillshade"]["hs_save_float"]["value"])
             self.hs_save_8bit = int(default_data["Hillshade"]["hs_save_8bit"]["value"])
-            self.hs_bytscl = (float(default_data["Hillshade"]["hs_bytscl"]["min"]),
+            self.hs_bytscl = (str(default_data["Hillshade"]["hs_bytscl"]["mode"]),
+                              float(default_data["Hillshade"]["hs_bytscl"]["min"]),
                               float(default_data["Hillshade"]["hs_bytscl"]["max"]))
             # Multiple directions hillshade
             self.mhs_compute = int(default_data["Multiple directions hillshade"]["mhs_compute"]["value"])
@@ -504,14 +539,16 @@ class DefaultValues:
             self.mhs_sun_el = int(default_data["Multiple directions hillshade"]["mhs_sun_el"]["value"])
             self.mhs_save_float = int(default_data["Multiple directions hillshade"]["mhs_save_float"]["value"])
             self.mhs_save_8bit = int(default_data["Multiple directions hillshade"]["mhs_save_8bit"]["value"])
-            self.mhs_bytscl = (float(default_data["Multiple directions hillshade"]["mhs_bytscl"]["min"]),
+            self.mhs_bytscl = (str(default_data["Multiple directions hillshade"]["mhs_bytscl"]["mode"]),
+                               float(default_data["Multiple directions hillshade"]["mhs_bytscl"]["min"]),
                                float(default_data["Multiple directions hillshade"]["mhs_bytscl"]["max"]))
             # Simple local relief model
             self.slrm_compute = int(default_data["Simple local relief model"]["slrm_compute"]["value"])
             self.slrm_rad_cell = int(default_data["Simple local relief model"]["slrm_rad_cell"]["value"])
             self.slrm_save_float = int(default_data["Simple local relief model"]["slrm_save_float"]["value"])
             self.slrm_save_8bit = int(default_data["Simple local relief model"]["slrm_save_8bit"]["value"])
-            self.slrm_bytscl = (float(default_data["Simple local relief model"]["slrm_bytscl"]["min"]),
+            self.slrm_bytscl = (str(default_data["Simple local relief model"]["slrm_bytscl"]["mode"]),
+                                float(default_data["Simple local relief model"]["slrm_bytscl"]["min"]),
                                 float(default_data["Simple local relief model"]["slrm_bytscl"]["max"]))
             # Sky-View Factor
             self.svf_compute = int(default_data["Sky-View Factor"]["svf_compute"]["value"])
@@ -520,23 +557,27 @@ class DefaultValues:
             self.svf_noise = int(default_data["Sky-View Factor"]["svf_noise"]["value"])
             self.svf_save_float = int(default_data["Sky-View Factor"]["svf_save_float"]["value"])
             self.svf_save_8bit = int(default_data["Sky-View Factor"]["svf_save_8bit"]["value"])
-            self.svf_bytscl = (float(default_data["Sky-View Factor"]["svf_bytscl"]["min"]),
+            self.svf_bytscl = (str(default_data["Sky-View Factor"]["svf_bytscl"]["mode"]),
+                               float(default_data["Sky-View Factor"]["svf_bytscl"]["min"]),
                                float(default_data["Sky-View Factor"]["svf_bytscl"]["max"]))
             # Anisotropic Sky-View Factor
             self.asvf_compute = int(default_data["Anisotropic Sky-View Factor"]["asvf_compute"]["value"])
             self.asvf_dir = int(default_data["Anisotropic Sky-View Factor"]["asvf_dir"]["value"])
             self.asvf_level = int(default_data["Anisotropic Sky-View Factor"]["asvf_level"]["value"])
-            self.asvf_bytscl = (float(default_data["Anisotropic Sky-View Factor"]["asvf_bytscl"]["min"]),
+            self.asvf_bytscl = (str(default_data["Anisotropic Sky-View Factor"]["asvf_bytscl"]["mode"]),
+                                float(default_data["Anisotropic Sky-View Factor"]["asvf_bytscl"]["min"]),
                                 float(default_data["Anisotropic Sky-View Factor"]["asvf_bytscl"]["max"]))
             # Openness - Positive
             self.pos_opns_compute = int(default_data["Openness - Positive"]["pos_opns_compute"]["value"])
-            self.pos_opns_bytscl = (float(default_data["Openness - Positive"]["pos_opns_bytscl"]["min"]),
+            self.pos_opns_bytscl = (str(default_data["Openness - Positive"]["pos_opns_bytscl"]["mode"]),
+                                    float(default_data["Openness - Positive"]["pos_opns_bytscl"]["min"]),
                                     float(default_data["Openness - Positive"]["pos_opns_bytscl"]["max"]))
             # Openness - Negative
             self.neg_opns_compute = int(default_data["Openness - Negative"]["neg_opns_compute"]["value"])
             self.neg_opns_save_float = int(default_data["Openness - Negative"]["neg_opns_save_float"]["value"])
             self.neg_opns_save_8bit = int(default_data["Openness - Negative"]["neg_opns_save_8bit"]["value"])
-            self.neg_opns_bytscl = (float(default_data["Openness - Negative"]["neg_opns_bytscl"]["min"]),
+            self.neg_opns_bytscl = (str(default_data["Openness - Negative"]["neg_opns_bytscl"]["mode"]),
+                                    float(default_data["Openness - Negative"]["neg_opns_bytscl"]["min"]),
                                     float(default_data["Openness - Negative"]["neg_opns_bytscl"]["max"]))
             # Sky illumination
             self.sim_compute = int(default_data["Sky illumination"]["sim_compute"]["value"])
@@ -548,7 +589,8 @@ class DefaultValues:
             self.sim_shadow_el = int(default_data["Sky illumination"]["sim_shadow_el"]["value"])
             self.sim_save_float = int(default_data["Sky illumination"]["sim_save_float"]["value"])
             self.sim_save_8bit = int(default_data["Sky illumination"]["sim_save_8bit"]["value"])
-            self.sim_bytscl = (float(default_data["Sky illumination"]["sim_bytscl"]["min"]),
+            self.sim_bytscl = (str(default_data["Sky illumination"]["sim_bytscl"]["mode"]),
+                               float(default_data["Sky illumination"]["sim_bytscl"]["min"]),
                                float(default_data["Sky illumination"]["sim_bytscl"]["max"]))
             # Local dominance
             self.ld_compute = int(default_data["Local dominance"]["ld_compute"]["value"])
@@ -559,7 +601,8 @@ class DefaultValues:
             self.ld_observer_h = float(default_data["Local dominance"]["ld_observer_h"]["value"])
             self.ld_save_float = int(default_data["Local dominance"]["ld_save_float"]["value"])
             self.ld_save_8bit = int(default_data["Local dominance"]["ld_save_8bit"]["value"])
-            self.ld_bytscl = (float(default_data["Local dominance"]["ld_bytscl"]["min"]),
+            self.ld_bytscl = (str(default_data["Local dominance"]["ld_bytscl"]["mode"]),
+                              float(default_data["Local dominance"]["ld_bytscl"]["min"]),
                               float(default_data["Local dominance"]["ld_bytscl"]["max"]))
             dat.close()
 
@@ -770,38 +813,109 @@ class DefaultValues:
 
     def float_to_8bit(self, float_arr, vis, x_res=None, y_res=None):
         """Converts (byte scale) float visualization to 8bit. Resolution (x_res, y_res) needed only for multiple
-         directions hillshade"""
+         directions hillshade. Method first normalize then byte scale (0-255)."""
         if vis.lower() == "hillshade":
-            return rvt.vis.byte_scale(float_arr, c_min=self.hs_bytscl[0], c_max=self.hs_bytscl[1])
+            if self.hs_bytscl[0].lower() == "percent" or self.hs_bytscl[0].lower() == "perc":
+                norm_arr = rvt.blend_func.normalize_perc(image=float_arr, minimum=self.hs_bytscl[1],
+                                                         maximum=self.hs_bytscl[2])
+            else:  # self.hs_bytscl[0] == "value"
+                norm_arr = rvt.blend_func.normalize_lin(image=float_arr, minimum=self.hs_bytscl[1],
+                                                        maximum=self.hs_bytscl[2])
+            return rvt.vis.byte_scale(norm_arr)
         elif vis.lower() == "slope gradient":
-            return rvt.vis.byte_scale(float_arr, c_min=self.slp_bytscl[0], c_max=self.slp_bytscl[1])
+            if self.slp_bytscl[0].lower() == "percent" or self.slp_bytscl[0].lower() == "perc":
+                norm_arr = rvt.blend_func.normalize_perc(image=float_arr, minimum=self.slp_bytscl[1],
+                                                         maximum=self.slp_bytscl[2])
+            else:  # self.slp_bytscl[0] == "value"
+                norm_arr = rvt.blend_func.normalize_lin(image=float_arr, minimum=self.slp_bytscl[1],
+                                                        maximum=self.slp_bytscl[2])
+            return rvt.vis.byte_scale(norm_arr)
         elif vis.lower() == "multiple directions hillshade":
             # Be careful when multihillshade we input dem, because we have to calculate hillshade in 3 directions
             red_band_arr = rvt.vis.hillshade(dem=float_arr, resolution_x=x_res, resolution_y=y_res,
                                              sun_elevation=self.mhs_sun_el, sun_azimuth=315)
-            red_band_arr = rvt.vis.byte_scale(red_band_arr, c_min=self.mhs_bytscl[0], c_max=self.mhs_bytscl[1])
             green_band_arr = rvt.vis.hillshade(dem=float_arr, resolution_x=x_res, resolution_y=y_res,
                                                sun_elevation=self.mhs_sun_el, sun_azimuth=22.5)
-            green_band_arr = rvt.vis.byte_scale(green_band_arr, c_min=self.mhs_bytscl[0], c_max=self.mhs_bytscl[1])
             blue_band_arr = rvt.vis.hillshade(dem=float_arr, resolution_x=x_res, resolution_y=y_res,
                                               sun_elevation=self.mhs_sun_el, sun_azimuth=90)
-            blue_band_arr = rvt.vis.byte_scale(blue_band_arr, c_min=self.mhs_bytscl[0], c_max=self.mhs_bytscl[1])
+            if self.mhs_bytscl[0].lower() == "percent" or self.slp_bytscl[0].lower() == "perc":
+                red_band_arr = rvt.blend_func.normalize_perc(image=red_band_arr, minimum=self.mhs_bytscl[1],
+                                                             maximum=self.mhs_bytscl[2])
+                red_band_arr = rvt.vis.byte_scale(red_band_arr)
+                green_band_arr = rvt.blend_func.normalize_perc(image=green_band_arr, minimum=self.mhs_bytscl[1],
+                                                               maximum=self.mhs_bytscl[2])
+                green_band_arr = rvt.vis.byte_scale(green_band_arr)
+                blue_band_arr = rvt.blend_func.normalize_perc(image=blue_band_arr, minimum=self.mhs_bytscl[1],
+                                                              maximum=self.mhs_bytscl[2])
+                blue_band_arr = rvt.vis.byte_scale(blue_band_arr)
+            else:  # self.mhs_bytscl[0] == "value"
+                red_band_arr = rvt.blend_func.normalize_lin(image=red_band_arr, minimum=self.mhs_bytscl[1],
+                                                            maximum=self.mhs_bytscl[2])
+                red_band_arr = rvt.vis.byte_scale(red_band_arr)
+                green_band_arr = rvt.blend_func.normalize_lin(image=green_band_arr, minimum=self.mhs_bytscl[1],
+                                                              maximum=self.mhs_bytscl[2])
+                green_band_arr = rvt.vis.byte_scale(green_band_arr)
+                blue_band_arr = rvt.blend_func.normalize_lin(image=blue_band_arr, minimum=self.mhs_bytscl[1],
+                                                             maximum=self.mhs_bytscl[2])
+                blue_band_arr = rvt.vis.byte_scale(blue_band_arr)
             multi_hillshade_8bit_arr = np.array([red_band_arr, green_band_arr, blue_band_arr])
             return multi_hillshade_8bit_arr
         elif vis.lower() == "simple local relief model":
-            return rvt.vis.byte_scale(float_arr, c_min=self.slrm_bytscl[0], c_max=self.slrm_bytscl[1])
+            if self.slrm_bytscl[0].lower() == "percent" or self.slrm_bytscl[0].lower() == "perc":
+                norm_arr = rvt.blend_func.normalize_perc(image=float_arr, minimum=self.slrm_bytscl[1],
+                                                         maximum=self.slrm_bytscl[2])
+            else:  # self.slrm_bytscl[0] == "value"
+                norm_arr = rvt.blend_func.normalize_lin(image=float_arr, minimum=self.slrm_bytscl[1],
+                                                        maximum=self.slrm_bytscl[2])
+            return rvt.vis.byte_scale(norm_arr)
         elif vis.lower() == "sky-view factor":
-            return rvt.vis.byte_scale(float_arr, c_min=self.svf_bytscl[0], c_max=self.svf_bytscl[1])
+            if self.svf_bytscl[0].lower() == "percent" or self.svf_bytscl[0].lower() == "perc":
+                norm_arr = rvt.blend_func.normalize_perc(image=float_arr, minimum=self.svf_bytscl[1],
+                                                         maximum=self.svf_bytscl[2])
+            else:  # self.svf_bytscl[0] == "value"
+                norm_arr = rvt.blend_func.normalize_lin(image=float_arr, minimum=self.svf_bytscl[1],
+                                                        maximum=self.svf_bytscl[2])
+            return rvt.vis.byte_scale(norm_arr)
         elif vis.lower() == "anisotropic sky-view factor":
-            return rvt.vis.byte_scale(float_arr, c_min=self.asvf_bytscl[0], c_max=self.asvf_bytscl[1])
+            if self.asvf_bytscl[0].lower() == "percent" or self.asvf_bytscl[0].lower() == "perc":
+                norm_arr = rvt.blend_func.normalize_perc(image=float_arr, minimum=self.asvf_bytscl[1],
+                                                         maximum=self.asvf_bytscl[2])
+            else:  # self.asvf_bytscl[0] == "value"
+                norm_arr = rvt.blend_func.normalize_lin(image=float_arr, minimum=self.asvf_bytscl[1],
+                                                        maximum=self.asvf_bytscl[2])
+            return rvt.vis.byte_scale(norm_arr)
         elif vis.lower() == "openness - positive":
-            return rvt.vis.byte_scale(float_arr, c_min=self.pos_opns_bytscl[0], c_max=self.pos_opns_bytscl[1])
+            if self.pos_opns_bytscl[0].lower() == "percent" or self.pos_opns_bytscl[0].lower() == "perc":
+                norm_arr = rvt.blend_func.normalize_perc(image=float_arr, minimum=self.pos_opns_bytscl[1],
+                                                         maximum=self.pos_opns_bytscl[2])
+            else:  # self.pos_opns_bytscl[0] == "value"
+                norm_arr = rvt.blend_func.normalize_lin(image=float_arr, minimum=self.pos_opns_bytscl[1],
+                                                        maximum=self.pos_opns_bytscl[2])
+            return rvt.vis.byte_scale(norm_arr)
         elif vis.lower() == "openness - negative":
-            return rvt.vis.byte_scale(float_arr, c_min=self.neg_opns_bytscl[0], c_max=self.neg_opns_bytscl[1])
+            if self.neg_opns_bytscl[0].lower() == "percent" or self.neg_opns_bytscl[0].lower() == "perc":
+                norm_arr = rvt.blend_func.normalize_perc(image=float_arr, minimum=self.neg_opns_bytscl[1],
+                                                         maximum=self.neg_opns_bytscl[2])
+            else:  # self.neg_opns_bytscl[0] == "value"
+                norm_arr = rvt.blend_func.normalize_lin(image=float_arr, minimum=self.neg_opns_bytscl[1],
+                                                        maximum=self.neg_opns_bytscl[2])
+            return rvt.vis.byte_scale(norm_arr)
         elif vis.lower() == "sky illumination":
-            return rvt.vis.byte_scale(float_arr, c_min=self.sim_bytscl[0], c_max=self.sim_bytscl[1])
+            if self.sim_bytscl[0].lower() == "percent" or self.sim_bytscl[0].lower() == "perc":
+                norm_arr = rvt.blend_func.normalize_perc(image=float_arr, minimum=self.sim_bytscl[1],
+                                                         maximum=self.sim_bytscl[2])
+            else:  # self.sim_bytscl[0] == "value"
+                norm_arr = rvt.blend_func.normalize_lin(image=float_arr, minimum=self.sim_bytscl[1],
+                                                        maximum=self.sim_bytscl[2])
+            return rvt.vis.byte_scale(norm_arr)
         elif vis.lower() == "local dominance":
-            return rvt.vis.byte_scale(float_arr, c_min=self.ld_bytscl[0], c_max=self.ld_bytscl[1])
+            if self.ld_bytscl[0].lower() == "percent" or self.ld_bytscl[0].lower() == "perc":
+                norm_arr = rvt.blend_func.normalize_perc(image=float_arr, minimum=self.ld_bytscl[1],
+                                                         maximum=self.ld_bytscl[2])
+            else:  # self.ld_bytscl[0] == "value"
+                norm_arr = rvt.blend_func.normalize_lin(image=float_arr, minimum=self.ld_bytscl[1],
+                                                        maximum=self.ld_bytscl[2])
+            return rvt.vis.byte_scale(norm_arr)
         else:
             raise Exception("rvt.default.DefaultValues.float_to_8bit: Wrong vis (visualization) parameter!")
 
@@ -1535,7 +1649,7 @@ class DefaultValues:
         if nr_rows * nr_cols > self.multiproc_size_limit:
             dat.write("\tMultiprocessing: {}\n".format("ON"))
             dat.write("\t\tMultiprocess block size: {}x{}\n".format(self.multiproc_block_size[0],
-                                                                    self.multiproc_block_size[0]))
+                                                                    self.multiproc_block_size[1]))
         else:
             dat.write("\tMultiprocessing: {}\n".format("OFF"))
 
@@ -1552,7 +1666,8 @@ class DefaultValues:
                     os.path.join(log_dir, self.get_hillshade_file_name(dem_path)))))
             if self.hs_save_8bit:
                 dat.write("\t\t>> Output 8bit file:\n")
-                dat.write("\t\ths_bytscl=\t\t({}, {})\n".format(self.hs_bytscl[0], self.hs_bytscl[1]))
+                dat.write("\t\ths_bytscl=\t\t({}, {}, {})\n".format(self.hs_bytscl[0], self.hs_bytscl[1],
+                                                                    self.hs_bytscl[2]))
                 dat.write("\t\t\t{}\n".format(os.path.abspath(
                     os.path.join(log_dir, self.get_hillshade_file_name(dem_path, bit8=True)))))
             dat.write("\n")
@@ -1566,7 +1681,8 @@ class DefaultValues:
                     os.path.join(log_dir, self.get_multi_hillshade_file_name(dem_path)))))
             if self.mhs_save_8bit:
                 dat.write("\t\t>> Output 8bit file:\n")
-                dat.write("\t\tmhs_bytscl=\t\t({}, {})\n".format(self.mhs_bytscl[0], self.mhs_bytscl[1]))
+                dat.write("\t\tmhs_bytscl=\t\t({}, {}, {})\n".format(self.mhs_bytscl[0], self.mhs_bytscl[1],
+                                                                     self.mhs_bytscl[2]))
                 dat.write("\t\t\t{}\n".format(os.path.abspath(
                     os.path.join(log_dir, self.get_multi_hillshade_file_name(dem_path, bit8=True)))))
             dat.write("\n")
@@ -1579,7 +1695,8 @@ class DefaultValues:
                     os.path.join(log_dir, self.get_slope_file_name(dem_path)))))
             if self.slp_save_8bit:
                 dat.write("\t\t>> Output 8bit file:\n")
-                dat.write("\t\tslp_bytscl=\t\t({}, {})\n".format(self.slp_bytscl[0], self.slp_bytscl[1]))
+                dat.write("\t\tslp_bytscl=\t\t({}, {}, {})\n".format(self.slp_bytscl[0], self.slp_bytscl[1],
+                                                                     self.slp_bytscl[2]))
                 dat.write("\t\t\t{}\n".format(os.path.abspath(
                     os.path.join(log_dir, self.get_slope_file_name(dem_path, bit8=True)))))
             dat.write("\n")
@@ -1592,7 +1709,8 @@ class DefaultValues:
                     os.path.join(log_dir, self.get_slrm_file_name(dem_path)))))
             if self.slrm_save_8bit:
                 dat.write("\t\t>> Output 8bit file:\n")
-                dat.write("\t\tslrm_bytscl=\t\t({}, {})\n".format(self.slrm_bytscl[0], self.slrm_bytscl[1]))
+                dat.write("\t\tslrm_bytscl=\t\t({}, {}, {})\n".format(self.slrm_bytscl[0], self.slrm_bytscl[1],
+                                                                      self.slrm_bytscl[2]))
                 dat.write("\t\t\t{}\n".format(os.path.abspath(
                     os.path.join(log_dir, self.get_slrm_file_name(dem_path, bit8=True)))))
             dat.write("\n")
@@ -1606,7 +1724,8 @@ class DefaultValues:
                 dat.write("\t\t\t{}\n".format(os.path.abspath(os.path.join(log_dir, self.get_svf_file_name(dem_path)))))
             if self.svf_save_8bit:
                 dat.write("\t\t>> Output 8bit file:\n")
-                dat.write("\t\tsvf_bytscl=\t\t({}, {})\n".format(self.svf_bytscl[0], self.svf_bytscl[1]))
+                dat.write("\t\tsvf_bytscl=\t\t({}, {}, {})\n".format(self.svf_bytscl[0], self.svf_bytscl[1],
+                                                                     self.svf_bytscl[2]))
                 dat.write("\t\t\t{}\n".format(os.path.abspath(
                     os.path.join(log_dir, self.get_svf_file_name(dem_path, bit8=True)))))
             dat.write("\n")
@@ -1623,7 +1742,8 @@ class DefaultValues:
                     os.path.join(log_dir, self.get_asvf_file_name(dem_path)))))
             if self.svf_save_8bit:
                 dat.write("\t\t>> Output 8bit file:\n")
-                dat.write("\t\tasvf_bytscl=\t\t({}, {})\n".format(self.asvf_bytscl[0], self.asvf_bytscl[1]))
+                dat.write("\t\tasvf_bytscl=\t\t({}, {}, {})\n".format(self.asvf_bytscl[0], self.asvf_bytscl[1],
+                                                                      self.asvf_bytscl[2]))
                 dat.write("\t\t\t{}\n".format(os.path.abspath(
                     os.path.join(log_dir, self.get_asvf_file_name(dem_path, bit8=True)))))
             dat.write("\n")
@@ -1638,7 +1758,9 @@ class DefaultValues:
                     os.path.join(log_dir, self.get_opns_file_name(dem_path)))))
             if self.svf_save_8bit:
                 dat.write("\t\t>> Output 8bit file:\n")
-                dat.write("\t\tpos_opns_bytscl=\t\t({}, {})\n".format(self.pos_opns_bytscl[0], self.pos_opns_bytscl[1]))
+                dat.write("\t\tpos_opns_bytscl=\t\t({}, {}, {})\n".format(self.pos_opns_bytscl[0],
+                                                                          self.pos_opns_bytscl[1],
+                                                                          self.pos_opns_bytscl[2]))
                 dat.write("\t\t\t{}\n".format(os.path.abspath(
                     os.path.join(log_dir, self.get_opns_file_name(dem_path, bit8=True)))))
             dat.write("\n")
@@ -1653,7 +1775,9 @@ class DefaultValues:
                     os.path.join(log_dir, self.get_neg_opns_file_name(dem_path)))))
             if self.neg_opns_save_8bit:
                 dat.write("\t\t>> Output 8bit file:\n")
-                dat.write("\t\tneg_opns_bytscl=\t\t({}, {})\n".format(self.neg_opns_bytscl[0], self.neg_opns_bytscl[1]))
+                dat.write("\t\tneg_opns_bytscl=\t\t({}, {}, {})\n".format(self.neg_opns_bytscl[0],
+                                                                          self.neg_opns_bytscl[1],
+                                                                          self.neg_opns_bytscl[2]))
                 dat.write("\t\t\t{}\n".format(os.path.abspath(
                     os.path.join(log_dir, self.get_neg_opns_file_name(dem_path, bit8=True)))))
             dat.write("\n")
@@ -1671,7 +1795,8 @@ class DefaultValues:
                     os.path.join(log_dir, self.get_sky_illumination_file_name(dem_path)))))
             if self.sim_save_8bit:
                 dat.write("\t\t>> Output 8bit file:\n")
-                dat.write("\t\tsim_bytscl=\t\t({}, {})\n".format(self.sim_bytscl[0], self.sim_bytscl[1]))
+                dat.write("\t\tsim_bytscl=\t\t({}, {}, {})\n".format(self.sim_bytscl[0], self.sim_bytscl[1],
+                                                                     self.sim_bytscl[2]))
                 dat.write("\t\t\t{}\n".format(os.path.abspath(
                     os.path.join(log_dir, self.get_sky_illumination_file_name(dem_path, bit8=True)))))
             dat.write("\n")
@@ -1688,7 +1813,8 @@ class DefaultValues:
                     os.path.join(log_dir, self.get_local_dominance_file_name(dem_path)))))
             if self.ld_save_8bit:
                 dat.write("\t\t>> Output 8bit file:\n")
-                dat.write("\t\tld_bytscl=\t\t({}, {})\n".format(self.ld_bytscl[0], self.ld_bytscl[1]))
+                dat.write("\t\tld_bytscl=\t\t({}, {}, {})\n".format(self.ld_bytscl[0], self.ld_bytscl[1],
+                                                                    self.ld_bytscl[2]))
                 dat.write("\t\t\t{}\n".format(os.path.abspath(
                     os.path.join(log_dir, self.get_local_dominance_file_name(dem_path, bit8=True)))))
             dat.write("\n")
