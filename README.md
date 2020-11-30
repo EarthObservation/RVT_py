@@ -41,7 +41,7 @@ Copy or clone the files to your environment. We suggest using an Anaconda enviro
 You'll need libraries (could also work with other versions):
 *   numpy 1.19.2
 *   scipy 1.5.2
-*   rasterio 1.1.7
+*   gdal 3.0.2
 
 You can use `rvt-py` in Python scripts, Jupyter Notebooks and in ArcGIS Pro.
 
