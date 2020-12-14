@@ -96,9 +96,9 @@ def normalize_perc(image, minimum, maximum):
 def advanced_normalization(image, minimum, maximum, normalization):
     equ_image = image
     if normalization.lower() == "value":
-        equ_image = normalize_lin(image, minimum, maximum)
+        equ_image = normalize_lin(image=image, minimum=minimum, maximum=maximum)
     elif normalization.lower() == "perc":
-        equ_image = normalize_perc(image, minimum, maximum)
+        equ_image = normalize_perc(image=image, minimum=minimum, maximum=maximum)
     elif normalization is None:
         equ_image = image
     return equ_image
@@ -349,22 +349,25 @@ def apply_opacity(active, background, opacity):
 def normalize_image(visualization, image, min_norm, max_norm, normalization):
     if visualization is None:
         return None
+    if normalization == "percent":
+        normalization = "perc"
+        
     # workaround for RGB images because they are on scale [0, 255] not [0, 1],
     # we use multiplier to get proper values
-    if normalization.lower() == "value" and visualization.lower() == "hillshade":
-        if np.nanmax(image) > 100.0 and len(image.shape) == 3:
-            # limit normalization 0 to 1
-            # all numbers below are 0
-            # numbers above are 1
-            if min_norm < 0:
-                min_norm = 0
-            if max_norm > 1:
-                max_norm = 1
+    # if normalization.lower() == "value" and visualization.lower() == "hillshade":
+    #     if np.nanmax(image) > 100.0 and len(image.shape) == 3:
+    #         # limit normalization 0 to 1
+    #         # all numbers below are 0
+    #         # numbers above are 1
+    #         if min_norm < 0:
+    #             min_norm = 0
+    #         if max_norm > 1:
+    #             max_norm = 1
+    #
+    #         min_norm = round(min_norm * 255)
+    #         max_norm = round(max_norm * 255)
 
-            min_norm = round(min_norm * 255)
-            max_norm = round(max_norm * 255)
-
-    norm_image = advanced_normalization(image, min_norm, max_norm, normalization)
+    norm_image = advanced_normalization(image=image, minimum=min_norm, maximum=max_norm, normalization=normalization)
     # make sure it scales 0 to 1
     if np.nanmax(norm_image) > 1:
         if visualization.lower() == "multiple directions hillshade":
@@ -375,8 +378,8 @@ def normalize_image(visualization, image, min_norm, max_norm, normalization):
         if np.nanmin(norm_image) < 0:
             warnings.warn("rvt.blend.normalize_images_on_layers: unexpected values! min < 0")
 
-    # for slope and neg openness, invert scale
+    # for slope, invert scale
     # meaning high slopes will be black
-    if visualization.lower() == "openness - negative" or visualization.lower() == "slope gradient":
+    if visualization.lower() == "slope gradient":
         norm_image = 1 - norm_image
     return norm_image

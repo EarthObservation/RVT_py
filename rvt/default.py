@@ -815,20 +815,14 @@ class DefaultValues:
         """Converts (byte scale) float visualization to 8bit. Resolution (x_res, y_res) needed only for multiple
          directions hillshade. Method first normalize then byte scale (0-255)."""
         if vis.lower() == "hillshade":
-            if self.hs_bytscl[0].lower() == "percent" or self.hs_bytscl[0].lower() == "perc":
-                norm_arr = rvt.blend_func.normalize_perc(image=float_arr, minimum=self.hs_bytscl[1],
-                                                         maximum=self.hs_bytscl[2])
-            else:  # self.hs_bytscl[0] == "value"
-                norm_arr = rvt.blend_func.normalize_lin(image=float_arr, minimum=self.hs_bytscl[1],
-                                                        maximum=self.hs_bytscl[2])
+            norm_arr = rvt.blend_func.normalize_image(visualization="hillshade", image=float_arr,
+                                                      min_norm=self.hs_bytscl[1], max_norm=self.hs_bytscl[2],
+                                                      normalization=self.hs_bytscl[0])
             return rvt.vis.byte_scale(norm_arr)
         elif vis.lower() == "slope gradient":
-            if self.slp_bytscl[0].lower() == "percent" or self.slp_bytscl[0].lower() == "perc":
-                norm_arr = rvt.blend_func.normalize_perc(image=float_arr, minimum=self.slp_bytscl[1],
-                                                         maximum=self.slp_bytscl[2])
-            else:  # self.slp_bytscl[0] == "value"
-                norm_arr = rvt.blend_func.normalize_lin(image=float_arr, minimum=self.slp_bytscl[1],
-                                                        maximum=self.slp_bytscl[2])
+            norm_arr = rvt.blend_func.normalize_image(visualization=vis.lower(), image=float_arr,
+                                                      min_norm=self.slp_bytscl[1], max_norm=self.slp_bytscl[2],
+                                                      normalization=self.slp_bytscl[0])
             return rvt.vis.byte_scale(norm_arr)
         elif vis.lower() == "multiple directions hillshade":
             # Be careful when multihillshade we input dem, because we have to calculate hillshade in 3 directions
@@ -861,60 +855,41 @@ class DefaultValues:
             multi_hillshade_8bit_arr = np.array([red_band_arr, green_band_arr, blue_band_arr])
             return multi_hillshade_8bit_arr
         elif vis.lower() == "simple local relief model":
-            if self.slrm_bytscl[0].lower() == "percent" or self.slrm_bytscl[0].lower() == "perc":
-                norm_arr = rvt.blend_func.normalize_perc(image=float_arr, minimum=self.slrm_bytscl[1],
-                                                         maximum=self.slrm_bytscl[2])
-            else:  # self.slrm_bytscl[0] == "value"
-                norm_arr = rvt.blend_func.normalize_lin(image=float_arr, minimum=self.slrm_bytscl[1],
-                                                        maximum=self.slrm_bytscl[2])
+            norm_arr = rvt.blend_func.normalize_image(visualization="simple local relief model", image=float_arr,
+                                                      min_norm=self.slrm_bytscl[1], max_norm=self.slrm_bytscl[2],
+                                                      normalization=self.slrm_bytscl[0])
             return rvt.vis.byte_scale(norm_arr)
         elif vis.lower() == "sky-view factor":
-            if self.svf_bytscl[0].lower() == "percent" or self.svf_bytscl[0].lower() == "perc":
-                norm_arr = rvt.blend_func.normalize_perc(image=float_arr, minimum=self.svf_bytscl[1],
-                                                         maximum=self.svf_bytscl[2])
-            else:  # self.svf_bytscl[0] == "value"
-                norm_arr = rvt.blend_func.normalize_lin(image=float_arr, minimum=self.svf_bytscl[1],
-                                                        maximum=self.svf_bytscl[2])
+            norm_arr = rvt.blend_func.normalize_image(visualization="sky-view factor", image=float_arr,
+                                                      min_norm=self.svf_bytscl[1], max_norm=self.svf_bytscl[2],
+                                                      normalization=self.svf_bytscl[0])
             return rvt.vis.byte_scale(norm_arr)
         elif vis.lower() == "anisotropic sky-view factor":
-            if self.asvf_bytscl[0].lower() == "percent" or self.asvf_bytscl[0].lower() == "perc":
-                norm_arr = rvt.blend_func.normalize_perc(image=float_arr, minimum=self.asvf_bytscl[1],
-                                                         maximum=self.asvf_bytscl[2])
-            else:  # self.asvf_bytscl[0] == "value"
-                norm_arr = rvt.blend_func.normalize_lin(image=float_arr, minimum=self.asvf_bytscl[1],
-                                                        maximum=self.asvf_bytscl[2])
+            norm_arr = rvt.blend_func.normalize_image(visualization="anisotropic sky-view factor", image=float_arr,
+                                                      min_norm=self.asvf_bytscl[1], max_norm=self.asvf_bytscl[2],
+                                                      normalization=self.asvf_bytscl[0])
             return rvt.vis.byte_scale(norm_arr)
         elif vis.lower() == "openness - positive":
-            if self.pos_opns_bytscl[0].lower() == "percent" or self.pos_opns_bytscl[0].lower() == "perc":
-                norm_arr = rvt.blend_func.normalize_perc(image=float_arr, minimum=self.pos_opns_bytscl[1],
-                                                         maximum=self.pos_opns_bytscl[2])
-            else:  # self.pos_opns_bytscl[0] == "value"
-                norm_arr = rvt.blend_func.normalize_lin(image=float_arr, minimum=self.pos_opns_bytscl[1],
-                                                        maximum=self.pos_opns_bytscl[2])
+            norm_arr = rvt.blend_func.normalize_image(visualization="openness - positive", image=float_arr,
+                                                      min_norm=self.pos_opns_bytscl[1],
+                                                      max_norm=self.pos_opns_bytscl[2],
+                                                      normalization=self.pos_opns_bytscl[0])
             return rvt.vis.byte_scale(norm_arr)
         elif vis.lower() == "openness - negative":
-            if self.neg_opns_bytscl[0].lower() == "percent" or self.neg_opns_bytscl[0].lower() == "perc":
-                norm_arr = rvt.blend_func.normalize_perc(image=float_arr, minimum=self.neg_opns_bytscl[1],
-                                                         maximum=self.neg_opns_bytscl[2])
-            else:  # self.neg_opns_bytscl[0] == "value"
-                norm_arr = rvt.blend_func.normalize_lin(image=float_arr, minimum=self.neg_opns_bytscl[1],
-                                                        maximum=self.neg_opns_bytscl[2])
+            norm_arr = rvt.blend_func.normalize_image(visualization="openness - negative", image=float_arr,
+                                                      min_norm=self.neg_opns_bytscl[1],
+                                                      max_norm=self.neg_opns_bytscl[2],
+                                                      normalization=self.neg_opns_bytscl[0])
             return rvt.vis.byte_scale(norm_arr)
         elif vis.lower() == "sky illumination":
-            if self.sim_bytscl[0].lower() == "percent" or self.sim_bytscl[0].lower() == "perc":
-                norm_arr = rvt.blend_func.normalize_perc(image=float_arr, minimum=self.sim_bytscl[1],
-                                                         maximum=self.sim_bytscl[2])
-            else:  # self.sim_bytscl[0] == "value"
-                norm_arr = rvt.blend_func.normalize_lin(image=float_arr, minimum=self.sim_bytscl[1],
-                                                        maximum=self.sim_bytscl[2])
+            norm_arr = rvt.blend_func.normalize_image(visualization="sky illumination", image=float_arr,
+                                                      min_norm=self.sim_bytscl[1], max_norm=self.sim_bytscl[2],
+                                                      normalization=self.sim_bytscl[0])
             return rvt.vis.byte_scale(norm_arr)
         elif vis.lower() == "local dominance":
-            if self.ld_bytscl[0].lower() == "percent" or self.ld_bytscl[0].lower() == "perc":
-                norm_arr = rvt.blend_func.normalize_perc(image=float_arr, minimum=self.ld_bytscl[1],
-                                                         maximum=self.ld_bytscl[2])
-            else:  # self.ld_bytscl[0] == "value"
-                norm_arr = rvt.blend_func.normalize_lin(image=float_arr, minimum=self.ld_bytscl[1],
-                                                        maximum=self.ld_bytscl[2])
+            norm_arr = rvt.blend_func.normalize_image(visualization="local dominance", image=float_arr,
+                                                      min_norm=self.ld_bytscl[1], max_norm=self.ld_bytscl[2],
+                                                      normalization=self.ld_bytscl[0])
             return rvt.vis.byte_scale(norm_arr)
         else:
             raise Exception("rvt.default.DefaultValues.float_to_8bit: Wrong vis (visualization) parameter!")
