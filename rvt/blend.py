@@ -22,6 +22,7 @@ Copyright:
 import numpy as np
 import warnings
 import rvt.default
+import rvt.vis
 from rvt.blend_func import *
 import os
 import json
@@ -234,7 +235,8 @@ class BlenderCombination:
         for layer in self.layers:
             layer.check_data()
 
-    def render_all_images(self, default=None, save_visualizations=False, save_render_path=None):
+    def render_all_images(self, default=None, save_visualizations=False, save_render_path=None, save_float=True,
+                          save_8bit=False):
         """Render all layers and returns blended image. If specific layer (BlenderLayer) in layers has image
         (is not None), method uses this image, if image is None and layer has image_path method reads image from
         path. If both image and image_path are None method calculates visualization. If save_visualization is True
@@ -250,9 +252,14 @@ class BlenderCombination:
             raise Exception(
                 "rvt.blend.BlenderCombination.render_all_images: If you would like to save rendered image (blender), "
                 "you have to define dem_path (BlenderCombination.add_dem_path())!")
-
+        if not save_float and not save_8bit and save_render_path:
+            raise Exception(
+                "rvt.blend.BlenderCombination.render_all_images: If you would like to save rendered image (blender), "
+                "you have to set save_float or save_8bit to True!")
         if save_render_path is not None:
             save_render_directory = os.path.abspath(os.path.dirname(save_render_path))
+            save_render_8bit_path = r"{}\{}_8bit.tif".format(save_render_directory,
+                                                             os.path.splitext(os.path.basename(save_render_path))[0])
         else:
             save_render_directory = None
 
@@ -427,9 +434,14 @@ class BlenderCombination:
                 if np.nanmin(background) < 0 or np.nanmax(background > 1):
                     warnings.warn("rvt.blend.BlenderCombination.render_all_images: Rendered image scale distorted")
         if save_render_path is not None:  # if paths presented it saves image
-            rvt.default.save_raster(src_raster_path=self.dem_path, out_raster_path=save_render_path,
-                                    out_raster_arr=rendered_image)
-        return rendered_image
+            if save_float:
+                rvt.default.save_raster(src_raster_path=self.dem_path, out_raster_path=save_render_path,
+                                        out_raster_arr=rendered_image)
+            if save_8bit:
+                rendered_image_8bit = rvt.vis.byte_scale(rendered_image)
+                rvt.default.save_raster(src_raster_path=self.dem_path, out_raster_path=save_render_8bit_path,
+                                        out_raster_arr=rendered_image_8bit, e_type=1)
+        return rendered_image  # returns float
 
     def create_log_file(self, dem_path, combination_name, render_path, default: rvt.default.DefaultValues,
                         terrain_sett_name=None, custom_dir=None, computation_time=None):
