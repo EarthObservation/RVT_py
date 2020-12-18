@@ -681,10 +681,14 @@ class DefaultValues:
         """Returns Anisotropic Sky-view factor name, dem name (from dem_path) with added asvf parameters.
         If bit8 it returns 8bit file name."""
         dem_name = os.path.basename(dem_path).split(".")[0]  # base name without extension
+        out_name = "{}_SVF-A_R{}_D{}_A{}".format(dem_name, self.svf_r_max, self.svf_n_dir, self.asvf_dir)
+        if self.asvf_level == 1:
+            out_name += "_ALlow"
+        elif self.asvf_level == 2:
+            out_name += "_ALstrong"
         if bit8:
-            return "{}_SVF-A_R{}_D{}_A{}_8bit.tif".format(dem_name, self.svf_r_max, self.svf_n_dir, self.asvf_dir)
-        else:
-            return "{}_SVF-A_R{}_D{}_A{}.tif".format(dem_name, self.svf_r_max, self.svf_n_dir, self.asvf_dir)
+            out_name += "_8bit"
+        return out_name + ".tif"
 
     def get_asvf_path(self, dem_path, bit8=False):
         """Returns path to Anisotropic Sky-view factor. Generates asvf name (uses default attributes and dem name from
