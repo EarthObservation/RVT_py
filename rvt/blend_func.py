@@ -55,17 +55,14 @@ def gray_scale_to_color_ramp(gray_scale, colormap, alpha=False):
 
 def normalize_lin(image, minimum, maximum):
     # linear cut off
-    idx_min = np.where(image < minimum)
-    idx_max = np.where(image > maximum)
-    if idx_min[0].size == 0 and idx_max[0].size == 0:
-        return image
-    if idx_min[0].size > 0:
-        image[idx_min] = minimum
-    if idx_max[0].size > 0:
-        image[idx_max] = maximum
+    image[image > maximum] = maximum
+    image[image < minimum] = minimum
 
     # stretch to 0.0 - 1.0 interval
     image = (image - minimum) / (maximum - minimum)
+    image[image > 1] = 1
+    image[image < 0] = 0
+    image[np.isnan(image)] = 0
     return image
 
 
@@ -75,15 +72,12 @@ def lin_cutoff_calc_from_perc(image, minimum, maximum):
     if minimum < 0 or maximum < 0 or minimum > 100 or maximum > 100:
         raise Exception("rvt.blend_funct.lin_cutoff_calc_from_perc: minimum, maximum are procent and have to be in "
                         "range 0-100 or 0-1!")
-
     if minimum < 1 and maximum < 1:
         minimum *= 100
         maximum *= 100
 
-    distribution = np.percentile(a=image, q=np.array([minimum, 100 - maximum]))
-    min_lin = np.amin(distribution)
-    max_lin = np.amax(distribution)
-    return {"min_lin": min_lin, "max_lin": max_lin}
+    distribution = np.nanpercentile(a=image, q=np.array([minimum, 100 - maximum]))
+    return {"min_lin": distribution[0], "max_lin": distribution[1]}
 
 
 def normalize_perc(image, minimum, maximum):
@@ -368,6 +362,16 @@ def normalize_image(visualization, image, min_norm, max_norm, normalization):
     #         max_norm = round(max_norm * 255)
 
     norm_image = advanced_normalization(image=image, minimum=min_norm, maximum=max_norm, normalization=normalization)
+    # print("vis={}, norm={}\nimg_min={}, min={}, n_min={}\nimg_max={}, max={}, n_max={}\n".format(visualization,
+    #                                                                                              normalization,
+    #                                                                                              np.nanmin(image),
+    #                                                                                              min_norm,
+    #                                                                                              np.nanmin(norm_image),
+    #                                                                                              np.nanmax(image),
+    #                                                                                              max_norm,
+    #                                                                                              np.nanmax(norm_image)
+    #                                                                                              ))
+
     # make sure it scales 0 to 1
     if np.nanmax(norm_image) > 1:
         if visualization.lower() == "multiple directions hillshade":
