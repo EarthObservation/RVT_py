@@ -3,7 +3,7 @@
 Installation
 ============
 
-The project source code is available on `GitHub <https://github.com/EarthObservation/RVT_py>`_.
+The project source code is available at `GitHub <https://github.com/EarthObservation/RVT_py>`_.
 
 Copy or clone the files to your environment.
 
@@ -22,7 +22,7 @@ Conda
 -----
 .. # TODO Describe installation, Conda-Forge preferred
 
-The package is available on Conda Forge.
+The package is available at Conda Forge.
 
 ArcGIS Raster functions
 -----------------------

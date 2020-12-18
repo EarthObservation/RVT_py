@@ -46,7 +46,7 @@ When using the tools, please cite:
 Contributing
 ------------
 
-The project source code is available on  `GitHub <https://github.com/EarthObservation/RVT_py>`_. Pull requests are welcome. For major changes, please open an issue first to discuss what you would like to change.
+The project source code is available at  `GitHub <https://github.com/EarthObservation/RVT_py>`_. Pull requests are welcome. For major changes, please open an issue first to discuss what you would like to change.
 
 Please report any bugs and suggestions for improvements.
 
