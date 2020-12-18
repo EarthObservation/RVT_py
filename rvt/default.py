@@ -209,12 +209,12 @@ class DefaultValues:
         self.slp_bytscl = ("value", 0., 51.)
         self.hs_bytscl = ("value", 0.00, 1.00)
         self.mhs_bytscl = ("value", 0.00, 1.00)
-        self.slrm_bytscl = ("percent", 0.02, 0.02)
+        self.slrm_bytscl = ("percent", 2, 2)
         self.svf_bytscl = ("value", 0.6375, 1.00)
-        self.asvf_bytscl = ("percent", 0.02, 0.02)
+        self.asvf_bytscl = ("percent", 2, 2)
         self.pos_opns_bytscl = ("value", 60, 95.)
         self.neg_opns_bytscl = ("value", 60, 95.)
-        self.sim_bytscl = ("percent", 0.025, 0)
+        self.sim_bytscl = ("percent", 0.25, 0)
         self.ld_bytscl = ("value", 0.5, 1.8)
         # multiprocessing
         self.multiproc_size_limit = 10000 * 10000  # if arr size > multiproc_size_limit, it uses multiprocessing
@@ -681,10 +681,14 @@ class DefaultValues:
         """Returns Anisotropic Sky-view factor name, dem name (from dem_path) with added asvf parameters.
         If bit8 it returns 8bit file name."""
         dem_name = os.path.basename(dem_path).split(".")[0]  # base name without extension
+        out_name = "{}_SVF-A_R{}_D{}_A{}".format(dem_name, self.svf_r_max, self.svf_n_dir, self.asvf_dir)
+        if self.asvf_level == 1:
+            out_name += "_ALlow"
+        elif self.asvf_level == 2:
+            out_name += "_ALstrong"
         if bit8:
-            return "{}_SVF-A_R{}_D{}_A{}_8bit.tif".format(dem_name, self.svf_r_max, self.svf_n_dir, self.asvf_dir)
-        else:
-            return "{}_SVF-A_R{}_D{}_A{}.tif".format(dem_name, self.svf_r_max, self.svf_n_dir, self.asvf_dir)
+            out_name += "_8bit"
+        return out_name + ".tif"
 
     def get_asvf_path(self, dem_path, bit8=False):
         """Returns path to Anisotropic Sky-view factor. Generates asvf name (uses default attributes and dem name from
@@ -1816,8 +1820,8 @@ def get_raster_arr(raster_path):
     """
     data_set = gdal.Open(raster_path)
     gt = data_set.GetGeoTransform()
-    x_res = gt[1]
-    y_res = -gt[5]
+    x_res = abs(gt[1])
+    y_res = abs(-gt[5])
     bands = []
     if data_set.RasterCount == 1:  # only one band
         array = np.array(data_set.GetRasterBand(1).ReadAsArray())

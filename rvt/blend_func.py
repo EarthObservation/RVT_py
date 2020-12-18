@@ -55,17 +55,14 @@ def gray_scale_to_color_ramp(gray_scale, colormap, alpha=False):
 
 def normalize_lin(image, minimum, maximum):
     # linear cut off
-    idx_min = np.where(image < minimum)
-    idx_max = np.where(image > maximum)
-    if idx_min[0].size == 0 and idx_max[0].size == 0:
-        return image
-    if idx_min[0].size > 0:
-        image[idx_min] = minimum
-    if idx_max[0].size > 0:
-        image[idx_max] = maximum
+    image[image > maximum] = maximum
+    image[image < minimum] = minimum
 
     # stretch to 0.0 - 1.0 interval
     image = (image - minimum) / (maximum - minimum)
+    image[image > 1] = 1
+    image[image < 0] = 0
+    image[np.isnan(image)] = 0
     return image
 
 
@@ -73,16 +70,14 @@ def lin_cutoff_calc_from_perc(image, minimum, maximum):
     """Minimum cutoff in percent, maximum cutoff in percent (0%-100%) or (0-1). Returns min and max values for linear
     stretch (cut-off)."""
     if minimum < 0 or maximum < 0 or minimum > 100 or maximum > 100:
-        raise Exception("rvt.blend_funct.lin_cutoff_calc_from_perc: minimum, maximum are procent and have to be in "
-                        "range 0-100 or 0-1!")
-
-    if minimum < 1 and maximum < 1:
-        minimum *= 100
-        maximum *= 100
-
-    distribution = np.percentile(a=image, q=np.array([minimum, 100 - maximum]))
-    min_lin = np.amin(distribution)
-    max_lin = np.amax(distribution)
+        raise Exception("rvt.blend_funct.lin_cutoff_calc_from_perc: minimum, maximum are percent and have to be in "
+                        "range 0-100!")
+    distribution = np.nanpercentile(a=image, q=np.array([minimum, 100 - maximum]))
+    min_lin = distribution[0]
+    max_lin = distribution[1]
+    if min_lin == max_lin:
+        min_lin = np.nanmin(image)
+        max_lin = np.nanmax(image)
     return {"min_lin": min_lin, "max_lin": max_lin}
 
 
@@ -95,6 +90,12 @@ def normalize_perc(image, minimum, maximum):
 
 def advanced_normalization(image, minimum, maximum, normalization):
     equ_image = image
+    if minimum == maximum and normalization == "value":
+        raise Exception("rvt.blend_func.advanced_normalization: If normalization == value, min and max cannot be the"
+                        " same!")
+    if minimum > maximum and normalization == "value":
+        raise Exception("rvt.blend_func.advanced_normalization: If normalization == value, max can't be smaller"
+                        " than min!")
     if normalization.lower() == "value":
         equ_image = normalize_lin(image=image, minimum=minimum, maximum=maximum)
     elif normalization.lower() == "perc":
@@ -351,23 +352,9 @@ def normalize_image(visualization, image, min_norm, max_norm, normalization):
         return None
     if normalization == "percent":
         normalization = "perc"
-        
-    # workaround for RGB images because they are on scale [0, 255] not [0, 1],
-    # we use multiplier to get proper values
-    # if normalization.lower() == "value" and visualization.lower() == "hillshade":
-    #     if np.nanmax(image) > 100.0 and len(image.shape) == 3:
-    #         # limit normalization 0 to 1
-    #         # all numbers below are 0
-    #         # numbers above are 1
-    #         if min_norm < 0:
-    #             min_norm = 0
-    #         if max_norm > 1:
-    #             max_norm = 1
-    #
-    #         min_norm = round(min_norm * 255)
-    #         max_norm = round(max_norm * 255)
 
     norm_image = advanced_normalization(image=image, minimum=min_norm, maximum=max_norm, normalization=normalization)
+
     # make sure it scales 0 to 1
     if np.nanmax(norm_image) > 1:
         if visualization.lower() == "multiple directions hillshade":
