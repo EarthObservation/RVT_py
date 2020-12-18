@@ -209,12 +209,12 @@ class DefaultValues:
         self.slp_bytscl = ("value", 0., 51.)
         self.hs_bytscl = ("value", 0.00, 1.00)
         self.mhs_bytscl = ("value", 0.00, 1.00)
-        self.slrm_bytscl = ("percent", 0.02, 0.02)
+        self.slrm_bytscl = ("percent", 2, 2)
         self.svf_bytscl = ("value", 0.6375, 1.00)
-        self.asvf_bytscl = ("percent", 0.02, 0.02)
+        self.asvf_bytscl = ("percent", 2, 2)
         self.pos_opns_bytscl = ("value", 60, 95.)
         self.neg_opns_bytscl = ("value", 60, 95.)
-        self.sim_bytscl = ("percent", 0.025, 0)
+        self.sim_bytscl = ("percent", 0.25, 0)
         self.ld_bytscl = ("value", 0.5, 1.8)
         # multiprocessing
         self.multiproc_size_limit = 10000 * 10000  # if arr size > multiproc_size_limit, it uses multiprocessing

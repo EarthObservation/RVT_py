@@ -70,12 +70,8 @@ def lin_cutoff_calc_from_perc(image, minimum, maximum):
     """Minimum cutoff in percent, maximum cutoff in percent (0%-100%) or (0-1). Returns min and max values for linear
     stretch (cut-off)."""
     if minimum < 0 or maximum < 0 or minimum > 100 or maximum > 100:
-        raise Exception("rvt.blend_funct.lin_cutoff_calc_from_perc: minimum, maximum are procent and have to be in "
-                        "range 0-100 or 0-1!")
-    if minimum < 1 and maximum < 1:
-        minimum *= 100
-        maximum *= 100
-
+        raise Exception("rvt.blend_funct.lin_cutoff_calc_from_perc: minimum, maximum are percent and have to be in "
+                        "range 0-100!")
     distribution = np.nanpercentile(a=image, q=np.array([minimum, 100 - maximum]))
     return {"min_lin": distribution[0], "max_lin": distribution[1]}
 
@@ -345,32 +341,8 @@ def normalize_image(visualization, image, min_norm, max_norm, normalization):
         return None
     if normalization == "percent":
         normalization = "perc"
-        
-    # workaround for RGB images because they are on scale [0, 255] not [0, 1],
-    # we use multiplier to get proper values
-    # if normalization.lower() == "value" and visualization.lower() == "hillshade":
-    #     if np.nanmax(image) > 100.0 and len(image.shape) == 3:
-    #         # limit normalization 0 to 1
-    #         # all numbers below are 0
-    #         # numbers above are 1
-    #         if min_norm < 0:
-    #             min_norm = 0
-    #         if max_norm > 1:
-    #             max_norm = 1
-    #
-    #         min_norm = round(min_norm * 255)
-    #         max_norm = round(max_norm * 255)
 
     norm_image = advanced_normalization(image=image, minimum=min_norm, maximum=max_norm, normalization=normalization)
-    # print("vis={}, norm={}\nimg_min={}, min={}, n_min={}\nimg_max={}, max={}, n_max={}\n".format(visualization,
-    #                                                                                              normalization,
-    #                                                                                              np.nanmin(image),
-    #                                                                                              min_norm,
-    #                                                                                              np.nanmin(norm_image),
-    #                                                                                              np.nanmax(image),
-    #                                                                                              max_norm,
-    #                                                                                              np.nanmax(norm_image)
-    #                                                                                              ))
 
     # make sure it scales 0 to 1
     if np.nanmax(norm_image) > 1:
