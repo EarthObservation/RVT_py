@@ -72,7 +72,7 @@ html_static_path = ['_static']
 def setup(app):
     app.connect('autodoc-process-docstring', sphinx.ext.autodoc.between('Credits:', what=['module'], exclude=True))
 
-# Copy examples do docs
+# Copy examples to docs
 examples_folder = './examples'
 shutil.rmtree(examples_folder, ignore_errors=True)
 

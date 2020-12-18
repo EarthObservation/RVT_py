@@ -26,7 +26,7 @@ Methods currently implemented are:
 
 For a more detailed description see references given at each method in the manual and a comparative paper describing them (e.g. Kokalj and Hesse 2017, see below).
 
-RVT python library called rvt contains modules:
+RVT Python library called rvt contains modules:
 
 * vis (:ref:`rvt.vis`) - visualization functions (mentioned above), for computing visualizations;
 
