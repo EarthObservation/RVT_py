@@ -21,9 +21,6 @@ import numpy as np
 import scipy.interpolate
 
 
-# TODO: check speed sky_ilumination
-# TODO: check IDL vectorisation remains:
-
 def byte_scale(data,
                c_min=None,
                c_max=None,

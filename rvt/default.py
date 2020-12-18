@@ -1820,8 +1820,8 @@ def get_raster_arr(raster_path):
     """
     data_set = gdal.Open(raster_path)
     gt = data_set.GetGeoTransform()
-    x_res = gt[1]
-    y_res = -gt[5]
+    x_res = abs(gt[1])
+    y_res = abs(-gt[5])
     bands = []
     if data_set.RasterCount == 1:  # only one band
         array = np.array(data_set.GetRasterBand(1).ReadAsArray())

@@ -73,7 +73,12 @@ def lin_cutoff_calc_from_perc(image, minimum, maximum):
         raise Exception("rvt.blend_funct.lin_cutoff_calc_from_perc: minimum, maximum are percent and have to be in "
                         "range 0-100!")
     distribution = np.nanpercentile(a=image, q=np.array([minimum, 100 - maximum]))
-    return {"min_lin": distribution[0], "max_lin": distribution[1]}
+    min_lin = distribution[0]
+    max_lin = distribution[1]
+    if min_lin == max_lin:
+        min_lin = np.nanmin(image)
+        max_lin = np.nanmax(image)
+    return {"min_lin": min_lin, "max_lin": max_lin}
 
 
 def normalize_perc(image, minimum, maximum):
@@ -85,6 +90,12 @@ def normalize_perc(image, minimum, maximum):
 
 def advanced_normalization(image, minimum, maximum, normalization):
     equ_image = image
+    if minimum == maximum and normalization == "value":
+        raise Exception("rvt.blend_func.advanced_normalization: If normalization == value, min and max cannot be the"
+                        " same!")
+    if minimum > maximum and normalization == "value":
+        raise Exception("rvt.blend_func.advanced_normalization: If normalization == value, max can't be smaller"
+                        " than min!")
     if normalization.lower() == "value":
         equ_image = normalize_lin(image=image, minimum=minimum, maximum=maximum)
     elif normalization.lower() == "perc":
