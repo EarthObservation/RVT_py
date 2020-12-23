@@ -71,8 +71,8 @@ layers_auto.read_from_file(file_path=blender_file)  # build BlenderCombination f
 layers_auto.add_dem_path(input_dem_path)  # needed when save_visualizations is True and save_rander_path is not None
 # render_all_images reads images simultaneously if layer (BlenderLayer) image is None and image_path is None it
 # calculates them
-layers_auto.render_all_images(save_visualizations=True, save_render_path=output_blend_path, save_float=True,
-                              save_8bit=True)
+layers_auto.render_all_images(default=default, save_visualizations=True, save_render_path=output_blend_path,
+                              save_float=True, save_8bit=True)
 #####
 
 #####
