@@ -180,6 +180,16 @@ class BlenderCombination:
         """Empties layers attribute."""
         self.layers = []
 
+    def layers_info(self):
+        layer_nr = 1
+        layers_info = []
+        for layer in self.layers:
+            layers_info.append("layer {}, vis = {}, normalization = {}, min = {}, max = {}, blend_mode = {},"
+                               " opacity = {}".format(layer_nr, layer.vis, layer.normalization, layer.min,
+                                                      layer.max, layer.blend_mode, layer.opacity))
+            layer_nr += 1
+        return layers_info
+
     def read_from_file(self, file_path):
         """Reads class attributes from .json file."""
         # Example file (for file_path) in dir settings: blender_file_example.txt
@@ -591,8 +601,10 @@ class BlenderCombinations:
     def __init__(self):
         self.combinations = []  # list of BlenderCombination
 
-    def add_combination(self, combination: BlenderCombination):
-        """Adds cobmination."""
+    def add_combination(self, combination: BlenderCombination, name=None):
+        """Adds cobmination if parameter name not None it renames combination."""
+        if name is not None:
+            combination.name = name
         self.combinations.append(combination)
 
     def remove_all_combinations(self):
@@ -604,6 +616,19 @@ class BlenderCombinations:
         for combination in self.combinations:
             if combination.name == name:
                 return combination
+
+    def remove_combination_by_name(self, name):
+        """Removes all combinations where self.combinations.BlenderCombination.name = name.
+        If combinations list is empty function returns 0, else 1."""
+        new_combinations = []
+        for combination in self.combinations:
+            if combination.name != name:
+                new_combinations.append(combination)
+        self.combinations = new_combinations
+        if not new_combinations:
+            return 0
+        else:
+            return 1
 
     def read_from_file(self, file_path):
         """Reads combinations from .json file."""
@@ -633,6 +658,13 @@ class BlenderCombinations:
             if compare_2_combinations(input_combination, combination):
                 return combination.name
         return None
+
+    def combinations_names(self):
+        """Returns list of combinations names."""
+        names_list = []
+        for combination in self.combinations:
+            names_list.append(combination.name)
+        return names_list
 
 
 class TerrainSettings:
