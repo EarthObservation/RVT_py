@@ -29,6 +29,10 @@
                 "value": 0,
                 "description": "If 1 it saves 8bit raster, if 0 it doesn't."
             },
+            "hs_shadow": {
+                "value": 0,
+                "description": "If 1 it saves shadow binary raster, if 0 it doesn't."
+            },
             "hs_bytscl": {
                 "mode": "value",
                 "min": 0.0,

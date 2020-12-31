@@ -122,7 +122,7 @@ class BlenderLayer:
                 raise Exception("rvt.blend.BlenderLayer.check_data: opacity incorrect [0-100]!")
             if self.image is None and self.image_path is None:
                 if self.vis.lower() != "slope gradient" and self.vis.lower() != "hillshade" and \
-                        self.vis.lower() != "multiple directions hillshade" and \
+                        self.vis.lower() != "shadow" and self.vis.lower() != "multiple directions hillshade" and \
                         self.vis.lower() != "simple local relief model" and self.vis.lower() != "sky-view factor" and \
                         self.vis.lower() != "anisotropic sky-view factor" and \
                         self.vis.lower() != "openness - positive" and self.vis.lower() != "openness - negative" and \
@@ -320,7 +320,7 @@ class BlenderCombination:
                                                      min_norm, max_norm, normalization)
                     else:
                         image = default.get_slope(dem_arr=self.dem_arr, resolution_x=self.dem_resolution,
-                                                  resolution_y=self.dem_resolution)["slope"]
+                                                  resolution_y=self.dem_resolution)
                         norm_image = normalize_image(visualization, image, min_norm, max_norm, normalization)
                 elif self.layers[i_img].vis.lower() == "hillshade":
                     if save_visualizations:
@@ -333,6 +333,17 @@ class BlenderCombination:
                         image = default.get_hillshade(dem_arr=self.dem_arr, resolution_x=self.dem_resolution,
                                                       resolution_y=self.dem_resolution)
                         norm_image = normalize_image(visualization, image, min_norm, max_norm, normalization)
+                elif self.layers[i_img].vis.lower() == "shadow":
+                    if save_visualizations:
+                        default.save_hillshade(dem_path=self.dem_path, custom_dir=save_render_directory,
+                                               save_float=True, save_8bit=False, save_shadow=True)
+                        image_path = default.get_shadow_path(self.dem_path)
+                        norm_image = normalize_image(visualization, rvt.default.get_raster_arr(image_path)["array"],
+                                                     min_norm, max_norm, normalization)
+                    else:
+                        image = default.get_shadow(dem_arr=self.dem_arr, resolution=self.dem_resolution)
+                        norm_image = normalize_image(visualization, image, min_norm, max_norm, normalization)
+
                 elif self.layers[i_img].vis.lower() == "multiple directions hillshade":
                     if save_visualizations:
                         default.save_multi_hillshade(dem_path=self.dem_path, custom_dir=save_render_directory,
@@ -517,6 +528,9 @@ class BlenderCombination:
             dat.write("Layer: {}\n".format(i_layer))
             dat.write("Visualization: {}\n".format(layer.vis))
             if layer.vis.lower() == "hillshade":
+                dat.write("\ths_sun_el=\t\t{}\n".format(default.hs_sun_el))
+                dat.write("\ths_sun_azi=\t\t{}\n".format(default.hs_sun_azi))
+            elif layer.vis.lower() == "shadow":
                 dat.write("\ths_sun_el=\t\t{}\n".format(default.hs_sun_el))
                 dat.write("\ths_sun_azi=\t\t{}\n".format(default.hs_sun_azi))
             elif layer.vis.lower() == "multiple directions hillshade":

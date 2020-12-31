@@ -6,6 +6,7 @@ import multiprocessing as mp
 import time
 import os
 
+# Multiprocessing is still in developing stage, it can contains bugs.
 
 class RasterVisBlock:
     """Class for storing raster visualization block and its position in original raster."""
@@ -30,7 +31,8 @@ def save_multiprocess_vis(dem_path, vis, default, custom_dir=None, save_float=Tr
     dem_path : str
         Path to input dem file.
     vis : str
-        Selected visualization you want to compute: "hillshade", "slope gradient", "multiple directions hillshade",
+        Selected visualization you want to compute: "hillshade", "shadow,
+        "slope gradient", "multiple directions hillshade",
         "simple local relief model", "sky-view factor", "anisotropic sky-view factor", "openness - positive",
         "openness - negative", "sky illumination", "local dominance", "sky-view factor default".
     default : rvt.default.DefaultValues
@@ -65,9 +67,12 @@ def save_multiprocess_vis(dem_path, vis, default, custom_dir=None, save_float=Tr
         y_size = band.YSize  # number of rows
         del band
 
+        if vis.lower() == "shadow":
+            save_8bit = False
+
         nr_bands_float = 1
         nr_bands_8bit = 1
-        if vis == "multiple directions hillshade":
+        if vis.lower() == "multiple directions hillshade":
             nr_bands_float = default.mhs_nr_dir
             nr_bands_8bit = 3
 
@@ -342,6 +347,8 @@ def get_block_offset(default, vis):
     """Returns offset for selected visualization (vis). """
     if vis.lower() == "hillshade":
         return 1
+    elif vis.lower() == "shadow":
+        return 1
     elif vis.lower() == "slope gradient":
         return 1
     elif vis.lower() == "multiple directions hillshade":
@@ -495,8 +502,10 @@ def calculate_block_visualization(dem_block_arr, vis, default, x_res, y_res):
     vis_arr = None
     if vis.lower() == "hillshade":
         vis_arr = default.get_hillshade(dem_arr=dem_block_arr, resolution_x=x_res, resolution_y=y_res)
+    elif vis.lower() == "shadow":
+        vis_arr = default.get_shadow(dem_arr=dem_block_arr, resolution=x_res)
     elif vis.lower() == "slope gradient":
-        vis_arr = default.get_slope(dem_arr=dem_block_arr, resolution_x=x_res, resolution_y=y_res)["slope"]
+        vis_arr = default.get_slope(dem_arr=dem_block_arr, resolution_x=x_res, resolution_y=y_res)
     elif vis.lower() == "multiple directions hillshade":
         vis_arr = default.get_multi_hillshade(dem_arr=dem_block_arr, resolution_x=x_res, resolution_y=y_res)
     elif vis.lower() == "simple local relief model":
@@ -518,7 +527,7 @@ def calculate_block_visualization(dem_block_arr, vis, default, x_res, y_res):
         vis_arr = default.get_local_dominance(dem_arr=dem_block_arr)
     else:
         raise Exception("rvt.multiproc.calculate_block_visualization: Wrong vis parameter, vis options:"
-                        "hillshade, slope gradient, multiple directions hillshade, simple local relief model,"
+                        "hillshade, shadow, slope gradient, multiple directions hillshade, simple local relief model,"
                         "sky-view factor, anisotropic sky-view factor, openness - positive, openness - negative, "
                         "sky illumination, local dominance")
     return vis_arr
@@ -533,16 +542,19 @@ def save_block_visualization(vis_path, blocks_to_save, nr_bands=1):
             if blocks_to_save[0] == "kill":  # stops function/process
                 out_data_set = None
                 break
-            if nr_bands == 1:  # one band
-                out_data_set.GetRasterBand(1).WriteArray(blocks_to_save[0].array, blocks_to_save[0].x,
-                                                         blocks_to_save[0].y)
-                out_data_set.FlushCache()
-            else:  # multiple bands
-                for i_band in range(nr_bands):
-                    band = i_band + 1
-                    out_data_set.GetRasterBand(band).WriteArray(blocks_to_save[0].array[i_band], blocks_to_save[0].x,
-                                                                blocks_to_save[0].y)
+            try:
+                if nr_bands == 1:  # one band
+                    out_data_set.GetRasterBand(1).WriteArray(blocks_to_save[0].array, blocks_to_save[0].x,
+                                                             blocks_to_save[0].y)
                     out_data_set.FlushCache()
+                else:  # multiple bands
+                    for i_band in range(nr_bands):
+                        band = i_band + 1
+                        out_data_set.GetRasterBand(band).WriteArray(blocks_to_save[0].array[i_band], blocks_to_save[0].x,
+                                                                    blocks_to_save[0].y)
+                        out_data_set.FlushCache()
+            except:
+                continue
             del blocks_to_save[0]  # remove block from blocks_to_save list
 
 

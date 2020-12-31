@@ -50,6 +50,8 @@ class DefaultValues:
         Hillshade. Solar azimuth angle (clockwise from North) in degrees.
     hs_sun_el : int
         Hillshade. Solar vertical angle (above the horizon) in degrees.
+    hs_shadow : bool
+        Hillshade. If 1 (Ture) computes binary shadow raster, if 0 (False) it doesn't.
     mhs_compute : bool
         If compute Multi directional hillshade. Parameter for GUIs.
     mhs_nr_dir : int
@@ -83,7 +85,7 @@ class DefaultValues:
         If compute Sky illumination. Parameter for GUIs.
     sim_sky_mod : str
         Sky illumination. Sky model [overcast, uniform].
-    sim_compute_shadow : int
+    sim_compute_shadow : bool
         Sky illumination. If 1 it computes shadows, if 0 it doesn't.
     sim_nr_dir : int
         Sky illumination. Number of directions.
@@ -106,6 +108,38 @@ class DefaultValues:
         Local dominance. Angular step for determination of number of angular directions.
     ld_observer_h : float
         Local dominance. Height at which we observe the terrain.
+    slp_save_float : bool
+        Slope. If 1 (True) it saves float, if 0 (False) it doesn't.
+    hs_save_float : bool
+        Hillshade. If 1 (True) it saves float, if 0 (False) it doesn't.
+    mhs_save_float : bool
+        Multi hillshade. If 1 (True) it saves float, if 0 (False) it doesn't.
+    slrm_save_float : bool
+        Simplified local relief model. If 1 (True) it saves float, if 0 (False) it doesn't.
+    svf_save_float : bool
+        Sky-view factor (asvf, pos_opns). If 1 (True) it saves float, if 0 (False) it doesn't.
+    neg_opns_save_float : bool
+        Negative openness. If 1 (True) it saves float, if 0 (False) it doesn't.
+    sim_save_float : bool
+        Sky illumination. If 1 (True) it saves float, if 0 (False) it doesn't.
+    ld_save_float : bool
+        Local dominance. If 1 (True) it saves float, if 0 (False) it doesn't.
+    slp_save_8bit : bool
+        Slope. If 1 (True) it saves 8bit, if 0 (False) it doesn't.
+    hs_save_8bit : bool
+        Hillshade. If 1 (True) it saves 8bit, if 0 (False) it doesn't.
+    mhs_save_8bit : bool
+        Multi hillshade. If 1 (True) it saves 8bit, if 0 (False) it doesn't.
+    slrm_save_8bit : bool
+        Simplified local relief model. If 1 (True) it saves 8bit, if 0 (False) it doesn't.
+    svf_save_8bit : bool
+        Sky-view factor (asvf, pos_opns). If 1 (True) it saves 8bit, if 0 (False) it doesn't.
+    neg_opns_save_8bit : bool
+        Negative openness. If 1 (True) it saves 8bit, if 0 (False) it doesn't.
+    sim_save_8bit : bool
+        Sky illumination. If 1 (True) it saves 8bit, if 0 (False) it doesn't.
+    ld_save_8bit : bool
+        local dominance. If 1 (True) it saves 8bit, if 0 (False) it doesn't.
     slp_bytscl : tuple(mode, min, max)
         Slope, bytescale (0-255) for 8bit raster. Mode can be 'value' (linear stretch) or 'percent'
         (histogram equalization, cut-off). Values min and max define stretch/cut-off borders.
@@ -152,6 +186,7 @@ class DefaultValues:
         self.hs_compute = 1
         self.hs_sun_azi = 315
         self.hs_sun_el = 35
+        self.hs_shadow = 0
         # multi hillshade
         self.mhs_compute = 0
         self.mhs_nr_dir = 16
@@ -243,6 +278,8 @@ class DefaultValues:
                                   "description": "If 1 it saves float raster, if 0 it doesn't."},
                 "hs_save_8bit": {"value": self.hs_save_8bit,
                                  "description": "If 1 it saves 8bit raster, if 0 it doesn't."},
+                "hs_shadow": {"value": self.hs_shadow,
+                              "description": "If 1 it saves shadow binary raster, if 0 it doesn't."},
                 "hs_bytscl": {"mode": self.hs_bytscl[0], "min": self.hs_bytscl[1], "max": self.hs_bytscl[2],
                               "description": "Linear stretch and byte scale (0-255) for 8bit raster. "
                                              "Mode can be 'value' or 'percent' (cut-off units). "
@@ -530,6 +567,7 @@ class DefaultValues:
             self.hs_sun_el = int(default_data["Hillshade"]["hs_sun_el"]["value"])
             self.hs_save_float = int(default_data["Hillshade"]["hs_save_float"]["value"])
             self.hs_save_8bit = int(default_data["Hillshade"]["hs_save_8bit"]["value"])
+            self.hs_shadow = int(default_data["Hillshade"]["hs_shadow"]["value"])
             self.hs_bytscl = (str(default_data["Hillshade"]["hs_bytscl"]["mode"]),
                               float(default_data["Hillshade"]["hs_bytscl"]["min"]),
                               float(default_data["Hillshade"]["hs_bytscl"]["max"]))
@@ -605,6 +643,17 @@ class DefaultValues:
                               float(default_data["Local dominance"]["ld_bytscl"]["min"]),
                               float(default_data["Local dominance"]["ld_bytscl"]["max"]))
             dat.close()
+
+    def get_shadow_file_name(self, dem_path):
+        """Returns shadow name, with added hillshade parameters (hs_sun_azi == shadow azimuth,
+        hs_sun_el == shadow_elevation)."""
+        dem_name = os.path.basename(dem_path).split(".")[0]  # base name without extension
+        return "{}_shadow_A{}_H{}.tif".format(dem_name, self.hs_sun_azi, self.hs_sun_el)
+
+    def get_shadow_path(self, dem_path):
+        """Returns path to Shadow. Generates shadow name (uses default attributes and dem name from dem_path) and
+        adds dem directory (dem_path) to it."""
+        return os.path.normpath(os.path.join(os.path.dirname(dem_path), self.get_shadow_file_name(dem_path)))
 
     def get_hillshade_file_name(self, dem_path, bit8=False):
         """Returns Hillshade name, dem name (from dem_path) with added hillshade parameters.
@@ -760,11 +809,13 @@ class DefaultValues:
 
     def get_vis_file_name(self, dem_path, vis, bit8=False):
         """Returns vis (visualization) file name. Dem name (from dem_path) with added vis parameters.
-        If bit8 it returns 8bit file name. Parameter vis can be: "hillshade", "slope gradient",
+        If bit8 it returns 8bit file name. Parameter vis can be: "hillshade", "shadow", "slope gradient",
         "multiple directions hillshade", "simple local relief model", "sky-view factor", "anisotropic sky-view factor",
         "openness - positive", "openness - negative", "sky illumination", "local dominance"."""
         if vis.lower() == "hillshade":
             return self.get_hillshade_file_name(dem_path=dem_path, bit8=bit8)
+        if vis.lower() == "shadow":
+            return self.get_shadow_file_name(dem_path=dem_path)
         elif vis.lower() == "multiple directions hillshade":
             return self.get_multi_hillshade_file_name(dem_path=dem_path, bit8=bit8)
         elif vis.lower() == "slope gradient":
@@ -789,11 +840,13 @@ class DefaultValues:
     def get_vis_path(self, dem_path, vis, bit8=False):
         """Returns vis (visualization) path. Generates vis name which is dem name (from dem_path) with added vis
         parameters. Vis name added in the same directory as dem (dem_path). If bit8 it returns 8bit path.
-        Parameter vis can be: "hillshade", "slope gradient", "multiple directions hillshade",
+        Parameter vis can be: "hillshade", "slope gradient", "multiple directions hillshade", "shadow",
         simple local relief model", "sky-view factor", "anisotropic sky-view factor", "openness - positive",
         "openness - negative", "sky illumination", "local dominance"."""
         if vis.lower() == "hillshade":
             return self.get_hillshade_path(dem_path=dem_path, bit8=bit8)
+        elif vis.lower() == "shadow":
+            return self.get_shadow_path(dem_path=dem_path)
         elif vis.lower() == "multiple directions hillshade":
             return self.get_multi_hillshade_path(dem_path=dem_path, bit8=bit8)
         elif vis.lower() == "slope gradient":
@@ -899,9 +952,9 @@ class DefaultValues:
             raise Exception("rvt.default.DefaultValues.float_to_8bit: Wrong vis (visualization) parameter!")
 
     def get_slope(self, dem_arr, resolution_x, resolution_y):
-        dict_slp_asp = rvt.vis.slope_aspect(dem=dem_arr, resolution_x=resolution_x, resolution_y=resolution_y,
-                                            ve_factor=self.ve_factor, output_units=self.slp_output_units)
-        return dict_slp_asp
+        slope_arr = rvt.vis.slope_aspect(dem=dem_arr, resolution_x=resolution_x, resolution_y=resolution_y,
+                                            ve_factor=self.ve_factor, output_units=self.slp_output_units)["slope"]
+        return slope_arr
 
     def save_slope(self, dem_path, custom_dir=None, save_float=None, save_8bit=None):
         """Calculates and saves Slope from dem (dem_path) with default parameters. If custom_dir is None it saves
@@ -953,8 +1006,7 @@ class DefaultValues:
             dem_arr = dict_arr_res["array"]
             x_res = dict_arr_res["resolution"][0]
             y_res = dict_arr_res["resolution"][1]
-            dict_slp_asp = self.get_slope(dem_arr=dem_arr, resolution_x=x_res, resolution_y=y_res)
-            slope_arr = dict_slp_asp["slope"].astype('float32')
+            slope_arr = self.get_slope(dem_arr=dem_arr, resolution_x=x_res, resolution_y=y_res)
             if save_float:
                 if os.path.isfile(slope_path) and not self.overwrite:  # file exists and overwrite=0
                     pass
@@ -970,13 +1022,18 @@ class DefaultValues:
                                 e_type=1)
             return 1
 
+    def get_shadow(self, dem_arr, resolution):
+        shadow_arr = rvt.vis.shadow_horizon(dem=dem_arr, resolution=resolution, shadow_az=self.hs_sun_azi,
+                                            shadow_el=self.hs_sun_el, ve_factor=self.ve_factor)["shadow"]
+        return shadow_arr
+
     def get_hillshade(self, dem_arr, resolution_x, resolution_y):
         hillshade_arr = rvt.vis.hillshade(dem=dem_arr, resolution_x=resolution_x, resolution_y=resolution_y,
                                           sun_azimuth=self.hs_sun_azi, sun_elevation=self.hs_sun_el,
                                           ve_factor=self.ve_factor)
         return hillshade_arr
 
-    def save_hillshade(self, dem_path, custom_dir=None, save_float=None, save_8bit=None):
+    def save_hillshade(self, dem_path, custom_dir=None, save_float=None, save_8bit=None, save_shadow=None):
         """Calculates and saves Hillshade from dem (dem_path) with default parameters. If custom_dir is None it saves
         in dem directory else in custom_dir. If path to file already exists we can overwrite file (overwrite=1)
         or not (overwrite=0). If save_float is True method creates Gtiff with real values,
@@ -988,6 +1045,9 @@ class DefaultValues:
         # if save_8bit is None it takes boolean from default (self)
         if save_8bit is None:
             save_8bit = self.hs_save_8bit
+        # if save_shadow is None it takes boolean from default (self)
+        if save_shadow is None:
+            save_shadow = self.hs_shadow
 
         if not save_float and not save_8bit:
             raise Exception("rvt.default.DefaultValues.save_hillshade: Both save_float and save_8bit are False,"
@@ -998,19 +1058,28 @@ class DefaultValues:
         if custom_dir is None:
             hillshade_path = self.get_hillshade_path(dem_path)
             hillshade_8bit_path = self.get_hillshade_path(dem_path, bit8=True)
+            shadow_path = self.get_shadow_path(dem_path)
         else:
             hillshade_path = os.path.join(custom_dir, self.get_hillshade_file_name(dem_path))
             hillshade_8bit_path = os.path.join(custom_dir, self.get_hillshade_file_name(dem_path, bit8=True))
+            shadow_path = os.path.join(custom_dir, self.get_shadow_path(dem_path))
 
         # if file already exists and overwrite=0
-        if save_float and save_8bit:
-            if os.path.isfile(hillshade_8bit_path) and os.path.isfile(hillshade_path) and not self.overwrite:
+        if save_float and save_8bit and save_shadow:
+            if os.path.isfile(hillshade_8bit_path) and os.path.isfile(hillshade_path) \
+                    and os.path.isfile(shadow_path) and not self.overwrite:
                 return 0
-        elif save_float and not save_8bit:
+        elif save_float and not save_8bit and not save_shadow:
             if os.path.isfile(hillshade_path) and not self.overwrite:
                 return 0
-        elif not save_float and not save_8bit:
+        elif not save_float and not save_8bit and not save_shadow:
             if os.path.isfile(hillshade_8bit_path) and not self.overwrite:
+                return 0
+        elif save_float and not save_8bit and save_shadow:
+            if os.path.isfile(hillshade_path) and os.path.isfile(shadow_path) and not self.overwrite:
+                return 0
+        elif not save_float and not save_8bit and save_shadow:
+            if os.path.isfile(hillshade_8bit_path) and os.path.isfile(shadow_path) and not self.overwrite:
                 return 0
 
         dem_size = get_raster_size(raster_path=dem_path)
@@ -1018,6 +1087,11 @@ class DefaultValues:
             rvt.multiproc.save_multiprocess_vis(dem_path=dem_path, vis="hillshade", default=self,
                                                 custom_dir=custom_dir,
                                                 save_float=save_float, save_8bit=save_8bit,
+                                                x_block_size=self.multiproc_block_size[0],
+                                                y_block_size=self.multiproc_block_size[1])
+            rvt.multiproc.save_multiprocess_vis(dem_path=dem_path, vis="shadow", default=self,
+                                                custom_dir=custom_dir,
+                                                save_float=True, save_8bit=False,
                                                 x_block_size=self.multiproc_block_size[0],
                                                 y_block_size=self.multiproc_block_size[1])
             return 1
@@ -1040,6 +1114,12 @@ class DefaultValues:
                     hillshade_8_bit_arr = self.float_to_8bit(float_arr=hillshade_arr, vis="hillshade")
                     save_raster(src_raster_path=dem_path, out_raster_path=hillshade_8bit_path,
                                 out_raster_arr=hillshade_8_bit_arr, e_type=1)
+            if save_shadow:
+                shadow_arr = self.get_shadow(dem_arr=dem_arr, resolution=x_res)
+                if os.path.isfile(shadow_path) and not self.overwrite:  # file exists and overwrite=0
+                    pass
+                else:
+                    save_raster(src_raster_path=dem_path, out_raster_path=shadow_path, out_raster_arr=shadow_arr)
             return 1
 
     def get_multi_hillshade(self, dem_arr, resolution_x, resolution_y):
@@ -1649,6 +1729,10 @@ class DefaultValues:
                                                                     self.hs_bytscl[2]))
                 dat.write("\t\t\t{}\n".format(os.path.abspath(
                     os.path.join(log_dir, self.get_hillshade_file_name(dem_path, bit8=True)))))
+            if self.hs_shadow:
+                dat.write("\t\t>> Output shadow file:\n")
+                dat.write("\t\t\t{}\n".format(os.path.abspath(
+                    os.path.join(log_dir, self.get_shadow_file_name(dem_path)))))
             dat.write("\n")
         if self.mhs_compute:
             dat.write("\tMultiple directions hillshade\n")

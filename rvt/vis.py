@@ -81,8 +81,8 @@ def byte_scale(data,
 def slope_aspect(dem,
                  resolution_x,
                  resolution_y,
-                 ve_factor=1,
                  output_units="radian",
+                 ve_factor=1
                  ):
     """
     Procedure can return terrain slope and aspect in radian units (default) or in alternative units (if specified).
@@ -95,8 +95,10 @@ def slope_aspect(dem,
     dem : input dem 2D numpy array
     resolution_x : dem resolution in X direction
     resolution_y : DEM resolution in Y direction
-    ve_factor : vertical exaggeration factor (must be greater than 0)
     output_units : percent, degree, radians
+    ve_factor : vertical exaggeration factor (must be greater than 0)
+    no_data : what value is no_data
+    no_data_interp : if True it returns vis with interpolated no data pixels, if False it preserves no data pixels
 
     Returns
     -------
@@ -785,6 +787,7 @@ def sky_illumination(dem,
                      resolution,
                      sky_model="overcast",
                      compute_shadow=True,
+                     shadow_horizon_only=False,
                      max_fine_radius=100,
                      num_directions=32,
                      shadow_az=315,
@@ -796,10 +799,12 @@ def sky_illumination(dem,
 
     Parameters
     ----------
+    shadow_horizon_only
     dem : numpy 2D array of elevation (DEM)
     resolution : dem pixel size
     sky_model : sky model, it can be 'overcast' or 'uniform'
     compute_shadow : bool compute shadow
+    shadow_horizon_only : returns only dict {"shadow": shadow, "horizon": horizon}
     max_fine_radius : max shadow modeling distance [pixels]
     num_directions : number of directions to search for horizon
     shadow_az : shadow azimuth
@@ -817,18 +822,24 @@ def sky_illumination(dem,
     if ve_factor <= 0:
         raise Exception("rvt.vis.sky_illumination: ve_factor must be a positive number!")
 
+    if shadow_az > 360 or shadow_az < 0:
+        raise Exception("rvt.vis.sky_illumination: shadow_az must be between 0 and 360!")
+
+    if shadow_el > 90 or shadow_el < 0:
+        raise Exception("rvt.vis.sky_illumination: shadow_el must be between 0 and 90!")
+
     dem = dem.astype(np.float32)
     if ve_factor != 1:
         dem = dem * ve_factor
 
     if sky_model.lower() == "overcast":
         compute_overcast = True
+        compute_uniform = False
     elif sky_model.lower() == "uniform":
         compute_overcast = False
         compute_uniform = True
     else:
         raise Exception("rvt.vis.sky_illumination: sky_model must be overcast or uniform!")
-
 
     # generate slope and aspect
     _ = slope_aspect(np.pad(dem, max_pyramid_radius, mode="symmetric"), resolution, resolution)
@@ -910,9 +921,9 @@ def sky_illumination(dem,
             # resample the max_slope to a lower pyramid level
             if i_level > 0:
                 lin_fine = pyramid[i_level - 1]["i_lin"] + (
-                            conv_from + max_pyramid_radius * pyramid_scale - max_pyramid_radius)
+                        conv_from + max_pyramid_radius * pyramid_scale - max_pyramid_radius)
                 col_fine = pyramid[i_level - 1]["i_col"] + (
-                            conv_from + max_pyramid_radius * pyramid_scale - max_pyramid_radius)
+                        conv_from + max_pyramid_radius * pyramid_scale - max_pyramid_radius)
                 lin_coarse = pyramid[i_level]["i_lin"] * pyramid_scale
                 col_coarse = pyramid[i_level]["i_col"] * pyramid_scale
                 interp_spline = scipy.interpolate.RectBivariateSpline(lin_coarse, col_coarse, max_slope)
@@ -930,6 +941,8 @@ def sky_illumination(dem,
         if compute_shadow and (direction == shadow_az):
             horizon_out = np.degrees(_[max_pyramid_radius:-max_pyramid_radius, max_pyramid_radius:-max_pyramid_radius])
             shadow_out = (horizon_out < shadow_el) * 1
+            if shadow_horizon_only:
+                return {"shadow": shadow_out, "horizon": horizon_out}
 
     # because of numeric stabilty check if the uniform_b is less then pi and greater than 0
     uniform_out = (da) * np.cos(slope) * uniform_a + np.sin(slope) * np.minimum(np.maximum(uniform_b, 0), np.pi)
@@ -960,11 +973,48 @@ def sky_illumination(dem,
     # return dict_sky_illumination
 
     # output
-    if sky_model == "uniform" and not compute_shadow:
+    if compute_uniform and not compute_shadow:
         return uniform_out
-    elif sky_model == "uniform" and compute_shadow:
+    elif compute_uniform and compute_shadow:
         return uniform_sh_out
-    elif sky_model == "overcast" and not compute_shadow:
+    elif compute_overcast and not compute_shadow:
         return overcast_out
-    elif sky_model == "overcast" and compute_shadow:
+    elif compute_overcast and compute_shadow:
         return overcast_sh_out
+
+
+def shadow_horizon(dem,
+                   resolution,
+                   shadow_az=315,
+                   shadow_el=35,
+                   ve_factor=1):
+    """
+       Compute shadow and horizon.
+
+       Parameters
+       ----------
+       dem : numpy 2D array of elevation (DEM)
+       resolution : raster resolution
+       shadow_az : shadow azimuth
+       shadow_el : shadow elevation
+       ve_factor : vertical exaggeration factor (must be greater than 0)
+
+       Returns
+       -------
+       {"shadow": shadow 2D np.array, "horizon": horizon 2D np.array}
+    """
+    if ve_factor <= 0:
+        raise Exception("rvt.vis.shadow_horizon: ve_factor must be a positive number!")
+
+    if shadow_az > 360 or shadow_az < 0:
+        raise Exception("rvt.vis.shadow_horizon: shadow_az must be between 0 and 360!")
+
+    if shadow_el > 90 or shadow_el < 0:
+        raise Exception("rvt.vis.shadow_horizon: shadow_el must be between 0 and 90!")
+
+    dem = dem.astype(np.float32)
+    if ve_factor != 1:
+        dem = dem * ve_factor
+
+    return sky_illumination(dem=dem, resolution=resolution, shadow_horizon_only=True, shadow_el=shadow_el,
+                            shadow_az=shadow_az)
