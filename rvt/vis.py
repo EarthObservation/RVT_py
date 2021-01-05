@@ -172,11 +172,11 @@ def slope_aspect(dem,
     if output_units == "degree":
         aspect_out = np.rad2deg(aspect_out)
 
-    # edges to -1
-    slope_out[:, 0] = -1
-    slope_out[0, :] = -1
-    slope_out[:, -1] = -1
-    slope_out[-1, :] = -1
+    # edges to np.nan
+    slope_out[:, 0] = np.nan
+    slope_out[0, :] = np.nan
+    slope_out[:, -1] = np.nan
+    slope_out[-1, :] = np.nan
 
     # change result to np.nan where dem is no_data
     if no_data is not None and keep_original_no_data:
@@ -271,10 +271,10 @@ def hillshade(dem,
         aspect - sun_azimuth_rad)
 
     # edges to -1
-    hillshade_out[:, 0] = -1
-    hillshade_out[0, :] = -1
-    hillshade_out[:, -1] = -1
-    hillshade_out[-1, :] = -1
+    hillshade_out[:, 0] = np.nan
+    hillshade_out[0, :] = np.nan
+    hillshade_out[:, -1] = np.nan
+    hillshade_out[-1, :] = np.nan
 
     # change result to np.nan where dem is no_data
     if no_data is not None and keep_original_no_data:
