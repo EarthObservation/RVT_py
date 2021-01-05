@@ -62,6 +62,7 @@ def save_multiprocess_vis(dem_path, vis, default, custom_dir=None, save_float=Tr
         gt = data_set.GetGeoTransform()
         x_res = gt[1]  # x_resolution
         y_res = -gt[5]  # y_resolution
+        no_data = data_set.GetRasterBand(1).GetNoDataValue()
         band = data_set.GetRasterBand(1)
         x_size = band.XSize  # number of columns
         y_size = band.YSize  # number of rows
@@ -286,7 +287,8 @@ def save_multiprocess_vis(dem_path, vis, default, custom_dir=None, save_float=Tr
                     block_process = mp.Process(target=calc_add_vis_block, args=(save_float, save_8bit, blocks_to_save_float,
                                                                                 blocks_to_save_8bit, block_array, default,
                                                                                 x, y, left_offset, right_offset, top_offset,
-                                                                                bottom_offset, vis, x_res, y_res))
+                                                                                bottom_offset, vis, x_res, y_res,
+                                                                                no_data))
                 else:  # vis == "sky-view factor default"
                     # calc add svf, asvf, opns
                     block_process = mp.Process(target=calc_add_svf_asvf_opns_block, args=(save_float, save_8bit,
@@ -299,7 +301,8 @@ def save_multiprocess_vis(dem_path, vis, default, custom_dir=None, save_float=Tr
                                                                                           block_array, default, x, y,
                                                                                           left_offset, right_offset,
                                                                                           top_offset, bottom_offset,
-                                                                                          vis, x_res, y_res))
+                                                                                          vis, x_res, y_res,
+                                                                                          no_data))
                 # start each process
                 block_process.start()
                 # add block to blocks_processes from where save_process is saving them
@@ -371,11 +374,11 @@ def get_block_offset(default, vis):
 
 
 def calc_add_vis_block(save_float, save_8bit, blocks_to_save_float, blocks_to_save_8bit, block_array, default, x, y,
-                       left_offset, right_offset, top_offset, bottom_offset, vis, x_res, y_res):
+                       left_offset, right_offset, top_offset, bottom_offset, vis, x_res, y_res, no_data):
     """Function calculates visualization on block, removes offset and adds block to list from where block is saved."""
     # calculate block visualization
     vis_block_array = calculate_block_visualization(dem_block_arr=block_array, vis=vis, default=default, x_res=x_res,
-                                                    y_res=y_res)
+                                                    y_res=y_res, no_data=no_data)
     if vis != "multiple directions hillshade":
         del block_array
 
@@ -423,7 +426,7 @@ def calc_add_vis_block(save_float, save_8bit, blocks_to_save_float, blocks_to_sa
 def calc_add_svf_asvf_opns_block(save_float, save_8bit, blocks_to_save_svf_float, blocks_to_save_svf_8bit,
                                  blocks_to_save_asvf_float, blocks_to_save_asvf_8bit, blocks_to_save_pos_opns_float,
                                  blocks_to_save_pos_opns_8bit, block_array, default, x, y, left_offset, right_offset,
-                                 top_offset, bottom_offset, vis, x_res, y_res):
+                                 top_offset, bottom_offset, vis, x_res, y_res, no_data):
     """Function calculates svf (if save_svf=True), asvf (if save_asvf=Ture) and opns (if save_pos_opns=True) on block,
      removes offsets and adds blocks to lists from where blocks are saved."""
     save_svf = default.svf_compute
@@ -432,7 +435,7 @@ def calc_add_svf_asvf_opns_block(save_float, save_8bit, blocks_to_save_svf_float
 
     # calculate block visualization
     vis_block_dict = default.get_sky_view_factor(dem_arr=block_array, resolution=x_res, compute_svf=save_svf,
-                                                 compute_asvf=save_asvf, compute_opns=save_pos_opns)
+                                                 compute_asvf=save_asvf, compute_opns=save_pos_opns, no_data=no_data)
     del block_array
     if save_svf:
         svf_block_arr = vis_block_dict["svf"]
@@ -497,34 +500,35 @@ def calc_add_svf_asvf_opns_block(save_float, save_8bit, blocks_to_save_svf_float
             blocks_to_save_pos_opns_8bit.append(pos_opns_block_8bit)
 
 
-def calculate_block_visualization(dem_block_arr, vis, default, x_res, y_res):
+def calculate_block_visualization(dem_block_arr, vis, default, x_res, y_res, no_data):
     """Calculate visualization on Block."""
     vis_arr = None
     if vis.lower() == "hillshade":
-        vis_arr = default.get_hillshade(dem_arr=dem_block_arr, resolution_x=x_res, resolution_y=y_res)
+        vis_arr = default.get_hillshade(dem_arr=dem_block_arr, resolution_x=x_res, resolution_y=y_res, no_data=no_data)
     elif vis.lower() == "shadow":
-        vis_arr = default.get_shadow(dem_arr=dem_block_arr, resolution=x_res)
+        vis_arr = default.get_shadow(dem_arr=dem_block_arr, resolution=x_res, no_data=no_data)
     elif vis.lower() == "slope gradient":
-        vis_arr = default.get_slope(dem_arr=dem_block_arr, resolution_x=x_res, resolution_y=y_res)
+        vis_arr = default.get_slope(dem_arr=dem_block_arr, resolution_x=x_res, resolution_y=y_res, no_data=no_data)
     elif vis.lower() == "multiple directions hillshade":
-        vis_arr = default.get_multi_hillshade(dem_arr=dem_block_arr, resolution_x=x_res, resolution_y=y_res)
+        vis_arr = default.get_multi_hillshade(dem_arr=dem_block_arr, resolution_x=x_res, resolution_y=y_res,
+                                              no_data=no_data)
     elif vis.lower() == "simple local relief model":
-        vis_arr = default.get_slrm(dem_arr=dem_block_arr)
+        vis_arr = default.get_slrm(dem_arr=dem_block_arr, no_data=no_data)
     elif vis.lower() == "sky-view factor":
         vis_arr = default.get_sky_view_factor(dem_arr=dem_block_arr, resolution=x_res, compute_svf=True,
-                                              compute_asvf=False, compute_opns=False)["svf"]
+                                              compute_asvf=False, compute_opns=False, no_data=no_data)["svf"]
     elif vis.lower() == "anisotropic sky-view factor":
         vis_arr = default.get_sky_view_factor(dem_arr=dem_block_arr, resolution=x_res, compute_svf=False,
-                                              compute_asvf=True, compute_opns=False)["asvf"]
+                                              compute_asvf=True, compute_opns=False, no_data=no_data)["asvf"]
     elif vis.lower() == "openness - positive":
         vis_arr = default.get_sky_view_factor(dem_arr=dem_block_arr, resolution=x_res, compute_svf=False,
-                                              compute_asvf=False, compute_opns=True)["opns"]
+                                              compute_asvf=False, compute_opns=True, no_data=no_data)["opns"]
     elif vis.lower() == "openness - negative":
-        vis_arr = default.get_neg_opns(dem_arr=dem_block_arr, resolution=x_res)
+        vis_arr = default.get_neg_opns(dem_arr=dem_block_arr, resolution=x_res, no_data=no_data)
     elif vis.lower() == "sky illumination":
-        vis_arr = default.get_sky_illumination(dem_arr=dem_block_arr, resolution=x_res)
+        vis_arr = default.get_sky_illumination(dem_arr=dem_block_arr, resolution=x_res, no_data=no_data)
     elif vis.lower() == "local dominance":
-        vis_arr = default.get_local_dominance(dem_arr=dem_block_arr)
+        vis_arr = default.get_local_dominance(dem_arr=dem_block_arr, no_data=no_data)
     else:
         raise Exception("rvt.multiproc.calculate_block_visualization: Wrong vis parameter, vis options:"
                         "hillshade, shadow, slope gradient, multiple directions hillshade, simple local relief model,"
@@ -558,7 +562,7 @@ def save_block_visualization(vis_path, blocks_to_save, nr_bands=1):
             del blocks_to_save[0]  # remove block from blocks_to_save list
 
 
-def create_blank_raster(in_data_set, out_raster_path, nr_bands=1, e_type=6):
+def create_blank_raster(in_data_set, out_raster_path, nr_bands=1, no_data=np.nan, e_type=6):
     """Takes input data set and creates new raster. It copies input data set size, projection and geo info."""
     gtiff_driver = gdal.GetDriverByName("GTiff")
     band = in_data_set.GetRasterBand(1)
@@ -568,6 +572,7 @@ def create_blank_raster(in_data_set, out_raster_path, nr_bands=1, e_type=6):
                                        options=["BIGTIFF=IF_NEEDED"])
     out_data_set.SetProjection(in_data_set.GetProjection())
     out_data_set.SetGeoTransform(in_data_set.GetGeoTransform())
+    out_data_set.GetRasterBand(1).SetNoDataValue(no_data)
     out_data_set.FlushCache()
     out_data_set = None
 

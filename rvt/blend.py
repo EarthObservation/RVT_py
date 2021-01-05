@@ -246,14 +246,15 @@ class BlenderCombination:
             layer.check_data()
 
     def render_all_images(self, default=None, save_visualizations=False, save_render_path=None, save_float=True,
-                          save_8bit=False):
+                          save_8bit=False, no_data=None):
         """Render all layers and returns blended image. If specific layer (BlenderLayer) in layers has image
         (is not None), method uses this image, if image is None and layer has image_path method reads image from
         path. If both image and image_path are None method calculates visualization. If save_visualization is True
         method needs dem_path and saves each visualization (if it doesn't exists) in directory of dem_path,
         else (save_visualization=False) method needs dem_arr, dem_resolution and calculates each visualization
         simultaneously (in memory). Be careful save_visualisation applies only if specific BlenderLayer
-        image and image_path are None"""
+        image and image_path are None. Parameter no_data changes all pixels with this values to np.nan,
+         if save_visualizations is Ture it is not needed."""
 
         # check data
         self.check_data()
@@ -320,7 +321,7 @@ class BlenderCombination:
                                                      min_norm, max_norm, normalization)
                     else:
                         image = default.get_slope(dem_arr=self.dem_arr, resolution_x=self.dem_resolution,
-                                                  resolution_y=self.dem_resolution)
+                                                  resolution_y=self.dem_resolution, no_data=no_data)
                         norm_image = normalize_image(visualization, image, min_norm, max_norm, normalization)
                 elif self.layers[i_img].vis.lower() == "hillshade":
                     if save_visualizations:
@@ -331,7 +332,7 @@ class BlenderCombination:
                                                      min_norm, max_norm, normalization)
                     else:
                         image = default.get_hillshade(dem_arr=self.dem_arr, resolution_x=self.dem_resolution,
-                                                      resolution_y=self.dem_resolution)
+                                                      resolution_y=self.dem_resolution, no_data=no_data)
                         norm_image = normalize_image(visualization, image, min_norm, max_norm, normalization)
                 elif self.layers[i_img].vis.lower() == "shadow":
                     if save_visualizations:
@@ -341,7 +342,8 @@ class BlenderCombination:
                         norm_image = normalize_image(visualization, rvt.default.get_raster_arr(image_path)["array"],
                                                      min_norm, max_norm, normalization)
                     else:
-                        image = default.get_shadow(dem_arr=self.dem_arr, resolution=self.dem_resolution)
+                        image = default.get_shadow(dem_arr=self.dem_arr, resolution=self.dem_resolution,
+                                                   no_data=no_data)
                         norm_image = normalize_image(visualization, image, min_norm, max_norm, normalization)
 
                 elif self.layers[i_img].vis.lower() == "multiple directions hillshade":
@@ -353,7 +355,7 @@ class BlenderCombination:
                                                      min_norm, max_norm, normalization)
                     else:
                         image = default.get_multi_hillshade(dem_arr=self.dem_arr, resolution_x=self.dem_resolution,
-                                                            resolution_y=self.dem_resolution)
+                                                            resolution_y=self.dem_resolution, no_data=no_data)
                         norm_image = normalize_image(visualization, image, min_norm, max_norm, normalization)
                 elif self.layers[i_img].vis.lower() == "simple local relief model":
                     if save_visualizations:
@@ -363,7 +365,7 @@ class BlenderCombination:
                         norm_image = normalize_image(visualization, rvt.default.get_raster_arr(image_path)["array"],
                                                      min_norm, max_norm, normalization)
                     else:
-                        image = default.get_slrm(dem_arr=self.dem_arr)
+                        image = default.get_slrm(dem_arr=self.dem_arr, no_data=no_data)
                         norm_image = normalize_image(visualization, image, min_norm, max_norm, normalization)
                 elif self.layers[i_img].vis.lower() == "sky-view factor":
                     if save_visualizations:
@@ -376,7 +378,7 @@ class BlenderCombination:
                     else:
                         image = default.get_sky_view_factor(dem_arr=self.dem_arr, resolution=self.dem_resolution,
                                                             compute_svf=True, compute_asvf=False,
-                                                            compute_opns=False)["svf"]
+                                                            compute_opns=False, no_data=no_data)["svf"]
                         norm_image = normalize_image(visualization, image, min_norm, max_norm, normalization)
                 elif self.layers[i_img].vis.lower() == "anisotropic sky-view factor":
                     if save_visualizations:
@@ -389,7 +391,7 @@ class BlenderCombination:
                     else:
                         image = default.get_sky_view_factor(dem_arr=self.dem_arr, resolution=self.dem_resolution,
                                                             compute_svf=False, compute_asvf=True,
-                                                            compute_opns=False)["asvf"]
+                                                            compute_opns=False, no_data=no_data)["asvf"]
                         norm_image = normalize_image(visualization, image, min_norm, max_norm, normalization)
                 elif self.layers[i_img].vis.lower() == "openness - positive":
                     if save_visualizations:
@@ -402,7 +404,7 @@ class BlenderCombination:
                     else:
                         image = default.get_sky_view_factor(dem_arr=self.dem_arr, resolution=self.dem_resolution,
                                                             compute_svf=False, compute_asvf=False,
-                                                            compute_opns=True)["opns"]
+                                                            compute_opns=True, no_data=no_data)["opns"]
                         norm_image = normalize_image(visualization, image, min_norm, max_norm, normalization)
                 elif self.layers[i_img].vis.lower() == "openness - negative":
                     if save_visualizations:
@@ -412,7 +414,8 @@ class BlenderCombination:
                         norm_image = normalize_image(visualization, rvt.default.get_raster_arr(image_path)["array"],
                                                      min_norm, max_norm, normalization)
                     else:
-                        image = default.get_neg_opns(dem_arr=self.dem_arr, resolution=self.dem_resolution)
+                        image = default.get_neg_opns(dem_arr=self.dem_arr, resolution=self.dem_resolution,
+                                                     no_data=no_data)
                         norm_image = normalize_image(visualization, image, min_norm, max_norm, normalization)
                 elif self.layers[i_img].vis.lower() == "sky illumination":
                     if save_visualizations:
@@ -422,7 +425,8 @@ class BlenderCombination:
                         norm_image = normalize_image(visualization, rvt.default.get_raster_arr(image_path)["array"],
                                                      min_norm, max_norm, normalization)
                     else:
-                        image = default.get_sky_illumination(dem_arr=self.dem_arr, resolution=self.dem_resolution)
+                        image = default.get_sky_illumination(dem_arr=self.dem_arr, resolution=self.dem_resolution,
+                                                             no_data=no_data)
                         norm_image = normalize_image(visualization, image, min_norm, max_norm, normalization)
                 elif self.layers[i_img].vis.lower() == "local dominance":
                     if save_visualizations:
@@ -432,7 +436,7 @@ class BlenderCombination:
                         norm_image = normalize_image(visualization, rvt.default.get_raster_arr(image_path)["array"],
                                                      min_norm, max_norm, normalization)
                     else:
-                        image = default.get_local_dominance(dem_arr=self.dem_arr)
+                        image = default.get_local_dominance(dem_arr=self.dem_arr, no_data=no_data)
                         norm_image = normalize_image(visualization, image, min_norm, max_norm, normalization)
 
             # if current layer has visualization applied, but there has been no rendering

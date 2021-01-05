@@ -9,6 +9,8 @@ if __name__ == "__main__":
     default.read_default_from_file("settings\default_settings.json")
     dem_path = r"test_data\TM1_564_146.tif"
     default.overwrite = 1
+    default.fill_no_data = 0
+    default.keep_original_no_data = 0
 
     # save specific visualization function
     default.save_hillshade(dem_path, save_float=True, save_8bit=True)

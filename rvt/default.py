@@ -38,6 +38,10 @@ class DefaultValues:
     ----------
     overwrite : bool
         When saving visualisation functions and file already exists, if 0 it doesn't compute it, if 1 it overwrites it.
+    fill_no_data : bool
+        If 1 (True) it fills where no_data with mean of surrounding pixels (3x3).
+    keep_original_no_data : bool
+        If 1 (True) it changes all output pixels to no_data where dem has no_data (fill_no_data has to be 1 (True)).
     ve_factor : float
         For all vis functions. Vertical exaggeration.
     slp_compute : bool
@@ -178,6 +182,8 @@ class DefaultValues:
 
     def __init__(self):
         self.overwrite = 0  # (0=False, 1=True)
+        self.fill_no_data = 0
+        self.keep_original_no_data = 0
         self.ve_factor = 1
         # slope gradient
         self.slp_compute = 0
@@ -257,11 +263,18 @@ class DefaultValues:
 
     def save_default_to_file(self, file_path=None):
         """Saves default attributes into .json file."""
-        data = {"default_settings": {"overwrite": {
-            "value": self.overwrite,
-            "description": "When saving visualisation functions and file already exists, if 0 "
-                           "it doesn't compute it, if 1 it overwrites it."
-        },
+        data = {"default_settings": {
+            "overwrite": {
+                "value": self.overwrite,
+                "description": "When saving visualisation functions and file already exists, if 0 "
+                               "it doesn't compute it, if 1 it overwrites it."},
+            "fill_no_data": {
+                "value": self.fill_no_data,
+                "description": "If 1 (True) it fills where no_data with mean of surrounding pixels (3x3)."},
+            "keep_original_no_data": {
+                "value": self.keep_original_no_data,
+                "description": "If 1 (True) it changes all output pixels to no_data where dem has no_data"
+                               " (fill_no_data has to be 1 (True))."},
             "ve_factor": {
                 "value": self.ve_factor,
                 "description": "Vertical exaggeration."},
@@ -552,6 +565,8 @@ class DefaultValues:
             data = json.load(dat)
             default_data = data["default_settings"]
             self.overwrite = int(default_data["overwrite"]["value"])
+            self.fill_no_data = int(default_data["fill_no_data"]["value"])
+            self.keep_original_no_data = int(default_data["keep_original_no_data"]["value"])
             self.ve_factor = float(default_data["ve_factor"]["value"])
             # Slope gradient
             self.slp_compute = int(default_data["Slope gradient"]["slp_compute"]["value"])
@@ -868,7 +883,7 @@ class DefaultValues:
         else:
             raise Exception("rvt.default.DefaultValues.get_vis_file_name: Wrong vis (visualization) parameter!")
 
-    def float_to_8bit(self, float_arr, vis, x_res=None, y_res=None):
+    def float_to_8bit(self, float_arr, vis, x_res=None, y_res=None, no_data=None):
         """Converts (byte scale) float visualization to 8bit. Resolution (x_res, y_res) needed only for multiple
          directions hillshade. Method first normalize then byte scale (0-255)."""
         if vis.lower() == "hillshade":
@@ -884,11 +899,17 @@ class DefaultValues:
         elif vis.lower() == "multiple directions hillshade":
             # Be careful when multihillshade we input dem, because we have to calculate hillshade in 3 directions
             red_band_arr = rvt.vis.hillshade(dem=float_arr, resolution_x=x_res, resolution_y=y_res,
-                                             sun_elevation=self.mhs_sun_el, sun_azimuth=315)
+                                             sun_elevation=self.mhs_sun_el, sun_azimuth=315, no_data=no_data,
+                                             fill_no_data=bool(self.fill_no_data),
+                                             keep_original_no_data=bool(self.keep_original_no_data))
             green_band_arr = rvt.vis.hillshade(dem=float_arr, resolution_x=x_res, resolution_y=y_res,
-                                               sun_elevation=self.mhs_sun_el, sun_azimuth=22.5)
+                                               sun_elevation=self.mhs_sun_el, sun_azimuth=22.5, no_data=no_data,
+                                               fill_no_data=bool(self.fill_no_data),
+                                               keep_original_no_data=bool(self.keep_original_no_data))
             blue_band_arr = rvt.vis.hillshade(dem=float_arr, resolution_x=x_res, resolution_y=y_res,
-                                              sun_elevation=self.mhs_sun_el, sun_azimuth=90)
+                                              sun_elevation=self.mhs_sun_el, sun_azimuth=90, no_data=no_data,
+                                              fill_no_data=bool(self.fill_no_data),
+                                              keep_original_no_data=bool(self.keep_original_no_data))
             if self.mhs_bytscl[0].lower() == "percent" or self.slp_bytscl[0].lower() == "perc":
                 red_band_arr = rvt.blend_func.normalize_perc(image=red_band_arr, minimum=self.mhs_bytscl[1],
                                                              maximum=self.mhs_bytscl[2])
@@ -951,9 +972,11 @@ class DefaultValues:
         else:
             raise Exception("rvt.default.DefaultValues.float_to_8bit: Wrong vis (visualization) parameter!")
 
-    def get_slope(self, dem_arr, resolution_x, resolution_y):
+    def get_slope(self, dem_arr, resolution_x, resolution_y, no_data=None):
         slope_arr = rvt.vis.slope_aspect(dem=dem_arr, resolution_x=resolution_x, resolution_y=resolution_y,
-                                            ve_factor=self.ve_factor, output_units=self.slp_output_units)["slope"]
+                                         ve_factor=self.ve_factor, output_units=self.slp_output_units,
+                                         no_data=no_data, fill_no_data=bool(self.fill_no_data),
+                                         keep_original_no_data=bool(self.keep_original_no_data))["slope"]
         return slope_arr
 
     def save_slope(self, dem_path, custom_dir=None, save_float=None, save_8bit=None):
@@ -1004,33 +1027,38 @@ class DefaultValues:
         else:  # singleprocess
             dict_arr_res = get_raster_arr(raster_path=dem_path)
             dem_arr = dict_arr_res["array"]
+            no_data = dict_arr_res["no_data"]
             x_res = dict_arr_res["resolution"][0]
             y_res = dict_arr_res["resolution"][1]
-            slope_arr = self.get_slope(dem_arr=dem_arr, resolution_x=x_res, resolution_y=y_res)
+            slope_arr = self.get_slope(dem_arr=dem_arr, resolution_x=x_res, resolution_y=y_res, no_data=no_data)
             if save_float:
                 if os.path.isfile(slope_path) and not self.overwrite:  # file exists and overwrite=0
                     pass
                 else:
-                    save_raster(src_raster_path=dem_path, out_raster_path=slope_path, out_raster_arr=slope_arr)
+                    save_raster(src_raster_path=dem_path, out_raster_path=slope_path, out_raster_arr=slope_arr,
+                                no_data=np.nan)
             if save_8bit:
                 if os.path.isfile(slope_8bit_path) and not self.overwrite:  # file exists and overwrite=0
                     pass
                 else:
                     slope_8bit_arr = self.float_to_8bit(float_arr=slope_arr, vis="slope gradient")
                     save_raster(src_raster_path=dem_path, out_raster_path=slope_8bit_path,
-                                out_raster_arr=slope_8bit_arr,
-                                e_type=1)
+                                out_raster_arr=slope_8bit_arr, e_type=1)
             return 1
 
-    def get_shadow(self, dem_arr, resolution):
+    def get_shadow(self, dem_arr, resolution, no_data=None):
         shadow_arr = rvt.vis.shadow_horizon(dem=dem_arr, resolution=resolution, shadow_az=self.hs_sun_azi,
-                                            shadow_el=self.hs_sun_el, ve_factor=self.ve_factor)["shadow"]
+                                            shadow_el=self.hs_sun_el, ve_factor=self.ve_factor,
+                                            no_data=no_data, fill_no_data=bool(self.fill_no_data),
+                                            keep_original_no_data=bool(self.keep_original_no_data))["shadow"]
         return shadow_arr
 
-    def get_hillshade(self, dem_arr, resolution_x, resolution_y):
+    def get_hillshade(self, dem_arr, resolution_x, resolution_y, no_data=None):
         hillshade_arr = rvt.vis.hillshade(dem=dem_arr, resolution_x=resolution_x, resolution_y=resolution_y,
                                           sun_azimuth=self.hs_sun_azi, sun_elevation=self.hs_sun_el,
-                                          ve_factor=self.ve_factor)
+                                          ve_factor=self.ve_factor, no_data=no_data,
+                                          fill_no_data=bool(self.fill_no_data),
+                                          keep_original_no_data=bool(self.keep_original_no_data))
         return hillshade_arr
 
     def save_hillshade(self, dem_path, custom_dir=None, save_float=None, save_8bit=None, save_shadow=None):
@@ -1098,15 +1126,17 @@ class DefaultValues:
         else:  # singleprocess
             dict_arr_res = get_raster_arr(raster_path=dem_path)
             dem_arr = dict_arr_res["array"]
+            no_data = dict_arr_res["no_data"]
             x_res = dict_arr_res["resolution"][0]
             y_res = dict_arr_res["resolution"][1]
-            hillshade_arr = self.get_hillshade(dem_arr=dem_arr, resolution_x=x_res, resolution_y=y_res).astype(
-                'float32')
+            hillshade_arr = self.get_hillshade(dem_arr=dem_arr, resolution_x=x_res, resolution_y=y_res,
+                                               no_data=no_data).astype('float32')
             if save_float:
                 if os.path.isfile(hillshade_path) and not self.overwrite:  # file exists and overwrite=0
                     pass
                 else:
-                    save_raster(src_raster_path=dem_path, out_raster_path=hillshade_path, out_raster_arr=hillshade_arr)
+                    save_raster(src_raster_path=dem_path, out_raster_path=hillshade_path, out_raster_arr=hillshade_arr,
+                                no_data=np.nan)
             if save_8bit:
                 if os.path.isfile(hillshade_8bit_path) and not self.overwrite:  # file exists and overwrite=0
                     pass
@@ -1119,13 +1149,16 @@ class DefaultValues:
                 if os.path.isfile(shadow_path) and not self.overwrite:  # file exists and overwrite=0
                     pass
                 else:
-                    save_raster(src_raster_path=dem_path, out_raster_path=shadow_path, out_raster_arr=shadow_arr)
+                    save_raster(src_raster_path=dem_path, out_raster_path=shadow_path, out_raster_arr=shadow_arr,
+                                no_data=np.nan)
             return 1
 
-    def get_multi_hillshade(self, dem_arr, resolution_x, resolution_y):
+    def get_multi_hillshade(self, dem_arr, resolution_x, resolution_y, no_data=None):
         multi_hillshade_arr = rvt.vis.multi_hillshade(dem=dem_arr, resolution_x=resolution_x, resolution_y=resolution_y,
                                                       nr_directions=self.mhs_nr_dir, sun_elevation=self.mhs_sun_el,
-                                                      ve_factor=self.ve_factor)
+                                                      ve_factor=self.ve_factor, no_data=no_data,
+                                                      fill_no_data=bool(self.fill_no_data),
+                                                      keep_original_no_data=bool(self.keep_original_no_data))
         return multi_hillshade_arr
 
     def save_multi_hillshade(self, dem_path, custom_dir=None, save_float=None, save_8bit=None):
@@ -1178,6 +1211,7 @@ class DefaultValues:
         else:  # singleprocess
             dict_arr_res = get_raster_arr(raster_path=dem_path)
             dem_arr = dict_arr_res["array"]
+            no_data = dict_arr_res["no_data"]
             x_res = dict_arr_res["resolution"][0]
             y_res = dict_arr_res["resolution"][1]
             if save_float:
@@ -1185,22 +1219,25 @@ class DefaultValues:
                     pass
                 else:
                     multi_hillshade_arr = self.get_multi_hillshade(dem_arr=dem_arr, resolution_x=x_res,
-                                                                   resolution_y=y_res).astype('float32')
+                                                                   resolution_y=y_res,
+                                                                   no_data=no_data).astype('float32')
                     save_raster(src_raster_path=dem_path, out_raster_path=multi_hillshade_path,
-                                out_raster_arr=multi_hillshade_arr)
+                                out_raster_arr=multi_hillshade_arr, no_data=np.nan)
             if save_8bit:
                 if os.path.isfile(multi_hillshade_8bit_path) and not self.overwrite:  # file exists and overwrite=0
                     pass
                 else:
                     multi_hillshade_8bit_arr = self.float_to_8bit(float_arr=dem_arr,
                                                                   vis="multiple directions hillshade",
-                                                                  x_res=x_res, y_res=y_res)
+                                                                  x_res=x_res, y_res=y_res, no_data=no_data)
                     save_raster(src_raster_path=dem_path, out_raster_path=multi_hillshade_8bit_path,
                                 out_raster_arr=multi_hillshade_8bit_arr, e_type=1)
             return 1
 
-    def get_slrm(self, dem_arr):
-        slrm_arr = rvt.vis.slrm(dem=dem_arr, radius_cell=self.slrm_rad_cell, ve_factor=self.ve_factor)
+    def get_slrm(self, dem_arr, no_data=None):
+        slrm_arr = rvt.vis.slrm(dem=dem_arr, radius_cell=self.slrm_rad_cell, ve_factor=self.ve_factor, no_data=no_data,
+                                fill_no_data=bool(self.fill_no_data),
+                                keep_original_no_data=bool(self.keep_original_no_data))
         return slrm_arr
 
     def save_slrm(self, dem_path, custom_dir=None, save_float=None, save_8bit=None):
@@ -1251,12 +1288,14 @@ class DefaultValues:
         else:  # singleprocess
             dict_arr_res = get_raster_arr(raster_path=dem_path)
             dem_arr = dict_arr_res["array"]
-            slrm_arr = self.get_slrm(dem_arr=dem_arr).astype('float32')
+            no_data = dict_arr_res["no_data"]
+            slrm_arr = self.get_slrm(dem_arr=dem_arr, no_data=no_data).astype('float32')
             if save_float:
                 if os.path.isfile(slrm_path) and not self.overwrite:  # file exists and overwrite=0
                     pass
                 else:
-                    save_raster(src_raster_path=dem_path, out_raster_path=slrm_path, out_raster_arr=slrm_arr)
+                    save_raster(src_raster_path=dem_path, out_raster_path=slrm_path, out_raster_arr=slrm_arr,
+                                no_data=np.nan)
             if save_8bit:
                 if os.path.isfile(slrm_8bit_path) and not self.overwrite:  # file exists and overwrite=0
                     pass
@@ -1266,12 +1305,15 @@ class DefaultValues:
                                 e_type=1)
             return 1
 
-    def get_sky_view_factor(self, dem_arr, resolution, compute_svf=True, compute_asvf=False, compute_opns=False):
+    def get_sky_view_factor(self, dem_arr, resolution, compute_svf=True, compute_asvf=False, compute_opns=False,
+                            no_data=None):
         dict_svf_asvf_opns = rvt.vis.sky_view_factor(dem=dem_arr, resolution=resolution, compute_svf=compute_svf,
                                                      compute_opns=compute_opns, compute_asvf=compute_asvf,
                                                      svf_n_dir=self.svf_n_dir, svf_r_max=self.svf_r_max,
                                                      svf_noise=self.svf_noise, asvf_dir=self.asvf_dir,
-                                                     asvf_level=self.asvf_level, ve_factor=self.ve_factor)
+                                                     asvf_level=self.asvf_level, ve_factor=self.ve_factor,
+                                                     no_data=no_data, fill_no_data=bool(self.fill_no_data),
+                                                     keep_original_no_data=bool(self.keep_original_no_data))
         return dict_svf_asvf_opns
 
     def save_sky_view_factor(self, dem_path, save_svf=True, save_asvf=False, save_opns=False, custom_dir=None,
@@ -1350,6 +1392,7 @@ class DefaultValues:
         else:
             dict_arr_res = get_raster_arr(raster_path=dem_path)
             dem_arr = dict_arr_res["array"]
+            no_data = dict_arr_res["no_data"]
             x_res = dict_arr_res["resolution"][0]
             y_res = dict_arr_res["resolution"][1]
             if x_res != y_res:
@@ -1357,26 +1400,27 @@ class DefaultValues:
                     "rvt.default.DefaultValues.save_sky_view_factor: dem resolution is not the same in x and y"
                     " directions!")
             dict_svf_asvf_opns = self.get_sky_view_factor(dem_arr=dem_arr, resolution=x_res, compute_svf=save_svf,
-                                                          compute_asvf=save_asvf, compute_opns=save_opns)
+                                                          compute_asvf=save_asvf, compute_opns=save_opns,
+                                                          no_data=no_data)
             if save_float:
                 if save_svf:
                     if os.path.isfile(svf_path) and not self.overwrite:  # file exists and overwrite=0
                         pass
                     else:  # svf_path, file doesn't exists or exists and overwrite=1
                         save_raster(src_raster_path=dem_path, out_raster_path=svf_path,
-                                    out_raster_arr=dict_svf_asvf_opns["svf"].astype('float32'))
+                                    out_raster_arr=dict_svf_asvf_opns["svf"].astype('float32'), no_data=np.nan)
                 if save_asvf:
                     if os.path.isfile(asvf_path) and not self.overwrite:  # file exists and overwrite=0
                         pass
                     else:  # asvf_path, file doesn't exists or exists and overwrite=1
                         save_raster(src_raster_path=dem_path, out_raster_path=asvf_path,
-                                    out_raster_arr=dict_svf_asvf_opns["asvf"].astype('float32'))
+                                    out_raster_arr=dict_svf_asvf_opns["asvf"].astype('float32'), no_data=np.nan)
                 if save_opns:
                     if os.path.isfile(opns_path) and not self.overwrite:  # file exists and overwrite=0
                         pass
                     else:  # opns_path, file doesn't exists or exists and overwrite=1
                         save_raster(src_raster_path=dem_path, out_raster_path=opns_path,
-                                    out_raster_arr=dict_svf_asvf_opns["opns"].astype('float32'))
+                                    out_raster_arr=dict_svf_asvf_opns["opns"].astype('float32'), no_data=np.nan)
             if save_8bit:
                 if save_svf:
                     if os.path.isfile(svf_8bit_path) and not self.overwrite:  # file exists and overwrite=0
@@ -1403,12 +1447,14 @@ class DefaultValues:
                                     out_raster_arr=opns_8bit_arr, e_type=1)
             return 1
 
-    def get_neg_opns(self, dem_arr, resolution):
+    def get_neg_opns(self, dem_arr, resolution, no_data=None):
         dem_arr = -1 * dem_arr
         dict_neg_opns = rvt.vis.sky_view_factor(dem=dem_arr, resolution=resolution, svf_n_dir=self.svf_n_dir,
                                                 svf_r_max=self.svf_r_max, svf_noise=self.svf_noise,
                                                 compute_svf=False, compute_asvf=False, compute_opns=True,
-                                                ve_factor=self.ve_factor)
+                                                ve_factor=self.ve_factor, no_data=no_data,
+                                                fill_no_data=bool(self.fill_no_data),
+                                                keep_original_no_data=bool(self.keep_original_no_data))
         neg_opns_arr = dict_neg_opns["opns"]
         return neg_opns_arr
 
@@ -1459,17 +1505,19 @@ class DefaultValues:
         else:  # singleprocess
             dict_arr_res = get_raster_arr(raster_path=dem_path)
             dem_arr = dict_arr_res["array"]
+            no_data = dict_arr_res["no_data"]
             x_res = dict_arr_res["resolution"][0]
             y_res = dict_arr_res["resolution"][1]
             if x_res != y_res:
                 raise Exception("rvt.default.DefaultValues.save_neg_opns: dem resolution is not the same in x and y"
                                 " directions!")
-            neg_opns_arr = self.get_neg_opns(dem_arr=dem_arr, resolution=x_res).astype('float32')
+            neg_opns_arr = self.get_neg_opns(dem_arr=dem_arr, resolution=x_res, no_data=no_data).astype('float32')
             if save_float:
                 if os.path.isfile(neg_opns_path) and not self.overwrite:  # file exists and overwrite=0
                     pass
                 else:
-                    save_raster(src_raster_path=dem_path, out_raster_path=neg_opns_path, out_raster_arr=neg_opns_arr)
+                    save_raster(src_raster_path=dem_path, out_raster_path=neg_opns_path, out_raster_arr=neg_opns_arr,
+                                no_data=np.nan)
             if save_8bit:
                 if os.path.isfile(neg_opns_8bit_path) and not self.overwrite:  # file exists and overwrite=0
                     pass
@@ -1479,12 +1527,14 @@ class DefaultValues:
                                 out_raster_arr=neg_opns_8bit_arr, e_type=1)
             return 1
 
-    def get_sky_illumination(self, dem_arr, resolution):
+    def get_sky_illumination(self, dem_arr, resolution, no_data=None):
         sky_illumination_arr = rvt.vis.sky_illumination(dem=dem_arr, resolution=resolution, sky_model=self.sim_sky_mod,
                                                         compute_shadow=bool(self.sim_compute_shadow),
                                                         max_fine_radius=self.sim_shadow_dist,
                                                         num_directions=self.sim_nr_dir, shadow_az=self.sim_shadow_az,
-                                                        shadow_el=self.sim_shadow_el, ve_factor=self.ve_factor)
+                                                        shadow_el=self.sim_shadow_el, ve_factor=self.ve_factor,
+                                                        no_data=no_data, fill_no_data=bool(self.fill_no_data),
+                                                        keep_original_no_data=bool(self.keep_original_no_data))
         return sky_illumination_arr
 
     def save_sky_illumination(self, dem_path, custom_dir=None, save_float=None, save_8bit=None):
@@ -1536,19 +1586,21 @@ class DefaultValues:
         else:  # singleprocess
             dict_arr_res = get_raster_arr(raster_path=dem_path)
             dem_arr = dict_arr_res["array"]
+            no_data = dict_arr_res["no_data"]
             x_res = dict_arr_res["resolution"][0]
             y_res = dict_arr_res["resolution"][1]
             if x_res != y_res:
                 raise Exception(
                     "rvt.default.DefaultValues.save_sky_illumination: dem resolution is not the same in x and y"
                     " directions!")
-            sky_illumination_arr = self.get_sky_illumination(dem_arr=dem_arr, resolution=x_res).astype('float32')
+            sky_illumination_arr = self.get_sky_illumination(dem_arr=dem_arr, resolution=x_res,
+                                                             no_data=no_data).astype('float32')
             if save_float:
                 if os.path.isfile(sky_illumination_path) and not self.overwrite:  # file exists and overwrite=0
                     pass
                 else:
                     save_raster(src_raster_path=dem_path, out_raster_path=sky_illumination_path,
-                                out_raster_arr=sky_illumination_arr)
+                                out_raster_arr=sky_illumination_arr, no_data=np.nan)
             if save_8bit:
                 if os.path.isfile(sky_illumination_8bit_path) and not self.overwrite:  # file exists and overwrite=0
                     pass
@@ -1559,10 +1611,12 @@ class DefaultValues:
                                 out_raster_arr=sky_illumination_8bit_arr, e_type=1)
             return 1
 
-    def get_local_dominance(self, dem_arr):
+    def get_local_dominance(self, dem_arr, no_data=None):
         local_dominance_arr = rvt.vis.local_dominance(dem=dem_arr, min_rad=self.ld_min_rad, max_rad=self.ld_max_rad,
                                                       rad_inc=self.ld_rad_inc, angular_res=self.ld_anglr_res,
-                                                      observer_height=self.ld_observer_h, ve_factor=self.ve_factor)
+                                                      observer_height=self.ld_observer_h, ve_factor=self.ve_factor,
+                                                      no_data=no_data, fill_no_data=bool(self.fill_no_data),
+                                                      keep_original_no_data=bool(self.keep_original_no_data))
         return local_dominance_arr
 
     def save_local_dominance(self, dem_path, custom_dir=None, save_float=None, save_8bit=None):
@@ -1614,13 +1668,14 @@ class DefaultValues:
         else:  # singleprocess
             dict_arr_res = get_raster_arr(raster_path=dem_path)
             dem_arr = dict_arr_res["array"]
-            local_dominance_arr = self.get_local_dominance(dem_arr=dem_arr).astype('float32')
+            no_data = dict_arr_res["no_data"]
+            local_dominance_arr = self.get_local_dominance(dem_arr=dem_arr, no_data=no_data).astype('float32')
             if save_float:
                 if os.path.isfile(local_dominance_path) and not self.overwrite:  # file exists and overwrite=0
                     pass
                 else:
                     save_raster(src_raster_path=dem_path, out_raster_path=local_dominance_path,
-                                out_raster_arr=local_dominance_arr)
+                                out_raster_arr=local_dominance_arr, no_data=np.nan)
             if save_8bit:
                 if os.path.isfile(local_dominance_8bit_path) and not self.overwrite:  # file exists and overwrite=0
                     pass
@@ -1704,6 +1759,8 @@ class DefaultValues:
 
         dat.write("# Selected visualization parameters\n")
         dat.write("\tOverwrite: {}\n".format(self.overwrite))
+        dat.write("\tFill no-data: {}\n".format(self.fill_no_data))
+        dat.write("\tKeep original no-data: {}\n".format(self.keep_original_no_data))
         dat.write("\tVertical exaggeration factor: {}\n".format(self.ve_factor))
         if nr_rows * nr_cols > self.multiproc_size_limit:
             dat.write("\tMultiprocessing: {}\n".format("ON"))
@@ -1898,19 +1955,21 @@ def get_raster_arr(raster_path):
 
     Returns
     -------
-    {"array": array, "resolution": (x_res, y_res)} : dict("array": np.array, "resolution": tuple(float, float))
-        Returns dictionary with keys array and resolution, resolution is tuple where first element is x resolution and
-        second is y resolution.
+    {"array": array, "resolution": (x_res, y_res), "no_data": no_data} : dict("array": np.array,
+     "resolution": tuple(float, float), "no_data": float)
+        Returns dictionary with keys array, resolution and no_data. Key resolution is tuple where first element is x
+        resolution and second is y resolution. Key no_data represent value of no data.
     """
     data_set = gdal.Open(raster_path)
     gt = data_set.GetGeoTransform()
     x_res = abs(gt[1])
     y_res = abs(-gt[5])
     bands = []
+    no_data = data_set.GetRasterBand(1).GetNoDataValue()  # we assume that all the bands have same no_data val
     if data_set.RasterCount == 1:  # only one band
         array = np.array(data_set.GetRasterBand(1).ReadAsArray())
         data_set = None
-        return {"array": array, "resolution": (x_res, y_res)}
+        return {"array": array, "resolution": (x_res, y_res), "no_data": no_data}
     else:  # multiple bands
         for i_band in range(data_set.RasterCount):
             i_band += 1
@@ -1920,7 +1979,7 @@ def get_raster_arr(raster_path):
             else:
                 bands.append(band)
         data_set = None  # close dataset
-        return {"array": np.array(bands), "resolution": (x_res, y_res)}
+        return {"array": np.array(bands), "resolution": (x_res, y_res), "no_data": no_data}
 
 
 def get_raster_size(raster_path, band=1):
@@ -1946,7 +2005,7 @@ def get_raster_size(raster_path, band=1):
     return x_size, y_size
 
 
-def save_raster(src_raster_path, out_raster_path, out_raster_arr: np.ndarray, e_type=6):
+def save_raster(src_raster_path, out_raster_path, out_raster_arr: np.ndarray, no_data=None, e_type=6):
     """Saves raster array (out_rast_arr) to out_raster_path (GTiff), using src_rast_path information.
 
     Parameters
@@ -1957,6 +2016,8 @@ def save_raster(src_raster_path, out_raster_path, out_raster_arr: np.ndarray, e_
         Path to new file, where to save raster (GTiff).
     out_raster_arr : np.array (2D - one band, 3D - multiple bands)
         Array with raster data.
+    no_data : float
+        Value that represents no data pixels.
     e_type : GDALDataType
         https://gdal.org/api/raster_c_api.html#_CPPv412GDALDataType, (GDT_Float32 = 6, GDT_UInt8 = 1, ...)
     """
@@ -1970,6 +2031,8 @@ def save_raster(src_raster_path, out_raster_path, out_raster_arr: np.ndarray, e_
         out_data_set.SetProjection(src_data_set.GetProjection())
         out_data_set.SetGeoTransform(src_data_set.GetGeoTransform())
         out_data_set.GetRasterBand(1).WriteArray(out_raster_arr)
+        if no_data is not None:
+            out_data_set.GetRasterBand(1).SetNoDataValue(no_data)
 
     elif len(out_raster_arr.shape) == 3:  # 3D array, more bands
         out_data_set = gtiff_driver.Create(out_raster_path, xsize=out_raster_arr.shape[2],
@@ -1980,6 +2043,8 @@ def save_raster(src_raster_path, out_raster_path, out_raster_arr: np.ndarray, e_
         out_data_set.SetGeoTransform(src_data_set.GetGeoTransform())
         for i_band in range(out_raster_arr.shape[0]):
             out_data_set.GetRasterBand(i_band + 1).WriteArray(out_raster_arr[i_band, :, :])
+        if no_data is not None:
+            out_data_set.GetRasterBand(1).SetNoDataValue(no_data)
     else:
         raise Exception("rvt.default.save_raster: You have to input 2D or 3D numpy array!")
     out_data_set.FlushCache()
