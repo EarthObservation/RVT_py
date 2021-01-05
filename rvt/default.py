@@ -182,7 +182,7 @@ class DefaultValues:
 
     def __init__(self):
         self.overwrite = 0  # (0=False, 1=True)
-        self.fill_no_data = 0
+        self.fill_no_data = 1
         self.keep_original_no_data = 0
         self.ve_factor = 1
         # slope gradient

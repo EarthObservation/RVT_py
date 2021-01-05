@@ -5,7 +5,7 @@
             "description": "When saving visualisation functions and file already exists, if 0 it doesn't compute it, if 1 it overwrites it."
         },
         "fill_no_data": {
-            "value": 0,
+            "value": 1,
             "description": "If 1 (True) it fills where no_data with mean of surrounding pixels (3x3)."
         },
         "keep_original_no_data": {
