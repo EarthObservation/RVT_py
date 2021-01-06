@@ -884,8 +884,8 @@ class DefaultValues:
             raise Exception("rvt.default.DefaultValues.get_vis_file_name: Wrong vis (visualization) parameter!")
 
     def float_to_8bit(self, float_arr, vis, x_res=None, y_res=None, no_data=None):
-        """Converts (byte scale) float visualization to 8bit. Resolution (x_res, y_res) needed only for multiple
-         directions hillshade. Method first normalize then byte scale (0-255)."""
+        """Converts (byte scale) float visualization to 8bit. Resolution (x_res, y_res) and no_data needed only for
+         multiple directions hillshade! Method first normalize then byte scale (0-255)."""
         if vis.lower() == "hillshade":
             norm_arr = rvt.blend_func.normalize_image(visualization="hillshade", image=float_arr,
                                                       min_norm=self.hs_bytscl[1], max_norm=self.hs_bytscl[2],
