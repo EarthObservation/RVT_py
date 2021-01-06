@@ -62,7 +62,6 @@ def normalize_lin(image, minimum, maximum):
     image = (image - minimum) / (maximum - minimum)
     image[image > 1] = 1
     image[image < 0] = 0
-    image[np.isnan(image)] = 0
     return image
 
 
