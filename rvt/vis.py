@@ -74,6 +74,7 @@ def byte_scale(data,
         byte_data = (high + 1) * (data - c_min - 1) / (c_max - c_min)  # copied from IDL BYTSCL
         byte_data[byte_data > high] = high
         byte_data[byte_data < 0] = 0
+        byte_data[np.isnan(byte_data)] = 0  # change no_data to 0
         return np.cast[np.uint8](byte_data) + np.cast[np.uint8](low)
 
     # scale = float(high - low) / cscale  # old scipy fn
