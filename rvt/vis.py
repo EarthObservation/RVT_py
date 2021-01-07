@@ -1270,7 +1270,22 @@ def fill_where_nan(dem):
     """Replaces np.nan values. It takes nan surrounding (neighbor) cells (3x3), if number of nans <= max_nan_nr it
     calculates mean of not nans and writes mean to the center nan pixel.
     Function iterates and first calculates areas where is less nan values in the surrounding (neighbour) cells."""
+    if np.all(~np.isnan(dem)):  # if there is no nan return dem
+        return dem
+
     dem_out = np.copy(dem)
+
+    # removes nan edges (speed up the process)
+    dem_rem_edge_dict = remove_nan_edges(dem_out)  # removes nan edges
+    dem_out = dem_rem_edge_dict["dem"]
+    top_rem = dem_rem_edge_dict["top_rows_rem"]  # number of top rows removed
+    bottom_rem = dem_rem_edge_dict["bottom_rows_rem"]  # number of bottom rows removed
+    left_rem = dem_rem_edge_dict["left_cols_rem"]  # number of left columns removed
+    right_rem = dem_rem_edge_dict["right_cols_rem"]  # number of right columns removed
+
+    # pad 1 nan edge so we can use 3x3 window on edge
+    dem_out = np.pad(array=dem_out, pad_width=1, mode="constant", constant_values=np.nan)
+
     rows = dem_out.shape[0]
     cols = dem_out.shape[1]
     max_nan_nr = 4  # maximum number of nans in surrounding array (3x3) to calculate mean
@@ -1278,6 +1293,8 @@ def fill_where_nan(dem):
         changes = True
         while changes:
             idx_nans = np.where(np.isnan(dem_out))  # index of all nans
+            if len(idx_nans[0]) == 0:  # if there is no np.nan
+                break  # exit loop there is no nan anymore
             changes = False
             for i_nan in range(len(idx_nans[0])):
                 row_idx_nan = idx_nans[0][i_nan]
@@ -1290,4 +1307,49 @@ def fill_where_nan(dem):
                 if nr_surr_nan <= max_nan_nr:
                     dem_out[row_idx_nan, col_idx_nan] = np.nanmean(surr_arr)
                     changes = True
+
+    # remove pad for edges
+    dem_out = dem_out[1:-1, 1:-1]
+    # add nan edges back
+    dem_out = np.pad(array=dem_out, pad_width=((top_rem, bottom_rem), (left_rem, right_rem)), mode="constant",
+                     constant_values=np.nan)  # pad_width=(top, bottom), (left, right)
     return dem_out
+
+
+def remove_nan_edges(dem):
+    """Takes 2D np.array (dem) and removes edges where whole edge is np.nan .
+     Returns {"dem": 2D np.array with removed edges, "left_cols_rem": number of removed columns left,
+              "top_rows_rem": number of removed rows top, "right_cols_rem": number of removed columns right,
+              "bottom_rows_rem": number of removed rows bottom}"""
+    # how many cols, rows removed counter
+    left_cols_rem = 0
+    right_cols_rem = 0
+    top_rows_rem = 0
+    bottom_rows_rem = 0
+
+    if np.all(np.isnan(dem)):  # if all np.nan
+        return {"dem": dem, "left_cols_rem": 0, "top_rows_rem": 0,
+                "right_cols_rem": 0, "bottom_rows_rem": 0}
+    if np.all(~np.isnan(dem)):  # if there is no np.nan
+        return {"dem": dem, "left_cols_rem": 0, "top_rows_rem": 0,
+                "right_cols_rem": 0, "bottom_rows_rem": 0}
+
+    dem_out = np.copy(dem)
+    # remove top rows
+    while np.all(np.isnan(dem_out[0, :])) and np.isnan(dem_out[0, :]).size != 0:
+        dem_out = dem_out[1:, :]
+        top_rows_rem += 1
+    # remove bottom rows
+    while np.all(np.isnan(dem_out[-1, :])) and np.isnan(dem_out[-1, :]).size != 0:
+        dem_out = dem_out[:-1, :]
+        bottom_rows_rem += 1
+    # remove left cols
+    while np.all(np.isnan(dem_out[:, 0])) and np.isnan(dem_out[:, 0]).size != 0:
+        dem_out = dem_out[:, 1:]
+        left_cols_rem += 1
+    # remove right cols
+    while np.all(np.isnan(dem_out[:, -1])) and np.isnan(dem_out[:, -1]).size != 0:
+        dem_out = dem_out[:, :-1]
+        right_cols_rem += 1
+    return {"dem": dem_out, "left_cols_rem": left_cols_rem, "top_rows_rem": top_rows_rem,
+            "right_cols_rem": right_cols_rem, "bottom_rows_rem": bottom_rows_rem}
