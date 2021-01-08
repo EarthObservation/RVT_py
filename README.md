@@ -37,11 +37,18 @@ When using the tools, please cite:
 
 ## Installation
 
-Copy or clone the files to your environment. We suggest using an Anaconda environment and Python version 3.6 or higher.
-You'll need libraries (could also work with other versions):
+First install libraries listed below. We suggest using an Anaconda environment (easiest gdal installation) and Python 3.6 or higher.
+Required libraries with tested versions (could also work with other versions):
+
 *   numpy 1.19.2
 *   scipy 1.5.2
 *   gdal 3.0.2
+
+After you have successfully installed required libraries you can install rvt-py from pypi ([pypi rvt-py](https://pypi.org/project/rvt-py/)):
+
+`pip install rvt-py`
+
+Or you can clone the repository ([github rvt_py](https://github.com/EarthObservation/RVT_py)).
 
 You can use `rvt-py` in Python scripts, Jupyter Notebooks and in ArcGIS Pro.
 
