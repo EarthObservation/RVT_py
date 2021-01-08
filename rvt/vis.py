@@ -20,7 +20,6 @@ Copyright:
 import numpy as np
 import scipy.interpolate
 import warnings
-import math
 
 
 def byte_scale(data,
