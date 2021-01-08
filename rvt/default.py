@@ -459,7 +459,7 @@ class DefaultValues:
                                              "Values min and max define stretch borders (in mode units)."}
             }}}
         if file_path is None:
-            file_path = r"settings\default_settings.json"
+            file_path = r"rvt\settings\default_settings.json"
             if os.path.isfile(file_path):
                 pass
             else:

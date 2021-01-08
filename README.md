@@ -37,7 +37,7 @@ When using the tools, please cite:
 
 ## Installation
 
-Copy or clone the files to your environment. We suggest using an Anaconda environment and Python version 3.5 or higher.
+Copy or clone the files to your environment. We suggest using an Anaconda environment and Python version 3.6 or higher.
 You'll need libraries (could also work with other versions):
 *   numpy 1.19.2
 *   scipy 1.5.2

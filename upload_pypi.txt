@@ -1,0 +1,16 @@
+Change version in setup.py
+
+*upgrade setuptools:
+"python -m pip install --user --upgrade setuptools wheel"
+
+prepare files for the upload to pypi:
+"python setup.py sdist bdist_wheel"
+
+*upgrade twin:
+"python -m pip install --user --upgrade twine"
+
+upload to pypi:
+	*for test: "python -m twine upload --repository testpypi dist/*"
+"python -m twine upload dist/*"
+
+when uploading for user name use: "__token__", for password use your token (https://pypi.org/help/#apitoken)

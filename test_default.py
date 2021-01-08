@@ -6,7 +6,7 @@ if __name__ == "__main__":
     # class with default values for all visualization functions
     default = rvt.default.DefaultValues()
     default.save_default_to_file()
-    default.read_default_from_file("settings\default_settings.json")
+    default.read_default_from_file(r"rvt\settings\default_settings.json")
     dem_path = r"test_data\TM1_564_146.tif"
     default.overwrite = 1
     default.fill_no_data = 0

@@ -2,7 +2,7 @@ import rvt.blend
 
 # read blender combinations from file
 blender_combinations = rvt.blend.BlenderCombinations()
-blender_combinations.read_from_file(file_path=".\settings\default_blender_combinations.json")
+blender_combinations.read_from_file(file_path=r".\rvt\settings\default_blender_combinations.json")
 
 # print all combinations names
 print(blender_combinations.combinations_names())
@@ -13,7 +13,7 @@ prism_opns_combination = blender_combinations.select_combination_by_name("Prisma
 
 # add specific combination, for example read from file
 combination = rvt.blend.BlenderCombination()
-combination.read_from_file(file_path=r".\settings\blender_file_example.json")
+combination.read_from_file(file_path=r".\rvt\settings\blender_file_example.json")
 print(combination.layers_info())
 blender_combinations.add_combination(combination, name="test")  # adds new combination and renames it to "test"
 
