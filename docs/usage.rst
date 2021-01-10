@@ -3,71 +3,105 @@
 Usage
 =====
 
+Reading and saving raster
+----------
+
+For reading raster (DEM) from files (GeoTIFF) to numpy array we suggest you to use our ``rvt.default`` module (uses gdal).
+You can also use ``rasterio``, ``gdal`` or any other module for reading and saving geo rasters.
+
+To read raster with ``rvt.default`` you first have to import module.
+Than call function ``rvt.default.get_raster_arr()`` to get dictionary with keys array (contains numpy array of raster),
+resolution (contains tuple(x resolution, y resolution)) and no_data (contains value of no_data). See example below:
+
+.. code-block:: python
+    import rvt.default
+    dem_path = r"C:/data/dem.tif"  # change path to your GeoTIFF
+    dem_dict = rvt.default.get_raster_arr(dem_path)  # returns dictionary: {"array": array, "resolution": (x_res, y_res), "no_data": no_data}
+    dem_arr = dem_dict["array"]  # numpy array
+    dem_resolution_tuple = dem_dict["resolution"]  # resolution tuple (x direction resolution, y direction resolution)
+    dem_x_resolution = dem_resolution_tuple[0]  # first element of resolution tuple is x direction resolution
+    dem_y_resolution = dem_resolution_tuple[1]  # second element of resolution tuple is y direction resolution
+    dem_no_data = dem_dict["no_data"]  # returns value of no_data stored in DEM
+
+To save raster with ``rvt.default`` you also have to have imported module. Then you call function ``rvt.default.save_raster()``.
+You have to define function parameters: src_raster_path: source raster path (dem_path) to copy metadata, out_raster_path: path to new file (visualization tif), out_raster_arr: vizualization numpy array, no_data: value of no_data (visualizations return no data as np.nan).
+For example if you compute hillshade (with rvt.vis) in hillshade_arr from dem stored in dem_path location. And you wish to store this hillshade visualiztion to hillshade_path. Saving hillshade would look like:
+
+.. code-block:: python
+    import rvt.default
+    import numpy as np
+    rvt.default.save_raster(src_raster_path=dem_path, out_raster_path=hillshade_path, out_raster_arr=hillshade_arr, no_data=np.nan)
+
+
 .. _module_vis:
 
 Module vis
 ----------
 
-For reading raster data (DEM) from files (GeoTIFF) we suggest to use ``rasterio``.
+Module ``rvt.vis`` contains visualization functions. Every function takes dem (as 2D numpy array) with parameters and outputs visualization (as 2D numpy array).
+For example to calculate hillshade you first have to import modules, read DEM (:ref:`Reading and saving raster`) and than call ``rvt.vis.hillshade()`` function with its parameters, then you can save visualization (:ref:`Reading and saving raster`).
+Example of calculating Hillshade with sun azimuth 315° and sun elevation 35°:
 
 .. code-block:: python
-
-    import rasterio as rio
-    
-    input_dem_path = "test_data/TM1_564_146.tif"  # path to your DEM
-    input_dem_dataset = rio.open(input_dem_path)  # open with rasterio
-    t = input_dem_dataset.transform
-    x_res = t[0]  # to get x resolution
-    y_res = -t[4] # to get y resolution
-    input_dem_arr = input_dem_dataset.read()[0]  # to get 2D numpy array of DEM
-    input_dem_dataset.close()
-
-
-Importing ``rvt.vis`` module.
-
-.. code-block:: python
-
     import rvt.vis
+    hillshade_arr = rvt.vis.hillshade(dem=dem_arr, sun_azimuth=315, sun_elevation=35, resolution_x=dem_x_resolution, resolution_y=dem_y_resolution, no_data=dem_no_data)
 
 
-Additional info is in :ref:`rvt.vis`.
+
+To find more about visualization functions and to learn about their parameters look into :ref:`rvt.vis`.
 
 .. _module_default:
 
 Module default
 --------------
 
-Default module contains class ``DefaultValues()`` where we can store our visualization functions parameters, this class also has methods for saving and computing visualization functions with that parameters. To import it we use:
+For beginner python users we suggest using ``rvt.default`` instead of ``rvt.vis`` to calculate and store visualizations.
+As mentioned before ``rvt.default`` module contains functions to read and save rasters. This module was initially developed for GUI backend use.
+Default module also contains class ``DefaultValues()`` where we can store our visualization functions parameters.
+We can than call methods of this class for saving and computing visualizations with that parameters (methods use ``rvt.vis`` for computing visualizations).
+
+
+For example to calculate and get or save hillshade with default module, we have to import module and create ``DefaultValues()`` class instance. Than we can change default parameters for hillshade (they are attributes of ``DefaultValues()``, their name starts with ``hs_``).
+After that we call method to get hillshade array or to save hillshade to GeoTIFF. Example:
 
 .. code-block:: python
-
     import rvt.default
 
+    # create DefaultValues() instance
+    default = rvt.default.DefaultValues()
+    # change hillshade parameters default values to our needs
+    default.hs_sun_el = 45
+    default.hs_sun_azi = 300
+    # call default.get_hillshade() method which uses set parameters and returns hillshade numpy array
+    hillshade_arr = default.get_hillshade(dem_arr=dem_arr, resolution_x=dem_x_resolution, resolution_y=dem_y_resolution, no_data=dem_no_data)
+    # if we don't need hillshade array and we just want to save hillshade we can directly call default.save_hillshade() method
+    # this method also uses set hillshade parameters and saves visualization as GeoTIFF in dem_path directory
+    default.save_hillshade(dem_path=dem_path, save_float=True, save_8bit=True)  # if we want also 8bit version of result we set save_8bit=True
 
-We have to create class instance first.
+Class ``DefaultValues()`` also contains methods: ``get_slope()``, ``save_slope()``, ``get_multi_hillshade()``, ``save_multi_hillshade()``, ``get_slrm()``,
+``save_slrm()``, ``get_sky_view_factor()``, ``save_sky_view_factor()``, ``get_neg_opns()``, ``save_neg_opns()``, ``get_local_dominance()``, ``save_local_dominance()``,
+``get_sky_illumination()``, ``save_sky_illumination()``. Additional info (about methods and attributes of ``DefaultValues()`` class) is in :ref:`rvt.default`.
 
+
+Parameters of ``DefaultValues()`` instance can be saved to JSON configuration file which can be edited. Then you can load this file back and overwrite attributes (visualization functions parameters) values.
+Example how to do that:
 .. code-block:: python
+    import rvt.default
 
     default = rvt.default.DefaultValues()
+    config_json_path = r"C:/rvt_default_values.json"  # change path to where you would like to save config file
+    # save set attributes values to JSON configuration file
+    default.save_default_to_file(file_path=config_json_path)
+    # overwrite DefaultValues() instance (default) attributes values from config file
+    default.read_default_from_file(file_path=config_json_path)
 
-When we create instance parameter values are already populated with default values. We can store them in file, change them in file and read them back from file. We can also change them in program.
-
-Additional info is in :ref:`rvt.default`.
 
 .. _module_blend:
 
 Module blend
 ------------
 
-Blend is module for blending different visualizations together. To import it we use:
-
-.. code-block:: python
-
-    import rvt.blend
-
-We could use manual blending (we compute visualisations) or we could use automatic blending from file (automatically computed visualisations with ``rvt.vis`` and stored in location where DEM is).
-
-Manual blending depends on module ``rvt.default`` (see :ref:`module_default`) and ``rvt.vis``. To start blending we first need to create instance of class ``BlenderCombination()`` which contains list of layers (``BlenderLayer()``). Single layer is defined in ``BlenderLayer()`` class.
+TODO
 
 Additional info is in :ref:`rvt.blend`.
 

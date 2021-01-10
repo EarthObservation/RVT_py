@@ -1955,9 +1955,10 @@ def get_raster_arr(raster_path):
 
     Returns
     -------
-    {"array": array, "resolution": (x_res, y_res), "no_data": no_data} : dict("array": np.array,
-     "resolution": tuple(float, float), "no_data": float)
-        Returns dictionary with keys array, resolution and no_data. Key resolution is tuple where first element is x
+    dict_out : dict
+        Returns {"array": array, "resolution": (x_res, y_res), "no_data": no_data} : dict("array": np.array,
+         "resolution": tuple(float, float), "no_data": float).
+        Returns dictionary with keys: array, resolution and no_data. Key resolution is tuple where first element is x
         resolution and second is y resolution. Key no_data represent value of no data.
     """
     data_set = gdal.Open(raster_path)

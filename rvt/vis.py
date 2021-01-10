@@ -129,8 +129,8 @@ def slope_aspect(dem,
     Returns
     -------
     dict_out: dict
-        {"slope": slope_out, "aspect": aspect_out}
-        slope_out, slope gradient : 2D numpy array (numpy.ndarray) of slope.
+        Returns {"slope": slope_out, "aspect": aspect_out};
+        slope_out, slope gradient : 2D numpy array (numpy.ndarray) of slope;
         aspect_out, aspect : 2D numpy array (numpy.ndarray) of aspect.
     """
     if dem.ndim != 2:
@@ -613,10 +613,10 @@ def sky_view_factor_compute(height_arr,
     Returns
     -------
     dict_out : dictionary
-        {"svf": svf_out, "asvf": asvf_out, "opns": opns_out}
-        svf_out, skyview factor : 2D numpy array (numpy.ndarray) of skyview factor.
-        asvf_out, anisotropic skyview factor : 2D numpy array (numpy.ndarray) of anisotropic skyview factor.
-        opns_out, openness : 2D numpy array (numpy.ndarray) openness (elevation angle of horizon)
+        Return {"svf": svf_out, "asvf": asvf_out, "opns": opns_out};
+        svf_out, skyview factor : 2D numpy array (numpy.ndarray) of skyview factor;
+        asvf_out, anisotropic skyview factor : 2D numpy array (numpy.ndarray) of anisotropic skyview factor;
+        opns_out, openness : 2D numpy array (numpy.ndarray) openness (elevation angle of horizon).
     """
     # change no_data to np.nan
     idx_no_data = None
@@ -763,10 +763,10 @@ def sky_view_factor(dem,
     Returns
     -------
     dict_out : dictionary
-        {"svf": svf_out, "asvf": asvf_out, "opns": opns_out}
-        svf_out, skyview factor : 2D numpy array (numpy.ndarray) of skyview factor.
-        asvf_out, anisotropic skyview factor : 2D numpy array (numpy.ndarray) of anisotropic skyview factor.
-        opns_out, openness : 2D numpy array (numpy.ndarray) openness (elevation angle of horizon)
+        Return {"svf": svf_out, "asvf": asvf_out, "opns": opns_out};
+        svf_out, skyview factor : 2D numpy array (numpy.ndarray) of skyview factor;
+        asvf_out, anisotropic skyview factor : 2D numpy array (numpy.ndarray) of anisotropic skyview factor;
+        opns_out, openness : 2D numpy array (numpy.ndarray) openness (elevation angle of horizon).
     """
     if dem.ndim != 2:
         raise Exception("rvt.vis.sky_view_factor: dem has to be 2D np.array!")
@@ -1358,8 +1358,8 @@ def shadow_horizon(dem,
     Returns
     -------
     dict_out : dict
-        {"shadow": shadow, "horizon": horizon}
-        shadow : 2D binary numpy array (numpy.ndarray) of shadows.
+        Returns {"shadow": shadow, "horizon": horizon};
+        shadow : 2D binary numpy array (numpy.ndarray) of shadows;
         horizon; 2D numpy array (numpy.ndarray) of horizon.
     """
     if not (1000 >= ve_factor >= -1000):
