@@ -14,7 +14,9 @@ Than call function ``rvt.default.get_raster_arr()`` to get dictionary with keys 
 resolution (contains tuple(x resolution, y resolution)) and no_data (contains value of no_data). See example below:
 
 .. code-block:: python
+
     import rvt.default
+
     dem_path = r"C:/data/dem.tif"  # change path to your GeoTIFF
     dem_dict = rvt.default.get_raster_arr(dem_path)  # returns dictionary: {"array": array, "resolution": (x_res, y_res), "no_data": no_data}
     dem_arr = dem_dict["array"]  # numpy array
@@ -23,13 +25,16 @@ resolution (contains tuple(x resolution, y resolution)) and no_data (contains va
     dem_y_resolution = dem_resolution_tuple[1]  # second element of resolution tuple is y direction resolution
     dem_no_data = dem_dict["no_data"]  # returns value of no_data stored in DEM
 
+
 To save raster with ``rvt.default`` you also have to have imported module. Then you call function ``rvt.default.save_raster()``.
 You have to define function parameters: src_raster_path: source raster path (dem_path) to copy metadata, out_raster_path: path to new file (visualization tif), out_raster_arr: vizualization numpy array, no_data: value of no_data (visualizations return no data as np.nan).
 For example if you compute hillshade (with rvt.vis) in hillshade_arr from dem stored in dem_path location. And you wish to store this hillshade visualiztion to hillshade_path. Saving hillshade would look like:
 
 .. code-block:: python
+
     import rvt.default
     import numpy as np
+
     rvt.default.save_raster(src_raster_path=dem_path, out_raster_path=hillshade_path, out_raster_arr=hillshade_arr, no_data=np.nan)
 
 
@@ -43,9 +48,10 @@ For example to calculate hillshade you first have to import modules, read DEM (:
 Example of calculating Hillshade with sun azimuth 315° and sun elevation 35°:
 
 .. code-block:: python
-    import rvt.vis
-    hillshade_arr = rvt.vis.hillshade(dem=dem_arr, sun_azimuth=315, sun_elevation=35, resolution_x=dem_x_resolution, resolution_y=dem_y_resolution, no_data=dem_no_data)
 
+    import rvt.vis
+
+    hillshade_arr = rvt.vis.hillshade(dem=dem_arr, sun_azimuth=315, sun_elevation=35, resolution_x=dem_x_resolution, resolution_y=dem_y_resolution, no_data=dem_no_data)
 
 
 To find more about visualization functions and to learn about their parameters look into :ref:`rvt.vis`.
@@ -65,6 +71,7 @@ For example to calculate and get or save hillshade with default module, we have 
 After that we call method to get hillshade array or to save hillshade to GeoTIFF. Example:
 
 .. code-block:: python
+
     import rvt.default
 
     # create DefaultValues() instance
@@ -78,6 +85,7 @@ After that we call method to get hillshade array or to save hillshade to GeoTIFF
     # this method also uses set hillshade parameters and saves visualization as GeoTIFF in dem_path directory
     default.save_hillshade(dem_path=dem_path, save_float=True, save_8bit=True)  # if we want also 8bit version of result we set save_8bit=True
 
+
 Class ``DefaultValues()`` also contains methods: ``get_slope()``, ``save_slope()``, ``get_multi_hillshade()``, ``save_multi_hillshade()``, ``get_slrm()``,
 ``save_slrm()``, ``get_sky_view_factor()``, ``save_sky_view_factor()``, ``get_neg_opns()``, ``save_neg_opns()``, ``get_local_dominance()``, ``save_local_dominance()``,
 ``get_sky_illumination()``, ``save_sky_illumination()``. Additional info (about methods and attributes of ``DefaultValues()`` class) is in :ref:`rvt.default`.
@@ -85,7 +93,9 @@ Class ``DefaultValues()`` also contains methods: ``get_slope()``, ``save_slope()
 
 Parameters of ``DefaultValues()`` instance can be saved to JSON configuration file which can be edited. Then you can load this file back and overwrite attributes (visualization functions parameters) values.
 Example how to do that:
+
 .. code-block:: python
+
     import rvt.default
 
     default = rvt.default.DefaultValues()

@@ -50,7 +50,7 @@ def create_blender_file_example(file_path=None):
                                 ]
                             }}
     if file_path is None:
-        file_path = r"rvt\settings\blender_file_example.json"
+        file_path = r"settings\blender_file_example.json"
         if os.path.isfile(file_path):
             pass
         else:

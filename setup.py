@@ -5,7 +5,7 @@ with open("README.md", "r", encoding="utf-8") as fh:
 
 setuptools.setup(
     name="rvt_py",
-    version="1.0.0a4",
+    version="1.0.0a5",
     author="ZRC SAZU and University of Ljubljana",
     author_email="ziga.kokalj@zrc-sazu.si",
     description="Relief Visualization Toolbox python library. "
@@ -29,10 +29,5 @@ setuptools.setup(
         'ArcGIS Pro': 'https://github.com/EarthObservation/rvt-arcgis-pro',
         "QGIS plugin": 'https://github.com/EarthObservation/rvt-qgis'''
     },
-    data_files=[
-        ('settings', ['rvt/settings/blender_custom_layers.json', 'rvt/settings/blender_file_example.json',
-                      'rvt/settings/default_blender_combinations.json', 'rvt/settings/default_settings.json',
-                      'rvt/settings/default_terrains_settings.json'])
-    ],
     install_requires=['numpy', 'scipy', 'gdal']
 )
