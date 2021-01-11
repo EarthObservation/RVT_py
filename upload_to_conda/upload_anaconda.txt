@@ -1,0 +1,19 @@
+To upload library to anaconda.org, we will build library from pypi
+
+Run following command to create meta.yaml:
+	"conda skeleton pypi rvt-py"
+
+Change recipe-maintainers in meta.yaml, add you github id.
+
+In meta.yaml change name from "rvt-py" to "rvt_py".
+
+Build package from meta.yaml:
+	"conda-build rvt-py"
+
+Built tar is in (conda-build rvt-py ouputs path where it is) "C:\Users\Uporabnik\Anaconda3\conda-bld" or smth like "C:\Users\jsmith\miniconda\conda-bld".
+
+Run "anaconda login" and write username and password.
+	"anaconda login"
+
+Then to upload run:
+	"anaconda upload path_to_tar" (path_to_tar example = C:\Users\Uporabnik\Anaconda3\conda-bld\win-64\rvt_py-1.0.0a6-py37h39e3cac_0.tar.bz2)
