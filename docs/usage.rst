@@ -3,8 +3,10 @@
 Usage
 =====
 
+.. _Reading and saving raster:
+
 Reading and saving raster
-----------
+-------------------------
 
 For reading raster (DEM) from files (GeoTIFF) to numpy array we suggest you to use our ``rvt.default`` module (uses gdal).
 You can also use ``rasterio``, ``gdal`` or any other module for reading and saving geo rasters.
