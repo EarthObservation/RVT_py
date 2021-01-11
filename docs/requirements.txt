@@ -2,5 +2,4 @@ matplotlib
 numpy
 scipy
 rasterio
-gdal
 nbsphinx
