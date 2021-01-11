@@ -72,6 +72,9 @@ html_static_path = []
 def setup(app):
     app.connect('autodoc-process-docstring', sphinx.ext.autodoc.between('Credits:', what=['module'], exclude=True))
 
+# Autommatiyally remove GDAL from imports
+autodoc_mock_imports = ['gdal']
+
 # Copy examples to docs
 examples_folder = './examples'
 shutil.rmtree(examples_folder, ignore_errors=True)
