@@ -23,7 +23,7 @@ import rvt.vis
 import rvt.blend_func
 import rvt.multiproc
 import os
-# import gdal
+import gdal
 import numpy as np
 import json
 import datetime
