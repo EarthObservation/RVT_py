@@ -3,6 +3,8 @@
 Usage
 =====
 
+Bellow you have basic explanation how to use ``rvt``, if you need detailed explanation look into :ref:`Examples`.
+
 .. _Reading and saving raster:
 
 Reading and saving raster
@@ -93,7 +95,7 @@ Class ``DefaultValues()`` also contains methods: ``get_slope()``, ``save_slope()
 ``get_sky_illumination()``, ``save_sky_illumination()``. Additional info (about methods and attributes of ``DefaultValues()`` class) is in :ref:`rvt.default`.
 
 
-Parameters of ``DefaultValues()`` instance can be saved to JSON configuration file which can be edited. Then you can load this file back and overwrite attributes (visualization functions parameters) values.
+Parameters of ``DefaultValues()`` instance can be saved to ``JSON`` configuration file which can be edited. Then you can load this file back and overwrite attributes (visualization functions parameters) values.
 Example how to do that:
 
 .. code-block:: python
@@ -113,93 +115,125 @@ Example how to do that:
 Module blend
 ------------
 
-TODO
+You can blend manually or automatically. When blending manually you have to define each layer (visualization) in python. Manually blending allows you to use visualizations that are not part of ``rvt``.
+Automatically blending automatically computes visualizations (they need to be a part of ``rvt``) and blends them together from configuration ``JSON`` file (can be edited).
+
+Main class of ``rvt.blend`` module for blending is ``BlenderCombination`` which has list attribute ``layers`` where are stored instances of class ``BlenderLayer``.
+In ``BlenderLayer`` instance in ``layers`` we store specific visualization and its parameters for blending. ``BlenderCombination`` class has method ``render_all_images()``,
+which blends all ``BlenderLayer`` instances (visualizations) in ``BlenderCombination.layers`` list together and outputs blended image.
 
 Additional info is in :ref:`rvt.blend`.
 
 Manual blending
 ^^^^^^^^^^^^^^^
 
-.. code-block:: python
-
-    layers_manual = rvt.blend.BlenderCombination()  # create class which will hold layers
-    # you have two options to add layer:
-    # option 1, create with method
-    layers_manual.create_layer(vis_method="Sky-View Factor", normalization="value", minimum=0.7, maximum=1,
-                              blend_mode="multiply", opacity=25,
-                              image=svf_arr)  # automatically creates BlenderLayer() and appends it to BlenderCombination()
-    # option 2, create class BlenderLayer instance and then add with method
-    layer1 = rvt.blend.BlenderLayer(vis_method="Sky-View Factor", normalization="value", minimum=0.7, maximum=1,
-                                    blend_mode="multiply", opacity=25,
-                                    image=svf_arr)
-    layers_manual.add_layer(layer1)
-
-You can add as many layers as you need. When adding/creating layers you can define image or image_path parameter or none of them. If you define ``image_path`` (you have to save image first) and not ``image`` then blending will work faster because it will not hold all images (from all layers) in memory. It will read them simultaneously. If both ``image`` and ``image_path`` are None (not defined) then when calling method ``render_all_images()`` visualizations will be calculated automatically when needed (``vis_method`` parameter has to be correct).
-
-.. code-block:: python
-
-    # you can input calculated image (preferred method for non rvt visualizations)
-    layers_manual.create_layer(vis_method="Sky-View Factor", normalization="value", minimum=0.7, maximum=1,
-                              blend_mode="multiply", opacity=25,
-                              image=svf_arr)
-    # or you can input image_path
-    layers_manual.create_layer(vis_method="Sky-View Factor", normalization="value", minimum=0.7, maximum=1,
-                              blend_mode="multiply", opacity=25,
-                              image_path=svf_path)
-    # or you don't define them (None), vis_method has to be correct (rvt, suggested method)
-    layers_manual.create_layer(vis_method="Sky-View Factor", normalization="value", minimum=0.7, maximum=1,
-                              blend_mode="multiply", opacity=25)
-
-After you added all the layers you would like to blend. You call method ``render_all_images()`` to create blended image. If both ``image`` and ``image_path`` are None, you can define parameters for specific visualisation function with parameter ``default``. If you call method ``add_dem_path()`` (needed for profile) and define method parameter ``save_render_path``, result will be saved in that path, else it will only return result raster array.
-
-.. code-block:: python
-
-    layers_manual.add_dem_path(dem_path=input_dem_path)  # needed when you wish to save render (save_render_path defined in render_all_images())
-    render_arr = layers_manual.render_all_images(save_render_path=save_render_path)  # to save rendered array in save_render_path
-    render_arr = layers_manual.render_all_images()  # to only get result render array (render_arr)
-
-Automatic blending
-^^^^^^^^^^^^^^^^^^
-
-Automatic blending depends on ``rvt.default``, so you have to import ``rvt.default``.
+When blending you have to import ``rvt.blend`` module and create ``BlenderCombination`` instance.
+For adding layer (visualization) with parameters to combination you can call ``BlenderCombination.create_layer()`` (creates ``BlenderLayer`` instance and adds it to ``BlenderCombination.layers``).
+For example let's say you have already calculated Simple local relief model (slrm_arr), Slope (slope_arr) and Hillshade (hillshade_arr). Now you want to blend calculated visualizations together:
 
 .. code-block:: python
 
     import rvt.blend
+
+    # create combination class which will hold layers (visualizations)
+    combination_manual = rvt.blend.BlenderCombination()
+
+    # 1st layer: Add slrm layer with 2% perc cuttoff on both sides, multiply blend mode and 25% opacity
+    combination_manual.create_layer(vis_method="Simple local relief model", normalization="perc", minimum=2, maximum=2,
+                              blend_mode="multiply", opacity=25, image=slrm_arr)
+    # 2nd layer: Add slope layer with value stretch from 0 to 51, luminosity blend mode and 50% opacity
+    combination_manual.create_layer(vis_method="Slope gradient", normalization="value", minimum=0, maximum=51,
+                              blend_mode="luminosity", opacity=50, image=slope_arr)
+    # 3rd layer: Add hillshade layer with value stretch from 0 to 1, normal blend mode and 100% opacity
+    combination_manual.create_layer(vis_method="Hillshade", normalization="value", minimum=0, maximum=1,
+                              blend_mode="normal", opacity=100, image=hillshade_arr)
+
+    # if we wish to save blended image in file we have to add dem_path to combination (for metadata, geodata)
+    combination_manual.add_dem_path(dem_path=input_dem_path)
+
+    # blend them all together, you can save blend to GeoTIFF if save_render_path presented (and dem_path is added) else it only returns array
+    render_arr = combination_manual.render_all_images(save_render_path=output_blend_path)
+
+
+You can also let ``BlenderCombination`` class to automatically computes visualization or give path to visualization.
+If you don't provide parameter image and vis_method parameter is correct (existing rvt visualization function) blender automatically calculates visualization.
+If you provide parameter image_path and not image (if you provide both image will be used), blender will read visualization from image_path.
+When you don't input image and image_path parameter, you have to add ``rvt.default.DefaultValues`` instance as parameter to ``BlenderCombination.render_all_images()``. Blender then takes parameters set in this class when calculating specific visualization.
+You also have to add dem array and its resolution.
+Example to use all three methods.
+
+.. code-block:: python
+    import rvt.blend
     import rvt.default
 
-Automatic blending is filling ``rvt.blender.BlenderCombination`` from file. To create example file where we can later change parameters we call function ``create_blender_file_example()``.
+    # create combination class which will hold layers (visualizations)
+    combination_manual = rvt.blend.BlenderCombination()
 
-.. code-block:: python
-
-    blender_file = rvt.blend.create_blender_file_example(file_path=r"settings\blender_file_example.txt")
-
-To blend from file we also need visualization function parameters values which we define in   class ``rvt.default.DefaultValues()`` (see :ref:`module_default`).
-
-.. code-block:: python
-
+    # we will let blender to calculate slrm so we need to create rvt.default.DefaultValues() and change parameters of
+    # slrm, we will later add default to combination_manual.render_all_images() method
     default = rvt.default.DefaultValues()
+    default.slrm_rad_cell = 15
 
+    # 1st layer: Add slrm layer with 2% perc cuttoff on both sides, multiply blend mode and 25% opacity
+    # slrm is calculated automatically, because we didn't provide image and image_path parameters
+    combination_manual.create_layer(vis_method="Simple local relief model", normalization="perc", minimum=2, maximum=2,
+                              blend_mode="multiply", opacity=25)
+    # 2nd layer: Add slope layer with value stretch from 0 to 51, luminosity blend mode and 50% opacity
+    # we provide image_path to slope, so slope is read from file
+    combination_manual.create_layer(vis_method="Slope gradient", normalization="value", minimum=0, maximum=51,
+                              blend_mode="luminosity", opacity=50, image_path=slope_path)
+    # 3rd layer: Add hillshade layer with value stretch from 0 to 1, normal blend mode and 100% opacity
+    # we provide image
+    combination_manual.create_layer(vis_method="Hillshade", normalization="value", minimum=0, maximum=1,
+                              blend_mode="normal", opacity=100, image=hillshade_arr)
+
+    # we have to add dem array and resolution so that slrm can be computed
+    combination_manual.add_dem_arr(dem_arr=input_dem_arr, dem_resolution=resolution)
+
+    # blend them all together and add default where are defined slrm parameters
+    render_arr = combination_manual.render_all_images(default=default)
+
+
+You can always add as many layers as you want.
+
+Automatic blending
+^^^^^^^^^^^^^^^^^^
+
+Automatic blending is blending from configuration ``JSON`` file. You can create file example and change it to suit your needs.
 To blend from file we create ``BlenderCombination()`` class, call method ``read_from_file()`` and then ``render_all_images()``. In ``render_all_images()`` method we can save (to dem_path directory) specific visualization if we set parameter ``save_visualization`` to True.
 
 .. code-block:: python
 
-    layers_auto = rvt.blend.BlenderCombination()
-    layers_auto.read_from_file(file_path=blender_file)   # we can make our own blender_file (change example)
-    layers_auto.add_dem_path(input_dem_path) # needed when save_visualizations is True, and we wish to save render (save_render_path is set)
-    layers_auto.add_dem_arr(dem_arr=input_dem_arr, dem_resolution=x_res)  # needed when save_visualizations is False
-    render_arr = layers_auto.render_all_images(save_visualizations=False, save_render_path=output_blend_path)
+    import rvt.blend
+
+    combination_auto = rvt.blend.BlenderCombination()
+    # to create JSON blender combination configuration file example you can change
+    blender_combination_path = r"settings\blender_file_example.txt"  # change path to where you wish to save
+    rvt.blend.create_blender_file_example(file_path=blender_combination_path)
+
+    # set parameters of visualizations you will be using
+    default = rvt.default.DefaultValues()
+    # for example default.hs_sun_el=40
+
+    # read json combination file from JSON
+    combination_auto.read_from_file(file_path=blender_combination_path)
+
+    layers_auto.add_dem_path(input_dem_path)  # needed when save_visualizations is True and save_rander_path is not None
+
+    layers_auto.render_all_images(default=default, save_visualizations=True, save_render_path=output_blend_path,
+                              save_float=True, save_8bit=True)  # if you also wish to save 8bit version
+
 
 Sample dataset
 --------------
 
-A sample dataset for trying RVT python is available here in the package ``/test_data/TM1_564_146.tif``. Additional files are available here:
+A sample dataset for trying RVT python is available in git ``/test_data/TM1_564_146.tif``. Additional files are available here:
 
 `RVT Demo Data <https://rebrand.ly/rvt_demo>`_
 
 Download it, save it in ``test_data`` directory and try the visualisations.
 
-Examples on how to use are in the following files:
+Examples on how to use are in :ref:`Examples`. Some examples are also in the following files in git:
 
 .. code-block:: python
 
