@@ -9,6 +9,7 @@ Credits:
     Žiga Kokalj (ziga.kokalj@zrc-sazu.si)
     Krištof Oštir (kristof.ostir@fgg.uni-lj.si)
     Klemen Zakšek
+    Peter Pehani
     Klemen Čotar
     Maja Somrak
     Žiga Maroh
