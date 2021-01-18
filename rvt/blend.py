@@ -494,7 +494,7 @@ class BlenderCombination:
         dem_name = os.path.splitext(os.path.basename(dem_path))[0]
         log_file_time = datetime.datetime.now()
         log_file_time_str = log_file_time.strftime("%Y-%m-%d_%H-%M-%S")
-        log_name = "{}_blend_log_{}".format(dem_name, log_file_time_str)
+        log_name = "{}_blend_log_{}.txt".format(dem_name, log_file_time_str)
         log_path = os.path.join(log_dir, log_name)
         dat = open(log_path, "w")
         dat.write(

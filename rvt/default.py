@@ -217,7 +217,7 @@ class DefaultValues:
         # sky_illum
         self.sim_compute = 0
         self.sim_sky_mod = "overcast"
-        self.sim_compute_shadow = 1
+        self.sim_compute_shadow = 0
         self.sim_shadow_dist = 100
         self.sim_nr_dir = 32
         self.sim_shadow_az = 315
@@ -1736,7 +1736,7 @@ class DefaultValues:
         dem_name = os.path.splitext(os.path.basename(dem_path))[0]
         log_file_time = datetime.datetime.now()
         log_file_time_str = log_file_time.strftime("%Y-%m-%d_%H-%M-%S")
-        log_name = "{}_vis_log_{}".format(dem_name, log_file_time_str)
+        log_name = "{}_vis_log_{}.txt".format(dem_name, log_file_time_str)
         log_path = os.path.join(log_dir, log_name)
         dat = open(log_path, "w")
         dat.write(

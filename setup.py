@@ -29,5 +29,5 @@ setuptools.setup(
         'ArcGIS Pro': 'https://github.com/EarthObservation/rvt-arcgis-pro',
         "QGIS plugin": 'https://github.com/EarthObservation/rvt-qgis'''
     },
-    install_requires=['numpy', 'scipy', 'gdal']
+    install_requires=['numpy', 'scipy', 'gdal', 'matplotlib']
 )
