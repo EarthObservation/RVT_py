@@ -1,5 +1,5 @@
 {% set name = "rvt_py" %}
-{% set version = "1.0.0a6" %}
+{% set version = "1.0.0a7" %}
 
 package:
   name: "{{ name|lower }}"
@@ -7,7 +7,7 @@ package:
 
 source:
   url: https://pypi.io/packages/source/{{ name[0] }}/{{ name }}/{{ name }}-{{ version }}.tar.gz
-  sha256: 12dc8052b1a99786422d646c2f426fb23553a51f3f9844b0330c2a5ee7c3e600
+  sha256: ad224563e46bbfa745e1197c64e59e8e4e0951e462f8e8d9474370f655953d0e
 
 build:
   number: 0
@@ -16,12 +16,14 @@ build:
 requirements:
   host:
     - gdal
+    - matplotlib
     - numpy
     - pip
     - python
     - scipy
   run:
     - gdal
+    - matplotlib
     - numpy
     - python
     - scipy
@@ -41,4 +43,4 @@ about:
 
 extra:
   recipe-maintainers:
-    - zm8597
+    - your-github-id-here
