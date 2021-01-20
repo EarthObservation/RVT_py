@@ -127,7 +127,8 @@ class BlenderLayer:
                         self.vis.lower() != "simple local relief model" and self.vis.lower() != "sky-view factor" and \
                         self.vis.lower() != "anisotropic sky-view factor" and \
                         self.vis.lower() != "openness - positive" and self.vis.lower() != "openness - negative" and \
-                        self.vis.lower() != "sky illumination" and self.vis.lower() != "local dominance":
+                        self.vis.lower() != "sky illumination" and self.vis.lower() != "local dominance" and \
+                        self.vis.lower() != "multi-scale relief model":
                     raise Exception("rvt.blend.BlenderLayer.check_data: Incorrect vis, if you don't input image or "
                                     "image_path you have to input known visualization method (vis)!")
 
@@ -439,6 +440,16 @@ class BlenderCombination:
                     else:
                         image = default.get_local_dominance(dem_arr=self.dem_arr, no_data=no_data)
                         norm_image = normalize_image(visualization, image, min_norm, max_norm, normalization)
+                elif self.layers[i_img].vis.lower() == "multi-scale relief model":
+                    if save_visualizations:
+                        default.save_msrm(dem_path=self.dem_path, custom_dir=save_render_directory,
+                                          save_float=True, save_8bit=False)
+                        image_path = default.get_msrm_path(self.dem_path)
+                        norm_image = normalize_image(visualization, rvt.default.get_raster_arr(image_path)["array"],
+                                                     min_norm, max_norm, normalization)
+                    else:
+                        image = default.get_msrm(dem_arr=self.dem_arr, resolution=self.dem_resolution, no_data=no_data)
+                        norm_image = normalize_image(visualization, image, min_norm, max_norm, normalization)
 
             # if current layer has visualization applied, but there has been no rendering
             # of images yet, than current layer will be the initial value of rendered_image
@@ -576,6 +587,10 @@ class BlenderCombination:
                 dat.write("\t\tld_max_rad=\t\t{}\n".format(default.ld_max_rad))
                 dat.write("\t\tld_anglr_res=\t\t{}\n".format(default.ld_anglr_res))
                 dat.write("\t\tld_observer_h=\t\t{}\n".format(default.ld_observer_h))
+            elif layer.vis.lower() == "multi-scale relief model":
+                dat.write("\t\tmsrm_feature_min=\t\t{}\n".format(default.msrm_feature_min))
+                dat.write("\t\tmsrm_feature_max=\t\t{}\n".format(default.msrm_feature_max))
+                dat.write("\t\tmsrm_scaling_factor=\t\t{}\n".format(default.msrm_scaling_factor))
             dat.write("Norm: {}\n".format(layer.normalization))
             dat.write("Linear normalization, min: {}, max: {}\n".format(layer.min, layer.max))
             dat.write("Opacity: {}\n".format(layer.opacity))
@@ -723,6 +738,10 @@ class TerrainSettings:
         self.ld_rad_inc = None
         self.ld_anglr_res = None
         self.ld_observer_h = None
+        # multi-scale relief model
+        self.msrm_feature_min = None
+        self.msrm_feature_max = None
+        self.msrm_scaling_factor = None
         # linear histogram stretches tuple(min, max)
         self.hs_stretch = None
         self.mhs_stretch = None
@@ -734,6 +753,7 @@ class TerrainSettings:
         self.neg_opns_stretch = None
         self.sim_stretch = None
         self.ld_stretch = None
+        self.msrm_stretch = None
 
     def read_from_file(self, file_path):
         """Reads combinations from .json file."""
@@ -836,6 +856,18 @@ class TerrainSettings:
         except KeyError:
             pass
         try:
+            self.msrm_feature_min = float(terrain_data["Multi-scale relief model"]["msrm_feature_min"]["value"])
+        except KeyError:
+            pass
+        try:
+            self.msrm_feature_max = float(terrain_data["Multi-scale relief model"]["msrm_feature_max"]["value"])
+        except KeyError:
+            pass
+        try:
+            self.msrm_scaling_factor = float(terrain_data["Multi-scale relief model"]["msrm_scaling_factor"]["value"])
+        except KeyError:
+            pass
+        try:
             self.slp_stretch = (float(terrain_data["Slope gradient"]["stretch"]["min"]),
                                 float(terrain_data["Slope gradient"]["stretch"]["max"]))
         except KeyError:
@@ -883,6 +915,11 @@ class TerrainSettings:
         try:
             self.neg_opns_stretch = (float(terrain_data["Local dominance"]["stretch"]["min"]),
                                      float(terrain_data["Local dominance"]["stretch"]["max"]))
+        except KeyError:
+            pass
+        try:
+            self.msrm_stretch = (float(terrain_data["Multi-scale relief model"]["stretch"]["min"]),
+                                 float(terrain_data["Multi-scale relief model"]["stretch"]["max"]))
         except KeyError:
             pass
 
@@ -933,6 +970,12 @@ class TerrainSettings:
             default.ld_anglr_res = self.ld_anglr_res
         if self.ld_observer_h is not None:
             default.ld_observer_h = self.ld_observer_h
+        if self.msrm_feature_min is not None:
+            default.msrm_feature_min = self.msrm_feature_min
+        if self.msrm_feature_max is not None:
+            default.msrm_feature_max = self.msrm_feature_max
+        if self.msrm_scaling_factor is not None:
+            default.msrm_scaling_factor = self.msrm_scaling_factor
 
         # linear histogram stretches, combination values overwrite
         for layer in combination.layers:
@@ -964,6 +1007,9 @@ class TerrainSettings:
                 layer.min = self.sim_stretch[0]
                 layer.max = self.sim_stretch[1]
             elif layer.vis.lower() == "local dominance" and self.ld_stretch is not None:
+                layer.min = self.ld_stretch[0]
+                layer.max = self.ld_stretch[1]
+            elif layer.vis.lower() == "multi-scale relief model" and self.msrm_stretch is None:
                 layer.min = self.ld_stretch[0]
                 layer.max = self.ld_stretch[1]
 

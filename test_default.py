@@ -22,6 +22,7 @@ if __name__ == "__main__":
     default.save_neg_opns(dem_path, save_float=True, save_8bit=True)
     default.save_sky_illumination(dem_path, save_float=True, save_8bit=True)
     default.save_local_dominance(dem_path, save_float=True, save_8bit=True)
+    default.save_msrm(dem_path, save_float=True, save_8bit=True)
 
     # save visualization functions, where default.compute = 1
     # for example if default.hs_compute = 1, it will calculate and save hillshade, it also generates log file

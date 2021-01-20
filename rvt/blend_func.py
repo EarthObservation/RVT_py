@@ -67,11 +67,14 @@ def normalize_lin(image, minimum, maximum):
 
 
 def lin_cutoff_calc_from_perc(image, minimum, maximum):
-    """Minimum cutoff in percent, maximum cutoff in percent (0%-100%) or (0-1). Returns min and max values for linear
+    """Minimum cutoff in percent, maximum cutoff in percent (0%-100%). Returns min and max values for linear
     stretch (cut-off)."""
     if minimum < 0 or maximum < 0 or minimum > 100 or maximum > 100:
         raise Exception("rvt.blend_funct.lin_cutoff_calc_from_perc: minimum, maximum are percent and have to be in "
                         "range 0-100!")
+    if minimum + maximum > 100:
+        raise Exception("rvt.blend_funct.lin_cutoff_calc_from_perc: if minimum + maximum > 100% then there are no"
+                        " values left! You can't cutoff whole image!")
     distribution = np.nanpercentile(a=image, q=np.array([minimum, 100 - maximum]))
     min_lin = distribution[0]
     max_lin = distribution[1]

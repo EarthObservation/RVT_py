@@ -113,6 +113,14 @@ class DefaultValues:
         Local dominance. Angular step for determination of number of angular directions.
     ld_observer_h : float
         Local dominance. Height at which we observe the terrain.
+    msrm_compute : bool
+        If compute Multi-scale relief model. Parameter for GUIs.
+    msrm_feature_min : float
+        Minimum size of the feature you want to detect in meters.
+    msrm_feature_max : float
+        Maximum size of the feature you want to detect in meters.
+    msrm_scaling_factor : int
+        Scaling factor.
     slp_save_float : bool
         Slope. If 1 (True) it saves float, if 0 (False) it doesn't.
     hs_save_float : bool
@@ -129,6 +137,8 @@ class DefaultValues:
         Sky illumination. If 1 (True) it saves float, if 0 (False) it doesn't.
     ld_save_float : bool
         Local dominance. If 1 (True) it saves float, if 0 (False) it doesn't.
+    msrm_save_float : bool
+        Multi-scale relief model. If 1 (True) it saves float, if 0 (False) it doesn't.
     slp_save_8bit : bool
         Slope. If 1 (True) it saves 8bit, if 0 (False) it doesn't.
     hs_save_8bit : bool
@@ -145,6 +155,8 @@ class DefaultValues:
         Sky illumination. If 1 (True) it saves 8bit, if 0 (False) it doesn't.
     ld_save_8bit : bool
         local dominance. If 1 (True) it saves 8bit, if 0 (False) it doesn't.
+    msrm_save_8bit : bool
+        Multi-scale relief model. If 1 (True) it saves 8bit, if 0 (False) it doesn't.
     slp_bytscl : tuple(mode, min, max)
         Slope, bytescale (0-255) for 8bit raster. Mode can be 'value' (linear stretch) or 'percent'
         (histogram equalization, cut-off). Values min and max define stretch/cut-off borders.
@@ -174,6 +186,9 @@ class DefaultValues:
         (cut-off units). Values min and max define stretch borders (in mode units).
     ld_bytscl : tuple(mode, min, max)
         Local dominance, linear stretch, bytescale (0-255) for 8bit raster. Mode can be 'value' or 'percent'
+        (cut-off units). Values min and max define stretch borders (in mode units).
+    msrm_bytscl : tuple(mode, min, max)
+        Multi-scale relief model, linear stretch, bytescale (0-255) for 8bit raster. Mode can be 'value' or 'percent'
         (cut-off units). Values min and max define stretch borders (in mode units).
     multiproc_size_limit : int
         If array size bigger than multiproc_size_limit it uses multiprocessing.
@@ -229,6 +244,11 @@ class DefaultValues:
         self.ld_rad_inc = 1
         self.ld_anglr_res = 15
         self.ld_observer_h = 1.7
+        # multi-scale relief model
+        self.msrm_compute = 0
+        self.msrm_feature_min = 1
+        self.msrm_feature_max = 5
+        self.msrm_scaling_factor = 3
         # save float
         self.slp_save_float = 1
         self.hs_save_float = 1
@@ -238,6 +258,7 @@ class DefaultValues:
         self.neg_opns_save_float = 1
         self.sim_save_float = 1
         self.ld_save_float = 1
+        self.msrm_save_float = 1
         # save 8bit
         self.slp_save_8bit = 0
         self.hs_save_8bit = 0
@@ -247,6 +268,7 @@ class DefaultValues:
         self.neg_opns_save_8bit = 0
         self.sim_save_8bit = 0
         self.ld_save_8bit = 0
+        self.msrm_save_8bit = 0
         # 8-bit bytescale parameters
         self.slp_bytscl = ("value", 0., 51.)
         self.hs_bytscl = ("value", 0.00, 1.00)
@@ -258,6 +280,7 @@ class DefaultValues:
         self.neg_opns_bytscl = ("value", 60, 95.)
         self.sim_bytscl = ("percent", 0.25, 0)
         self.ld_bytscl = ("value", 0.5, 1.8)
+        self.msrm_bytscl = ("percent", 2, 2)
         # multiprocessing
         self.multiproc_size_limit = 10000 * 10000  # if arr size > multiproc_size_limit, it uses multiprocessing
         self.multiproc_block_size = (4000, 4000)  # size of single block (x_size, y_size)
@@ -458,7 +481,27 @@ class DefaultValues:
                               "description": "Linear stretch and byte scale (0-255) for 8bit raster. "
                                              "Mode can be 'value' or 'percent' (cut-off units). "
                                              "Values min and max define stretch borders (in mode units)."}
-            }}}
+            },
+            "Multi-scale relief model": {
+                "msrm_compute": {"value": self.msrm_compute,
+                                 "description": "If compute Multi-scale relief model. "
+                                                "Parameter for GUIs."},
+                "msrm_feature_min": {"value": self.msrm_feature_min,
+                                     "description": "Minimum size of the feature you want to detect in meters."},
+                "msrm_feature_max": {"value": self.msrm_feature_max,
+                                     "description": "Maximum size of the feature you want to detect in meters."},
+                "msrm_scaling_factor": {"value": self.msrm_scaling_factor,
+                                        "description": "Scaling factor."},
+                "msrm_save_float": {"value": self.msrm_save_float,
+                                    "description": "If 1 it saves float raster, if 0 it doesn't."},
+                "msrm_save_8bit": {"value": self.msrm_save_8bit,
+                                   "description": "If 1 it saves 8bit raster, if 0 it doesn't."},
+                "msrm_bytscl": {"mode": self.msrm_bytscl[0], "min": self.msrm_bytscl[1], "max": self.msrm_bytscl[2],
+                                "description": "Linear stretch and byte scale (0-255) for 8bit raster. "
+                                               "Mode can be 'value' or 'percent' (cut-off units). "
+                                               "Values min and max define stretch borders (in mode units)."}
+                }
+            }}
         if file_path is None:
             file_path = r"settings\default_settings.json"
             if os.path.isfile(file_path):
@@ -658,6 +701,16 @@ class DefaultValues:
             self.ld_bytscl = (str(default_data["Local dominance"]["ld_bytscl"]["mode"]),
                               float(default_data["Local dominance"]["ld_bytscl"]["min"]),
                               float(default_data["Local dominance"]["ld_bytscl"]["max"]))
+            # Mulit-scale relief model
+            self.msrm_compute = int(default_data["Multi-scale relief model"]["msrm_compute"]["value"])
+            self.msrm_feature_min = float(default_data["Multi-scale relief model"]["msrm_feature_min"]["value"])
+            self.msrm_feature_max = float(default_data["Multi-scale relief model"]["msrm_feature_max"]["value"])
+            self.msrm_scaling_factor = int(default_data["Multi-scale relief model"]["msrm_scaling_factor"]["value"])
+            self.msrm_save_float = int(default_data["Multi-scale relief model"]["msrm_save_float"]["value"])
+            self.msrm_save_8bit = int(default_data["Multi-scale relief model"]["msrm_save_8bit"]["value"])
+            self.msrm_bytscl = (str(default_data["Multi-scale relief model"]["msrm_bytscl"]["mode"]),
+                                float(default_data["Multi-scale relief model"]["msrm_bytscl"]["min"]),
+                                float(default_data["Multi-scale relief model"]["msrm_bytscl"]["max"]))
             dat.close()
 
     def get_shadow_file_name(self, dem_path):
@@ -823,6 +876,22 @@ class DefaultValues:
         return os.path.normpath(os.path.join(os.path.dirname(dem_path),
                                              self.get_local_dominance_file_name(dem_path, bit8)))
 
+    def get_msrm_file_name(self, dem_path, bit8=False):
+        """Returns Simple local relief model name, dem name (from dem_path) with added slrm parameters.
+        If bit8 it returns 8bit file name."""
+        dem_name = os.path.basename(dem_path).split(".")[0]  # base name without extension
+        if bit8:
+            return "{}_MSRM_F_M{}-{}_S{}_8bit.tif".format(dem_name, self.msrm_feature_min, self.msrm_feature_max,
+                                                          self.msrm_scaling_factor)
+        else:
+            return "{}_MSRM_F_M{}-{}_S{}.tif".format(dem_name, self.msrm_feature_min, self.msrm_feature_max,
+                                                     self.msrm_scaling_factor)
+
+    def get_msrm_path(self, dem_path, bit8=False):
+        """Returns path to Simple local relief model. Generates slrm name (uses default attributes and dem name from
+        dem_path) and adds dem directory (dem_path) to it. If bit8 it returns 8bit file path."""
+        return os.path.normpath(os.path.join(os.path.dirname(dem_path), self.get_msrm_file_name(dem_path, bit8)))
+
     def get_vis_file_name(self, dem_path, vis, bit8=False):
         """Returns vis (visualization) file name. Dem name (from dem_path) with added vis parameters.
         If bit8 it returns 8bit file name. Parameter vis can be: "hillshade", "shadow", "slope gradient",
@@ -850,6 +919,8 @@ class DefaultValues:
             return self.get_sky_illumination_file_name(dem_path=dem_path, bit8=bit8)
         elif vis.lower() == "local dominance":
             return self.get_local_dominance_file_name(dem_path=dem_path, bit8=bit8)
+        elif vis.lower() == "multi-scale relief model":
+            return self.get_msrm_file_name(dem_path=dem_path, bit8=bit8)
         else:
             raise Exception("rvt.default.DefaultValues.get_vis_file_name: Wrong vis (visualization) parameter!")
 
@@ -881,6 +952,8 @@ class DefaultValues:
             return self.get_sky_illumination_path(dem_path=dem_path, bit8=bit8)
         elif vis.lower() == "local dominance":
             return self.get_local_dominance_path(dem_path=dem_path, bit8=bit8)
+        elif vis.lower() == "multi-scale relief model":
+            return self.get_msrm_path(dem_path=dem_path, bit8=bit8)
         else:
             raise Exception("rvt.default.DefaultValues.get_vis_file_name: Wrong vis (visualization) parameter!")
 
@@ -969,6 +1042,11 @@ class DefaultValues:
             norm_arr = rvt.blend_func.normalize_image(visualization="local dominance", image=float_arr,
                                                       min_norm=self.ld_bytscl[1], max_norm=self.ld_bytscl[2],
                                                       normalization=self.ld_bytscl[0])
+            return rvt.vis.byte_scale(data=norm_arr, no_data=np.nan)
+        elif vis.lower() == "multi-scale relief model":
+            norm_arr = rvt.blend_func.normalize_image(visualization="multi-scale relief model", image=float_arr,
+                                                      min_norm=self.msrm_bytscl[1], max_norm=self.msrm_bytscl[2],
+                                                      normalization=self.msrm_bytscl[0])
             return rvt.vis.byte_scale(data=norm_arr, no_data=np.nan)
         else:
             raise Exception("rvt.default.DefaultValues.float_to_8bit: Wrong vis (visualization) parameter!")
@@ -1686,6 +1764,84 @@ class DefaultValues:
                                 out_raster_arr=local_dominance_8bit_arr, e_type=1)
             return 1
 
+    def get_msrm(self, dem_arr, resolution, no_data=None):
+        msrm_arr = rvt.vis.msrm(dem=dem_arr, resolution=resolution, feature_min=self.msrm_feature_min,
+                                feature_max=self.msrm_feature_max, scaling_factor=self.msrm_scaling_factor,
+                                ve_factor=self.ve_factor, no_data=no_data,
+                                fill_no_data=bool(self.fill_no_data),
+                                keep_original_no_data=bool(self.keep_original_no_data))
+        return msrm_arr
+
+    def save_msrm(self, dem_path, custom_dir=None, save_float=None, save_8bit=None):
+        """Calculates and saves Simple local relief model from dem (dem_path) with default parameters.
+        If custom_dir is None it saves in dem directory else in custom_dir. If path to file already exists we can
+        overwrite file (overwrite=1) or not (overwrite=0). If save_float is True method creates Gtiff with real values,
+        if save_8bit is True method creates GTiff with bytescaled values (0-255)."""
+
+        # if save_float is None it takes boolean from default (self)
+        if save_float is None:
+            save_float = self.msrm_save_float
+        # if save_8bit is None it takes boolean from default (self)
+        if save_8bit is None:
+            save_8bit = self.msrm_save_8bit
+
+        if not save_float and not save_8bit:
+            raise Exception("rvt.default.DefaultValues.save_msrm: Both save_float and save_8bit are False,"
+                            " at least one of them has to be True!")
+        if not os.path.isfile(dem_path):
+            raise Exception("rvt.default.DefaultValues.save_msrm: dem_path doesn't exist!")
+
+        if custom_dir is None:
+            msrm_path = self.get_msrm_path(dem_path)
+            msrm_8bit_path = self.get_msrm_path(dem_path, bit8=True)
+        else:
+            msrm_path = os.path.join(custom_dir, self.get_msrm_file_name(dem_path))
+            msrm_8bit_path = os.path.join(custom_dir, self.get_msrm_file_name(dem_path, bit8=True))
+
+        # if file already exists and overwrite=0
+        if save_float and save_8bit:
+            if os.path.isfile(msrm_8bit_path) and os.path.isfile(msrm_path) and not self.overwrite:
+                return 0
+        elif save_float and not save_8bit:
+            if os.path.isfile(msrm_path) and not self.overwrite:
+                return 0
+        elif not save_float and not save_8bit:
+            if os.path.isfile(msrm_8bit_path) and not self.overwrite:
+                return 0
+
+        dem_size = get_raster_size(raster_path=dem_path)
+        if dem_size[0] * dem_size[1] > self.multiproc_size_limit:  # multiprocess, calculating on blocks
+            rvt.multiproc.save_multiprocess_vis(dem_path=dem_path, vis="multi-scale relief model", default=self,
+                                                custom_dir=custom_dir,
+                                                save_float=save_float, save_8bit=save_8bit,
+                                                x_block_size=self.multiproc_block_size[0],
+                                                y_block_size=self.multiproc_block_size[1])
+            return 1
+        else:  # singleprocess
+            dict_arr_res = get_raster_arr(raster_path=dem_path)
+            dem_arr = dict_arr_res["array"]
+            no_data = dict_arr_res["no_data"]
+            x_res = dict_arr_res["resolution"][0]
+            y_res = dict_arr_res["resolution"][1]
+            if x_res != y_res:
+                raise Exception("rvt.default.DefaultValues.save_neg_opns: dem resolution is not the same in x and y"
+                                " directions!")
+            msrm_arr = self.get_msrm(dem_arr=dem_arr, resolution=x_res, no_data=no_data).astype('float32')
+            if save_float:
+                if os.path.isfile(msrm_path) and not self.overwrite:  # file exists and overwrite=0
+                    pass
+                else:
+                    save_raster(src_raster_path=dem_path, out_raster_path=msrm_path, out_raster_arr=msrm_arr,
+                                no_data=np.nan)
+            if save_8bit:
+                if os.path.isfile(msrm_8bit_path) and not self.overwrite:  # file exists and overwrite=0
+                    pass
+                else:
+                    msrm_8bit_arr = self.float_to_8bit(float_arr=msrm_arr, vis="multi-scale relief model")
+                    save_raster(src_raster_path=dem_path, out_raster_path=msrm_8bit_path, out_raster_arr=msrm_8bit_arr,
+                                e_type=1)
+            return 1
+
     def save_visualizations(self, dem_path, custom_dir=None):
         """Save all visualizations where self.'vis'_compute = True also saves float where self.'vis'_save_float = True
         and 8bit where self.'vis'_save_8bit = True. In the end method creates log file."""
@@ -1707,6 +1863,8 @@ class DefaultValues:
             self.save_sky_illumination(dem_path, custom_dir=custom_dir)
         if self.ld_compute:
             self.save_local_dominance(dem_path, custom_dir=custom_dir)
+        if self.msrm_compute:
+            self.save_msrm(dem_path, custom_dir=custom_dir)
         end_time = time.time()
         compute_time = end_time - start_time
         self.create_log_file(dem_path=dem_path, custom_dir=custom_dir, compute_time=compute_time)
@@ -1938,6 +2096,23 @@ class DefaultValues:
                                                                     self.ld_bytscl[2]))
                 dat.write("\t\t\t{}\n".format(os.path.abspath(
                     os.path.join(log_dir, self.get_local_dominance_file_name(dem_path, bit8=True)))))
+            dat.write("\n")
+        if self.msrm_compute:
+            dat.write("\tMulti-scale relief model\n")
+            dat.write("\t\tmsrm_feature_min=\t\t{}\n".format(self.msrm_feature_min))
+            dat.write("\t\tmsrm_feature_max=\t\t{}\n".format(self.msrm_feature_max))
+            dat.write("\t\tmsrm_scaling_factor=\t\t{}\n".format(self.msrm_scaling_factor))
+            if self.msrm_save_float:
+                dat.write("\t\t>> Output file:\n")
+                dat.write("\t\t>> Output file:\n")
+                dat.write("\t\t\t{}\n".format(os.path.abspath(
+                    os.path.join(log_dir, self.get_msrm_file_name(dem_path)))))
+            if self.msrm_save_8bit:
+                dat.write("\t\t>> Output 8bit file:\n")
+                dat.write("\t\tmsrm_bytscl=\t\t({}, {}, {})\n".format(self.msrm_bytscl[0], self.msrm_bytscl[1],
+                                                                      self.msrm_bytscl[2]))
+                dat.write("\t\t\t{}\n".format(os.path.abspath(
+                    os.path.join(log_dir, self.get_msrm_file_name(dem_path, bit8=True)))))
             dat.write("\n")
 
         if compute_time is not None:

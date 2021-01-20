@@ -34,7 +34,8 @@ def save_multiprocess_vis(dem_path, vis, default, custom_dir=None, save_float=Tr
         Selected visualization you want to compute: "hillshade", "shadow,
         "slope gradient", "multiple directions hillshade",
         "simple local relief model", "sky-view factor", "anisotropic sky-view factor", "openness - positive",
-        "openness - negative", "sky illumination", "local dominance", "sky-view factor default".
+        "openness - negative", "sky illumination", "local dominance", "sky-view factor default",
+         "multi-scale relief model".
     default : rvt.default.DefaultValues
         Class where are all visualization parameters stored.
     custom_dir : str
@@ -78,7 +79,7 @@ def save_multiprocess_vis(dem_path, vis, default, custom_dir=None, save_float=Tr
             nr_bands_8bit = 3
 
         if offset is None:  # if offset not set
-            offset = get_block_offset(default=default, vis=vis)
+            offset = get_block_offset(default=default, vis=vis, res=x_res)
 
         # paths
         vis_float_path = None
@@ -346,7 +347,7 @@ def save_multiprocess_vis(dem_path, vis, default, custom_dir=None, save_float=Tr
         pass
 
 
-def get_block_offset(default, vis):
+def get_block_offset(default, vis, res):
     """Returns offset for selected visualization (vis). """
     if vis.lower() == "hillshade":
         return 1
@@ -366,11 +367,13 @@ def get_block_offset(default, vis):
         return 10
     elif vis.lower() == "local dominance":
         return int(default.ld_max_rad)
+    elif vis.lower() == "multi-scale relief model":
+        return int(np.ceil(((default.msrm_feature_max - res) / (2 * res)) ** (1 / default.msrm_scaling_factor)))
     else:
         raise Exception("rvt.multiproc.calculate_block_visualization: Wrong vis parameter, vis options:"
                         "hillshade, slope gradient, multiple directions hillshade, simple local relief model,"
                         "sky-view factor, anisotropic sky-view factor, openness - positive, openness - negative, "
-                        "sky illumination, local dominance")
+                        "sky illumination, local dominance", "multi-scale relief model")
 
 
 def calc_add_vis_block(save_float, save_8bit, blocks_to_save_float, blocks_to_save_8bit, block_array, default, x, y,
@@ -529,11 +532,13 @@ def calculate_block_visualization(dem_block_arr, vis, default, x_res, y_res, no_
         vis_arr = default.get_sky_illumination(dem_arr=dem_block_arr, resolution=x_res, no_data=no_data)
     elif vis.lower() == "local dominance":
         vis_arr = default.get_local_dominance(dem_arr=dem_block_arr, no_data=no_data)
+    elif vis.lowe() == "multi-scale relief model":
+        vis_arr = default.get_msrm(dem_arr=dem_block_arr, resolution=x_res, no_data=no_data)
     else:
         raise Exception("rvt.multiproc.calculate_block_visualization: Wrong vis parameter, vis options:"
                         "hillshade, shadow, slope gradient, multiple directions hillshade, simple local relief model,"
                         "sky-view factor, anisotropic sky-view factor, openness - positive, openness - negative, "
-                        "sky illumination, local dominance")
+                        "sky illumination, local dominance", "multi-scale relief model")
     return vis_arr
 
 
