@@ -7,3 +7,6 @@ Here are some of the usage examples scripts. All the Jupyter Notebooks examples 
 
 .. toctree::
     examples/rvt_cumpute_svf.ipynb
+
+.. toctree::
+    examples/rvt_vis_example.ipynb
