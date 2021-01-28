@@ -1474,10 +1474,6 @@ class DefaultValues:
             no_data = dict_arr_res["no_data"]
             x_res = dict_arr_res["resolution"][0]
             y_res = dict_arr_res["resolution"][1]
-            if x_res != y_res:
-                raise Exception(
-                    "rvt.default.DefaultValues.save_sky_view_factor: dem resolution is not the same in x and y"
-                    " directions!")
             dict_svf_asvf_opns = self.get_sky_view_factor(dem_arr=dem_arr, resolution=x_res, compute_svf=save_svf,
                                                           compute_asvf=save_asvf, compute_opns=save_opns,
                                                           no_data=no_data)
@@ -1587,9 +1583,7 @@ class DefaultValues:
             no_data = dict_arr_res["no_data"]
             x_res = dict_arr_res["resolution"][0]
             y_res = dict_arr_res["resolution"][1]
-            if x_res != y_res:
-                raise Exception("rvt.default.DefaultValues.save_neg_opns: dem resolution is not the same in x and y"
-                                " directions!")
+
             neg_opns_arr = self.get_neg_opns(dem_arr=dem_arr, resolution=x_res, no_data=no_data).astype('float32')
             if save_float:
                 if os.path.isfile(neg_opns_path) and not self.overwrite:  # file exists and overwrite=0
@@ -1668,10 +1662,7 @@ class DefaultValues:
             no_data = dict_arr_res["no_data"]
             x_res = dict_arr_res["resolution"][0]
             y_res = dict_arr_res["resolution"][1]
-            if x_res != y_res:
-                raise Exception(
-                    "rvt.default.DefaultValues.save_sky_illumination: dem resolution is not the same in x and y"
-                    " directions!")
+
             sky_illumination_arr = self.get_sky_illumination(dem_arr=dem_arr, resolution=x_res,
                                                              no_data=no_data).astype('float32')
             if save_float:
@@ -1823,9 +1814,7 @@ class DefaultValues:
             no_data = dict_arr_res["no_data"]
             x_res = dict_arr_res["resolution"][0]
             y_res = dict_arr_res["resolution"][1]
-            if x_res != y_res:
-                raise Exception("rvt.default.DefaultValues.save_neg_opns: dem resolution is not the same in x and y"
-                                " directions!")
+
             msrm_arr = self.get_msrm(dem_arr=dem_arr, resolution=x_res, no_data=no_data).astype('float32')
             if save_float:
                 if os.path.isfile(msrm_path) and not self.overwrite:  # file exists and overwrite=0
