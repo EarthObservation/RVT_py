@@ -1394,8 +1394,9 @@ def shadow_horizon(dem,
     if resolution < 0:
         raise Exception("rvt.vis.shadow_horizon: resolution must be a positive number!")
 
-    return sky_illumination(dem=dem, resolution=resolution, shadow_horizon_only=True, shadow_el=shadow_el,
-                            shadow_az=shadow_az, ve_factor=ve_factor, no_data=no_data, fill_no_data=fill_no_data,
+    return sky_illumination(dem=dem, resolution=resolution, compute_shadow=True,
+                            shadow_horizon_only=True, shadow_el=shadow_el, shadow_az=shadow_az, ve_factor=ve_factor,
+                            no_data=no_data, fill_no_data=fill_no_data,
                             keep_original_no_data=keep_original_no_data)
 
 

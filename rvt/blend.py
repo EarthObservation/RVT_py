@@ -113,7 +113,7 @@ class BlenderLayer:
                 raise Exception("rvt.blend.BlenderLayer.check_data: min value incorrect [0-100]!")
             if 0 > self.max > 100:
                 raise Exception("rvt.blend.BlenderLayer.check_data: max value incorrect [0-100]!")
-            if self.min > self.max:
+            if self.min > self.max and self.normalization.lower() == "value":
                 raise Exception("rvt.blend.BlenderLayer.check_data: min bigger than max!")
             if self.blend_mode.lower() != "normal" and self.blend_mode.lower() != "multiply" and \
                     self.blend_mode.lower() != "overlay" and self.blend_mode.lower() != "luminosity" and \
