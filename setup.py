@@ -5,7 +5,7 @@ with open("README.md", "r", encoding="utf-8") as fh:
 
 setuptools.setup(
     name="rvt_py",
-    version="1.0.0a7",
+    version="1.0.0a8",
     author="ZRC SAZU and University of Ljubljana",
     author_email="ziga.kokalj@zrc-sazu.si",
     description="Relief Visualization Toolbox python library. "
