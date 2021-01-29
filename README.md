@@ -12,6 +12,7 @@ Methods currently implemented are:
 *   hillshading from multiple directions,
 *   slope gradient,
 *   simple local relief model,
+*   multi-scale relief model,
 *   sky illumination,
 *   sky-view factor (as developed by our team),
 *   anisotropic sky-view factor,
