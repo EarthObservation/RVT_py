@@ -246,9 +246,9 @@ class DefaultValues:
         self.ld_observer_h = 1.7
         # multi-scale relief model
         self.msrm_compute = 0
-        self.msrm_feature_min = 1
-        self.msrm_feature_max = 5
-        self.msrm_scaling_factor = 3
+        self.msrm_feature_min = 0
+        self.msrm_feature_max = 20
+        self.msrm_scaling_factor = 2
         # save float
         self.slp_save_float = 1
         self.hs_save_float = 1

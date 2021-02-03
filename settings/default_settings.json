@@ -298,15 +298,15 @@
                 "description": "If compute Multi-scale relief model. Parameter for GUIs."
             },
             "msrm_feature_min": {
-                "value": 1,
+                "value": 0,
                 "description": "Minimum size of the feature you want to detect in meters."
             },
             "msrm_feature_max": {
-                "value": 5,
+                "value": 20,
                 "description": "Maximum size of the feature you want to detect in meters."
             },
             "msrm_scaling_factor": {
-                "value": 3,
+                "value": 2,
                 "description": "Scaling factor."
             },
             "msrm_save_float": {
