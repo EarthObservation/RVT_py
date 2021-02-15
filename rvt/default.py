@@ -2193,7 +2193,8 @@ def save_raster(src_raster_path, out_raster_path, out_raster_arr: np.ndarray, no
         out_data_set = gtiff_driver.Create(out_raster_path, xsize=out_raster_arr.shape[1],
                                            ysize=out_raster_arr.shape[0],
                                            bands=1,
-                                           eType=e_type)  # eType: 6 = GDT_Float32
+                                           eType=e_type,  # eType: 6 = GDT_Float32
+                                           options=['COMPRESS=LZW'])
         out_data_set.SetProjection(src_data_set.GetProjection())
         out_data_set.SetGeoTransform(src_data_set.GetGeoTransform())
         out_data_set.GetRasterBand(1).WriteArray(out_raster_arr)
@@ -2204,7 +2205,8 @@ def save_raster(src_raster_path, out_raster_path, out_raster_arr: np.ndarray, no
         out_data_set = gtiff_driver.Create(out_raster_path, xsize=out_raster_arr.shape[2],
                                            ysize=out_raster_arr.shape[1],
                                            bands=out_raster_arr.shape[0],
-                                           eType=e_type)  # eType: 6 = GDT_Float32
+                                           eType=e_type,  # eType: 6 = GDT_Float32
+                                           options=['COMPRESS=LZW'])
         out_data_set.SetProjection(src_data_set.GetProjection())
         out_data_set.SetGeoTransform(src_data_set.GetGeoTransform())
         for i_band in range(out_raster_arr.shape[0]):
