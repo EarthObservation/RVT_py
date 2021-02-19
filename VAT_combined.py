@@ -11,6 +11,8 @@ Parameters are:
     nr_processes (number of parallel processes which are calculating and saving output VAT combined)
     save_float (if saves float)
     save_8bit (if saves 8bit)
+    save_VAT_general (if saves VAT general)
+    save_VAT_flat (if saves VAT flat)
 """
 import rvt.vis
 import rvt.blend
@@ -25,11 +27,14 @@ vat_combination_json_path = "settings/blender_VAT.json"
 terrains_sett_json_path = "settings/default_terrains_settings.json"
 nr_processes = 2
 save_float = True
-save_8bit = False
+save_8bit = True
+save_VAT_general = True
+save_VAT_flat = True
 
 
 def combined_VAT(input_dir_path, output_dir_path, general_opacity, vat_combination_json_path=None,
-                 terrains_sett_json_path=None, nr_processes=7, save_float=True, save_8bit=False):
+                 terrains_sett_json_path=None, nr_processes=7, save_float=True, save_8bit=False,
+                 save_VAT_general=False, save_VAT_flat=False):
     if not save_float and not save_8bit:
         raise Exception("save_float and save_8bit are both False!")
 
@@ -94,9 +99,14 @@ def combined_VAT(input_dir_path, output_dir_path, general_opacity, vat_combinati
         flat_combination = vat_combination_2
         general_default = default_1
         flat_default = default_2
+        out_comb_vat_general_name = "{}_Archaeological_(VAT_general).tif".format(input_dem_name.rstrip(".tif"))
+        out_comb_vat_general_path = os.path.abspath(os.path.join(output_dir_path, out_comb_vat_general_name))
+        out_comb_vat_flat_name = "{}_Archaeological_(VAT_flat).tif".format(input_dem_name.rstrip(".tif"))
+        out_comb_vat_flat_path = os.path.abspath(os.path.join(output_dir_path, out_comb_vat_flat_name))
         input_process_list.append((general_combination, flat_combination, general_default, flat_default,
-                                   input_dem_path, out_comb_vat_path, out_comb_vat_8bit_path,
-                                   general_opacity, save_float, save_8bit))
+                                   input_dem_path, out_comb_vat_path,
+                                   general_opacity, save_float, save_8bit, save_VAT_general,
+                                   out_comb_vat_general_path, save_VAT_flat, out_comb_vat_flat_path))
 
     # multiprocessing
     with mp.Pool(nr_processes) as p:
@@ -107,19 +117,32 @@ def combined_VAT(input_dir_path, output_dir_path, general_opacity, vat_combinati
 
 # function which is multiprocessing
 def compute_save_VAT_combined(general_combination, flat_combination, general_default, flat_default,
-                              input_dem_path, out_comb_vat_path, out_comb_vat_8bit_path,
-                              general_transparency, save_float, save_8bit):
+                              input_dem_path, out_comb_vat_path,
+                              general_transparency, save_float, save_8bit, save_VAT_general, out_comb_vat_general_path,
+                              save_VAT_flat, out_comb_vat_flat_path):
     dict_arr_res_nd = rvt.default.get_raster_arr(raster_path=input_dem_path)
 
     # create and blend VAT general
     general_combination.add_dem_arr(dem_arr=dict_arr_res_nd["array"],
                                     dem_resolution=dict_arr_res_nd["resolution"][0])
-    vat_arr_1 = general_combination.render_all_images(default=general_default, no_data=dict_arr_res_nd["no_data"])
+    if save_VAT_general:
+        general_combination.add_dem_path(dem_path=input_dem_path)
+        vat_arr_1 = general_combination.render_all_images(save_render_path=out_comb_vat_general_path,
+                                                          save_float=save_float, save_8bit=save_8bit,
+                                                          default=general_default, no_data=dict_arr_res_nd["no_data"])
+    else:
+        vat_arr_1 = general_combination.render_all_images(default=general_default, no_data=dict_arr_res_nd["no_data"])
 
     # create and blend VAT flat
     flat_combination.add_dem_arr(dem_arr=dict_arr_res_nd["array"],
                                  dem_resolution=dict_arr_res_nd["resolution"][0])
-    vat_arr_2 = flat_combination.render_all_images(default=flat_default, no_data=dict_arr_res_nd["no_data"])
+    if save_VAT_flat:
+        flat_combination.add_dem_path(dem_path=input_dem_path)
+        vat_arr_2 = flat_combination.render_all_images(save_render_path=out_comb_vat_flat_path,
+                                                       save_float=save_float, save_8bit=save_8bit,
+                                                       default=flat_default, no_data=dict_arr_res_nd["no_data"])
+    else:
+        vat_arr_2 = flat_combination.render_all_images(default=flat_default, no_data=dict_arr_res_nd["no_data"])
 
     # create combination which blends VAT flat and VAT general together
     combination = rvt.blend.BlenderCombination()
@@ -131,18 +154,10 @@ def compute_save_VAT_combined(general_combination, flat_combination, general_def
     combination.add_dem_path(dem_path=input_dem_path)
 
     # VAT combined
-    if save_float:
-        vat_comb = combination.render_all_images(save_render_path=out_comb_vat_path, save_visualizations=False,
-                                                 save_float=True, save_8bit=False,
-                                                 no_data=dict_arr_res_nd["no_data"])
-    else:
-        vat_comb = combination.render_all_images(save_visualizations=False,
-                                                 save_float=True, save_8bit=False,
-                                                 no_data=dict_arr_res_nd["no_data"])
-    if save_8bit:
-        vat_comb_8bit = rvt.vis.byte_scale(vat_comb)
-        rvt.default.save_raster(src_raster_path=input_dem_path, out_raster_path=out_comb_vat_8bit_path,
-                                out_raster_arr=vat_comb_8bit, e_type=1)
+    combination.render_all_images(save_render_path=out_comb_vat_path, save_visualizations=False,
+                                  save_float=save_float, save_8bit=save_8bit,
+                                  no_data=dict_arr_res_nd["no_data"])
+    out_comb_vat_8bit_path = out_comb_vat_path.rstrip("tif") + "_8bit.tif"
     if save_float and save_8bit:
         return "{} and {} successfully calculated and saved!".format(out_comb_vat_path, out_comb_vat_8bit_path)
     elif save_float:
@@ -156,4 +171,4 @@ if __name__ == '__main__':
     combined_VAT(input_dir_path=input_dir_path, output_dir_path=output_dir_path,
                  general_opacity=general_opacity, vat_combination_json_path=vat_combination_json_path,
                  terrains_sett_json_path=terrains_sett_json_path, nr_processes=nr_processes, save_float=save_float,
-                 save_8bit=save_8bit)
+                 save_8bit=save_8bit, save_VAT_general=save_VAT_general, save_VAT_flat=save_VAT_flat)
