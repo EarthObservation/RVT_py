@@ -77,7 +77,7 @@ def combined_VAT(input_dir_path, output_dir_path, general_opacity, vat_combinati
         if ".tif" not in input_dem_name:  # preskoči če se file ne konča .tif
             continue
         input_dem_path = os.path.join(input_dir_path, input_dem_name)
-        out_name = "{}_VCOMB_{}.tif".format(input_dem_name.rstrip(".tif"), general_opacity)
+        out_name = "{}_Archaeological_(VAT_combined)_opac{}.tif".format(input_dem_name.rstrip(".tif"), general_opacity)
         out_comb_vat_path = os.path.abspath(os.path.join(output_dir_path, out_name))
         out_comb_vat_8bit_path = out_comb_vat_path.rstrip(".tif") + "_8bit.tif"
         if save_8bit and os.path.isfile(out_comb_vat_8bit_path) and save_float and os.path.isfile(out_comb_vat_path):
