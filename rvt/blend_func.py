@@ -373,3 +373,45 @@ def normalize_image(visualization, image, min_norm, max_norm, normalization):
     if visualization.lower() == "slope gradient":
         norm_image = 1 - norm_image
     return norm_image
+
+
+def cut_off_normalize(image, mode, min=None, max=None, bool_norm=True):
+    """
+    One band image cut-off or normalization or both. Image is 2D np.ndarray of raster, mode is perc or value
+    (min and max units), min and max are minimum value to cutoff and maximum value to cutoff.
+    (e.x. percent min=2 and max=3 -> cutoff lower 2% values and higher 3% values;
+     e.x. value min=10 and max=60 -> cutoff bellow 10 and above 60, image values will be 10-60)
+    """
+    if min is not None and max is not None:
+        if min == max and mode == "value":
+            raise Exception("rvt.blend_func.cut_off_normalize: If normalization == value, min and max cannot be the"
+                            " same!")
+        if min > max and mode == "value":
+            raise Exception("rvt.blend_func.cut_off_normalize: If normalization == value, max can't be smaller"
+                            " than min!")
+
+    cut_off_arr = image
+    if min is None and mode.lower() == "value":
+        min = np.amin(image)
+    if max is None and mode.lower() == "value":
+        max = np.amax(image)
+    if min is None and (mode.lower() == "perc" or mode.lower() == "percent"):
+        min = 0
+    if max is None and (mode.lower() == "perc" or mode.lower() == "percent"):
+        max = 0
+    if bool_norm:
+        if mode.lower() == "value":
+            cut_off_arr = normalize_lin(cut_off_arr, min, max)
+        elif mode.lower() == "perc" or mode.lower() == "percent":
+            cut_off_arr = normalize_perc(cut_off_arr, min, max)
+    else:
+        if mode.lower() == "value":
+            cut_off_arr[cut_off_arr > max] = max
+            cut_off_arr[cut_off_arr < min] = min
+        elif mode.lower() == "perc" or mode.lower() == "percent":
+            min_max_value_dict = lin_cutoff_calc_from_perc(cut_off_arr, min, max)
+            min_value = min_max_value_dict["min_lin"]
+            max_value = min_max_value_dict["max_lin"]
+            cut_off_arr[cut_off_arr > max_value] = max_value
+            cut_off_arr[cut_off_arr < min_value] = min_value
+    return cut_off_arr
