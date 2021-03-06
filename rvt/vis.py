@@ -906,8 +906,8 @@ def horizon_generate_coarse_dem(dem_fine,
 def horizon_generate_pyramids(dem,
                               num_directions=4,
                               max_fine_radius=100,
-                              max_pyramid_radius=10,
-                              pyramid_scale=5
+                              max_pyramid_radius=7,
+                              pyramid_scale=3,
                               ):
     # In the levels higher than 1, determine the minimal search distance
     # and number of search distances.
@@ -955,7 +955,7 @@ def horizon_generate_pyramids(dem,
             min_radius = 1
             dem_fine = np.copy(np.pad(dem, max_pyramid_radius, mode="constant", constant_values=dem.min()))
         else:
-            min_radius = min_pyramid_radius
+            min_radius = min_pyramid_radius-1
             dem_fine = np.copy(dem_coarse)
         # the last level contains the other radius_pixels as the rest of levels
         if level == pyramid_levels:
@@ -1020,8 +1020,8 @@ def sky_illumination(dem,
     sky_illum_out : 2D numpy result array
     """
     # standard pyramid settings
-    pyramid_scale = 3
-    max_pyramid_radius = 10
+    pyramid_scale = 2
+    max_pyramid_radius = 20
 
     if not (1000 >= ve_factor >= -1000):
         raise Exception("rvt.vis.sky_illumination: ve_factor must be between -1000 and 1000!")
@@ -1135,7 +1135,7 @@ def sky_illumination(dem,
                 # get shift index from move dictionary
                 shift_indx = move[direction]["shift"][i_rad]
                 # estimate the slope
-                _ = (np.roll(height, shift_indx, axis=(0, 1)) - height) / radius
+                _ = np.maximum((np.roll(height, shift_indx, axis=(0, 1)) - height) / radius, 0.)
                 # compare to the previus max slope and keep the larges
                 max_slope = np.maximum(max_slope, _)
 
@@ -1147,18 +1147,18 @@ def sky_illumination(dem,
                         conv_from + max_pyramid_radius * pyramid_scale - max_pyramid_radius)
                 lin_coarse = pyramid[i_level]["i_lin"] * pyramid_scale
                 col_coarse = pyramid[i_level]["i_col"] * pyramid_scale
-                interp_spline = scipy.interpolate.RectBivariateSpline(lin_coarse, col_coarse, max_slope)
+                interp_spline = scipy.interpolate.RectBivariateSpline(lin_coarse, col_coarse, max_slope, kx=1, ky=1)
                 max_slope = interp_spline(lin_fine, col_fine)
 
         # convert to angle in radians and compute directional output
         _ = np.arctan(max_slope)
         uniform_a = uniform_a + (np.cos(_)) ** 2
-        _d_aspect = np.sin((dir_rad - da) - aspect) - np.sin((dir_rad + da) - aspect)
-        uniform_b = uniform_b + _d_aspect * (np.pi / 4. - _ / 2. - np.sin(2. * _) / 4.)
+        _d_aspect = -2 * np.sin(da) * np.cos(dir_rad - aspect)
+        uniform_b = uniform_b + np.maximum(_d_aspect * (np.pi / 4. - _ / 2. - np.sin(2. * _) / 4.), 0)
         if compute_overcast:
             _cos3 = (np.cos(_)) ** 3
-            overcast_c = overcast_c + _cos3
-            overcast_d = overcast_d + _d_aspect * (2. / 3. - np.cos(_) + _cos3 / 3.)
+            overcast_c = overcast_c + np.maximum(_cos3, 0)
+            overcast_d = overcast_d + np.maximum(_d_aspect * (2. / 3. - np.cos(_) + _cos3 / 3.), 0)
         if compute_shadow and (direction == shadow_az):
             horizon_out = np.degrees(_[max_pyramid_radius:-max_pyramid_radius, max_pyramid_radius:-max_pyramid_radius])
             shadow_out = (horizon_out < shadow_el) * 1
@@ -1168,13 +1168,13 @@ def sky_illumination(dem,
                     shadow_out[idx_no_data] = np.nan
                     horizon_out[idx_no_data] = np.nan
                 return {"shadow": shadow_out, "horizon": horizon_out}
-
-    # because of numeric stabilty check if the uniform_b is less then pi and greater than 0
-    uniform_out = (da) * np.cos(slope) * uniform_a + np.sin(slope) * np.minimum(np.maximum(uniform_b, 0), np.pi)
+        
+    # because of numeric stabilty check if the uniform_b is less then pi
+    uniform_out = (da) * np.cos(slope) * uniform_a + np.sin(slope) * np.minimum(uniform_b, np.pi)
     uniform_out = uniform_out[max_pyramid_radius:-max_pyramid_radius, max_pyramid_radius:-max_pyramid_radius]
+    
     if compute_overcast:
-        # because of numeric stabilty check if the uniform_b is less then pi and greater than 0
-        overcast_out = (2. * da / 3.) * np.cos(slope) * overcast_c + np.sin(slope) * np.maximum(overcast_d, 0)
+        overcast_out = (2. * da / 3.) * np.cos(slope) * overcast_c + np.sin(slope) * overcast_d
         overcast_out = overcast_out[max_pyramid_radius:-max_pyramid_radius, max_pyramid_radius:-max_pyramid_radius]
         overcast_out = 0.33 * uniform_out + 0.67 * overcast_out
         overcast_out = overcast_out / overcast_out.max()
