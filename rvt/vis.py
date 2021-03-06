@@ -87,8 +87,8 @@ def byte_scale(data,
 
 
 def slope_aspect(dem,
-                 resolution_x,
-                 resolution_y,
+                 resolution_x=1,
+                 resolution_y=1,
                  output_units="radian",
                  ve_factor=1,
                  no_data=None,
