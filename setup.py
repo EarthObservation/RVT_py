@@ -5,8 +5,8 @@ with open("README.md", "r", encoding="utf-8") as fh:
 
 setuptools.setup(
     name="rvt_py",
-    version="1.0.0a8",
-    author="ZRC SAZU and University of Ljubljana",
+    version="1.0.0a9",
+    author="ZRC SAZU and University of Ljubljana (UL FGG)",
     author_email="ziga.kokalj@zrc-sazu.si",
     description="Relief Visualization Toolbox python library. "
                 "It helps scientist visualize raster elevation model datasets. ",

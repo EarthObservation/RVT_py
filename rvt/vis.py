@@ -1681,7 +1681,6 @@ def mstp(dem,
     macro_step = int(np.ceil((macro_scale[1] - macro_scale[0]) / 10))
     macro_DEV = max_elevation_deviation(dem=dem, minimum_radius=macro_scale[0], maximum_radius=macro_scale[1],
                                         step=100)
-    import rvt.blend_func
 
     return np.array([byte_scale(micro_DEV, 2, 2),
                      byte_scale(meso_DEV, 2, 2),

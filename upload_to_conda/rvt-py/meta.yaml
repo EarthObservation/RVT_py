@@ -1,5 +1,5 @@
 {% set name = "rvt_py" %}
-{% set version = "1.0.0a8" %}
+{% set version = "1.0.0a9" %}
 
 package:
   name: "{{ name|lower }}"
@@ -7,7 +7,7 @@ package:
 
 source:
   url: https://pypi.io/packages/source/{{ name[0] }}/{{ name }}/{{ name }}-{{ version }}.tar.gz
-  sha256: 8e4b521ab953ac8126d8b54fc11c4394c2d4488008ec93d99285e12100d2ab78
+  sha256: 8473d5f69f902e281aa89fd7b17322b72c66b9b8331e26830109ae769d3d4f99
 
 build:
   number: 0
@@ -43,4 +43,4 @@ about:
 
 extra:
   recipe-maintainers:
-    - your-github-id-here
+    - zm8597
