@@ -21,6 +21,7 @@ Copyright:
 import numpy as np
 import scipy.interpolate
 import scipy.ndimage.filters
+import scipy.signal
 import warnings
 
 
@@ -437,6 +438,21 @@ def mean_filter(dem, kernel_radius):
     mean_out = mean_out / ((2 * radius_cell + 1) ** 2)  # calculate mean
     mean_out = mean_out[radius_cell:-radius_cell, radius_cell:-radius_cell]  # remove padding
     return mean_out
+
+
+def std_filter(dem, kernel_radius):
+    """Applies standard deviation filter on DEM. Kernel radius is in pixels. Kernel size is 2 * kernel_radius + 1.
+    It returns std filtered dem as numpy.ndarray (2D numpy array)."""
+    radius_cell = int(kernel_radius)
+    dem = np.array(dem, dtype=float)
+    dem2 = dem ** 2
+    ones = np.ones(dem.shape)
+    kernel = np.ones((2 * radius_cell + 1, 2 * radius_cell + 1))
+    s = scipy.signal.convolve2d(dem, kernel, mode="same")
+    s2 = scipy.signal.convolve2d(dem2, kernel, mode="same")
+    ns = scipy.signal.convolve2d(ones, kernel, mode="same")
+    std_out = np.sqrt((s2 - s ** 2 / ns) / ns)
+    return std_out
 
 
 def slrm(dem,
@@ -1410,6 +1426,7 @@ def msrm(dem,
          fill_no_data=False,
          keep_original_no_data=False
          ):
+    # TODO: not working as it should! FIX
     """
     Compute Multi-scale relief model (MSRM).
 
@@ -1500,6 +1517,175 @@ def msrm(dem,
         msrm_out[idx_no_data] = np.nan
 
     return msrm_out
+
+
+def integral_image(dem):
+    """
+    Calculates integral image (summed-area table), where origin is left upper corner.
+
+    References
+    ----------
+    https://en.wikipedia.org/wiki/Summed-area_table
+
+    Examples
+    --------
+    >>> print(integral_image(np.array([[7, 4, 7, 2],
+    ... [6, 9, 9, 5],
+    ... [6, 6, 7, 6]])))
+    [[ 7. 11. 18. 20.]
+     [13. 26. 42. 49.]
+     [19. 38. 61. 74.]]
+    """
+    dem = dem.astype(np.float)
+    return dem.cumsum(axis=0).cumsum(axis=1)
+
+
+def topographic_dev(dem, kernel_radius):
+    """
+    Calculates topographic DEV - Deviation from mean elevation. DEV(D) = (z0 - zmD) / sD.
+    Where D is radius of kernel, z0 is center pixel value, zmD is mean of all kernel values,
+    sD is standard deviation of kernel.
+
+    Parameters
+    ----------
+    dem : numpy.ndarray
+        Input digital elevation model as 2D numpy array.
+    kernel_radius : int
+        Kernel radius (D).
+
+    Returns
+    -------
+    dev_out : numpy.ndarray
+        2D numpy result array of topographic DEV - Deviation from mean elevation.
+    """
+    radius_cell = int(kernel_radius)
+    if radius_cell <= 0:
+        return dem
+
+    dem_padded = np.pad(array=dem, pad_width=radius_cell, mode="edge")  # padding
+
+    dev_out = (dem_padded - mean_filter(dem_padded, kernel_radius=kernel_radius)) / (
+            std_filter(dem_padded, kernel_radius=kernel_radius) + 1e-6)  # add 1e-6 to prevent division with 0
+    dev_out = dev_out[radius_cell:-radius_cell, radius_cell:-radius_cell]  # remove padding
+    return dev_out
+
+
+def max_elevation_deviation(dem, minimum_radius, maximum_radius, step):
+    # TODO: not working as it should! FIX
+    """
+    Calculates maximum deviation from mean elevation, DEVmax (Maximum Deviation from mean elevation) for each
+    grid cell in a digital elevation model (DEM) across a range specified spatial scales.
+    """
+    minimum_radius = int(minimum_radius)
+    maximum_radius = int(maximum_radius)
+    step = int(step)
+
+    # kernel approach
+    # dev_max_out = 0
+    # for i_radius in range(minimum_radius, maximum_radius + 1, step):
+    #     dev = topographic_dev(dem, kernel_radius=i_radius)
+    #     if i_radius == minimum_radius:
+    #         dev_max_out = dev
+    #     else:
+    #         dev_max_out = np.where(np.abs(dev_max_out) >= np.abs(dev), dev_max_out, dev)
+
+    # integral approach
+    i = integral_image(dem)
+    i2 = integral_image(dem**2)
+    dev_max_out = np.zeros(dem.shape)
+    for i_row in range(dem.shape[0]):  # iterate trough dem rows
+        # if i_row < maximum_radius or i_row >= dem.shape[0] - maximum_radius:  # skip padding
+        #     continue
+        for i_colum in range(dem.shape[1]):  # iterate trough dem columns
+            # if i_colum < maximum_radius or i_colum >= dem.shape[1] - maximum_radius:  # skip padding
+            #     continue
+            cell_value = None
+            for radius_cell in range(minimum_radius, maximum_radius, step):
+                y1 = i_row - radius_cell - 1
+                if y1 < 0:
+                    y1 = 0
+                if y1 >= dem.shape[0]:
+                    y1 = dem.shape[0] - 1
+                y2 = i_row + radius_cell
+                if y2 < 0:
+                    y2 = 0
+                if y2 >= dem.shape[0]:
+                    y2 = dem.shape[0] - 1
+                x1 = i_colum - radius_cell - 1
+                if x1 < 0:
+                    x1 = 0
+                if x1 >= dem.shape[1]:
+                    x1 = dem.shape[1] - 1
+                x2 = i_colum + radius_cell
+                if x2 < 0:
+                    x2 = 0
+                if x2 >= dem.shape[1]:
+                    x2 = dem.shape[1] - 1
+                n = (radius_cell * 2 + 1) ** 2
+                sum = i[(y2, x2)] + i[(y1, x1)] - i[(y1, x2)] - i[(y2, x1)]
+                sum_sqr = i2[(y2, x2)] + i2[(y1, x1)] - i2[(y1, x2)] - i2[(y2, x1)]
+                v = (sum_sqr - (sum * sum) / n) / n
+                if v > 0:
+                    s = np.sqrt(v)
+                    mean = sum / n
+                    z = dem[i_row, i_colum]
+                    calculated_value = (z - mean) / s
+                else:
+                    calculated_value = 0
+                if cell_value is None:
+                    cell_value = calculated_value
+                if calculated_value**2 > cell_value**2:
+                    cell_value = calculated_value
+            dev_max_out[i_row, i_colum] = cell_value
+
+    return dev_max_out
+
+
+def mstp(dem,
+         micro_scale=(1, 10),
+         meso_scale=(10, 100),
+         macro_scale=(100, 1000),
+         ve_factor=1,
+         no_data=None,
+         fill_no_data=True,
+         keep_original_no_data=False):
+    # TODO: not working as it should! FIX
+    """
+    Compute Multi-scale topographic position (MSTP).
+
+    Parameters
+    ----------
+    dem : numpy.ndarray
+        Input digital elevation model as 2D numpy array.
+    micro_scale : tuple(int, int)
+        Input
+    ve_factor : int or float
+        Vertical exaggeration factor.
+    no_data : int or float
+        Value that represents no_data, all pixels with this value are changed to np.nan .
+    fill_no_data : bool
+        If True it fills where np.nan (no_data) with mean of surrounding pixels (3x3).
+    keep_original_no_data : if True it changes all output pixels to np.nan where dem has no_data
+
+    Returns
+    -------
+    msrm_out : numpy.ndarray
+        3D numpy RGB result array of Multi-scale topographic position.
+    """
+    micro_step = int(np.ceil((micro_scale[1] - micro_scale[0]) / 10))
+    micro_DEV = max_elevation_deviation(dem=dem, minimum_radius=micro_scale[0], maximum_radius=micro_scale[1],
+                                        step=1)
+    meso_step = int(np.ceil((meso_scale[1] - meso_scale[0]) / 10))
+    meso_DEV = max_elevation_deviation(dem=dem, minimum_radius=meso_scale[0], maximum_radius=meso_scale[1],
+                                       step=10)
+    macro_step = int(np.ceil((macro_scale[1] - macro_scale[0]) / 10))
+    macro_DEV = max_elevation_deviation(dem=dem, minimum_radius=macro_scale[0], maximum_radius=macro_scale[1],
+                                        step=100)
+    import rvt.blend_func
+
+    return np.array([byte_scale(micro_DEV, 2, 2),
+                     byte_scale(meso_DEV, 2, 2),
+                     byte_scale(macro_DEV, 2, 2)])
 
 
 def fill_where_nan(dem):
