@@ -444,14 +444,16 @@ def std_filter(dem, kernel_radius):
     """Applies standard deviation filter on DEM. Kernel radius is in pixels. Kernel size is 2 * kernel_radius + 1.
     It returns std filtered dem as numpy.ndarray (2D numpy array)."""
     radius_cell = int(kernel_radius)
-    dem = np.array(dem, dtype=float)
-    dem2 = dem ** 2
+    dem_padded = np.pad(array=dem, pad_width=radius_cell, mode="edge")  # padding
+    dem = np.array(dem_padded, dtype=float)
+    dem2 = dem_padded ** 2
     ones = np.ones(dem.shape)
     kernel = np.ones((2 * radius_cell + 1, 2 * radius_cell + 1))
     s = scipy.signal.convolve2d(dem, kernel, mode="same")
     s2 = scipy.signal.convolve2d(dem2, kernel, mode="same")
     ns = scipy.signal.convolve2d(ones, kernel, mode="same")
     std_out = np.sqrt((s2 - s ** 2 / ns) / ns)
+    std_out = std_out[radius_cell:-radius_cell, radius_cell:-radius_cell]  # remove padding
     return std_out
 
 
@@ -1426,7 +1428,6 @@ def msrm(dem,
          fill_no_data=False,
          keep_original_no_data=False
          ):
-    # TODO: not working as it should! FIX
     """
     Compute Multi-scale relief model (MSRM).
 
@@ -1501,9 +1502,7 @@ def msrm(dem,
     # generation of filtered surfaces (lpf_surface)
     for ndx in range(i, n + 1, 1):
         kernel_radius = ndx ** scaling_factor
-        # generate kernel for low pass filtering
-        lpf_kerenel = np.full((2 * kernel_radius + 1, 2 * kernel_radius + 1), 1 / ((2 * kernel_radius + 1) ** 2))
-        # add mean filtered surface to list
+        # calculate mean filtered surface
         lpf_surface = mean_filter(dem=dem, kernel_radius=kernel_radius)
         if not ndx == i:  # if not first surface
             relief_models_sum += (last_lpf_surface - lpf_surface)  # substitution of 2 consecutive lpf_surface
@@ -1562,11 +1561,9 @@ def topographic_dev(dem, kernel_radius):
     if radius_cell <= 0:
         return dem
 
-    dem_padded = np.pad(array=dem, pad_width=radius_cell, mode="edge")  # padding
+    dev_out = (dem - mean_filter(dem, kernel_radius=kernel_radius)) / (
+            std_filter(dem, kernel_radius=kernel_radius) + 1e-6)  # add 1e-6 to prevent division with 0
 
-    dev_out = (dem_padded - mean_filter(dem_padded, kernel_radius=kernel_radius)) / (
-            std_filter(dem_padded, kernel_radius=kernel_radius) + 1e-6)  # add 1e-6 to prevent division with 0
-    dev_out = dev_out[radius_cell:-radius_cell, radius_cell:-radius_cell]  # remove padding
     return dev_out
 
 
@@ -1593,6 +1590,7 @@ def max_elevation_deviation(dem, minimum_radius, maximum_radius, step):
     i = integral_image(dem)
     i2 = integral_image(dem**2)
     dev_max_out = np.zeros(dem.shape)
+    scale_out = np.zeros(dem.shape, dtype=int)
     for i_row in range(dem.shape[0]):  # iterate trough dem rows
         # if i_row < maximum_radius or i_row >= dem.shape[0] - maximum_radius:  # skip padding
         #     continue
@@ -1600,45 +1598,55 @@ def max_elevation_deviation(dem, minimum_radius, maximum_radius, step):
             # if i_colum < maximum_radius or i_colum >= dem.shape[1] - maximum_radius:  # skip padding
             #     continue
             cell_value = None
-            for radius_cell in range(minimum_radius, maximum_radius, step):
-                y1 = i_row - radius_cell - 1
-                if y1 < 0:
-                    y1 = 0
-                if y1 >= dem.shape[0]:
-                    y1 = dem.shape[0] - 1
-                y2 = i_row + radius_cell
-                if y2 < 0:
-                    y2 = 0
-                if y2 >= dem.shape[0]:
-                    y2 = dem.shape[0] - 1
-                x1 = i_colum - radius_cell - 1
-                if x1 < 0:
-                    x1 = 0
-                if x1 >= dem.shape[1]:
-                    x1 = dem.shape[1] - 1
-                x2 = i_colum + radius_cell
-                if x2 < 0:
-                    x2 = 0
-                if x2 >= dem.shape[1]:
-                    x2 = dem.shape[1] - 1
-                n = (radius_cell * 2 + 1) ** 2
-                sum = i[(y2, x2)] + i[(y1, x1)] - i[(y1, x2)] - i[(y2, x1)]
-                sum_sqr = i2[(y2, x2)] + i2[(y1, x1)] - i2[(y1, x2)] - i2[(y2, x1)]
-                v = (sum_sqr - (sum * sum) / n) / n
-                if v > 0:
-                    s = np.sqrt(v)
-                    mean = sum / n
-                    z = dem[i_row, i_colum]
-                    calculated_value = (z - mean) / s
-                else:
-                    calculated_value = 0
-                if cell_value is None:
-                    cell_value = calculated_value
-                if calculated_value**2 > cell_value**2:
-                    cell_value = calculated_value
-            dev_max_out[i_row, i_colum] = cell_value
+            z = dem[i_row, i_colum]
+            if np.isnan(z):
+                dev_max_out[i_row, i_colum] = np.nan
+                scale_out[i_row, i_colum] = 0
+            else:
+                scale_rad_cell = minimum_radius
+                for radius_cell in range(minimum_radius, maximum_radius+1, step):
+                    y1 = i_row - radius_cell - 1
+                    if y1 < 0:
+                        y1 = 0
+                    if y1 >= dem.shape[0]:
+                        y1 = dem.shape[0] - 1
+                    y2 = i_row + radius_cell
+                    if y2 < 0:
+                        y2 = 0
+                    if y2 >= dem.shape[0]:
+                        y2 = dem.shape[0] - 1
+                    x1 = i_colum - radius_cell - 1
+                    if x1 < 0:
+                        x1 = 0
+                    if x1 >= dem.shape[1]:
+                        x1 = dem.shape[1] - 1
+                    x2 = i_colum + radius_cell
+                    if x2 < 0:
+                        x2 = 0
+                    if x2 >= dem.shape[1]:
+                        x2 = dem.shape[1] - 1
+                    n = (radius_cell * 2 + 1) ** 2
+                    if n > 0:
+                        sum = i[(y2, x2)] + i[(y1, x1)] - i[(y1, x2)] - i[(y2, x1)]
+                        sum_sqr = i2[(y2, x2)] + i2[(y1, x1)] - i2[(y1, x2)] - i2[(y2, x1)]
+                        v = (sum_sqr - (sum * sum) / n) / n
+                        if v > 0:
+                            s = np.sqrt(v)
+                            mean = sum / n
+                            calculated_value = (z - mean) / s
+                        else:
+                            calculated_value = 0
+                    else:
+                        calculated_value = 0
+                    if cell_value is None:
+                        cell_value = calculated_value
+                    if calculated_value**2 > cell_value**2:
+                        cell_value = calculated_value
+                        scale_rad_cell = radius_cell
 
-    return dev_max_out
+                dev_max_out[i_row, i_colum] = cell_value
+                scale_out[i_row, i_colum] = scale_rad_cell
+    return dev_max_out, scale_out
 
 
 def mstp(dem,
