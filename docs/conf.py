@@ -59,7 +59,7 @@ exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
 # nbsphinx_allow_errors = True
 
 # BibTeX files
-bibtex_bibfiles = ['../docs/rvt.bib']
+bibtex_bibfiles = ['RVT.bib']
 
 # -- Options for HTML output -------------------------------------------------
 
