@@ -3,9 +3,9 @@
 Bibliography
 ============
 
-Relief Visualization Toolbox has been used in several applications, from archaeology, over urban heat island modelling and landscape detection and analysis to ceramics imaging.
+Relief Visualization Toolbox has been used in a variety of applications, from archaeology to urban heat island modelling, landscape recognition and analysis, and ceramic imaging.
 
-Here is a list of journal papers, derived from the Scopus database. If you have used RVT and your publication is not listed, please contact us.
+Here is a list of journal articles that originated from the Scopus database. If you have used RVT and your publication is not listed, please contact us.
 
 .. bibliography:: rvt.bib
    :all:
