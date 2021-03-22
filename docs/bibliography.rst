@@ -7,6 +7,8 @@ Relief Visualization Toolbox has been used in a variety of applications, from ar
 
 Here is a list of journal articles that originated from the Scopus database. If you have used RVT and your publication is not listed, please contact us.
 
-.. bibliography:: rvt.bib
-   :all:
+See :cite:t:`Zaksek.2011` 
+
+
+.. bibliography::
    :style: plain
