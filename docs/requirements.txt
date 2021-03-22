@@ -3,3 +3,4 @@ numpy
 scipy
 rasterio
 nbsphinx
+sphinxcontrib-bibtex
