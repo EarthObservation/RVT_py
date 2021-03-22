@@ -37,6 +37,7 @@ extensions = [
     'sphinx.ext.autosummary',  # Create neat summary tables
     'sphinx.ext.viewcode',  # Add links to highlighted source code
     'sphinx.ext.napoleon',  # Use NumPy docstrings
+    'sphinxcontrib.bibtex', # BibTeX support
     'nbsphinx'  # Jupyter Notebook support
 ]
 
@@ -53,6 +54,13 @@ templates_path = ['_templates']
 # directories to ignore when looking for source files.
 # This pattern also affects html_static_path and html_extra_path.
 exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
+
+# Ignore import errors
+nbsphinx_allow_errors = True
+
+# BibTeX files
+bibtex_bibfiles = ['rvt.bib']
+
 
 # -- Options for HTML output -------------------------------------------------
 
