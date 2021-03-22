@@ -56,11 +56,10 @@ templates_path = ['_templates']
 exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
 
 # Ignore import errors
-nbsphinx_allow_errors = True
+# nbsphinx_allow_errors = True
 
 # BibTeX files
 bibtex_bibfiles = ['rvt.bib']
-
 
 # -- Options for HTML output -------------------------------------------------
 

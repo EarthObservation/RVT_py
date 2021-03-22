@@ -73,9 +73,9 @@ This project is licensed under the terms of the `Apache License <http://www.apac
    install
    usage
    examples
-   bibliography
    arcgis
    qgis
    rvt.vis
    rvt.default
    rvt.blend
+   bibliography
