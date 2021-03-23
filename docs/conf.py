@@ -74,7 +74,6 @@ html_logo = './figures/RVT_head.png'
 # so a file named "default.css" will overwrite the builtin "default.css".
 html_static_path = []
 
-
 # Remove module docstring credits
 def setup(app):
     app.connect('autodoc-process-docstring', sphinx.ext.autodoc.between('Credits:', what=['module'], exclude=True))
