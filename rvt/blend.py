@@ -256,7 +256,7 @@ class BlenderCombination:
         else (save_visualization=False) method needs dem_arr, dem_resolution and calculates each visualization
         simultaneously (in memory). Be careful save_visualisation applies only if specific BlenderLayer
         image and image_path are None. Parameter no_data changes all pixels with this values to np.nan,
-         if save_visualizations is Ture it is not needed."""
+        if save_visualizations is Ture it is not needed."""
 
         # check data
         self.check_data()

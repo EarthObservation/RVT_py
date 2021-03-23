@@ -2122,9 +2122,17 @@ def get_raster_arr(raster_path):
     -------
     dict_out : dict
         Returns {"array": array, "resolution": (x_res, y_res), "no_data": no_data} : dict("array": np.array,
-         "resolution": tuple(float, float), "no_data": float).
+        "resolution": tuple(float, float), "no_data": float).
         Returns dictionary with keys: array, resolution and no_data. Key resolution is tuple where first element is x
         resolution and second is y resolution. Key no_data represent value of no data.
+    """
+    """
+    get_raster_arr [summary]
+
+    Returns
+    -------
+    [type]
+        [description]
     """
     data_set = gdal.Open(raster_path)
     gt = data_set.GetGeoTransform()
