@@ -785,11 +785,13 @@ def sky_view_factor(dem,
         If True it fills where np.nan (no_data) with mean of surrounding pixels (3x3).
     keep_original_no_data : bool
         If True it changes all output pixels to np.nan where dem has no_data.
-        CONSTANTS:
-            sc_asvf_min : level of polynomial that determines the anisotropy, selected with in_asvf_level
-            sc_asvf_pol : level of polynomial that determines the anisotropy, selected with in_asvf_level
-            sc_svf_r_min : the portion (percent) of the maximal search radius to ignore in horizon estimation;
-                           for each noise level, selected with in_svf_noise
+    
+    Constants
+    ---------
+        sc_asvf_min : level of polynomial that determines the anisotropy, selected with in_asvf_level
+        sc_asvf_pol : level of polynomial that determines the anisotropy, selected with in_asvf_level
+        sc_svf_r_min : the portion (percent) of the maximal search radius to ignore in horizon estimation;
+        for each noise level, selected with in_svf_noise
 
     Returns
     -------

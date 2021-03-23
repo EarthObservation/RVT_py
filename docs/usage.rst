@@ -163,6 +163,7 @@ You also have to add dem array and its resolution.
 Example to use all three methods.
 
 .. code-block:: python
+
     import rvt.blend
     import rvt.default
 
