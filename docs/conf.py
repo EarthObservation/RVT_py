@@ -80,7 +80,7 @@ def setup(app):
     app.connect('autodoc-process-docstring', sphinx.ext.autodoc.between('Credits:', what=['module'], exclude=True))
 
 # Autommatiyally remove GDAL from imports
-autodoc_mock_imports = ['gdal']
+autodoc_mock_imports = ['gdal', 'osgeo']
 
 # Copy examples to docs
 examples_folder = './examples'
