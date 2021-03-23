@@ -4,4 +4,3 @@ scipy
 rasterio
 nbsphinx
 sphinxcontrib-bibtex
-rvt-py
