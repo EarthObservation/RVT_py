@@ -9,4 +9,7 @@ As described in `Raster functions—ArcGIS Pro | Documentation <https://pro.arcg
 
 The development version of the plugin is available in `Github EarthObservation/rvt-arcgis-pro <https://github.com/EarthObservation/rvt-arcgis-pro>`_.
 
-The  documentation, including installation instructions is available at `Relief Visualization Toolbox ArcGIS Raster Functions <https://rvt-arcgis-pro.readthedocs.io>`_.
+.. toctree::
+
+    arcgis_install
+    arcgis_usage

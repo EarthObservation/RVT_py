@@ -27,7 +27,7 @@ Methods currently implemented are:
 
 For a more detailed description see references given at each method in the manual and a comparative paper describing them (e.g. Kokalj and Hesse 2017, see below).
 
-RVT Python library called rvt contains modules:
+RVT Python package called `rvt` contains modules:
 
 * vis (:ref:`rvt.vis`) - visualization functions (mentioned above), for computing visualizations;
 
@@ -57,6 +57,8 @@ Acknowledgment
 
 Development of RVT was part financed by the European Commission's Culture Programme through the ArchaeoLandscapes Europe project and by the Slovenian Research Agency core funding No. P2-0406, and by research projects No. J2-9251, No. J6-7085 and No. J6-9395.
 
+Development of RVT QGIS plugin was part financed by PTS Consultancy via the UK Government Culture Recovery Fund.
+
 License
 -------
 
@@ -66,16 +68,13 @@ This project is licensed under the terms of the `Apache License <http://www.apac
 © Copyright 2020 ZRC SAZU and University of Ljubljana
 
 .. toctree::
-   :maxdepth: 1
    :hidden:
-   :caption: Contents:
+   :caption: Contents
 
    install
-   usage
+   quickstart
    examples
    arcgis
    qgis
-   rvt.vis
-   rvt.default
-   rvt.blend
+   rvt
    bibliography

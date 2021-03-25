@@ -1,7 +1,7 @@
-.. _usage:
+.. _quickstart:
 
-Usage
-=====
+Getting Started
+===============
 
 Bellow you have basic explanation how to use ``rvt``, if you need detailed explanation look into :ref:`Examples`.
 
