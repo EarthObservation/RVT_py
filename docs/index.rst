@@ -69,7 +69,6 @@ This project is licensed under the terms of the `Apache License <http://www.apac
 
 .. toctree::
    :hidden:
-   :caption: Contents
 
    install
    quickstart
