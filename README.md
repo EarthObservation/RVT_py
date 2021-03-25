@@ -66,7 +66,7 @@ Library `rvt-py` can be used in Python scripts, Jupyter Notebooks and in ArcGIS 
 
 ## Documentation
 
-Documentation of the package and its usage is available at [Read the Docs](https://rvt-py.readthedocs.io/).
+Documentation of the package and its usage is available at [Relief Visualization Toolbox in Python documentation](https://rvt-py.readthedocs.io/).
 
 ## Contributing
 Pull requests are welcome. For major changes, please open an issue first to discuss what you would like to change.
