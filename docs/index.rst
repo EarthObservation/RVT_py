@@ -76,5 +76,5 @@ This project is licensed under the terms of the `Apache License <http://www.apac
    arcgis
    qgis
    rvt
-   bibliography
    releases
+   bibliography
