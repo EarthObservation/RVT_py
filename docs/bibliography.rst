@@ -9,4 +9,4 @@ Here is a list of journal articles that originated from the Scopus database. If 
 
 .. bibliography::
    :all:
-   :style: plain
+   :style: unsrt
