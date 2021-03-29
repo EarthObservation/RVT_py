@@ -1,0 +1,11 @@
+Citations search
+
+[1]	Ž. Kokalj and M. Somrak, “Why Not a Single Image? Combining Visualizations to Facilitate Fieldwork and On-Screen Mapping,” Remote Sensing, vol. 11, no. 7, p. 747, 2019, doi: 10.3390/rs11070747.
+[2]	Ž. Kokalj, K. Zakšek, and K. Oštir, “Application of sky-view factor for the visualisation of historic landscape features in lidar-derived relief models,” Antiquity, vol. 85, no. 327, pp. 263–273, 2011, doi: 10.1017/S0003598X00067594.
+[3]	B. Štular, Ž. Kokalj, K. Oštir, and L. Nuninger, “Visualization of lidar-derived relief models for detection of archaeological features,” Journal of Archaeological Science, vol. 39, no. 11, pp. 3354–3360, 2012, doi: 10.1016/j.jas.2012.05.029.
+[4]	K. Zakšek, K. Oštir, and Ž. Kokalj, “Sky-View Factor as a Relief Visualization Technique,” Remote Sensing, vol. 3, no. 2, pp. 398–415, 2011, doi: 10.3390/rs3020398.
+
+https://www.scopus.com/
+
+Citavi Relief Visualization Toolbox
+Export RVT Simple
