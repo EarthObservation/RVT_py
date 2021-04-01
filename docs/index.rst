@@ -65,7 +65,7 @@ License
 This project is licensed under the terms of the `Apache License <http://www.apache.org/licenses/LICENSE-2.0>`_.
 
 
-© Copyright 2020 ZRC SAZU and University of Ljubljana
+© Copyright 2010-2021 ZRC SAZU and University of Ljubljana
 
 .. toctree::
    :hidden:
