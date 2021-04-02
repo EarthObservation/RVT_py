@@ -3,10 +3,10 @@
 QGIS Plugin Release history
 ===========================
 
-v 0.6.0
+v 0.6.1
 -------
 
-*   Sky illumination visualization fixed and added back.
+*   Multi-scale relief model fixed and added back. Sky illumination is still not working as it should (will be fixed soon). Read the Docs sites (RVT python library rvt_py, RVT QGIS plugin, RVT ArcGIS raster fn) were merged into one.
 
 
 v 0.5.3
