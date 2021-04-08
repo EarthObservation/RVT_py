@@ -21,6 +21,7 @@ Copyright:
 import numpy as np
 import scipy.interpolate
 import scipy.ndimage.filters
+import scipy.spatial
 import scipy.signal
 import warnings
 
@@ -1082,7 +1083,7 @@ def horizon_generate_pyramids(dem,
             min_radius = 1
             dem_fine = np.copy(np.pad(dem, max_pyramid_radius, mode="constant", constant_values=dem.min()))
         else:
-            min_radius = min_pyramid_radius-1
+            min_radius = min_pyramid_radius - 1
             dem_fine = np.copy(dem_coarse)
         # the last level contains the other radius_pixels as the rest of levels
         if level == pyramid_levels:
@@ -1309,11 +1310,11 @@ def sky_illumination(dem,
                     shadow_out[idx_no_data] = np.nan
                     horizon_out[idx_no_data] = np.nan
                 return {"shadow": shadow_out, "horizon": horizon_out}
-        
+
     # because of numeric stabilty check if the uniform_b is less then pi
     uniform_out = (da) * np.cos(slope) * uniform_a + np.sin(slope) * np.minimum(uniform_b, np.pi)
     uniform_out = uniform_out[max_pyramid_radius:-max_pyramid_radius, max_pyramid_radius:-max_pyramid_radius]
-    
+
     if compute_overcast:
         overcast_out = (2. * da / 3.) * np.cos(slope) * overcast_c + np.sin(slope) * overcast_d
         overcast_out = overcast_out[max_pyramid_radius:-max_pyramid_radius, max_pyramid_radius:-max_pyramid_radius]
@@ -1590,7 +1591,7 @@ def max_elevation_deviation(dem, minimum_radius, maximum_radius, step):
 
     # integral approach
     i = integral_image(dem)
-    i2 = integral_image(dem**2)
+    i2 = integral_image(dem ** 2)
     dev_max_out = np.zeros(dem.shape)
     scale_out = np.zeros(dem.shape, dtype=int)
     for i_row in range(dem.shape[0]):  # iterate trough dem rows
@@ -1606,7 +1607,7 @@ def max_elevation_deviation(dem, minimum_radius, maximum_radius, step):
                 scale_out[i_row, i_colum] = 0
             else:
                 scale_rad_cell = minimum_radius
-                for radius_cell in range(minimum_radius, maximum_radius+1, step):
+                for radius_cell in range(minimum_radius, maximum_radius + 1, step):
                     y1 = i_row - radius_cell - 1
                     if y1 < 0:
                         y1 = 0
@@ -1642,7 +1643,7 @@ def max_elevation_deviation(dem, minimum_radius, maximum_radius, step):
                         calculated_value = 0
                     if cell_value is None:
                         cell_value = calculated_value
-                    if calculated_value**2 > cell_value**2:
+                    if calculated_value ** 2 > cell_value ** 2:
                         cell_value = calculated_value
                         scale_rad_cell = radius_cell
 
@@ -1697,14 +1698,42 @@ def mstp(dem,
                      byte_scale(macro_DEV, 2, 2)])
 
 
-def fill_where_nan(dem):
-    """Replaces np.nan values. It takes nan surrounding (neighbor) cells (3x3), if number of nans <= max_nan_nr it
-    calculates mean of not nans and writes mean to the center nan pixel.
-    Function iterates and first calculates areas where is less nan values in the surrounding (neighbour) cells."""
+def fill_where_nan(dem, method="linear_row"):
+    """
+    Replaces np.nan values, with interpolation (extrapolation).
+
+    Methods
+    -------
+    linear_row : Linear row interpolation (fast) (1D) (array is flattened and then linear interpolation is performed).
+    kd_tree : K-D Tree interpolation.
+    nearest_neighbour : Nearest neighbour interpolation.
+    """
     if np.all(~np.isnan(dem)):  # if there is no nan return dem
         return dem
 
     dem_out = np.copy(dem)
     mask = np.isnan(dem_out)
-    dem_out[mask] = np.interp(np.flatnonzero(mask), np.flatnonzero(~mask), dem_out[~mask])
+
+    # 1D row linear interpolation
+    if method == "linear_row":
+        dem_out[mask] = np.interp(np.flatnonzero(mask), np.flatnonzero(~mask), dem_out[~mask])
+
+    elif method == "kd_tree" or method == "nearest_neighbour" or method == "nearest_neighbor":
+        x, y = np.mgrid[0:dem_out.shape[0], 0:dem_out.shape[1]]
+        xygood = np.array((x[~mask], y[~mask])).T
+        xybad = np.array((x[mask], y[mask])).T
+
+        # cKD-Tree (K-D Tree) interpolation
+        # https://stackoverflow.com/questions/3662361/fill-in-missing-values-with-nearest-neighbour-in-python-numpy-masked-arrays
+        if method == "kd_tree":
+            leaf_size = 1000
+            dem_out[mask] = dem_out[~mask][scipy.spatial.cKDTree(data=xygood, leafsize=leaf_size).query(xybad)[1]]
+
+        # Nearest neighbour interpolation
+        elif method == "nearest_neighbour" or method == "nearest_neighbor":
+            dem_out[mask] = scipy.interpolate.griddata(xygood, dem_out[~mask], xybad,
+                                                       method='nearest')
+    else:
+        raise Exception("rvt.vis.fill_where_nan: Wrong method!")
+
     return dem_out
