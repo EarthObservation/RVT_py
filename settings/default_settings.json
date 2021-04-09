@@ -6,7 +6,11 @@
         },
         "fill_no_data": {
             "value": 1,
-            "description": "If 1 (True) it fills where no_data with mean of surrounding pixels (3x3)."
+            "description": "If 1 (True) it fills where no_data."
+        },
+        "fill_method": {
+            "value": "linear_row",
+            "description": "Method for the fill_no_data (if true) interpolation. Methods are: linear_row, kd_tree, nearest_neighbour."
         },
         "keep_original_no_data": {
             "value": 0,

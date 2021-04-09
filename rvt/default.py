@@ -40,7 +40,10 @@ class DefaultValues:
     overwrite : bool
         When saving visualisation functions and file already exists, if 0 it doesn't compute it, if 1 it overwrites it.
     fill_no_data : bool
-        If 1 (True) it fills where no_data with mean of surrounding pixels (3x3).
+        If 1 (True) it fills where no_data.
+    fill_method : str
+        Method for the fill_no_data (fill_no_data has to be 1 (True)) interpolation (look rvt.vis.fill_where_nan() function for methods).
+        Default method is linear_row which is very fast, other methods are kd_tree (K-D Tree) and nearest_neighbour.
     keep_original_no_data : bool
         If 1 (True) it changes all output pixels to no_data where dem has no_data (fill_no_data has to be 1 (True)).
     ve_factor : float
@@ -199,6 +202,7 @@ class DefaultValues:
     def __init__(self):
         self.overwrite = 0  # (0=False, 1=True)
         self.fill_no_data = 1
+        self.fill_method = "linear_row"
         self.keep_original_no_data = 0
         self.ve_factor = 1
         # slope gradient
@@ -294,7 +298,11 @@ class DefaultValues:
                                "it doesn't compute it, if 1 it overwrites it."},
             "fill_no_data": {
                 "value": self.fill_no_data,
-                "description": "If 1 (True) it fills where no_data with mean of surrounding pixels (3x3)."},
+                "description": "If 1 (True) it fills where no_data."},
+            "fill_method": {
+                "value": self.fill_method,
+                "description": "Method for the fill_no_data (fill_no_data has to be 1 (True)) interpolation. "
+                               "Methods are: linear_row, kd_tree, nearest_neighbour."},
             "keep_original_no_data": {
                 "value": self.keep_original_no_data,
                 "description": "If 1 (True) it changes all output pixels to no_data where dem has no_data"
@@ -610,6 +618,7 @@ class DefaultValues:
             default_data = data["default_settings"]
             self.overwrite = int(default_data["overwrite"]["value"])
             self.fill_no_data = int(default_data["fill_no_data"]["value"])
+            self.fill_method = str(default_data["fill_method"]["value"])
             self.keep_original_no_data = int(default_data["keep_original_no_data"]["value"])
             self.ve_factor = float(default_data["ve_factor"]["value"])
             # Slope gradient
@@ -974,15 +983,15 @@ class DefaultValues:
             # Be careful when multihillshade we input dem, because we have to calculate hillshade in 3 directions
             red_band_arr = rvt.vis.hillshade(dem=float_arr, resolution_x=x_res, resolution_y=y_res,
                                              sun_elevation=self.mhs_sun_el, sun_azimuth=315, no_data=no_data,
-                                             fill_no_data=bool(self.fill_no_data),
+                                             fill_no_data=bool(self.fill_no_data), fill_method=str(self.fill_method),
                                              keep_original_no_data=bool(self.keep_original_no_data))
             green_band_arr = rvt.vis.hillshade(dem=float_arr, resolution_x=x_res, resolution_y=y_res,
                                                sun_elevation=self.mhs_sun_el, sun_azimuth=22.5, no_data=no_data,
-                                               fill_no_data=bool(self.fill_no_data),
+                                               fill_no_data=bool(self.fill_no_data), fill_method=str(self.fill_method),
                                                keep_original_no_data=bool(self.keep_original_no_data))
             blue_band_arr = rvt.vis.hillshade(dem=float_arr, resolution_x=x_res, resolution_y=y_res,
                                               sun_elevation=self.mhs_sun_el, sun_azimuth=90, no_data=no_data,
-                                              fill_no_data=bool(self.fill_no_data),
+                                              fill_no_data=bool(self.fill_no_data), fill_method=str(self.fill_method),
                                               keep_original_no_data=bool(self.keep_original_no_data))
             if self.mhs_bytscl[0].lower() == "percent" or self.slp_bytscl[0].lower() == "perc":
                 red_band_arr = rvt.blend_func.normalize_perc(image=red_band_arr, minimum=self.mhs_bytscl[1],
@@ -1055,6 +1064,7 @@ class DefaultValues:
         slope_arr = rvt.vis.slope_aspect(dem=dem_arr, resolution_x=resolution_x, resolution_y=resolution_y,
                                          ve_factor=self.ve_factor, output_units=self.slp_output_units,
                                          no_data=no_data, fill_no_data=bool(self.fill_no_data),
+                                         fill_method=str(self.fill_method),
                                          keep_original_no_data=bool(self.keep_original_no_data))["slope"]
         return slope_arr
 
@@ -1129,6 +1139,7 @@ class DefaultValues:
         shadow_arr = rvt.vis.shadow_horizon(dem=dem_arr, resolution=resolution, shadow_az=self.hs_sun_azi,
                                             shadow_el=self.hs_sun_el, ve_factor=self.ve_factor,
                                             no_data=no_data, fill_no_data=bool(self.fill_no_data),
+                                            fill_method=str(self.fill_method),
                                             keep_original_no_data=bool(self.keep_original_no_data))["shadow"]
         return shadow_arr
 
@@ -1137,6 +1148,7 @@ class DefaultValues:
                                           sun_azimuth=self.hs_sun_azi, sun_elevation=self.hs_sun_el,
                                           ve_factor=self.ve_factor, no_data=no_data,
                                           fill_no_data=bool(self.fill_no_data),
+                                          fill_method=str(self.fill_method),
                                           keep_original_no_data=bool(self.keep_original_no_data))
         return hillshade_arr
 
@@ -1237,6 +1249,7 @@ class DefaultValues:
                                                       nr_directions=self.mhs_nr_dir, sun_elevation=self.mhs_sun_el,
                                                       ve_factor=self.ve_factor, no_data=no_data,
                                                       fill_no_data=bool(self.fill_no_data),
+                                                      fill_method=str(self.fill_method),
                                                       keep_original_no_data=bool(self.keep_original_no_data))
         return multi_hillshade_arr
 
@@ -1316,6 +1329,7 @@ class DefaultValues:
     def get_slrm(self, dem_arr, no_data=None):
         slrm_arr = rvt.vis.slrm(dem=dem_arr, radius_cell=self.slrm_rad_cell, ve_factor=self.ve_factor, no_data=no_data,
                                 fill_no_data=bool(self.fill_no_data),
+                                fill_method=str(self.fill_method),
                                 keep_original_no_data=bool(self.keep_original_no_data))
         return slrm_arr
 
@@ -1392,6 +1406,7 @@ class DefaultValues:
                                                      svf_noise=self.svf_noise, asvf_dir=self.asvf_dir,
                                                      asvf_level=self.asvf_level, ve_factor=self.ve_factor,
                                                      no_data=no_data, fill_no_data=bool(self.fill_no_data),
+                                                     fill_method=str(self.fill_method),
                                                      keep_original_no_data=bool(self.keep_original_no_data))
         return dict_svf_asvf_opns
 
@@ -1529,6 +1544,7 @@ class DefaultValues:
                                                 compute_svf=False, compute_asvf=False, compute_opns=True,
                                                 ve_factor=self.ve_factor, no_data=no_data,
                                                 fill_no_data=bool(self.fill_no_data),
+                                                fill_method=str(self.fill_method),
                                                 keep_original_no_data=bool(self.keep_original_no_data))
         neg_opns_arr = dict_neg_opns["opns"]
         return neg_opns_arr
@@ -1607,6 +1623,7 @@ class DefaultValues:
                                                         num_directions=self.sim_nr_dir, shadow_az=self.sim_shadow_az,
                                                         shadow_el=self.sim_shadow_el, ve_factor=self.ve_factor,
                                                         no_data=no_data, fill_no_data=bool(self.fill_no_data),
+                                                        fill_method=str(self.fill_method),
                                                         keep_original_no_data=bool(self.keep_original_no_data))
         return sky_illumination_arr
 
@@ -1686,6 +1703,7 @@ class DefaultValues:
                                                       rad_inc=self.ld_rad_inc, angular_res=self.ld_anglr_res,
                                                       observer_height=self.ld_observer_h, ve_factor=self.ve_factor,
                                                       no_data=no_data, fill_no_data=bool(self.fill_no_data),
+                                                      fill_method=str(self.fill_method),
                                                       keep_original_no_data=bool(self.keep_original_no_data))
         return local_dominance_arr
 
@@ -1760,6 +1778,7 @@ class DefaultValues:
                                 feature_max=self.msrm_feature_max, scaling_factor=self.msrm_scaling_factor,
                                 ve_factor=self.ve_factor, no_data=no_data,
                                 fill_no_data=bool(self.fill_no_data),
+                                fill_method=str(self.fill_method),
                                 keep_original_no_data=bool(self.keep_original_no_data))
         return msrm_arr
 
@@ -1908,6 +1927,7 @@ class DefaultValues:
         dat.write("# Selected visualization parameters\n")
         dat.write("\tOverwrite: {}\n".format(self.overwrite))
         dat.write("\tFill no-data: {}\n".format(self.fill_no_data))
+        dat.write("\tFill method: {}\n".format(self.fill_method))
         dat.write("\tKeep original no-data: {}\n".format(self.keep_original_no_data))
         dat.write("\tVertical exaggeration factor: {}\n".format(self.ve_factor))
         if nr_rows * nr_cols > self.multiproc_size_limit:

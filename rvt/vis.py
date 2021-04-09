@@ -103,6 +103,7 @@ def slope_aspect(dem,
                  ve_factor=1,
                  no_data=None,
                  fill_no_data=False,
+                 fill_method="linear_row",
                  keep_original_no_data=False
                  ):
     """
@@ -126,7 +127,9 @@ def slope_aspect(dem,
     no_data : int or float
         Value that represents no_data, all pixels with this value are changed to np.nan .
     fill_no_data : bool
-        If True it fills where np.nan (no_data) with mean of surrounding pixels (3x3).
+        If True it fills where np.nan (no_data).
+    fill_method : str
+        Method for the fill_no_data (if true) interpolation (look fill_where_nan() function for methods).
     keep_original_no_data : bool
         If True it changes all output pixels to np.nan where DEM has no_data.
 
@@ -165,7 +168,7 @@ def slope_aspect(dem,
 
     # fill no data with mean of surrounding pixels
     if fill_no_data:
-        dem = fill_where_nan(dem)
+        dem = fill_where_nan(dem, fill_method)
 
     # derivatives in X and Y direction
     dzdx = ((np.roll(dem, 1, axis=1) - np.roll(dem, -1, axis=1)) / 2) / resolution_x
@@ -217,6 +220,7 @@ def hillshade(dem,
               ve_factor=1,
               no_data=None,
               fill_no_data=False,
+              fill_method="linear_row",
               keep_original_no_data=False
               ):
     """
@@ -243,7 +247,9 @@ def hillshade(dem,
     no_data : int or float
         Value that represents no_data, all pixels with this value are changed to np.nan.
     fill_no_data : bool
-        If True it fills where np.nan (no_data) with mean of surrounding pixels (3x3).
+        If True it fills where np.nan (no_data).
+    fill_method : str
+        Method for the fill_no_data (if true) interpolation (look fill_where_nan() function for methods).
     keep_original_no_data : bool
         If True it changes all output pixels to np.nan where dem has no_data.
 
@@ -282,7 +288,7 @@ def hillshade(dem,
 
     # fill no data with mean of surrounding pixels
     if fill_no_data:
-        dem = fill_where_nan(dem)
+        dem = fill_where_nan(dem, fill_method)
 
     # Convert solar position (degrees) to radians
     sun_azimuth_rad = np.deg2rad(sun_azimuth)
@@ -326,6 +332,7 @@ def multi_hillshade(dem,
                     ve_factor=1,
                     no_data=None,
                     fill_no_data=False,
+                    fill_method="linear_row",
                     keep_original_no_data=False
                     ):
     """
@@ -352,7 +359,9 @@ def multi_hillshade(dem,
     no_data : int or float
         Value that represents no_data, all pixels with this value are changed to np.nan .
     fill_no_data : bool
-        If True it fills where np.nan (no_data) with mean of surrounding pixels (3x3).
+        If True it fills where np.nan (no_data).
+    fill_method : str
+        Method for the fill_no_data (if true) interpolation (look fill_where_nan() function for methods).
     keep_original_no_data : bool
         If True it changes all output pixels to np.nan where dem has no_data.
 
@@ -393,7 +402,7 @@ def multi_hillshade(dem,
 
     # fill no data with mean of surrounding pixels
     if fill_no_data:
-        dem = fill_where_nan(dem)
+        dem = fill_where_nan(dem, fill_method)
 
     # calculates slope and aspect if they are not added
     if slope is None or aspect is None:  # slope and aspect are the same, so we have to calculate it once
@@ -463,6 +472,7 @@ def slrm(dem,
          ve_factor=1,
          no_data=None,
          fill_no_data=False,
+         fill_method="linear_row",
          keep_original_no_data=False
          ):
     """
@@ -479,7 +489,9 @@ def slrm(dem,
     no_data : int or float
         Value that represents no_data, all pixels with this value are changed to np.nan .
     fill_no_data : bool
-        If True it fills where np.nan (no_data) with mean of surrounding pixels (3x3).
+        If True it fills where np.nan (no_data).
+    fill_method : str
+        Method for the fill_no_data (if true) interpolation (look fill_where_nan() function for methods).
     keep_original_no_data : bool
         If True it changes all output pixels to np.nan where dem has no_data.
 
@@ -516,7 +528,7 @@ def slrm(dem,
 
     # fill no data with mean of surrounding pixels
     if fill_no_data:
-        dem = fill_where_nan(dem)
+        dem = fill_where_nan(dem, fill_method)
 
     # mean filter
     dem_mean_filter = mean_filter(dem=dem, kernel_radius=radius_cell)
@@ -606,6 +618,7 @@ def sky_view_factor_compute(height_arr,
                             a_min_weight=0.4,
                             no_data=None,
                             fill_no_data=False,
+                            fill_method="linear_row",
                             keep_original_no_data=False
                             ):
     """
@@ -638,7 +651,9 @@ def sky_view_factor_compute(height_arr,
     no_data : int or float
         Value that represents no_data, all pixels with this value are changed to np.nan .
     fill_no_data : bool
-        If True it fills where np.nan (no_data) with mean of surrounding pixels (3x3).
+        If True it fills where np.nan (no_data).
+    fill_method : str
+        Method for the fill_no_data (if true) interpolation (look fill_where_nan() function for methods).
     keep_original_no_data : bool
         If True it changes all output pixels to np.nan where dem has no_data.
 
@@ -662,7 +677,7 @@ def sky_view_factor_compute(height_arr,
 
     # fill no data with mean of surrounding pixels
     if fill_no_data:
-        height_arr = fill_where_nan(height_arr)
+        height_arr = fill_where_nan(height_arr, fill_method)
 
     # pad the array for the radius_max on all 4 sides
     height = np.pad(height_arr, radius_max, mode='symmetric')
@@ -751,6 +766,7 @@ def sky_view_factor(dem,
                     ve_factor=1,
                     no_data=None,
                     fill_no_data=False,
+                    fill_method="linear_row",
                     keep_original_no_data=False
                     ):
     """
@@ -783,7 +799,9 @@ def sky_view_factor(dem,
     no_data : int or float
         Value that represents no_data, all pixels with this value are changed to np.nan .
     fill_no_data : bool
-        If True it fills where np.nan (no_data) with mean of surrounding pixels (3x3).
+        If True it fills where np.nan (no_data).
+    fill_method : str
+        Method for the fill_no_data (if true) interpolation (look fill_where_nan() function for methods).
     keep_original_no_data : bool
         If True it changes all output pixels to np.nan where dem has no_data.
     
@@ -872,6 +890,7 @@ def local_dominance(dem,
                     ve_factor=1,
                     no_data=None,
                     fill_no_data=False,
+                    fill_method="linear_row",
                     keep_original_no_data=False
                     ):
     """
@@ -897,7 +916,9 @@ def local_dominance(dem,
     no_data : int or float
         Value that represents no_data, all pixels with this value are changed to np.nan .
     fill_no_data : bool
-        If True it fills where np.nan (no_data) with mean of surrounding pixels (3x3).
+        If True it fills where np.nan (no_data).
+    fill_method : str
+        Method for the fill_no_data (if true) interpolation (look fill_where_nan() function for methods).
     keep_original_no_data : bool
         If True it changes all output pixels to np.nan where dem has no_data.
 
@@ -932,7 +953,7 @@ def local_dominance(dem,
 
     # fill no data with mean of surrounding pixels
     if fill_no_data:
-        dem = fill_where_nan(dem)
+        dem = fill_where_nan(dem, fill_method)
 
     # create a vector with possible distances
     n_dist = int((max_rad - min_rad) / rad_inc + 1)
@@ -1121,6 +1142,7 @@ def sky_illumination(dem,
                      ve_factor=1,
                      no_data=None,
                      fill_no_data=False,
+                     fill_method="linear_row",
                      keep_original_no_data=False
                      ):
     """
@@ -1151,7 +1173,9 @@ def sky_illumination(dem,
     no_data : int or float
         Value that represents no_data, all pixels with this value are changed to np.nan .
     fill_no_data : bool
-        If True it fills where np.nan (no_data) with mean of surrounding pixels (3x3).
+        If True it fills where np.nan (no_data).
+    fill_method : str
+        Method for the fill_no_data (if true) interpolation (look fill_where_nan() function for methods).
     keep_original_no_data : if True it changes all output pixels to np.nan where dem has no_data
 
     Returns
@@ -1193,7 +1217,7 @@ def sky_illumination(dem,
 
     # fill no data with mean of surrounding pixels
     if fill_no_data:
-        dem = fill_where_nan(dem)
+        dem = fill_where_nan(dem, fill_method)
 
     if sky_model.lower() == "overcast":
         compute_overcast = True
@@ -1369,6 +1393,7 @@ def shadow_horizon(dem,
                    ve_factor=1,
                    no_data=None,
                    fill_no_data=False,
+                   fill_method="linear_row",
                    keep_original_no_data=False
                    ):
     """
@@ -1389,7 +1414,9 @@ def shadow_horizon(dem,
     no_data : int or float
         Value that represents no_data, all pixels with this value are changed to np.nan .
     fill_no_data : bool
-        If True it fills where np.nan (no_data) with mean of surrounding pixels (3x3).
+        If True it fills where np.nan (no_data).
+    fill_method : str
+        Method for the fill_no_data (if true) interpolation (look fill_where_nan() function for methods).
     keep_original_no_data : bool
         If True it changes all output pixels to np.nan where dem has no_data.
 
@@ -1429,6 +1456,7 @@ def msrm(dem,
          ve_factor=1,
          no_data=None,
          fill_no_data=False,
+         fill_method="linear_row",
          keep_original_no_data=False
          ):
     """
@@ -1452,7 +1480,9 @@ def msrm(dem,
     no_data : int or float
         Value that represents no_data, all pixels with this value are changed to np.nan .
     fill_no_data : bool
-        If True it fills where np.nan (no_data) with mean of surrounding pixels (3x3).
+        If True it fills where np.nan (no_data).
+    fill_method : str
+        Method for the fill_no_data (if true) interpolation (look fill_where_nan() function for methods).
     keep_original_no_data : if True it changes all output pixels to np.nan where dem has no_data
 
     Returns
@@ -1486,7 +1516,7 @@ def msrm(dem,
 
     # fill no data with mean of surrounding pixels
     if fill_no_data:
-        dem = fill_where_nan(dem)
+        dem = fill_where_nan(dem, fill_method)
 
     if feature_min < resolution:  # feature min can't be smaller than resolution
         feature_min = resolution
@@ -1675,7 +1705,9 @@ def mstp(dem,
     no_data : int or float
         Value that represents no_data, all pixels with this value are changed to np.nan .
     fill_no_data : bool
-        If True it fills where np.nan (no_data) with mean of surrounding pixels (3x3).
+        If True it fills where np.nan (no_data).
+    fill_method : str
+        Method for the fill_no_data (if true) interpolation (look fill_where_nan() function for methods).
     keep_original_no_data : if True it changes all output pixels to np.nan where dem has no_data
 
     Returns
