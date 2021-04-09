@@ -10,6 +10,7 @@ if __name__ == "__main__":
     dem_path = r"test_data\TM1_564_146.tif"
     default.overwrite = 1
     default.fill_no_data = 0
+    default.fill_method = "kd_tree"
     default.keep_original_no_data = 0
 
     # save specific visualization function
