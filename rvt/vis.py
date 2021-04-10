@@ -21,6 +21,7 @@ Copyright:
 import numpy as np
 import scipy.interpolate
 import scipy.ndimage.filters
+import scipy.ndimage.morphology
 import scipy.spatial
 import scipy.signal
 import warnings
@@ -1737,6 +1738,8 @@ def fill_where_nan(dem, method="linear_row"):
     Methods
     -------
     linear_row : Linear row interpolation (fast) (1D) (array is flattened and then linear interpolation is performed).
+                 This method is fast but very inaccurate.
+    idw : Inverse Distance Weighting interpolation.
     kd_tree : K-D Tree interpolation.
     nearest_neighbour : Nearest neighbour interpolation.
     """
@@ -1749,6 +1752,46 @@ def fill_where_nan(dem, method="linear_row"):
     # 1D row linear interpolation
     if method == "linear_row":
         dem_out[mask] = np.interp(np.flatnonzero(mask), np.flatnonzero(~mask), dem_out[~mask])
+
+    if method == "idw":
+        radius = 20
+        power = 2
+        nan_idx = zip(*np.where(mask))
+        for i_row, i_column in nan_idx:  # iterate through nans
+            # nan surrounding array based on radius
+            i_row_start = i_row - radius  # start row idx of nan surrounding
+            i_column_start = i_column - radius  # start col idx of nan surrounding
+            i_row_end = i_row + radius + 1  # end row idx of nan surrounding
+            i_column_end = i_column + radius + 1  # end col idx of nan surrounding
+            # row idx center pixel (nan pixel to idw) of nan surrounding array
+            i_row_center = i_row - i_row_start
+            # col idx center pixel (nan pixel to idw) of nan surrounding array
+            i_column_center = i_column - i_column_start
+            if i_row_start < 0:  # edge
+                i_row_center = i_row
+                i_row_start = 0
+            if i_column_start < 0:  # edge
+                i_column_center = i_column
+                i_column_start = 0
+            if i_row_end > dem.shape[0]:  # edge
+                i_row_end = dem.shape[0]
+            if i_column_end > dem.shape[1]:  # edge
+                i_column_end = dem.shape[0]
+            nan_surrounding_arr = dem[i_row_start:i_row_end, i_column_start:i_column_end]
+            if np.all(np.isnan(nan_surrounding_arr)):  # whole surrounding array is nan
+                dem_out[i_row, i_column] = np.nan
+            else:
+                # calculate distance array (wight matrix)
+                dist_arr = np.ones(nan_surrounding_arr.shape)  # all ones
+                # center pixel is 0 to calc distance matrix around 0 pixel with distance_transform_edt
+                dist_arr[i_row_center, i_column_center] = 0
+                dist_arr = scipy.ndimage.morphology.distance_transform_edt(dist_arr)
+                dist_arr[dist_arr == 0] = np.nan  # can't divide with zero
+                dist_arr = 1/dist_arr**power
+                nan_mask = np.isnan(nan_surrounding_arr)
+                dist_arr[nan_mask] = 0  # where nan weight matrix is zero
+                # calculate idw for one nan value
+                dem_out[i_row, i_column] = np.nansum(nan_surrounding_arr * dist_arr) / np.nansum(dist_arr)
 
     elif method == "kd_tree" or method == "nearest_neighbour" or method == "nearest_neighbor":
         x, y = np.mgrid[0:dem_out.shape[0], 0:dem_out.shape[1]]
