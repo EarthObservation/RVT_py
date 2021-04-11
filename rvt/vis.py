@@ -104,7 +104,7 @@ def slope_aspect(dem,
                  ve_factor=1,
                  no_data=None,
                  fill_no_data=False,
-                 fill_method="linear_row",
+                 fill_method="idw",
                  keep_original_no_data=False
                  ):
     """
@@ -221,7 +221,7 @@ def hillshade(dem,
               ve_factor=1,
               no_data=None,
               fill_no_data=False,
-              fill_method="linear_row",
+              fill_method="idw",
               keep_original_no_data=False
               ):
     """
@@ -333,7 +333,7 @@ def multi_hillshade(dem,
                     ve_factor=1,
                     no_data=None,
                     fill_no_data=False,
-                    fill_method="linear_row",
+                    fill_method="idw",
                     keep_original_no_data=False
                     ):
     """
@@ -473,7 +473,7 @@ def slrm(dem,
          ve_factor=1,
          no_data=None,
          fill_no_data=False,
-         fill_method="linear_row",
+         fill_method="idw",
          keep_original_no_data=False
          ):
     """
@@ -619,7 +619,7 @@ def sky_view_factor_compute(height_arr,
                             a_min_weight=0.4,
                             no_data=None,
                             fill_no_data=False,
-                            fill_method="linear_row",
+                            fill_method="idw",
                             keep_original_no_data=False
                             ):
     """
@@ -767,7 +767,7 @@ def sky_view_factor(dem,
                     ve_factor=1,
                     no_data=None,
                     fill_no_data=False,
-                    fill_method="linear_row",
+                    fill_method="idw",
                     keep_original_no_data=False
                     ):
     """
@@ -876,6 +876,7 @@ def sky_view_factor(dem,
                                                  a_min_weight=min_weight,
                                                  no_data=no_data,
                                                  fill_no_data=fill_no_data,
+                                                 fill_method=fill_method,
                                                  keep_original_no_data=keep_original_no_data
                                                  )
 
@@ -891,7 +892,7 @@ def local_dominance(dem,
                     ve_factor=1,
                     no_data=None,
                     fill_no_data=False,
-                    fill_method="linear_row",
+                    fill_method="idw",
                     keep_original_no_data=False
                     ):
     """
@@ -1143,7 +1144,7 @@ def sky_illumination(dem,
                      ve_factor=1,
                      no_data=None,
                      fill_no_data=False,
-                     fill_method="linear_row",
+                     fill_method="idw",
                      keep_original_no_data=False
                      ):
     """
@@ -1394,7 +1395,7 @@ def shadow_horizon(dem,
                    ve_factor=1,
                    no_data=None,
                    fill_no_data=False,
-                   fill_method="linear_row",
+                   fill_method="idw",
                    keep_original_no_data=False
                    ):
     """
@@ -1445,7 +1446,7 @@ def shadow_horizon(dem,
 
     return sky_illumination(dem=dem, resolution=resolution, compute_shadow=True,
                             shadow_horizon_only=True, shadow_el=shadow_el, shadow_az=shadow_az, ve_factor=ve_factor,
-                            no_data=no_data, fill_no_data=fill_no_data,
+                            no_data=no_data, fill_no_data=fill_no_data, fill_method=fill_method,
                             keep_original_no_data=keep_original_no_data)
 
 
@@ -1457,7 +1458,7 @@ def msrm(dem,
          ve_factor=1,
          no_data=None,
          fill_no_data=False,
-         fill_method="linear_row",
+         fill_method="idw",
          keep_original_no_data=False
          ):
     """
@@ -1731,7 +1732,7 @@ def mstp(dem,
                      byte_scale(macro_DEV, 2, 2)])
 
 
-def fill_where_nan(dem, method="linear_row"):
+def fill_where_nan(dem, method="idw"):
     """
     Replaces np.nan values, with interpolation (extrapolation).
 
@@ -1739,7 +1740,10 @@ def fill_where_nan(dem, method="linear_row"):
     -------
     linear_row : Linear row interpolation (fast) (1D) (array is flattened and then linear interpolation is performed).
                  This method is fast but very inaccurate.
-    idw : Inverse Distance Weighting interpolation.
+    idw_r_p : Inverse Distance Weighting interpolation.
+              If you only input idw it will take default parameters (r=20, p=2).
+              You can also input interpolation radius (r) and power (p) for weights.
+              Example: idw_5_2 means radius = 5, power = 2.
     kd_tree : K-D Tree interpolation.
     nearest_neighbour : Nearest neighbour interpolation.
     """
@@ -1753,10 +1757,13 @@ def fill_where_nan(dem, method="linear_row"):
     if method == "linear_row":
         dem_out[mask] = np.interp(np.flatnonzero(mask), np.flatnonzero(~mask), dem_out[~mask])
 
-    if method == "idw":
+    if method.split("_")[0] == "idw":
         radius = 20
         power = 2
-        nan_idx = zip(*np.where(mask))
+        if len(method.split("_")) == 3:
+            radius = method.split("_")[1]
+            power = method.split("_")[2]
+        nan_idx = zip(*np.where(mask))  # find nan positions
         for i_row, i_column in nan_idx:  # iterate through nans
             # nan surrounding array based on radius
             i_row_start = i_row - radius  # start row idx of nan surrounding
