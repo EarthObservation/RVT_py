@@ -1537,7 +1537,7 @@ def integral_image(dem):
      [13. 26. 42. 49.]
      [19. 38. 61. 74.]]
     """
-    dem = dem.astype(np.float)
+    dem = dem.astype(np.float64)
     return dem.cumsum(axis=0).cumsum(axis=1)
 
 
