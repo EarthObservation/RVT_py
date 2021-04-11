@@ -11,7 +11,7 @@ arr[arr == nodata] = np.nan
 
 # idw
 start_time = time.time()
-arr_out = rvt.vis.fill_where_nan(arr, "idw")
+arr_out = rvt.vis.fill_where_nan(arr, "idw_20_2.0")
 print("idw = {}s".format(time.time() - start_time))
 rast_path_out = r"D:\RVT_py\test\manhattan\Manhattan_DSM_1m_max_tst_idw.tif"
 rvt.default.save_raster(src_raster_path=rast_path, out_raster_path=rast_path_out,
