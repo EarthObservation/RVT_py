@@ -1541,7 +1541,7 @@ def integral_image(dem):
     return dem.cumsum(axis=0).cumsum(axis=1)
 
 
-def topographic_dev(dem, kernel_radius):
+def topographic_dev(dem, dem_i1, dem_i2, kernel_radius):
     """
     Calculates topographic DEV - Deviation from mean elevation. DEV(D) = (z0 - zmD) / sD.
     Where D is radius of kernel, z0 is center pixel value, zmD is mean of all kernel values,
@@ -1563,14 +1563,24 @@ def topographic_dev(dem, kernel_radius):
     if radius_cell <= 0:
         return dem
 
-    dev_out = (dem - mean_filter(dem, kernel_radius=kernel_radius)) / (
-            std_filter(dem, kernel_radius=kernel_radius) + 1e-6)  # add 1e-6 to prevent division with 0
+    dem_mean = np.roll(dem_i1, ( radius_cell,    radius_cell),   axis=(0,1)) + \
+               np.roll(dem_i1, (-radius_cell-1, -radius_cell-1), axis=(0,1)) - \
+               np.roll(dem_i1, (-radius_cell-1,  radius_cell),   axis=(0,1)) - \
+               np.roll(dem_i1, ( radius_cell,   -radius_cell-1), axis=(0,1))
+    dem_mean = dem_mean / (2 * radius_cell + 1)**2
+    
+    dem_std = np.roll(dem_i2, ( radius_cell,    radius_cell),   axis=(0,1)) + \
+              np.roll(dem_i2, (-radius_cell-1, -radius_cell-1), axis=(0,1)) - \
+              np.roll(dem_i2, (-radius_cell-1,  radius_cell),   axis=(0,1)) - \
+              np.roll(dem_i2, ( radius_cell,   -radius_cell-1), axis=(0,1))
+    dem_std = np.sqrt(np.abs(dem_std / (2 * radius_cell + 1)**2 - dem_mean**2))
+
+    dev_out = (np.roll(dem, (-1,-1),   axis=(0,1)) - dem_mean) / (dem_std + 1e-6)  # add 1e-6 to prevent division with 0
 
     return dev_out
 
 
 def max_elevation_deviation(dem, minimum_radius, maximum_radius, step):
-    # TODO: not working as it should! FIX
     """
     Calculates maximum deviation from mean elevation, DEVmax (Maximum Deviation from mean elevation) for each
     grid cell in a digital elevation model (DEM) across a range specified spatial scales.
@@ -1578,77 +1588,23 @@ def max_elevation_deviation(dem, minimum_radius, maximum_radius, step):
     minimum_radius = int(minimum_radius)
     maximum_radius = int(maximum_radius)
     step = int(step)
+    
+    dem_pad = np.pad(dem, (maximum_radius+1, maximum_radius), mode="symmetric")
+    dem_i1 = integral_image(dem_pad)
+    dem_i2 = integral_image(dem_pad**2)
 
-    # kernel approach
-    # dev_max_out = 0
-    # for i_radius in range(minimum_radius, maximum_radius + 1, step):
-    #     dev = topographic_dev(dem, kernel_radius=i_radius)
-    #     if i_radius == minimum_radius:
-    #         dev_max_out = dev
-    #     else:
-    #         dev_max_out = np.where(np.abs(dev_max_out) >= np.abs(dev), dev_max_out, dev)
-
-    # integral approach
-    i = integral_image(dem)
-    i2 = integral_image(dem**2)
-    dev_max_out = np.zeros(dem.shape)
-    scale_out = np.zeros(dem.shape, dtype=int)
-    for i_row in range(dem.shape[0]):  # iterate trough dem rows
-        # if i_row < maximum_radius or i_row >= dem.shape[0] - maximum_radius:  # skip padding
-        #     continue
-        for i_colum in range(dem.shape[1]):  # iterate trough dem columns
-            # if i_colum < maximum_radius or i_colum >= dem.shape[1] - maximum_radius:  # skip padding
-            #     continue
-            cell_value = None
-            z = dem[i_row, i_colum]
-            if np.isnan(z):
-                dev_max_out[i_row, i_colum] = np.nan
-                scale_out[i_row, i_colum] = 0
-            else:
-                scale_rad_cell = minimum_radius
-                for radius_cell in range(minimum_radius, maximum_radius+1, step):
-                    y1 = i_row - radius_cell - 1
-                    if y1 < 0:
-                        y1 = 0
-                    if y1 >= dem.shape[0]:
-                        y1 = dem.shape[0] - 1
-                    y2 = i_row + radius_cell
-                    if y2 < 0:
-                        y2 = 0
-                    if y2 >= dem.shape[0]:
-                        y2 = dem.shape[0] - 1
-                    x1 = i_colum - radius_cell - 1
-                    if x1 < 0:
-                        x1 = 0
-                    if x1 >= dem.shape[1]:
-                        x1 = dem.shape[1] - 1
-                    x2 = i_colum + radius_cell
-                    if x2 < 0:
-                        x2 = 0
-                    if x2 >= dem.shape[1]:
-                        x2 = dem.shape[1] - 1
-                    n = (radius_cell * 2 + 1) ** 2
-                    if n > 0:
-                        sum = i[(y2, x2)] + i[(y1, x1)] - i[(y1, x2)] - i[(y2, x1)]
-                        sum_sqr = i2[(y2, x2)] + i2[(y1, x1)] - i2[(y1, x2)] - i2[(y2, x1)]
-                        v = (sum_sqr - (sum * sum) / n) / n
-                        if v > 0:
-                            s = np.sqrt(v)
-                            mean = sum / n
-                            calculated_value = (z - mean) / s
-                        else:
-                            calculated_value = 0
-                    else:
-                        calculated_value = 0
-                    if cell_value is None:
-                        cell_value = calculated_value
-                    if calculated_value**2 > cell_value**2:
-                        cell_value = calculated_value
-                        scale_rad_cell = radius_cell
-
-                dev_max_out[i_row, i_colum] = cell_value
-                scale_out[i_row, i_colum] = scale_rad_cell
-    return dev_max_out, scale_out
+    for kernel_radius in range(minimum_radius, maximum_radius + 1, step):
+        print(kernel_radius)
+        dev = topographic_dev(dem_pad, dem_i1, dem_i2, kernel_radius)[maximum_radius:-(maximum_radius+1), maximum_radius:-(maximum_radius+1)]
+        if kernel_radius == minimum_radius:
+            dev_max_out = dev
+            rad_max_out = np.zeros_like(dev) + kernel_radius
+        else:
+            print(np.sum(np.abs(dev_max_out) >= np.abs(dev)))
+            rad_max_out = np.where(np.abs(dev_max_out) >= np.abs(dev), rad_max_out, kernel_radius)
+            dev_max_out = np.where(np.abs(dev_max_out) >= np.abs(dev), dev_max_out, dev)
+    
+    return dev_max_out, rad_max_out
 
 
 def mstp(dem,
