@@ -3,6 +3,12 @@
 QGIS Plugin Release history
 ===========================
 
+v 0.6.2
+-------
+
+*   Added fill no-data methods (Inverse Distance Weighting, K-D Tree, Nearest Neighbour).
+
+
 v 0.6.1
 -------
 
