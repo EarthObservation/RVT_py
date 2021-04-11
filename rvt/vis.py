@@ -1761,8 +1761,8 @@ def fill_where_nan(dem, method="idw"):
         radius = 20
         power = 2
         if len(method.split("_")) == 3:
-            radius = method.split("_")[1]
-            power = method.split("_")[2]
+            radius = int(method.split("_")[1])
+            power = float(method.split("_")[2])
         nan_idx = zip(*np.where(mask))  # find nan positions
         for i_row, i_column in nan_idx:  # iterate through nans
             # nan surrounding array based on radius
