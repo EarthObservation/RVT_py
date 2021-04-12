@@ -166,7 +166,7 @@ def slope_aspect(dem,
     dem = dem.astype(np.float32)
     dem = dem * ve_factor
 
-    # fill no data with mean of surrounding pixels
+    # fill no data
     if fill_no_data:
         dem = fill_where_nan(dem, fill_method)
 
@@ -286,7 +286,7 @@ def hillshade(dem,
     dem = dem.astype(np.float32)
     dem = dem * ve_factor
 
-    # fill no data with mean of surrounding pixels
+    # fill no data
     if fill_no_data:
         dem = fill_where_nan(dem, fill_method)
 
@@ -400,7 +400,7 @@ def multi_hillshade(dem,
     dem = dem.astype(np.float32)
     dem = dem * ve_factor
 
-    # fill no data with mean of surrounding pixels
+    # fill no data
     if fill_no_data:
         dem = fill_where_nan(dem, fill_method)
 
@@ -509,7 +509,7 @@ def slrm(dem,
     dem = dem.astype(np.float32)
     dem = dem * ve_factor
 
-    # fill no data with mean of surrounding pixels
+    # fill no data
     if fill_no_data:
         dem = fill_where_nan(dem, fill_method)
 
@@ -658,7 +658,7 @@ def sky_view_factor_compute(height_arr,
                 idx_no_data = np.where(height_arr == no_data)
         height_arr[height_arr == no_data] = np.nan
 
-    # fill no data with mean of surrounding pixels
+    # fill no data
     if fill_no_data:
         height_arr = fill_where_nan(height_arr, fill_method)
 
@@ -935,7 +935,7 @@ def local_dominance(dem,
     dem = dem.astype(np.float32)
     dem = dem * ve_factor
 
-    # fill no data with mean of surrounding pixels
+    # fill no data
     if fill_no_data:
         dem = fill_where_nan(dem, fill_method)
 
@@ -1199,7 +1199,7 @@ def sky_illumination(dem,
     dem = dem.astype(np.float32)
     dem = dem * ve_factor
 
-    # fill no data with mean of surrounding pixels
+    # fill no data
     if fill_no_data:
         dem = fill_where_nan(dem, fill_method)
 
@@ -1498,7 +1498,7 @@ def msrm(dem,
     dem = dem.astype(np.float32)
     dem = dem * ve_factor
 
-    # fill no data with mean of surrounding pixels
+    # fill no data
     if fill_no_data:
         dem = fill_where_nan(dem, fill_method)
 
@@ -1633,8 +1633,8 @@ def mstp(dem,
          ve_factor=1,
          no_data=None,
          fill_no_data=True,
+         fill_method="idw",
          keep_original_no_data=False):
-    # TODO: not working as it should! FIX
     """
     Compute Multi-scale topographic position (MSTP).
 
@@ -1642,8 +1642,14 @@ def mstp(dem,
     ----------
     dem : numpy.ndarray
         Input digital elevation model as 2D numpy array.
-    micro_scale : tuple(int, int)
-        Input
+    micro_scale : tuple(int, int, int)
+        Input micro scale minimum radius (micro_scale[0]), maximum radius (micro_scale[1]), step (micro_scale[2]).
+    meso_scale : tuple(int, int, int)
+        Input meso scale minimum radius (meso_scale[0]), maximum radius (meso_scale[1]), step (meso_scale[2]).
+    macro_scale : tuple(int, int, int)
+        Input macro scale minimum radius (macro_scale[0]), maximum radius (macro_scale[1]), step (macro_scale[2]).
+    ve_factor : int or float
+        Vertical exaggeration factor.
     ve_factor : int or float
         Vertical exaggeration factor.
     no_data : int or float
@@ -1659,19 +1665,49 @@ def mstp(dem,
     msrm_out : numpy.ndarray
         3D numpy RGB result array of Multi-scale topographic position.
     """
-    micro_step = int(np.ceil((micro_scale[1] - micro_scale[0]) / 10))
-    micro_DEV = max_elevation_deviation(dem=dem, minimum_radius=micro_scale[0], maximum_radius=micro_scale[1],
-                                        step=1)
-    meso_step = int(np.ceil((meso_scale[1] - meso_scale[0]) / 10))
-    meso_DEV = max_elevation_deviation(dem=dem, minimum_radius=meso_scale[0], maximum_radius=meso_scale[1],
-                                       step=10)
-    macro_step = int(np.ceil((macro_scale[1] - macro_scale[0]) / 10))
-    macro_DEV = max_elevation_deviation(dem=dem, minimum_radius=macro_scale[0], maximum_radius=macro_scale[1],
-                                        step=100)
+    # TODO: Check and fix. Results are not the same as in whitebox.
+    if not (1000 >= ve_factor >= -1000):
+        raise Exception("rvt.vis.mstp: ve_factor must be between -1000 and 1000!")
+    if no_data is None and fill_no_data:
+        warnings.warn("rvt.vis.mstp: In order to fill no data (fill_no_data = True) you have to input"
+                      " no_data!")
+    if (no_data is None or not fill_no_data) and keep_original_no_data:
+        warnings.warn("rvt.vis.mstp: In order to keep original no data (keep_original_no_data = True)"
+                      " you have to input no_data and fill_no_data has to be True!")
 
-    return np.array([byte_scale(micro_DEV, 2, 2),
-                     byte_scale(meso_DEV, 2, 2),
-                     byte_scale(macro_DEV, 2, 2)])
+    # change no_data to np.nan
+    idx_no_data = None
+    if no_data is not None:
+        if keep_original_no_data:  # save indexes where is no_data
+            if np.isnan(no_data):
+                idx_no_data = np.where(np.isnan(dem))
+            else:
+                idx_no_data = np.where(dem == no_data)
+        dem[dem == no_data] = np.nan
+
+    dem = dem.astype(np.float32)
+    dem = dem * ve_factor
+
+    # fill no data
+    if fill_no_data:
+        dem = fill_where_nan(dem, fill_method)
+
+    micro_DEV = max_elevation_deviation(dem=dem, minimum_radius=micro_scale[0], maximum_radius=micro_scale[1],
+                                        step=micro_scale[2])[0]
+    meso_DEV = max_elevation_deviation(dem=dem, minimum_radius=meso_scale[0], maximum_radius=meso_scale[1],
+                                       step=meso_scale[2])[0]
+    macro_DEV = max_elevation_deviation(dem=dem, minimum_radius=macro_scale[0], maximum_radius=macro_scale[1],
+                                        step=macro_scale[2])[0]
+
+    # change result to np.nan where dem is no_data
+    if no_data is not None and keep_original_no_data:
+        micro_DEV[idx_no_data] = np.nan
+        meso_DEV[idx_no_data] = np.nan
+        macro_DEV[idx_no_data] = np.nan
+
+    return np.array([byte_scale(micro_DEV, -3, 3),
+                     byte_scale(meso_DEV, -3, 3),
+                     byte_scale(macro_DEV, -3, 3)])
 
 
 def fill_where_nan(dem, method="idw"):
