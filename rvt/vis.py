@@ -23,7 +23,6 @@ import scipy.interpolate
 import scipy.ndimage.filters
 import scipy.ndimage.morphology
 import scipy.spatial
-import scipy.signal
 import warnings
 
 
@@ -449,23 +448,6 @@ def mean_filter(dem, kernel_radius):
     mean_out = mean_out / ((2 * radius_cell + 1) ** 2)  # calculate mean
     mean_out = mean_out[radius_cell:-radius_cell, radius_cell:-radius_cell]  # remove padding
     return mean_out
-
-
-def std_filter(dem, kernel_radius):
-    """Applies standard deviation filter on DEM. Kernel radius is in pixels. Kernel size is 2 * kernel_radius + 1.
-    It returns std filtered dem as numpy.ndarray (2D numpy array)."""
-    radius_cell = int(kernel_radius)
-    dem_padded = np.pad(array=dem, pad_width=radius_cell, mode="edge")  # padding
-    dem = np.array(dem_padded, dtype=float)
-    dem2 = dem_padded ** 2
-    ones = np.ones(dem.shape)
-    kernel = np.ones((2 * radius_cell + 1, 2 * radius_cell + 1))
-    s = scipy.signal.convolve2d(dem, kernel, mode="same")
-    s2 = scipy.signal.convolve2d(dem2, kernel, mode="same")
-    ns = scipy.signal.convolve2d(ones, kernel, mode="same")
-    std_out = np.sqrt((s2 - s ** 2 / ns) / ns)
-    std_out = std_out[radius_cell:-radius_cell, radius_cell:-radius_cell]  # remove padding
-    return std_out
 
 
 def slrm(dem,
@@ -1584,6 +1566,10 @@ def topographic_dev(dem, dem_i1, dem_i2, kernel_radius):
     ----------
     dem : numpy.ndarray
         Input digital elevation model as 2D numpy array.
+    dem_i1 : numpy.ndarray
+        Summed area table (itegral image) of dem.
+    dem_i2 : numpy.ndarray
+        Summed area table (integral image) of dem squared (dem**2).
     kernel_radius : int
         Kernel radius (D).
 
@@ -1596,19 +1582,19 @@ def topographic_dev(dem, dem_i1, dem_i2, kernel_radius):
     if radius_cell <= 0:
         return dem
 
-    dem_mean = np.roll(dem_i1, ( radius_cell,    radius_cell),   axis=(0,1)) + \
-               np.roll(dem_i1, (-radius_cell-1, -radius_cell-1), axis=(0,1)) - \
-               np.roll(dem_i1, (-radius_cell-1,  radius_cell),   axis=(0,1)) - \
-               np.roll(dem_i1, ( radius_cell,   -radius_cell-1), axis=(0,1))
-    dem_mean = dem_mean / (2 * radius_cell + 1)**2
-    
-    dem_std = np.roll(dem_i2, ( radius_cell,    radius_cell),   axis=(0,1)) + \
-              np.roll(dem_i2, (-radius_cell-1, -radius_cell-1), axis=(0,1)) - \
-              np.roll(dem_i2, (-radius_cell-1,  radius_cell),   axis=(0,1)) - \
-              np.roll(dem_i2, ( radius_cell,   -radius_cell-1), axis=(0,1))
-    dem_std = np.sqrt(np.abs(dem_std / (2 * radius_cell + 1)**2 - dem_mean**2))
+    dem_mean = np.roll(dem_i1, (radius_cell, radius_cell), axis=(0, 1)) + \
+               np.roll(dem_i1, (-radius_cell - 1, -radius_cell - 1), axis=(0, 1)) - \
+               np.roll(dem_i1, (-radius_cell - 1, radius_cell), axis=(0, 1)) - \
+               np.roll(dem_i1, (radius_cell, -radius_cell - 1), axis=(0, 1))
+    dem_mean = dem_mean / (2 * radius_cell + 1) ** 2
 
-    dev_out = (np.roll(dem, (-1,-1),   axis=(0,1)) - dem_mean) / (dem_std + 1e-6)  # add 1e-6 to prevent division with 0
+    dem_std = np.roll(dem_i2, (radius_cell, radius_cell), axis=(0, 1)) + \
+              np.roll(dem_i2, (-radius_cell - 1, -radius_cell - 1), axis=(0, 1)) - \
+              np.roll(dem_i2, (-radius_cell - 1, radius_cell), axis=(0, 1)) - \
+              np.roll(dem_i2, (radius_cell, -radius_cell - 1), axis=(0, 1))
+    dem_std = np.sqrt(np.abs(dem_std / (2 * radius_cell + 1) ** 2 - dem_mean ** 2))
+
+    dev_out = (np.roll(dem, (-1, -1), axis=(0, 1)) - dem_mean) / (dem_std + 1e-6)  # add 1e-6 to prevent division with 0
 
     return dev_out
 
@@ -1618,25 +1604,25 @@ def max_elevation_deviation(dem, minimum_radius, maximum_radius, step):
     Calculates maximum deviation from mean elevation, DEVmax (Maximum Deviation from mean elevation) for each
     grid cell in a digital elevation model (DEM) across a range specified spatial scales.
     """
+    # TODO: Check and fix. Results are not the same as in whitebox.
     minimum_radius = int(minimum_radius)
     maximum_radius = int(maximum_radius)
     step = int(step)
-    
-    dem_pad = np.pad(dem, (maximum_radius+1, maximum_radius), mode="symmetric")
+
+    dem_pad = np.pad(dem, (maximum_radius + 1, maximum_radius), mode="symmetric")
     dem_i1 = integral_image(dem_pad)
-    dem_i2 = integral_image(dem_pad**2)
+    dem_i2 = integral_image(dem_pad ** 2)
 
     for kernel_radius in range(minimum_radius, maximum_radius + 1, step):
-        print(kernel_radius)
-        dev = topographic_dev(dem_pad, dem_i1, dem_i2, kernel_radius)[maximum_radius:-(maximum_radius+1), maximum_radius:-(maximum_radius+1)]
+        dev = topographic_dev(dem_pad, dem_i1, dem_i2, kernel_radius)[maximum_radius:-(maximum_radius + 1),
+              maximum_radius:-(maximum_radius + 1)]
         if kernel_radius == minimum_radius:
             dev_max_out = dev
             rad_max_out = np.zeros_like(dev) + kernel_radius
         else:
-            print(np.sum(np.abs(dev_max_out) >= np.abs(dev)))
             rad_max_out = np.where(np.abs(dev_max_out) >= np.abs(dev), rad_max_out, kernel_radius)
             dev_max_out = np.where(np.abs(dev_max_out) >= np.abs(dev), dev_max_out, dev)
-    
+
     return dev_max_out, rad_max_out
 
 
@@ -1750,7 +1736,7 @@ def fill_where_nan(dem, method="idw"):
                 dist_arr[i_row_center, i_column_center] = 0
                 dist_arr = scipy.ndimage.morphology.distance_transform_edt(dist_arr)
                 dist_arr[dist_arr == 0] = np.nan  # can't divide with zero
-                dist_arr = 1/dist_arr**power
+                dist_arr = 1 / dist_arr ** power
                 nan_mask = np.isnan(nan_surrounding_arr)
                 dist_arr[nan_mask] = 0  # where nan weight matrix is zero
                 # calculate idw for one nan value
