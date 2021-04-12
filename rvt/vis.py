@@ -1609,7 +1609,7 @@ def max_elevation_deviation(dem, minimum_radius, maximum_radius, step):
     maximum_radius = int(maximum_radius)
     step = int(step)
 
-    dem_pad = np.pad(dem, (maximum_radius + 1, maximum_radius), mode="symmetric")
+    dem_pad = np.pad(dem, (maximum_radius + 1, maximum_radius), mode="edge")
     dem_i1 = integral_image(dem_pad)
     dem_i2 = integral_image(dem_pad ** 2)
 
