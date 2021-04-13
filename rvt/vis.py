@@ -1578,7 +1578,6 @@ def topographic_dev(dem, dem_i1, dem_i2, kernel_radius):
     dev_out : numpy.ndarray
         2D numpy result array of topographic DEV - Deviation from mean elevation.
     """
-    # TODO: Check and fix. Results are not the same as in whitebox.
     radius_cell = int(kernel_radius)
     if radius_cell <= 0:
         return dem
@@ -1599,35 +1598,28 @@ def topographic_dev(dem, dem_i1, dem_i2, kernel_radius):
 
     return dev_out
 
-    # ZiM: Test trying to copy:
-    # https://github.com/jblindsay/whitebox-tools/blob/master/src/tools/terrain_analysis/dev_from_mean_elev.rs
-    # lines 441-457
-
-    # sum = np.roll(dem_i1, (radius_cell, radius_cell), axis=(0, 1)) + \
-    #            np.roll(dem_i1, (-radius_cell - 1, -radius_cell - 1), axis=(0, 1)) - \
-    #            np.roll(dem_i1, (-radius_cell - 1, radius_cell), axis=(0, 1)) - \
-    #            np.roll(dem_i1, (radius_cell, -radius_cell - 1), axis=(0, 1))
-    # n = (2 * radius_cell + 1) ** 2
-    # sum_sqr = np.roll(dem_i2, (radius_cell, radius_cell), axis=(0, 1)) + \
-    #           np.roll(dem_i2, (-radius_cell - 1, -radius_cell - 1), axis=(0, 1)) - \
-    #           np.roll(dem_i2, (-radius_cell - 1, radius_cell), axis=(0, 1)) - \
-    #           np.roll(dem_i2, (radius_cell, -radius_cell - 1), axis=(0, 1))
-    #
-    # v = (sum_sqr - (sum*sum) / n) / n
-    # v_positive_mask = v > 0
-    # s = np.zeros_like(dem)
-    # s[v_positive_mask] = np.sqrt(v[v_positive_mask])
-    # mean = sum / n
-    # dev_out = np.zeros_like(dem)
-    # dev_out[v_positive_mask] = (dem[v_positive_mask] - mean[v_positive_mask]) / s[v_positive_mask]
-
 
 def max_elevation_deviation(dem, minimum_radius, maximum_radius, step):
     """
     Calculates maximum deviation from mean elevation, DEVmax (Maximum Deviation from mean elevation) for each
     grid cell in a digital elevation model (DEM) across a range specified spatial scales.
+
+    Parameters
+    ----------
+    dem : numpy.ndarray
+        Input digital elevation model as 2D numpy array.
+    minimum_radius : int
+        Minimum radius to calculate DEV (topographic_dev).
+    maximum_radius : int
+        Maximum radius to calculate DEV (topographic_dev).
+    step : int
+        Step from minimum to maximum radius to calc DEV (topographic_dev).
+
+    Returns
+    -------
+    dev_out : numpy.ndarray
+        2D numpy result array of maxDEV - Maximum Deviation from mean elevation.
     """
-    # TODO: Check and fix. Results are not the same as in whitebox.
     minimum_radius = int(minimum_radius)
     maximum_radius = int(maximum_radius)
     step = int(step)
@@ -1639,25 +1631,24 @@ def max_elevation_deviation(dem, minimum_radius, maximum_radius, step):
     for kernel_radius in range(minimum_radius, maximum_radius + 1, step):
         dev = topographic_dev(dem_pad, dem_i1, dem_i2, kernel_radius)[maximum_radius:-(maximum_radius + 1),
               maximum_radius:-(maximum_radius + 1)]
-        # ZiM: Does it have to be: [maximum_radius+1:-(maximum_radius), maximum_radius+1:-(maximum_radius)]
-        # ??? To align devs?
         if kernel_radius == minimum_radius:
             dev_max_out = dev
             rad_max_out = np.zeros_like(dev) + kernel_radius
         else:
             rad_max_out = np.where(np.abs(dev_max_out) >= np.abs(dev), rad_max_out, kernel_radius)
             dev_max_out = np.where(np.abs(dev_max_out) >= np.abs(dev), dev_max_out, dev)
-
-    return dev_max_out, rad_max_out
+    # rad_max_out, radius of DEV for maxDEV (for each pixel)
+    return dev_max_out
 
 
 def mstp(dem,
-         micro_scale=(1, 10),
-         meso_scale=(10, 100),
-         macro_scale=(100, 1000),
+         local_scale=(1, 10, 1),
+         meso_scale=(10, 100, 10),
+         broad_scale=(100, 1000, 100),
+         image_lightness=1.2,
          ve_factor=1,
          no_data=None,
-         fill_no_data=True,
+         fill_no_data=False,
          fill_method="idw",
          keep_original_no_data=False):
     """
@@ -1667,12 +1658,14 @@ def mstp(dem,
     ----------
     dem : numpy.ndarray
         Input digital elevation model as 2D numpy array.
-    micro_scale : tuple(int, int, int)
-        Input micro scale minimum radius (micro_scale[0]), maximum radius (micro_scale[1]), step (micro_scale[2]).
+    local_scale : tuple(int, int, int)
+        Input local scale minimum radius (local_scale[0]), maximum radius (local_scale[1]), step (local_scale[2]).
     meso_scale : tuple(int, int, int)
         Input meso scale minimum radius (meso_scale[0]), maximum radius (meso_scale[1]), step (meso_scale[2]).
-    macro_scale : tuple(int, int, int)
-        Input macro scale minimum radius (macro_scale[0]), maximum radius (macro_scale[1]), step (macro_scale[2]).
+    broad_scale : tuple(int, int, int)
+        Input broad scale minimum radius (broad_scale[0]), maximum radius (broad_scale[1]), step (broad_scale[2]).
+    image_lightness : float
+        Lightness of image.
     ve_factor : int or float
         Vertical exaggeration factor.
     ve_factor : int or float
@@ -1690,7 +1683,6 @@ def mstp(dem,
     msrm_out : numpy.ndarray
         3D numpy RGB result array of Multi-scale topographic position.
     """
-    # TODO: Check and fix. Results are not the same as in whitebox.
     if not (1000 >= ve_factor >= -1000):
         raise Exception("rvt.vis.mstp: ve_factor must be between -1000 and 1000!")
     if no_data is None and fill_no_data:
@@ -1717,22 +1709,25 @@ def mstp(dem,
     if fill_no_data:
         dem = fill_where_nan(dem, fill_method)
 
-    micro_DEV = max_elevation_deviation(dem=dem, minimum_radius=micro_scale[0], maximum_radius=micro_scale[1],
-                                        step=micro_scale[2])[0]
+    local_DEV = max_elevation_deviation(dem=dem, minimum_radius=local_scale[0], maximum_radius=local_scale[1],
+                                        step=local_scale[2])
     meso_DEV = max_elevation_deviation(dem=dem, minimum_radius=meso_scale[0], maximum_radius=meso_scale[1],
-                                       step=meso_scale[2])[0]
-    macro_DEV = max_elevation_deviation(dem=dem, minimum_radius=macro_scale[0], maximum_radius=macro_scale[1],
-                                        step=macro_scale[2])[0]
+                                       step=meso_scale[2])
+    broad_DEV = max_elevation_deviation(dem=dem, minimum_radius=broad_scale[0], maximum_radius=broad_scale[1],
+                                        step=broad_scale[2])
+
+    cutoff = image_lightness
+    red = np.floor(512 / (1 + np.exp(-cutoff * np.abs(broad_DEV)))) - 256  # broad
+    green = np.floor(512 / (1 + np.exp(-cutoff * np.abs(meso_DEV)))) - 256  # meso
+    blue = np.floor(512 / (1 + np.exp(-cutoff * np.abs(local_DEV)))) - 256  # local
 
     # change result to np.nan where dem is no_data
     if no_data is not None and keep_original_no_data:
-        micro_DEV[idx_no_data] = np.nan
-        meso_DEV[idx_no_data] = np.nan
-        macro_DEV[idx_no_data] = np.nan
+        red[idx_no_data] = np.nan
+        green[idx_no_data] = np.nan
+        blue[idx_no_data] = np.nan
 
-    return np.array([byte_scale(micro_DEV, -3, 3),
-                     byte_scale(meso_DEV, -3, 3),
-                     byte_scale(macro_DEV, -3, 3)])
+    return np.asarray([red, green, blue])  # RGB 24-bit (3 x 8bit)
 
 
 def fill_where_nan(dem, method="idw"):
