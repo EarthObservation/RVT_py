@@ -1578,6 +1578,7 @@ def topographic_dev(dem, dem_i1, dem_i2, kernel_radius):
     dev_out : numpy.ndarray
         2D numpy result array of topographic DEV - Deviation from mean elevation.
     """
+    # TODO: Check and fix. Results are not the same as in whitebox.
     radius_cell = int(kernel_radius)
     if radius_cell <= 0:
         return dem
@@ -1598,6 +1599,28 @@ def topographic_dev(dem, dem_i1, dem_i2, kernel_radius):
 
     return dev_out
 
+    # ZiM: Test trying to copy:
+    # https://github.com/jblindsay/whitebox-tools/blob/master/src/tools/terrain_analysis/dev_from_mean_elev.rs
+    # lines 441-457
+
+    # sum = np.roll(dem_i1, (radius_cell, radius_cell), axis=(0, 1)) + \
+    #            np.roll(dem_i1, (-radius_cell - 1, -radius_cell - 1), axis=(0, 1)) - \
+    #            np.roll(dem_i1, (-radius_cell - 1, radius_cell), axis=(0, 1)) - \
+    #            np.roll(dem_i1, (radius_cell, -radius_cell - 1), axis=(0, 1))
+    # n = (2 * radius_cell + 1) ** 2
+    # sum_sqr = np.roll(dem_i2, (radius_cell, radius_cell), axis=(0, 1)) + \
+    #           np.roll(dem_i2, (-radius_cell - 1, -radius_cell - 1), axis=(0, 1)) - \
+    #           np.roll(dem_i2, (-radius_cell - 1, radius_cell), axis=(0, 1)) - \
+    #           np.roll(dem_i2, (radius_cell, -radius_cell - 1), axis=(0, 1))
+    #
+    # v = (sum_sqr - (sum*sum) / n) / n
+    # v_positive_mask = v > 0
+    # s = np.zeros_like(dem)
+    # s[v_positive_mask] = np.sqrt(v[v_positive_mask])
+    # mean = sum / n
+    # dev_out = np.zeros_like(dem)
+    # dev_out[v_positive_mask] = (dem[v_positive_mask] - mean[v_positive_mask]) / s[v_positive_mask]
+
 
 def max_elevation_deviation(dem, minimum_radius, maximum_radius, step):
     """
@@ -1616,6 +1639,8 @@ def max_elevation_deviation(dem, minimum_radius, maximum_radius, step):
     for kernel_radius in range(minimum_radius, maximum_radius + 1, step):
         dev = topographic_dev(dem_pad, dem_i1, dem_i2, kernel_radius)[maximum_radius:-(maximum_radius + 1),
               maximum_radius:-(maximum_radius + 1)]
+        # ZiM: Does it have to be: [maximum_radius+1:-(maximum_radius), maximum_radius+1:-(maximum_radius)]
+        # ??? To align devs?
         if kernel_radius == minimum_radius:
             dev_max_out = dev
             rad_max_out = np.zeros_like(dev) + kernel_radius
