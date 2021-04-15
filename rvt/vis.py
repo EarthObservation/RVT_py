@@ -1624,7 +1624,7 @@ def max_elevation_deviation(dem, minimum_radius, maximum_radius, step):
     maximum_radius = int(maximum_radius)
     step = int(step)
 
-    dem_pad = np.pad(dem, (maximum_radius + 1, maximum_radius), mode="edge")
+    dem_pad = np.pad(dem, (maximum_radius + 1, maximum_radius), mode="symmetric")
     dem_i1 = integral_image(dem_pad)
     dem_i2 = integral_image(dem_pad ** 2)
 
@@ -1664,7 +1664,7 @@ def mstp(dem,
         Input meso scale minimum radius (meso_scale[0]), maximum radius (meso_scale[1]), step (meso_scale[2]).
     broad_scale : tuple(int, int, int)
         Input broad scale minimum radius (broad_scale[0]), maximum radius (broad_scale[1]), step (broad_scale[2]).
-    image_lightness : float
+    lightness : float
         Lightness of image.
     ve_factor : int or float
         Vertical exaggeration factor.
@@ -1716,10 +1716,18 @@ def mstp(dem,
     broad_DEV = max_elevation_deviation(dem=dem, minimum_radius=broad_scale[0], maximum_radius=broad_scale[1],
                                         step=broad_scale[2])
 
-    cutoff = image_lightness
+    cutoff = lightness
     red = np.floor(512 / (1 + np.exp(-cutoff * np.abs(broad_DEV)))) - 256  # broad
     green = np.floor(512 / (1 + np.exp(-cutoff * np.abs(meso_DEV)))) - 256  # meso
     blue = np.floor(512 / (1 + np.exp(-cutoff * np.abs(local_DEV)))) - 256  # local
+
+    red[red < 0] = 0
+    green[green < 0] = 0
+    blue[blue < 0] = 0
+
+    red[red > 255] = 255
+    green[green > 255] = 255
+    blue[blue > 255] = 255
 
     # change result to np.nan where dem is no_data
     if no_data is not None and keep_original_no_data:
