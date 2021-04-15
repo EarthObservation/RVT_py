@@ -429,24 +429,40 @@ def mean_filter(dem, kernel_radius):
     """Applies mean filter (low pass filter) on DEM. Kernel radius is in pixels. Kernel size is 2 * kernel_radius + 1.
     It uses matrix shifting (roll) instead of convolutional approach (works faster).
     It returns mean filtered dem as numpy.ndarray (2D numpy array)."""
+    radius_cell = int(kernel_radius)
+
     if kernel_radius == 0:
         return dem
+
     # mean filter
-    radius_cell = int(kernel_radius)  # nr_rolls (shifts) in each direction
-    dem_padded = np.pad(array=dem, pad_width=radius_cell, mode="edge")  # padding
-    mean_out = np.copy(dem_padded)
-    for i_y_roll in range(radius_cell):
-        roll = i_y_roll + 1  # y direction roll
-        mean_out += np.roll(np.copy(dem_padded), roll, axis=0)  # roll positive direction
-        mean_out += np.roll(np.copy(dem_padded), -roll, axis=0)  # roll negative direction
-    y_rolls_sum = np.copy(mean_out)  # sum of all rolls in y direction
-    for i_x_roll in range(radius_cell):  # x direction roll
-        roll = i_x_roll + 1
-        mean_out += np.roll(np.copy(y_rolls_sum), roll, axis=1)  # roll positive direction
-        mean_out += np.roll(np.copy(y_rolls_sum), -roll, axis=1)  # roll negative direction
-    del y_rolls_sum
-    mean_out = mean_out / ((2 * radius_cell + 1) ** 2)  # calculate mean
-    mean_out = mean_out[radius_cell:-radius_cell, radius_cell:-radius_cell]  # remove padding
+    if np.isnan(dem).any():  # contains at least one nan (can't use summed area table approach)
+        # array shifting approach (a little bit slower that summed area table)
+        dem_pad = np.pad(array=dem, pad_width=radius_cell, mode="edge")  # padding
+        mean_out = np.copy(dem_pad)
+        for i_y_roll in range(radius_cell):
+            roll = i_y_roll + 1  # y direction roll
+            mean_out += np.roll(np.copy(dem_pad), roll, axis=0)  # roll positive direction
+            mean_out += np.roll(np.copy(dem_pad), -roll, axis=0)  # roll negative direction
+        y_rolls_sum = np.copy(mean_out)  # sum of all rolls in y direction
+        for i_x_roll in range(radius_cell):  # x direction roll
+            roll = i_x_roll + 1
+            mean_out += np.roll(np.copy(y_rolls_sum), roll, axis=1)  # roll positive direction
+            mean_out += np.roll(np.copy(y_rolls_sum), -roll, axis=1)  # roll negative direction
+        del y_rolls_sum
+        mean_out = mean_out / ((2 * radius_cell + 1) ** 2)  # calculate mean
+        mean_out = mean_out[radius_cell:-radius_cell, radius_cell:-radius_cell]  # remove padding
+    else:  # dem doesn't contains np.nan
+        # summed area table (integral) approach
+        dem_pad = np.pad(dem, (radius_cell + 1, radius_cell), mode="edge")
+        dem_i1 = integral_image(dem_pad)
+        mean_out = np.roll(dem_i1, (radius_cell, radius_cell), axis=(0, 1)) + \
+                     np.roll(dem_i1, (-radius_cell - 1, -radius_cell - 1), axis=(0, 1)) - \
+                     np.roll(dem_i1, (-radius_cell - 1, radius_cell), axis=(0, 1)) - \
+                     np.roll(dem_i1, (radius_cell, -radius_cell - 1), axis=(0, 1))
+        mean_out = mean_out.astype(np.float32)
+        mean_out = mean_out / (2 * radius_cell + 1) ** 2
+        mean_out = mean_out[radius_cell:-(radius_cell + 1), radius_cell:-(radius_cell + 1)]  # remove padding
+
     return mean_out
 
 
