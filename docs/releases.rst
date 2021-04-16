@@ -3,6 +3,18 @@
 Release history
 ===============
 
+1.0.0a10
+-------
+
+*   Added fill no data methods (IDW, Nearest neighbour, K-D Tree)
+*   Fixed Negative Openness 8bit image (reverted colours).
+*   Added Multi-scale topographic position (MSTP)
+
+PRE-RELEASE
+
+Apr 16, 2021
+
+
 1.0.0a9
 -------
 
