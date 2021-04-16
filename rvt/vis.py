@@ -1661,7 +1661,7 @@ def mstp(dem,
          local_scale=(1, 10, 1),
          meso_scale=(10, 100, 10),
          broad_scale=(100, 1000, 100),
-         image_lightness=1.2,
+         lightness=1.2,
          ve_factor=1,
          no_data=None,
          fill_no_data=False,
@@ -1682,8 +1682,6 @@ def mstp(dem,
         Input broad scale minimum radius (broad_scale[0]), maximum radius (broad_scale[1]), step (broad_scale[2]).
     lightness : float
         Lightness of image.
-    ve_factor : int or float
-        Vertical exaggeration factor.
     ve_factor : int or float
         Vertical exaggeration factor.
     no_data : int or float

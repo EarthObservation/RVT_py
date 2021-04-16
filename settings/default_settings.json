@@ -9,8 +9,8 @@
             "description": "If 1 (True) it fills where no_data."
         },
         "fill_method": {
-            "value": "linear_row",
-            "description": "Method for the fill_no_data (if true) interpolation. Methods are: linear_row, kd_tree, nearest_neighbour."
+            "value": "idw",
+            "description": "Method for the fill_no_data (fill_no_data has to be 1 (True)) interpolation. Methods are: linear_row, kd_tree, nearest_neighbour."
         },
         "keep_original_no_data": {
             "value": 0,
@@ -122,6 +122,38 @@
                 "description": "If 1 it saves 8bit raster, if 0 it doesn't."
             },
             "slrm_bytscl": {
+                "mode": "percent",
+                "min": 2,
+                "max": 2,
+                "description": "Linear stretch and byte scale (0-255) for 8bit raster. Mode can be 'value' or 'percent' (cut-off units). Values min and max define stretch borders (in mode units)."
+            }
+        },
+        "Multi-scale relief model": {
+            "msrm_compute": {
+                "value": 0,
+                "description": "If compute Multi-scale relief model. Parameter for GUIs."
+            },
+            "msrm_feature_min": {
+                "value": 0,
+                "description": "Minimum size of the feature you want to detect in meters."
+            },
+            "msrm_feature_max": {
+                "value": 20,
+                "description": "Maximum size of the feature you want to detect in meters."
+            },
+            "msrm_scaling_factor": {
+                "value": 2,
+                "description": "Scaling factor."
+            },
+            "msrm_save_float": {
+                "value": 1,
+                "description": "If 1 it saves float raster, if 0 it doesn't."
+            },
+            "msrm_save_8bit": {
+                "value": 0,
+                "description": "If 1 it saves 8bit raster, if 0 it doesn't."
+            },
+            "msrm_bytscl": {
                 "mode": "percent",
                 "min": 2,
                 "max": 2,
@@ -296,36 +328,32 @@
                 "description": "Linear stretch and byte scale (0-255) for 8bit raster. Mode can be 'value' or 'percent' (cut-off units). Values min and max define stretch borders (in mode units)."
             }
         },
-        "Multi-scale relief model": {
-            "msrm_compute": {
+        "Multi-scale topographic position": {
+            "mstp_compute": {
                 "value": 0,
-                "description": "If compute Multi-scale relief model. Parameter for GUIs."
+                "description": "If compute Multi-scale topographic position. Parameter for GUIs."
             },
-            "msrm_feature_min": {
-                "value": 0,
-                "description": "Minimum size of the feature you want to detect in meters."
+            "mstp_local_scale": {
+                "min": 1,
+                "max": 10,
+                "step": 1,
+                "description": "Local scale minimum radius, maximum radius and step in pixels to calculate maximum mean deviation from elevation. All have to be integers!"
             },
-            "msrm_feature_max": {
-                "value": 20,
-                "description": "Maximum size of the feature you want to detect in meters."
+            "mstp_meso_scale": {
+                "min": 10,
+                "max": 100,
+                "step": 10,
+                "description": "Meso scale minimum radius, maximum radius and step in pixels to calculate maximum mean deviation from elevation. All have to be integers!"
             },
-            "msrm_scaling_factor": {
-                "value": 2,
-                "description": "Scaling factor."
+            "mstp_broad_scale": {
+                "min": 100,
+                "max": 1000,
+                "step": 100,
+                "description": "Broad scale minimum radius, maximum radius and step in pixels to calculate maximum mean deviation from elevation. All have to be integers!"
             },
-            "msrm_save_float": {
-                "value": 1,
-                "description": "If 1 it saves float raster, if 0 it doesn't."
-            },
-            "msrm_save_8bit": {
-                "value": 0,
-                "description": "If 1 it saves 8bit raster, if 0 it doesn't."
-            },
-            "msrm_bytscl": {
-                "mode": "percent",
-                "min": 2,
-                "max": 2,
-                "description": "Linear stretch and byte scale (0-255) for 8bit raster. Mode can be 'value' or 'percent' (cut-off units). Values min and max define stretch borders (in mode units)."
+            "mstp_lightness": {
+                "value": 1.2,
+                "description": "Lightness factor to adjust MSTP visibility."
             }
         }
     }

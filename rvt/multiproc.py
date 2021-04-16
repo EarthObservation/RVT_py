@@ -6,6 +6,8 @@ import multiprocessing as mp
 import time
 import os
 
+# TODO: Percent normalization of each block doesn't work. 8bit where perc cutoff and MSTP not working!
+
 # Multiprocessing is still in developing stage, it can contains bugs.
 
 class RasterVisBlock:
@@ -74,7 +76,7 @@ def save_multiprocess_vis(dem_path, vis, default, custom_dir=None, save_float=Tr
 
         nr_bands_float = 1
         nr_bands_8bit = 1
-        if vis.lower() == "multiple directions hillshade":
+        if vis.lower() == "multiple directions hillshade" or vis.lower() == "multi-scale topographic position":
             nr_bands_float = default.mhs_nr_dir
             nr_bands_8bit = 3
 
@@ -105,9 +107,11 @@ def save_multiprocess_vis(dem_path, vis, default, custom_dir=None, save_float=Tr
                     default.get_vis_file_name(dem_path=dem_path, vis=vis, bit8=True)))
             # create blank out raster
             if save_float:
-                create_blank_raster(in_data_set=data_set, out_raster_path=vis_float_path, nr_bands=nr_bands_float, e_type=6)
+                create_blank_raster(in_data_set=data_set, out_raster_path=vis_float_path, nr_bands=nr_bands_float,
+                                    e_type=6)
             if save_8bit:
-                create_blank_raster(in_data_set=data_set, out_raster_path=vis_8bit_path, nr_bands=nr_bands_8bit, e_type=1)
+                create_blank_raster(in_data_set=data_set, out_raster_path=vis_8bit_path, nr_bands=nr_bands_8bit,
+                                    e_type=1)
         else:  # vis == "sky-view factor default", we can compute svf, asvf, pos_opns simultaneously
             save_svf = default.svf_compute
             save_asvf = default.asvf_compute
@@ -285,11 +289,12 @@ def save_multiprocess_vis(dem_path, vis, default, custom_dir=None, save_float=Tr
 
                 # create process for each block
                 if vis != "sky-view factor default":  # single vis function
-                    block_process = mp.Process(target=calc_add_vis_block, args=(save_float, save_8bit, blocks_to_save_float,
-                                                                                blocks_to_save_8bit, block_array, default,
-                                                                                x, y, left_offset, right_offset, top_offset,
-                                                                                bottom_offset, vis, x_res, y_res,
-                                                                                no_data))
+                    block_process = mp.Process(target=calc_add_vis_block,
+                                               args=(save_float, save_8bit, blocks_to_save_float,
+                                                     blocks_to_save_8bit, block_array, default,
+                                                     x, y, left_offset, right_offset, top_offset,
+                                                     bottom_offset, vis, x_res, y_res,
+                                                     no_data))
                 else:  # vis == "sky-view factor default"
                     # calc add svf, asvf, opns
                     block_process = mp.Process(target=calc_add_svf_asvf_opns_block, args=(save_float, save_8bit,
@@ -368,12 +373,15 @@ def get_block_offset(default, vis, res):
     elif vis.lower() == "local dominance":
         return int(default.ld_max_rad)
     elif vis.lower() == "multi-scale relief model":
-        return int(np.ceil(((default.msrm_feature_max - res) / (2 * res)) ** (1 / default.msrm_scaling_factor)))
+        return int(np.ceil(((default.msrm_feature_max - res) / (2 * res)) ** (1 / default.msrm_scaling_factor)) * 3)
+    elif vis.lower() == "multi-scale topographic position":
+        return int(default.mstp_broad_scale[1] / 2)
     else:
         raise Exception("rvt.multiproc.calculate_block_visualization: Wrong vis parameter, vis options:"
                         "hillshade, slope gradient, multiple directions hillshade, simple local relief model,"
                         "sky-view factor, anisotropic sky-view factor, openness - positive, openness - negative, "
-                        "sky illumination, local dominance", "multi-scale relief model")
+                        "sky illumination, local dominance, multi-scale relief model, "
+                        "multi-scale topographic position")
 
 
 def calc_add_vis_block(save_float, save_8bit, blocks_to_save_float, blocks_to_save_8bit, block_array, default, x, y,
@@ -395,7 +403,7 @@ def calc_add_vis_block(save_float, save_8bit, blocks_to_save_float, blocks_to_sa
             vis_block_array = vis_block_array[top_offset:, left_offset:-right_offset]
         else:
             vis_block_array = vis_block_array[top_offset:-bottom_offset, left_offset:-right_offset]
-    else:  # 3D array, multi hillshade
+    else:  # 3D array, multi hillshade, multi-scale topographic position
         if right_offset == 0 and bottom_offset == 0:
             vis_block_array = vis_block_array[:, top_offset:, left_offset:]
         elif right_offset == 0:
@@ -532,13 +540,16 @@ def calculate_block_visualization(dem_block_arr, vis, default, x_res, y_res, no_
         vis_arr = default.get_sky_illumination(dem_arr=dem_block_arr, resolution=x_res, no_data=no_data)
     elif vis.lower() == "local dominance":
         vis_arr = default.get_local_dominance(dem_arr=dem_block_arr, no_data=no_data)
-    elif vis.lowe() == "multi-scale relief model":
+    elif vis.lower() == "multi-scale relief model":
         vis_arr = default.get_msrm(dem_arr=dem_block_arr, resolution=x_res, no_data=no_data)
+    elif vis.lower() == "multi-scale topographic position":
+        vis_arr = default.get_mstp(dem_arr=dem_block_arr, no_data=no_data)
     else:
         raise Exception("rvt.multiproc.calculate_block_visualization: Wrong vis parameter, vis options:"
                         "hillshade, shadow, slope gradient, multiple directions hillshade, simple local relief model,"
                         "sky-view factor, anisotropic sky-view factor, openness - positive, openness - negative, "
-                        "sky illumination, local dominance", "multi-scale relief model")
+                        "sky illumination, local dominance, multi-scale relief model,"
+                        " multi-scale topographic position.")
     return vis_arr
 
 
@@ -559,7 +570,8 @@ def save_block_visualization(vis_path, blocks_to_save, nr_bands=1):
                 else:  # multiple bands
                     for i_band in range(nr_bands):
                         band = i_band + 1
-                        out_data_set.GetRasterBand(band).WriteArray(blocks_to_save[0].array[i_band], blocks_to_save[0].x,
+                        out_data_set.GetRasterBand(band).WriteArray(blocks_to_save[0].array[i_band],
+                                                                    blocks_to_save[0].x,
                                                                     blocks_to_save[0].y)
                         out_data_set.FlushCache()
             except:
