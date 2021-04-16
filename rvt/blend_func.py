@@ -370,7 +370,7 @@ def normalize_image(visualization, image, min_norm, max_norm, normalization):
 
     # for slope, invert scale
     # meaning high slopes will be black
-    if visualization.lower() == "slope gradient":
+    if visualization.lower() == "slope gradient" or visualization.lower() == "openness - negative":
         norm_image = 1 - norm_image
     return norm_image
 

@@ -124,6 +124,19 @@ class DefaultValues:
         Maximum size of the feature you want to detect in meters.
     msrm_scaling_factor : int
         Scaling factor.
+    mstp_compute : bool
+        If compute Multi-scale topographic position (MSTP).
+    mstp_local_scale : tuple(min_radius, max_radius, step)
+        Local scale minimum radius, maximum radius and step in pixels to calculate maximum mean deviation from elevation.
+        All have to be integers!
+    mstp_meso_scale : tuple(min_radius, max_radius, step)
+        Meso scale minimum radius, maximum radius and step in pixels to calculate maximum mean deviation from elevation.
+        All have to be integers!
+    mstp_broad_scale : tuple(min_radius, max_radius, step)
+        Broad scale minimum radius, maximum radius and step in pixels to calculate maximum mean deviation from elevation.
+        All have to be integers!
+    mstp_lightness : float
+        Lightness of image.
     slp_save_float : bool
         Slope. If 1 (True) it saves float, if 0 (False) it doesn't.
     hs_save_float : bool
@@ -253,6 +266,12 @@ class DefaultValues:
         self.msrm_feature_min = 0
         self.msrm_feature_max = 20
         self.msrm_scaling_factor = 2
+        # multi-scale topographic position
+        self.mstp_compute = 0
+        self.mstp_local_scale = (1, 10, 1)
+        self.mstp_meso_scale = (10, 100, 10)
+        self.mstp_broad_scale = (100, 1000, 100)
+        self.mstp_lightness = 1.2
         # save float
         self.slp_save_float = 1
         self.hs_save_float = 1
@@ -379,6 +398,25 @@ class DefaultValues:
                                                "Mode can be 'value' or 'percent' (cut-off units). "
                                                "Values min and max define stretch borders (in mode units)."}
             },
+            "Multi-scale relief model": {
+                "msrm_compute": {"value": self.msrm_compute,
+                                 "description": "If compute Multi-scale relief model. "
+                                                "Parameter for GUIs."},
+                "msrm_feature_min": {"value": self.msrm_feature_min,
+                                     "description": "Minimum size of the feature you want to detect in meters."},
+                "msrm_feature_max": {"value": self.msrm_feature_max,
+                                     "description": "Maximum size of the feature you want to detect in meters."},
+                "msrm_scaling_factor": {"value": self.msrm_scaling_factor,
+                                        "description": "Scaling factor."},
+                "msrm_save_float": {"value": self.msrm_save_float,
+                                    "description": "If 1 it saves float raster, if 0 it doesn't."},
+                "msrm_save_8bit": {"value": self.msrm_save_8bit,
+                                   "description": "If 1 it saves 8bit raster, if 0 it doesn't."},
+                "msrm_bytscl": {"mode": self.msrm_bytscl[0], "min": self.msrm_bytscl[1], "max": self.msrm_bytscl[2],
+                                "description": "Linear stretch and byte scale (0-255) for 8bit raster. "
+                                               "Mode can be 'value' or 'percent' (cut-off units). "
+                                               "Values min and max define stretch borders (in mode units)."}
+            },
             "Sky-View Factor": {
                 "svf_compute": {"value": self.svf_compute,
                                 "description": "If compute Sky-View Factor."
@@ -490,26 +528,30 @@ class DefaultValues:
                                              "Mode can be 'value' or 'percent' (cut-off units). "
                                              "Values min and max define stretch borders (in mode units)."}
             },
-            "Multi-scale relief model": {
-                "msrm_compute": {"value": self.msrm_compute,
-                                 "description": "If compute Multi-scale relief model. "
+            "Multi-scale topographic position": {
+                "mstp_compute": {"value": self.mstp_compute,
+                                 "description": "If compute Multi-scale topographic position. "
                                                 "Parameter for GUIs."},
-                "msrm_feature_min": {"value": self.msrm_feature_min,
-                                     "description": "Minimum size of the feature you want to detect in meters."},
-                "msrm_feature_max": {"value": self.msrm_feature_max,
-                                     "description": "Maximum size of the feature you want to detect in meters."},
-                "msrm_scaling_factor": {"value": self.msrm_scaling_factor,
-                                        "description": "Scaling factor."},
-                "msrm_save_float": {"value": self.msrm_save_float,
-                                    "description": "If 1 it saves float raster, if 0 it doesn't."},
-                "msrm_save_8bit": {"value": self.msrm_save_8bit,
-                                   "description": "If 1 it saves 8bit raster, if 0 it doesn't."},
-                "msrm_bytscl": {"mode": self.msrm_bytscl[0], "min": self.msrm_bytscl[1], "max": self.msrm_bytscl[2],
-                                "description": "Linear stretch and byte scale (0-255) for 8bit raster. "
-                                               "Mode can be 'value' or 'percent' (cut-off units). "
-                                               "Values min and max define stretch borders (in mode units)."}
-                }
-            }}
+                "mstp_local_scale": {"min": self.mstp_local_scale[0], "max": self.mstp_local_scale[1],
+                                     "step": self.mstp_local_scale[2],
+                                     "description": "Local scale minimum radius, maximum radius and step in pixels to"
+                                                    " calculate maximum mean deviation from elevation."
+                                                    " All have to be integers!"},
+                "mstp_meso_scale": {"min": self.mstp_meso_scale[0], "max": self.mstp_meso_scale[1],
+                                    "step": self.mstp_meso_scale[2],
+                                    "description": "Meso scale minimum radius, maximum radius and step in pixels to"
+                                                   " calculate maximum mean deviation from elevation."
+                                                   " All have to be integers!"},
+                "mstp_broad_scale": {"min": self.mstp_broad_scale[0], "max": self.mstp_broad_scale[1],
+                                     "step": self.mstp_broad_scale[2],
+                                     "description": "Broad scale minimum radius, maximum radius and step in pixels to"
+                                                    " calculate maximum mean deviation from elevation."
+                                                    " All have to be integers!"},
+                "mstp_lightness": {"value": self.mstp_lightness,
+                                   "description": "Lightness factor to adjust MSTP visibility."}
+            }
+
+        }}
         if file_path is None:
             file_path = r"settings\default_settings.json"
             if os.path.isfile(file_path):
@@ -656,6 +698,16 @@ class DefaultValues:
             self.slrm_bytscl = (str(default_data["Simple local relief model"]["slrm_bytscl"]["mode"]),
                                 float(default_data["Simple local relief model"]["slrm_bytscl"]["min"]),
                                 float(default_data["Simple local relief model"]["slrm_bytscl"]["max"]))
+            # Mulit-scale relief model
+            self.msrm_compute = int(default_data["Multi-scale relief model"]["msrm_compute"]["value"])
+            self.msrm_feature_min = float(default_data["Multi-scale relief model"]["msrm_feature_min"]["value"])
+            self.msrm_feature_max = float(default_data["Multi-scale relief model"]["msrm_feature_max"]["value"])
+            self.msrm_scaling_factor = int(default_data["Multi-scale relief model"]["msrm_scaling_factor"]["value"])
+            self.msrm_save_float = int(default_data["Multi-scale relief model"]["msrm_save_float"]["value"])
+            self.msrm_save_8bit = int(default_data["Multi-scale relief model"]["msrm_save_8bit"]["value"])
+            self.msrm_bytscl = (str(default_data["Multi-scale relief model"]["msrm_bytscl"]["mode"]),
+                                float(default_data["Multi-scale relief model"]["msrm_bytscl"]["min"]),
+                                float(default_data["Multi-scale relief model"]["msrm_bytscl"]["max"]))
             # Sky-View Factor
             self.svf_compute = int(default_data["Sky-View Factor"]["svf_compute"]["value"])
             self.svf_n_dir = int(default_data["Sky-View Factor"]["svf_n_dir"]["value"])
@@ -710,16 +762,18 @@ class DefaultValues:
             self.ld_bytscl = (str(default_data["Local dominance"]["ld_bytscl"]["mode"]),
                               float(default_data["Local dominance"]["ld_bytscl"]["min"]),
                               float(default_data["Local dominance"]["ld_bytscl"]["max"]))
-            # Mulit-scale relief model
-            self.msrm_compute = int(default_data["Multi-scale relief model"]["msrm_compute"]["value"])
-            self.msrm_feature_min = float(default_data["Multi-scale relief model"]["msrm_feature_min"]["value"])
-            self.msrm_feature_max = float(default_data["Multi-scale relief model"]["msrm_feature_max"]["value"])
-            self.msrm_scaling_factor = int(default_data["Multi-scale relief model"]["msrm_scaling_factor"]["value"])
-            self.msrm_save_float = int(default_data["Multi-scale relief model"]["msrm_save_float"]["value"])
-            self.msrm_save_8bit = int(default_data["Multi-scale relief model"]["msrm_save_8bit"]["value"])
-            self.msrm_bytscl = (str(default_data["Multi-scale relief model"]["msrm_bytscl"]["mode"]),
-                                float(default_data["Multi-scale relief model"]["msrm_bytscl"]["min"]),
-                                float(default_data["Multi-scale relief model"]["msrm_bytscl"]["max"]))
+            # Multi-scale topographic position
+            self.mstp_compute = int(default_data["Multi-scale topographic position"]["mstp_compute"]["value"])
+            self.mstp_local_scale = (int(default_data["Multi-scale topographic position"]["mstp_local_scale"]["min"]),
+                                     int(default_data["Multi-scale topographic position"]["mstp_local_scale"]["max"]),
+                                     int(default_data["Multi-scale topographic position"]["mstp_local_scale"]["step"]))
+            self.mstp_meso_scale = (int(default_data["Multi-scale topographic position"]["mstp_meso_scale"]["min"]),
+                                    int(default_data["Multi-scale topographic position"]["mstp_meso_scale"]["max"]),
+                                    int(default_data["Multi-scale topographic position"]["mstp_meso_scale"]["step"]))
+            self.mstp_broad_scale = (int(default_data["Multi-scale topographic position"]["mstp_broad_scale"]["min"]),
+                                     int(default_data["Multi-scale topographic position"]["mstp_broad_scale"]["max"]),
+                                     int(default_data["Multi-scale topographic position"]["mstp_broad_scale"]["step"]))
+            self.mstp_lightness = float(default_data["Multi-scale topographic position"]["mstp_lightness"]["value"])
             dat.close()
 
     def get_shadow_file_name(self, dem_path):
@@ -886,7 +940,7 @@ class DefaultValues:
                                              self.get_local_dominance_file_name(dem_path, bit8)))
 
     def get_msrm_file_name(self, dem_path, bit8=False):
-        """Returns Simple local relief model name, dem name (from dem_path) with added slrm parameters.
+        """Returns Multi-scale relief model name, dem name (from dem_path) with added msrm parameters.
         If bit8 it returns 8bit file name."""
         dem_name = os.path.basename(dem_path).split(".")[0]  # base name without extension
         if bit8:
@@ -897,9 +951,18 @@ class DefaultValues:
                                                      self.msrm_scaling_factor)
 
     def get_msrm_path(self, dem_path, bit8=False):
-        """Returns path to Simple local relief model. Generates slrm name (uses default attributes and dem name from
+        """Returns path to Multi-scale relief model. Generates msrm name (uses default attributes and dem name from
         dem_path) and adds dem directory (dem_path) to it. If bit8 it returns 8bit file path."""
         return os.path.normpath(os.path.join(os.path.dirname(dem_path), self.get_msrm_file_name(dem_path, bit8)))
+
+    def get_mstp_file_name(self, dem_path):
+        """Returns Multi-scale topographic position name, dem name (from dem_path) with added mstp parameters.
+        If bit8 it returns 8bit file name."""
+        dem_name = os.path.basename(dem_path).split(".")[0]  # base name without extension
+        return "{}_MSTP_L{}.tif".format(dem_name, self.mstp_lightness)
+
+    def get_mstp_path(self, dem_path):
+        return os.path.normpath(os.path.join(os.path.dirname(dem_path), self.get_mstp_file_name(dem_path)))
 
     def get_vis_file_name(self, dem_path, vis, bit8=False):
         """Returns vis (visualization) file name. Dem name (from dem_path) with added vis parameters.
@@ -930,6 +993,8 @@ class DefaultValues:
             return self.get_local_dominance_file_name(dem_path=dem_path, bit8=bit8)
         elif vis.lower() == "multi-scale relief model":
             return self.get_msrm_file_name(dem_path=dem_path, bit8=bit8)
+        elif vis.lower() == "multi-scale topographic position":
+            return self.get_mstp_file_name(dem_path=dem_path)
         else:
             raise Exception("rvt.default.DefaultValues.get_vis_file_name: Wrong vis (visualization) parameter!")
 
@@ -963,6 +1028,8 @@ class DefaultValues:
             return self.get_local_dominance_path(dem_path=dem_path, bit8=bit8)
         elif vis.lower() == "multi-scale relief model":
             return self.get_msrm_path(dem_path=dem_path, bit8=bit8)
+        elif vis.lower() == "multi-scale topographic position":
+            return self.get_mstp_path(dem_path=dem_path)
         else:
             raise Exception("rvt.default.DefaultValues.get_vis_file_name: Wrong vis (visualization) parameter!")
 
@@ -1057,6 +1124,8 @@ class DefaultValues:
                                                       min_norm=self.msrm_bytscl[1], max_norm=self.msrm_bytscl[2],
                                                       normalization=self.msrm_bytscl[0])
             return rvt.vis.byte_scale(data=norm_arr, no_data=np.nan)
+        elif vis.lower() == "multi-scale topographic position":
+            return float_arr
         else:
             raise Exception("rvt.default.DefaultValues.float_to_8bit: Wrong vis (visualization) parameter!")
 
@@ -1783,7 +1852,7 @@ class DefaultValues:
         return msrm_arr
 
     def save_msrm(self, dem_path, custom_dir=None, save_float=None, save_8bit=None):
-        """Calculates and saves Simple local relief model from dem (dem_path) with default parameters.
+        """Calculates and saves Multi-scale relief model from dem (dem_path) with default parameters.
         If custom_dir is None it saves in dem directory else in custom_dir. If path to file already exists we can
         overwrite file (overwrite=1) or not (overwrite=0). If save_float is True method creates Gtiff with real values,
         if save_8bit is True method creates GTiff with bytescaled values (0-255)."""
@@ -1850,6 +1919,46 @@ class DefaultValues:
                                 e_type=1)
             return 1
 
+    def get_mstp(self, dem_arr, no_data=None):
+        mstp_arr = rvt.vis.mstp(dem=dem_arr, local_scale=self.mstp_local_scale, meso_scale=self.mstp_meso_scale,
+                                broad_scale=self.mstp_broad_scale, lightness=self.mstp_lightness, no_data=no_data,
+                                fill_no_data=bool(self.fill_no_data),
+                                fill_method=str(self.fill_method),
+                                keep_original_no_data=bool(self.keep_original_no_data))
+        return mstp_arr
+
+    def save_mstp(self, dem_path, custom_dir=None):
+        """Calculates and saves Multi-scale topographic position from dem (dem_path) with default parameters.
+        If custom_dir is None it saves in dem directory else in custom_dir. If path to file already exists we can
+        overwrite file (overwrite=1) or not (overwrite=0)."""
+        if not os.path.isfile(dem_path):
+            raise Exception("rvt.default.DefaultValues.save_msrm: dem_path doesn't exist!")
+        if custom_dir is None:
+            mstp_path = self.get_mstp_path(dem_path)
+        else:
+            mstp_path = os.path.join(custom_dir, self.get_mstp_file_name(dem_path))
+
+        if os.path.isfile(mstp_path) and not self.overwrite:
+            return 0
+
+        dem_size = get_raster_size(raster_path=dem_path)
+        if dem_size[0] * dem_size[1] > self.multiproc_size_limit:  # multiprocess, calculating on blocks
+            rvt.multiproc.save_multiprocess_vis(dem_path=dem_path, vis="multi-scale topographic position", default=self,
+                                                custom_dir=custom_dir,
+                                                save_float=False, save_8bit=True,
+                                                x_block_size=self.multiproc_block_size[0],
+                                                y_block_size=self.multiproc_block_size[1])
+            return 1
+        else:  # singleprocess
+            dict_arr_res = get_raster_arr(raster_path=dem_path)
+            dem_arr = dict_arr_res["array"]
+            no_data = dict_arr_res["no_data"]
+
+            mstp_arr = self.get_mstp(dem_arr=dem_arr, no_data=no_data).astype('float32')
+            save_raster(src_raster_path=dem_path, out_raster_path=mstp_path, out_raster_arr=mstp_arr,
+                        e_type=1)
+            return 1
+
     def save_visualizations(self, dem_path, custom_dir=None):
         """Save all visualizations where self.'vis'_compute = True also saves float where self.'vis'_save_float = True
         and 8bit where self.'vis'_save_8bit = True. In the end method creates log file."""
@@ -1873,6 +1982,8 @@ class DefaultValues:
             self.save_local_dominance(dem_path, custom_dir=custom_dir)
         if self.msrm_compute:
             self.save_msrm(dem_path, custom_dir=custom_dir)
+        if self.mstp_compute:
+            self.save_mstp(dem_path, custom_dir=custom_dir)
         end_time = time.time()
         compute_time = end_time - start_time
         self.create_log_file(dem_path=dem_path, custom_dir=custom_dir, compute_time=compute_time)
@@ -2002,6 +2113,23 @@ class DefaultValues:
                 dat.write("\t\t\t{}\n".format(os.path.abspath(
                     os.path.join(log_dir, self.get_slrm_file_name(dem_path, bit8=True)))))
             dat.write("\n")
+        if self.msrm_compute:
+            dat.write("\tMulti-scale relief model\n")
+            dat.write("\t\tmsrm_feature_min=\t\t{}\n".format(self.msrm_feature_min))
+            dat.write("\t\tmsrm_feature_max=\t\t{}\n".format(self.msrm_feature_max))
+            dat.write("\t\tmsrm_scaling_factor=\t\t{}\n".format(self.msrm_scaling_factor))
+            if self.msrm_save_float:
+                dat.write("\t\t>> Output file:\n")
+                dat.write("\t\t>> Output file:\n")
+                dat.write("\t\t\t{}\n".format(os.path.abspath(
+                    os.path.join(log_dir, self.get_msrm_file_name(dem_path)))))
+            if self.msrm_save_8bit:
+                dat.write("\t\t>> Output 8bit file:\n")
+                dat.write("\t\tmsrm_bytscl=\t\t({}, {}, {})\n".format(self.msrm_bytscl[0], self.msrm_bytscl[1],
+                                                                      self.msrm_bytscl[2]))
+                dat.write("\t\t\t{}\n".format(os.path.abspath(
+                    os.path.join(log_dir, self.get_msrm_file_name(dem_path, bit8=True)))))
+            dat.write("\n")
         if self.svf_compute:
             dat.write("\tSky-View Factor\n")
             dat.write("\t\tsvf_n_dir=\t\t{}\n".format(self.svf_n_dir))
@@ -2107,21 +2235,17 @@ class DefaultValues:
                     os.path.join(log_dir, self.get_local_dominance_file_name(dem_path, bit8=True)))))
             dat.write("\n")
         if self.msrm_compute:
-            dat.write("\tMulti-scale relief model\n")
-            dat.write("\t\tmsrm_feature_min=\t\t{}\n".format(self.msrm_feature_min))
-            dat.write("\t\tmsrm_feature_max=\t\t{}\n".format(self.msrm_feature_max))
-            dat.write("\t\tmsrm_scaling_factor=\t\t{}\n".format(self.msrm_scaling_factor))
-            if self.msrm_save_float:
-                dat.write("\t\t>> Output file:\n")
-                dat.write("\t\t>> Output file:\n")
-                dat.write("\t\t\t{}\n".format(os.path.abspath(
-                    os.path.join(log_dir, self.get_msrm_file_name(dem_path)))))
-            if self.msrm_save_8bit:
-                dat.write("\t\t>> Output 8bit file:\n")
-                dat.write("\t\tmsrm_bytscl=\t\t({}, {}, {})\n".format(self.msrm_bytscl[0], self.msrm_bytscl[1],
-                                                                      self.msrm_bytscl[2]))
-                dat.write("\t\t\t{}\n".format(os.path.abspath(
-                    os.path.join(log_dir, self.get_msrm_file_name(dem_path, bit8=True)))))
+            dat.write("\tMulti-scale topographic position\n")
+            dat.write("\t\tmstp_local_scale=\t\t({}, {}, {})\n".format(
+                self.mstp_local_scale[0], self.mstp_local_scale[1], self.mstp_local_scale[2]))
+            dat.write("\t\tmstp_meso_scale=\t\t({}, {}, {})\n".format(
+                self.mstp_meso_scale[0], self.mstp_meso_scale[1], self.mstp_meso_scale[2]))
+            dat.write("\t\tmstp_broad_scale=\t\t({}, {}, {})\n".format(
+                self.mstp_broad_scale[0], self.mstp_broad_scale[1], self.mstp_broad_scale[2]))
+            dat.write("\t\tmstp_lightness=\t\t{}\n".format(self.mstp_lightness))
+            dat.write("\t\t>> Output file:\n")
+            dat.write("\t\t\t{}\n".format(os.path.abspath(
+                os.path.join(log_dir, self.get_mstp_file_name(dem_path)))))
             dat.write("\n")
 
         if compute_time is not None:

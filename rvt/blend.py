@@ -128,7 +128,8 @@ class BlenderLayer:
                         self.vis.lower() != "anisotropic sky-view factor" and \
                         self.vis.lower() != "openness - positive" and self.vis.lower() != "openness - negative" and \
                         self.vis.lower() != "sky illumination" and self.vis.lower() != "local dominance" and \
-                        self.vis.lower() != "multi-scale relief model":
+                        self.vis.lower() != "multi-scale relief model" and \
+                        self.vis.lower() != "multi-scale topographic position":
                     raise Exception("rvt.blend.BlenderLayer.check_data: Incorrect vis, if you don't input image or "
                                     "image_path you have to input known visualization method (vis)!")
 
@@ -450,6 +451,16 @@ class BlenderCombination:
                     else:
                         image = default.get_msrm(dem_arr=self.dem_arr, resolution=self.dem_resolution, no_data=no_data)
                         norm_image = normalize_image(visualization, image, min_norm, max_norm, normalization)
+                elif self.layers[i_img].vis.lower() == "multi-scale topographic position":
+                    if save_visualizations:
+                        default.save_mstp(dem_path=self.dem_path, custom_dir=save_render_directory)
+                        image_path = default.get_mstp_path(self.dem_path)
+                        norm_image = normalize_image(visualization, rvt.default.get_raster_arr(image_path)["array"],
+                                                     min_norm, max_norm, normalization)
+                    else:
+                        image = default.get_mstp(dem_arr=self.dem_arr, no_data=no_data)
+                        norm_image = normalize_image(visualization, image, min_norm, max_norm, normalization)
+
 
             # if current layer has visualization applied, but there has been no rendering
             # of images yet, than current layer will be the initial value of rendered_image
@@ -591,6 +602,14 @@ class BlenderCombination:
                 dat.write("\t\tmsrm_feature_min=\t\t{}\n".format(default.msrm_feature_min))
                 dat.write("\t\tmsrm_feature_max=\t\t{}\n".format(default.msrm_feature_max))
                 dat.write("\t\tmsrm_scaling_factor=\t\t{}\n".format(default.msrm_scaling_factor))
+            elif layer.vis.lower() == "multi-scale topographic position":
+                dat.write("\t\tmstp_local_scale=\t\t({}, {}, {})\n".format(
+                    default.mstp_local_scale[0], default.mstp_local_scale[1], default.mstp_local_scale[2]))
+                dat.write("\t\tmstp_meso_scale=\t\t({}, {}, {})\n".format(
+                    default.mstp_meso_scale[0], default.mstp_meso_scale[1], default.mstp_meso_scale[2]))
+                dat.write("\t\tmstp_broad_scale=\t\t({}, {}, {})\n".format(
+                    default.mstp_broad_scale[0], default.mstp_broad_scale[1], default.mstp_broad_scale[2]))
+                dat.write("\t\tmstp_lightness=\t\t{}\n".format(default.mstp_lightness))
             dat.write("Norm: {}\n".format(layer.normalization))
             dat.write("Linear normalization, min: {}, max: {}\n".format(layer.min, layer.max))
             dat.write("Opacity: {}\n".format(layer.opacity))
@@ -742,6 +761,12 @@ class TerrainSettings:
         self.msrm_feature_min = None
         self.msrm_feature_max = None
         self.msrm_scaling_factor = None
+        # multi-scale topographic position
+        self.mstp_local_scale = None
+        self.mstp_meso_scale = None
+        self.mstp_broad_scale = None
+        self.mstp_lightness = None
+
         # linear histogram stretches tuple(min, max)
         self.hs_stretch = None
         self.mhs_stretch = None
@@ -754,6 +779,7 @@ class TerrainSettings:
         self.sim_stretch = None
         self.ld_stretch = None
         self.msrm_stretch = None
+        self.mstp_stretch = None
 
     def read_from_file(self, file_path):
         """Reads combinations from .json file."""
@@ -864,7 +890,29 @@ class TerrainSettings:
         except KeyError:
             pass
         try:
-            self.msrm_scaling_factor = float(terrain_data["Multi-scale relief model"]["msrm_scaling_factor"]["value"])
+            self.msrm_scaling_factor = int(terrain_data["Multi-scale relief model"]["msrm_scaling_factor"]["value"])
+        except KeyError:
+            pass
+        try:
+            self.mstp_local_scale = (int(terrain_data["Multi-scale topographic position"]["mstp_local_scale"]["min"]),
+                                     int(terrain_data["Multi-scale topographic position"]["mstp_local_scale"]["max"]),
+                                     int(terrain_data["Multi-scale topographic position"]["mstp_local_scale"]["step"]))
+        except KeyError:
+            pass
+        try:
+            self.mstp_meso_scale = (int(terrain_data["Multi-scale topographic position"]["mstp_meso_scale"]["min"]),
+                                     int(terrain_data["Multi-scale topographic position"]["mstp_meso_scale"]["max"]),
+                                     int(terrain_data["Multi-scale topographic position"]["mstp_meso_scale"]["step"]))
+        except KeyError:
+            pass
+        try:
+            self.mstp_broad_scale = (int(terrain_data["Multi-scale topographic position"]["mstp_broad_scale"]["min"]),
+                                     int(terrain_data["Multi-scale topographic position"]["mstp_broad_scale"]["max"]),
+                                     int(terrain_data["Multi-scale topographic position"]["mstp_broad_scale"]["step"]))
+        except KeyError:
+            pass
+        try:
+            self.mstp_lightness = float(terrain_data["Multi-scale topographic position"]["mstp_lightness"]["value"])
         except KeyError:
             pass
         try:
@@ -922,6 +970,11 @@ class TerrainSettings:
                                  float(terrain_data["Multi-scale relief model"]["stretch"]["max"]))
         except KeyError:
             pass
+        try:
+            self.mstp_stretch = (float(terrain_data["Multi-scale topographic position"]["stretch"]["min"]),
+                                 float(terrain_data["Multi-scale topographic position"]["stretch"]["max"]))
+        except KeyError:
+            pass
 
     def apply_terrain(self, default: rvt.default.DefaultValues, combination: BlenderCombination):
         """It overwrites default (DefaultValues) and combination (BlenderCombination),
@@ -976,6 +1029,14 @@ class TerrainSettings:
             default.msrm_feature_max = self.msrm_feature_max
         if self.msrm_scaling_factor is not None:
             default.msrm_scaling_factor = self.msrm_scaling_factor
+        if self.mstp_local_scale is not None:
+            default.mstp_local_scale = self.mstp_local_scale
+        if self.mstp_meso_scale is not None:
+            default.mstp_meso_scale = self.mstp_meso_scale
+        if self.mstp_broad_scale is not None:
+            default.mstp_broad_scale = self.mstp_broad_scale
+        if self.mstp_lightness is not None:
+            default.mstp_lightness = self.mstp_lightness
 
         # linear histogram stretches, combination values overwrite
         for layer in combination.layers:
@@ -1009,9 +1070,12 @@ class TerrainSettings:
             elif layer.vis.lower() == "local dominance" and self.ld_stretch is not None:
                 layer.min = self.ld_stretch[0]
                 layer.max = self.ld_stretch[1]
-            elif layer.vis.lower() == "multi-scale relief model" and self.msrm_stretch is None:
-                layer.min = self.ld_stretch[0]
-                layer.max = self.ld_stretch[1]
+            elif layer.vis.lower() == "multi-scale relief model" and self.msrm_stretch is not None:
+                layer.min = self.msrm_stretch[0]
+                layer.max = self.msrm_stretch[1]
+            elif layer.vis.lower() == "multi-scale topographic position" and self.mstp_stretch is not None:
+                layer.min = self.mstp_stretch[0]
+                layer.max = self.mstp_stretch[1]
 
 
 class TerrainsSettings:
