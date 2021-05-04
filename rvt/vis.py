@@ -895,7 +895,7 @@ def local_dominance(dem,
                     ):
     """
     Compute Local Dominance dem visualization.
-    Adapted from original version that is part of the Lida Visualisation Toolbox LiVT developed by Ralf Hesse.
+    Adapted from original version that is part of the Lidar Visualisation Toolbox LiVT developed by Ralf Hesse.
 
     Parameters
     ----------
@@ -1756,16 +1756,18 @@ def fill_where_nan(dem, method="idw"):
     """
     Replaces np.nan values, with interpolation (extrapolation).
 
-    Methods
+    Parameters
     -------
-    linear_row : Linear row interpolation (fast) (1D) (array is flattened and then linear interpolation is performed).
-                 This method is fast but very inaccurate.
-    idw_r_p : Inverse Distance Weighting interpolation.
-              If you only input idw it will take default parameters (r=20, p=2).
-              You can also input interpolation radius (r) and power (p) for weights.
-              Example: idw_5_2 means radius = 5, power = 2.
-    kd_tree : K-D Tree interpolation.
-    nearest_neighbour : Nearest neighbour interpolation.
+    dem : numpy.ndarray
+        Input digital elevation model as 2D numpy array.
+    method : {'linear_row', 'idw_r_p', 'kd_tree', 'nearest_neighbour'}
+        'linear_row', Linear row interpolation, array is flattened and then linear interpolation is performed.
+        This method is fast but very inaccurate.
+        'idw_r_p', Inverse Distance Weighting interpolation. If you only input idw it will take default parameters
+         (r=20, p=2). You can also input interpolation radius (r) and power (p) for weights. (Example:
+         idw_5_2 means radius = 5, power = 2.)
+        'kd_tree', K-D Tree interpolation.
+        'nearest_neighbour', Nearest neighbour interpolation.
     """
     if np.all(~np.isnan(dem)):  # if there is no nan return dem
         return dem
