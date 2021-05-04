@@ -1763,7 +1763,7 @@ def fill_where_nan(dem, method="idw"):
     method : {'linear_row', 'idw_r_p', 'kd_tree', 'nearest_neighbour'}
         'linear_row', Linear row interpolation, array is flattened and then linear interpolation is performed.
         This method is fast but very inaccurate.
-        'idw_r_p', Inverse Distance Weighting interpolation. If you only input idw it will take default parameters
+        'idw_r_p', Inverse Distance Weighting interpolation. If you only input idw it will take default parameters 
          (r=20, p=2). You can also input interpolation radius (r) and power (p) for weights. (Example:
          idw_5_2 means radius = 5, power = 2.)
         'kd_tree', K-D Tree interpolation.
