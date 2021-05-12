@@ -2234,13 +2234,13 @@ class DefaultValues:
                 dat.write("\t\t\t{}\n".format(os.path.abspath(
                     os.path.join(log_dir, self.get_local_dominance_file_name(dem_path, bit8=True)))))
             dat.write("\n")
-        if self.msrm_compute:
+        if self.mstp_compute:
             dat.write("\tMulti-scale topographic position\n")
-            dat.write("\t\tmstp_local_scale=\t\t({}, {}, {})\n".format(
+            dat.write("\t\tmstp_local_scale=\t({}, {}, {})\n".format(
                 self.mstp_local_scale[0], self.mstp_local_scale[1], self.mstp_local_scale[2]))
-            dat.write("\t\tmstp_meso_scale=\t\t({}, {}, {})\n".format(
+            dat.write("\t\tmstp_meso_scale=\t({}, {}, {})\n".format(
                 self.mstp_meso_scale[0], self.mstp_meso_scale[1], self.mstp_meso_scale[2]))
-            dat.write("\t\tmstp_broad_scale=\t\t({}, {}, {})\n".format(
+            dat.write("\t\tmstp_broad_scale=\t({}, {}, {})\n".format(
                 self.mstp_broad_scale[0], self.mstp_broad_scale[1], self.mstp_broad_scale[2]))
             dat.write("\t\tmstp_lightness=\t\t{}\n".format(self.mstp_lightness))
             dat.write("\t\t>> Output file:\n")
