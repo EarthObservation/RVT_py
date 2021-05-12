@@ -3,8 +3,15 @@
 QGIS Plugin Release history
 ===========================
 
-v 0.6.2
+v 0.6.3
 -------
+
+*   Negative-Openness 8bit reversed colors bug fix.
+*   Added Multi-scale topographic position (MSTP) visualization.
+
+
+v 0.6.2.1
+---------
 
 *   Changed RVT QGIS plugin documentation link in About.
 

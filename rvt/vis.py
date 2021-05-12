@@ -1697,6 +1697,11 @@ def mstp(dem,
     msrm_out : numpy.ndarray
         3D numpy RGB result array of Multi-scale topographic position.
     """
+    if local_scale[0] > local_scale[1] or meso_scale[0] > meso_scale[1] or broad_scale[0] > broad_scale[1]:
+        raise Exception("rvt.vis.mstp: local_scale, meso_scale, broad_scale min has to be smaller than max!")
+    if (local_scale[1] - local_scale[0] < local_scale[2]) or (meso_scale[1] - meso_scale[0] < meso_scale[2]) or\
+            (broad_scale[1] - broad_scale[0] < broad_scale[2]):
+        raise Exception("rvt.vis.mstp: local_scale, meso_scale, broad_scale step has to be within min and max!")
     if not (1000 >= ve_factor >= -1000):
         raise Exception("rvt.vis.mstp: ve_factor must be between -1000 and 1000!")
     if no_data is None and fill_no_data:
@@ -1763,7 +1768,7 @@ def fill_where_nan(dem, method="idw"):
     method : {'linear_row', 'idw_r_p', 'kd_tree', 'nearest_neighbour'}
         'linear_row', Linear row interpolation, array is flattened and then linear interpolation is performed.
         This method is fast but very inaccurate.
-        'idw_r_p', Inverse Distance Weighting interpolation. If you only input idw it will take default parameters 
+        'idw_r_p', Inverse Distance Weighting interpolation. If you only input idw it will take default parameters
          (r=20, p=2). You can also input interpolation radius (r) and power (p) for weights. (Example:
          idw_5_2 means radius = 5, power = 2.)
         'kd_tree', K-D Tree interpolation.
