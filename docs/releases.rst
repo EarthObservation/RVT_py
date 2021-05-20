@@ -3,6 +3,17 @@
 Release history
 ===============
 
+1.0.0a11
+-------
+
+*   Blending with Multiple directions hillshade bug fixed. Now MHS 8-bit is used.
+*   Fixed SVF, ASVF, OPNS file name, added noise remove parameter in the output name.
+
+PRE-RELEASE
+
+May 20, 2021
+
+
 1.0.0a10
 -------
 
