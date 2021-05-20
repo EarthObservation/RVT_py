@@ -352,13 +352,35 @@ class BlenderCombination:
                 elif self.layers[i_img].vis.lower() == "multiple directions hillshade":
                     if save_visualizations:
                         default.save_multi_hillshade(dem_path=self.dem_path, custom_dir=save_render_directory,
-                                                     save_float=True, save_8bit=False)
-                        image_path = default.get_multi_hillshade_path(self.dem_path)
-                        norm_image = normalize_image(visualization, rvt.default.get_raster_arr(image_path)["array"],
+                                                     save_float=False, save_8bit=True)
+                        image_path = default.get_multi_hillshade_path(self.dem_path, bit8=True)
+                        norm_image = normalize_image("", rvt.default.get_raster_arr(image_path)["array"],
+                                                     0, 255, normalization)
+                        norm_image = normalize_image(visualization, norm_image,
                                                      min_norm, max_norm, normalization)
                     else:
-                        image = default.get_multi_hillshade(dem_arr=self.dem_arr, resolution_x=self.dem_resolution,
-                                                            resolution_y=self.dem_resolution, no_data=no_data)
+                        red_band_arr = rvt.vis.hillshade(dem=self.dem_arr, resolution_x=self.dem_resolution,
+                                                         resolution_y=self.dem_resolution,
+                                                         sun_elevation=default.mhs_sun_el, sun_azimuth=315,
+                                                         no_data=no_data,
+                                                         fill_no_data=bool(default.fill_no_data),
+                                                         fill_method=str(default.fill_method),
+                                                         keep_original_no_data=bool(default.keep_original_no_data))
+                        green_band_arr = rvt.vis.hillshade(dem=self.dem_arr, resolution_x=self.dem_resolution,
+                                                           resolution_y=self.dem_resolution,
+                                                           sun_elevation=default.mhs_sun_el, sun_azimuth=22.5,
+                                                           no_data=no_data,
+                                                           fill_no_data=bool(default.fill_no_data),
+                                                           fill_method=str(default.fill_method),
+                                                           keep_original_no_data=bool(default.keep_original_no_data))
+                        blue_band_arr = rvt.vis.hillshade(dem=self.dem_arr, resolution_x=self.dem_resolution,
+                                                          resolution_y=self.dem_resolution,
+                                                          sun_elevation=default.mhs_sun_el, sun_azimuth=90,
+                                                          no_data=no_data,
+                                                          fill_no_data=bool(default.fill_no_data),
+                                                          fill_method=str(default.fill_method),
+                                                          keep_original_no_data=bool(default.keep_original_no_data))
+                        image = np.array([red_band_arr, green_band_arr, blue_band_arr])
                         norm_image = normalize_image(visualization, image, min_norm, max_norm, normalization)
                 elif self.layers[i_img].vis.lower() == "simple local relief model":
                     if save_visualizations:
@@ -460,7 +482,6 @@ class BlenderCombination:
                     else:
                         image = default.get_mstp(dem_arr=self.dem_arr, no_data=no_data)
                         norm_image = normalize_image(visualization, image, min_norm, max_norm, normalization)
-
 
             # if current layer has visualization applied, but there has been no rendering
             # of images yet, than current layer will be the initial value of rendered_image
@@ -901,8 +922,8 @@ class TerrainSettings:
             pass
         try:
             self.mstp_meso_scale = (int(terrain_data["Multi-scale topographic position"]["mstp_meso_scale"]["min"]),
-                                     int(terrain_data["Multi-scale topographic position"]["mstp_meso_scale"]["max"]),
-                                     int(terrain_data["Multi-scale topographic position"]["mstp_meso_scale"]["step"]))
+                                    int(terrain_data["Multi-scale topographic position"]["mstp_meso_scale"]["max"]),
+                                    int(terrain_data["Multi-scale topographic position"]["mstp_meso_scale"]["step"]))
         except KeyError:
             pass
         try:
