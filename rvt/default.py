@@ -848,10 +848,16 @@ class DefaultValues:
         """Returns Sky-view factor name, dem name (from dem_path) with added svf parameters.
         If bit8 it returns 8bit file name."""
         dem_name = os.path.basename(dem_path).split(".")[0]  # base name without extension
+        out_name = "{}_SVF_R{}_D{}".format(dem_name, self.svf_r_max, self.svf_n_dir)
+        if self.svf_noise == 1:
+            out_name += "_NRlow"
+        elif self.svf_noise == 2:
+            out_name += "_NRmedium"
+        elif self.svf_noise == 3:
+            out_name += "_NRstrong"
         if bit8:
-            return "{}_SVF_R{}_D{}_8bit.tif".format(dem_name, self.svf_r_max, self.svf_n_dir)
-        else:
-            return "{}_SVF_R{}_D{}.tif".format(dem_name, self.svf_r_max, self.svf_n_dir)
+            out_name += "_8bit"
+        return out_name + ".tif"
 
     def get_svf_path(self, dem_path, bit8=False):
         """Returns path to Sky-view factor. Generates svf name (uses default attributes and dem name from
@@ -867,6 +873,12 @@ class DefaultValues:
             out_name += "_ALlow"
         elif self.asvf_level == 2:
             out_name += "_ALstrong"
+        if self.svf_noise == 1:
+            out_name += "_NRlow"
+        elif self.svf_noise == 2:
+            out_name += "_NRmedium"
+        elif self.svf_noise == 3:
+            out_name += "_NRstrong"
         if bit8:
             out_name += "_8bit"
         return out_name + ".tif"
@@ -880,10 +892,16 @@ class DefaultValues:
         """Returns Positive Openness name, dem name (from dem_path) with added pos opns parameters.
         If bit8 it returns 8bit file name."""
         dem_name = os.path.basename(dem_path).split(".")[0]  # base name without extension
+        out_name = "{}_OPEN-POS_R{}_D{}".format(dem_name, self.svf_r_max, self.svf_n_dir)
+        if self.svf_noise == 1:
+            out_name += "_NRlow"
+        elif self.svf_noise == 2:
+            out_name += "_NRmedium"
+        elif self.svf_noise == 3:
+            out_name += "_NRstrong"
         if bit8:
-            return "{}_OPEN-POS_R{}_D{}_8bit.tif".format(dem_name, self.svf_r_max, self.svf_n_dir)
-        else:
-            return "{}_OPEN-POS_R{}_D{}.tif".format(dem_name, self.svf_r_max, self.svf_n_dir)
+            out_name += "_8bit"
+        return out_name + ".tif"
 
     def get_opns_path(self, dem_path, bit8=False):
         """Returns path to Positive Openness. Generates pos opns name (uses default attributes and dem name from
@@ -894,10 +912,16 @@ class DefaultValues:
         """Returns Negative Openness name, dem name (from dem_path) with added neg opns parameters.
         If bit8 it returns 8bit file name."""
         dem_name = os.path.basename(dem_path).split(".")[0]  # base name without extension
+        out_name = "{}_OPEN-NEG_R{}_D{}".format(dem_name, self.svf_r_max, self.svf_n_dir)
+        if self.svf_noise == 1:
+            out_name += "_NRlow"
+        elif self.svf_noise == 2:
+            out_name += "_NRmedium"
+        elif self.svf_noise == 3:
+            out_name += "_NRstrong"
         if bit8:
-            return "{}_OPEN-NEG_R{}_D{}_8bit.tif".format(dem_name, self.svf_r_max, self.svf_n_dir)
-        else:
-            return "{}_OPEN-NEG_R{}_D{}.tif".format(dem_name, self.svf_r_max, self.svf_n_dir)
+            out_name += "_8bit"
+        return out_name + ".tif"
 
     def get_neg_opns_path(self, dem_path, bit8=False):
         """Returns path to Negative Openness. Generates pos neg name (uses default attributes and dem name from
