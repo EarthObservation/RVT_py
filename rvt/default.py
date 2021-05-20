@@ -854,7 +854,7 @@ class DefaultValues:
         elif self.svf_noise == 2:
             out_name += "_NRmedium"
         elif self.svf_noise == 3:
-            out_name += "_NRstrong"
+            out_name += "_NRhigh"
         if bit8:
             out_name += "_8bit"
         return out_name + ".tif"
@@ -872,13 +872,13 @@ class DefaultValues:
         if self.asvf_level == 1:
             out_name += "_ALlow"
         elif self.asvf_level == 2:
-            out_name += "_ALstrong"
+            out_name += "_ALhigh"
         if self.svf_noise == 1:
             out_name += "_NRlow"
         elif self.svf_noise == 2:
             out_name += "_NRmedium"
         elif self.svf_noise == 3:
-            out_name += "_NRstrong"
+            out_name += "_NRhigh"
         if bit8:
             out_name += "_8bit"
         return out_name + ".tif"
@@ -898,7 +898,7 @@ class DefaultValues:
         elif self.svf_noise == 2:
             out_name += "_NRmedium"
         elif self.svf_noise == 3:
-            out_name += "_NRstrong"
+            out_name += "_NRhigh"
         if bit8:
             out_name += "_8bit"
         return out_name + ".tif"
