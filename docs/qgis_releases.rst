@@ -3,6 +3,14 @@
 QGIS Plugin Release history
 ===========================
 
+v 0.6.4
+-------
+
+*   Blending with Multiple directions hillshade bug fixed. Now MHS 8-bit is used.
+*   Fixed SVF, ASVF, OPNS file name, added noise remove parameter in the output name.
+*   Added Multi-scale topographic position (MSTP) processing algorithm (function).
+
+
 v 0.6.3
 -------
 
