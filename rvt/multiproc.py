@@ -1,4 +1,4 @@
-import gdal
+from osgeo import gdal
 import rvt.vis
 import rvt.default
 import numpy as np
