@@ -3,6 +3,12 @@
 QGIS Plugin Release history
 ===========================
 
+v 0.7.0
+-------
+
+*   Enabled qgis_process command line utility.
+
+
 v 0.6.4
 -------
 
