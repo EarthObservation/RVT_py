@@ -46,7 +46,7 @@ def gray_scale_to_color_ramp(gray_scale, colormap, alpha=False):
     cm = mpl.cm.get_cmap(colormap)
     rgba_out = cm(gray_scale)  # normalized rgb
     rgba_mtpl_out = np.uint8(rgba_out * 255)  # 0-1 scale to 0-255 and change type to uint8
-    if alpha:
+    if not alpha:
         rgba_out = np.array([rgba_mtpl_out[:, :, 0], rgba_mtpl_out[:, :, 1], rgba_mtpl_out[:, :, 2]])
     else:
         rgba_out = np.array([rgba_mtpl_out[:, :, 0], rgba_mtpl_out[:, :, 1], rgba_mtpl_out[:, :, 2],

@@ -3,6 +3,12 @@
 QGIS Plugin Release history
 ===========================
 
+v 0.7.1
+-------
+
+*   Buttons "Select all" and "Select none" to select/deselect all DEMs.
+
+
 v 0.7.0
 -------
 
