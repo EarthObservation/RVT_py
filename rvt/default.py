@@ -214,7 +214,7 @@ class DefaultValues:
 
     def __init__(self):
         self.overwrite = 0  # (0=False, 1=True)
-        self.fill_no_data = 1
+        self.fill_no_data = 0
         self.fill_method = "idw"
         self.keep_original_no_data = 0
         self.ve_factor = 1
@@ -269,8 +269,8 @@ class DefaultValues:
         # multi-scale topographic position
         self.mstp_compute = 0
         self.mstp_local_scale = (1, 10, 1)
-        self.mstp_meso_scale = (10, 100, 10)
-        self.mstp_broad_scale = (100, 1000, 100)
+        self.mstp_meso_scale = (10, 50, 5)
+        self.mstp_broad_scale = (50, 500, 50)
         self.mstp_lightness = 1.2
         # save float
         self.slp_save_float = 1
