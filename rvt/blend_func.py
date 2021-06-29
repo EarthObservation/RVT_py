@@ -22,11 +22,13 @@ Copyright:
 # python libraries
 import matplotlib as mpl
 import matplotlib.cm
+import matplotlib.colors
 import numpy as np
 import warnings
 
 
-def gray_scale_to_color_ramp(gray_scale, colormap, alpha=False):
+def gray_scale_to_color_ramp(gray_scale, colormap, min_colormap_cut=None, max_colormap_cut=None, alpha=False,
+                             output_8bit=True):
     """
     Turns normalized gray scale np.array to rgba (np.array of 4 np.arrays r, g, b, a).
 
@@ -35,23 +37,53 @@ def gray_scale_to_color_ramp(gray_scale, colormap, alpha=False):
     gray_scale : np.array (2D)
         Normalized gray_scale img as np.array (0-1)
     colormap : str
-        colormap form matplotlib (https://matplotlib.org/3.3.2/tutorials/colors/colormaps.html)
+        Colormap form matplotlib (https://matplotlib.org/3.3.2/tutorials/colors/colormaps.html)
+    min_colormap_cut : float
+        What lower part of colormap to cut to select part of colormap.
+        Valid values are between 0 and 1, if 0.2 it cuts off (deletes) 20% of lower colors in colormap.
+        If None cut is not applied.
+    max_colormap_cut : float
+        What upper part of colormap to cut to select part of colormap.
+        Valid values are between 0 and 1, if 0.8 it cuts off (deletes) 20% of upper colors in colormap.
+        If None cut is not applied.
     alpha : bool
         If True outputs 4D array RGBA, if False outputs 3D array RGB
+    output_8bit : bool
+        If true output values will be int 0-255 instead of normalized values.
     Returns
     -------
     rgba_out : np.array (3D: red 0-255, green 0-255, blue 0-255)
             If alpha False: np.array (4D: red 0-255, green 0-255, blue 0-255, alpha 0-255)
     """
     cm = mpl.cm.get_cmap(colormap)
-    rgba_out = cm(gray_scale)  # normalized rgb
-    rgba_mtpl_out = np.uint8(rgba_out * 255)  # 0-1 scale to 0-255 and change type to uint8
+    if min_colormap_cut is not None or max_colormap_cut is not None:
+        if min_colormap_cut is None:
+            min_colormap_cut = 0.0
+        if max_colormap_cut is None:
+            max_colormap_cut = 1.0
+        if min_colormap_cut > 1 or min_colormap_cut < 0 or max_colormap_cut > 1 or max_colormap_cut < 0:
+            raise Exception("rvt.blend_funct.gray_scale_to_color_ramp: min_colormap_cut and max_colormap_cut must be"
+                            " between 0 and 1!")
+        if min_colormap_cut >= max_colormap_cut:
+            raise Exception("rvt.blend_funct.gray_scale_to_color_ramp: min_colormap_cut can't be smaller than"
+                            " max_colormap_cut!")
+        cm = truncate_colormap(cmap=cm, minval=min_colormap_cut, maxval=max_colormap_cut)
+    rgba_mtpl_out = cm(gray_scale)  # normalized rgb
+    if output_8bit:
+        rgba_mtpl_out = np.uint8(rgba_mtpl_out * 255)  # 0-1 scale to 0-255 and change type to uint8
     if not alpha:
         rgba_out = np.array([rgba_mtpl_out[:, :, 0], rgba_mtpl_out[:, :, 1], rgba_mtpl_out[:, :, 2]])
     else:
         rgba_out = np.array([rgba_mtpl_out[:, :, 0], rgba_mtpl_out[:, :, 1], rgba_mtpl_out[:, :, 2],
                              rgba_mtpl_out[:, :, 3]])
     return rgba_out
+
+
+def truncate_colormap(cmap, minval=0.0, maxval=1.0, n=100):
+    new_cmap = matplotlib.colors.LinearSegmentedColormap.from_list(
+        'trunc({n},{a:.2f},{b:.2f})'.format(n=cmap.name, a=minval, b=maxval),
+        cmap(np.linspace(minval, maxval, n)))
+    return new_cmap
 
 
 def normalize_lin(image, minimum, maximum):
@@ -63,7 +95,7 @@ def normalize_lin(image, minimum, maximum):
     image = (image - minimum) / (maximum - minimum)
     image[image > 1] = 1
     image[image < 0] = 0
-    return image
+    return np.float32(image)
 
 
 def lin_cutoff_calc_from_perc(image, minimum, maximum):
@@ -119,27 +151,29 @@ def lum(img):
         r = img[0]
         g = img[1]
         b = img[2]
-        return (0.3 * r) + (0.59 * g) + (0.11 * b)
+        lum_img = np.float32((0.3 * r) + (0.59 * g) + (0.11 * b))
     else:
-        return img
+        lum_img = img
+
+    return lum_img
 
 
 def matrix_eq_min_lt_zero(r, idx_min_lt_zero, lum_c, min_c):
     r[idx_min_lt_zero] = lum_c[idx_min_lt_zero] + (((r[idx_min_lt_zero] - lum_c[idx_min_lt_zero]) *
-                                                    lum_c[idx_min_lt_zero])
-                                                   / (lum_c[idx_min_lt_zero] - min_c[idx_min_lt_zero]))
+                                                    lum_c[idx_min_lt_zero]) / (lum_c[idx_min_lt_zero] -
+                                                                               min_c[idx_min_lt_zero]))
     return r
 
 
 def matrix_eq_max_gt_one(r, idx_max_c_gt_one, lum_c, max_c):
     r[idx_max_c_gt_one] = lum_c[idx_max_c_gt_one] + (((r[idx_max_c_gt_one] - lum_c[idx_max_c_gt_one]) *
-                                                      (1.0 - lum_c[idx_max_c_gt_one]))
-                                                     / (max_c[idx_max_c_gt_one] - lum_c[idx_max_c_gt_one]))
+                                                      (1.0 - lum_c[idx_max_c_gt_one])) / (max_c[idx_max_c_gt_one]
+                                                                                          - lum_c[idx_max_c_gt_one]))
     return r
 
 
 def channel_min(r, g, b):
-    min_c = r
+    min_c = r * 1.0
     idx_min = np.where(g < min_c)
     min_c[idx_min] = g[idx_min]
     idx_min = np.where(b < min_c)
@@ -148,19 +182,20 @@ def channel_min(r, g, b):
 
 
 def channel_max(r, g, b):
-    max_c = r
-    idx_min = np.where(g > max_c)
-    max_c[idx_min] = g[idx_min]
-    idx_min = np.where(b > max_c)
-    max_c[idx_min] = b[idx_min]
+    max_c = r * 1.0
+    idx_max = np.where(g > max_c)
+    max_c[idx_max] = g[idx_max]
+    idx_max = np.where(b > max_c)
+    max_c[idx_max] = b[idx_max]
     return max_c
 
 
 def clip_color(c, min_c=None, max_c=None):
     lum_c = lum(c)
-    r = c[0]
-    g = c[1]
-    b = c[2]
+
+    r = np.float32(c[0])
+    g = np.float32(c[1])
+    b = np.float32(c[2])
 
     if min_c is None and max_c is None:
         min_c = channel_min(r, g, b)
@@ -176,11 +211,11 @@ def clip_color(c, min_c=None, max_c=None):
     g = matrix_eq_max_gt_one(g, idx_max_c_gt_one, lum_c, max_c)
     b = matrix_eq_max_gt_one(b, idx_max_c_gt_one, lum_c, max_c)
 
-    c[0, :, :] = r
-    c[1, :, :] = g
-    c[2, :, :] = b
-
-    return c
+    c_out = np.zeros(c.shape)
+    c_out[0, :, :] = r
+    c_out[1, :, :] = g
+    c_out[2, :, :] = b
+    return c_out
 
 
 def blend_normal(active, background):
@@ -198,9 +233,16 @@ def blend_multiply(active, background):
 def blend_overlay(active, background):
     idx1 = np.where(background > 0.5)
     idx2 = np.where(background <= 0.5)
-    background[idx1[0], idx1[1]] = (
-            1 - (1 - 2 * (background[idx1[0], idx1[1]] - 0.5)) * (1 - active[idx1[0], idx1[1]]))
-    background[idx2[0], idx2[1]] = ((2 * background[idx2[0], idx2[1]]) * active[idx2[0], idx2[1]])
+    background[idx1] = (1 - (1 - 2 * (background[idx1] - 0.5)) * (1 - active[idx1]))
+    background[idx2] = ((2 * background[idx2]) * active[idx2])
+    return background
+
+
+def blend_soft_light(active, background):
+    idx1 = np.where(background >= 0.5)
+    idx2 = np.where(background < 0.5)
+    background[idx1] = (active[idx1] + (background[idx1] - 0.5) * (0.5 - (0.5 - active[idx1]) ** 2))
+    background[idx2] = (active[idx2] - (0.5 - background[idx2]) * (0.5 - (0.5 - active[idx2]) ** 2))
     return background
 
 
@@ -208,6 +250,7 @@ def blend_luminosity(active, background, min_c=None, max_c=None):
     lum_active = lum(active)
     lum_background = lum(background)
     luminosity = lum_active - lum_background
+
     if len(background.shape) < 3:
         return lum_active
 
@@ -232,6 +275,8 @@ def equation_blend(blend_mode, active, background):
         return blend_multiply(active, background)
     elif blend_mode.lower() == "overlay":
         return blend_overlay(active, background)
+    elif blend_mode.lower() == "soft_light":
+        return blend_soft_light(active, background)
 
 
 def blend_multi_dim_images(blend_mode, active, background):
@@ -257,7 +302,8 @@ def blend_multi_dim_images(blend_mode, active, background):
 
 
 def blend_images(blend_mode, active, background, min_c=None, max_c=None):
-    if blend_mode.lower() == "multiply" or blend_mode.lower() == "overlay" or blend_mode.lower() == "screen":
+    if blend_mode.lower() == "multiply" or blend_mode.lower() == "overlay" or blend_mode.lower() == "screen" \
+            or blend_mode.lower() == "soft_light":
         return blend_multi_dim_images(blend_mode, active, background)
     elif blend_mode.lower() == "luminosity":
         return blend_luminosity(active, background, min_c, max_c)
@@ -266,9 +312,9 @@ def blend_images(blend_mode, active, background, min_c=None, max_c=None):
 
 
 def render_images(active, background, opacity):
-    if np.nanmin(active) < 0 or np.nanmax(active) > 1.1:
+    if np.nanmin(active) < 0 or np.nanmax(active) > 1:
         active = scale_0_to_1(active)
-    if np.nanmin(background) < 0 or np.nanmax(background) > 1.1:
+    if np.nanmin(background) < 0 or np.nanmax(background) > 1:
         background = scale_0_to_1(background)
 
     a_rgb = len(active.shape) == 3

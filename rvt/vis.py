@@ -779,7 +779,7 @@ def sky_view_factor(dem,
         Compute SVF (True) or not (False).
     compute_opns : bool
         Compute OPENNESS (True) or not (False).
-    resolution : int
+    resolution : float
         Pixel resolution.
     svf_n_dir : int
         Number of directions.
@@ -1152,7 +1152,7 @@ def sky_illumination(dem,
     ----------
     dem : numpy.ndarray
         Input digital elevation model as 2D numpy array.
-    resolution : int
+    resolution : float
         DEM pixel size.
     sky_model : str
         Sky model, it can be 'overcast' or 'uniform'.
@@ -1403,7 +1403,7 @@ def shadow_horizon(dem,
     ----------
     dem : numpy.ndarray
         Input digital elevation model as 2D numpy array.
-    resolution : int
+    resolution : float
         DEM pixel size.
     shadow_az : int or float
         Shadow azimuth.
@@ -1466,7 +1466,7 @@ def msrm(dem,
     ----------
     dem : numpy.ndarray
         Input digital elevation model as 2D numpy array.
-    resolution : int
+    resolution : float
         DEM pixel size.
     feature_min: float
         Minimum size of the feature you want to detect in meters.

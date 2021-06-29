@@ -79,6 +79,16 @@ class BlenderLayer:
         Normalization maximum.
     opacity : integer
         Image (visualization) opacity.
+    colormap : str
+        Colormap form matplotlib (https://matplotlib.org/3.3.2/tutorials/colors/colormaps.html).
+    min_colormap_cut : float
+        What lower part of colormap to cut to select part of colormap.
+        Valid values are between 0 and 1, if 0.2 it cuts off (deletes) 20% of lower colors in colormap.
+        If None cut is not applied.
+    max_colormap_cut : float
+        What upper part of colormap to cut to select part of colormap.
+        Valid values are between 0 and 1, if 0.8 it cuts off (deletes) 20% of upper colors in colormap.
+        If None cut is not applied.
     image_path : str
         Path to DEM. Doesn't matter if image is not None. Leave None if you would like for blender to compute it.
     image : numpy.array (2D)
@@ -86,41 +96,52 @@ class BlenderLayer:
     """
 
     def __init__(self, vis_method=None, normalization="value", minimum=None, maximum=None,
-                 blend_mode="normal", opacity=100, image=None, image_path=None):
+                 blend_mode="normal", opacity=100, colormap=None, min_colormap_cut=None, max_colormap_cut=None,
+                 image=None, image_path=None):
         self.vis = vis_method
         self.normalization = normalization
         self.min = minimum
         self.max = maximum
         self.blend_mode = blend_mode
         self.opacity = opacity
+        self.colormap = colormap
+        self.min_colormap_cut = min_colormap_cut
+        self.max_colormap_cut = max_colormap_cut
         self.image_path = image_path
         self.image = image
 
     def check_data(self):
         """ Check Attributes """
+        if self.normalization == "percent":
+            self.normalization = "perc"
         if self.vis is None:  # if vis is None everything is None
             self.normalization = None
             self.min = None
             self.max = None
             self.blend_mode = None
             self.opacity = None
+            self.colormap = None  # leave None if you don't want to apply colormap to grayscale
+            self.min_colormap_cut = None  # if None it equals to 0
+            self.max_colormap_cut = None  # if None it equals to 1
             self.image = None  # leave None if you wish for blender to compute visualization
             self.image_path = None  # leave None if you wish for blender to compute visualization
         else:
-            if self.normalization.lower() != "value" and self.normalization.lower() != "perc":
+            if not (self.normalization.lower() == "value" or self.normalization.lower() == "perc"):
                 raise Exception("rvt.blend.BlenderLayer.check_data: normalization value incorrect!")
-            if 0 > self.min > 100:
-                raise Exception("rvt.blend.BlenderLayer.check_data: min value incorrect [0-100]!")
-            if 0 > self.max > 100:
-                raise Exception("rvt.blend.BlenderLayer.check_data: max value incorrect [0-100]!")
+            if self.normalization.lower() == "perc" and (self.min + self.max) >= 100:
+                raise Exception("rvt.blend.BlenderLayer.check_data: when normalization is perc, min + max has "
+                                "to smaller then 100%!")
             if self.min > self.max and self.normalization.lower() == "value":
                 raise Exception("rvt.blend.BlenderLayer.check_data: min bigger than max!")
             if self.blend_mode.lower() != "normal" and self.blend_mode.lower() != "multiply" and \
                     self.blend_mode.lower() != "overlay" and self.blend_mode.lower() != "luminosity" and \
-                    self.blend_mode.lower() != "screen":
+                    self.blend_mode.lower() != "screen" and self.blend_mode.lower() != "soft_light":
                 raise Exception("rvt.blend.BlenderLayer.check_data: blend_mode incorrect!")
             if 0 > self.opacity > 100:
                 raise Exception("rvt.blend.BlenderLayer.check_data: opacity incorrect [0-100]!")
+            if self.colormap is None and (self.min_colormap_cut is not None or self.max_colormap_cut is not None):
+                raise Exception("rvt.blend.BlenderLayer.check_data: colormap not defined but min_colormap_cut or "
+                                "max_colormap_cut are!")
             if self.image is None and self.image_path is None:
                 if self.vis.lower() != "slope gradient" and self.vis.lower() != "hillshade" and \
                         self.vis.lower() != "shadow" and self.vis.lower() != "multiple directions hillshade" and \
@@ -167,11 +188,14 @@ class BlenderCombination:
         self.dem_path = dem_path
 
     def create_layer(self, vis_method=None, normalization="value", minimum=None, maximum=None,
-                     blend_mode="normal", opacity=100, image=None, image_path=None):
+                     blend_mode="normal", opacity=100, colormap=None, min_colormap_cut=None, max_colormap_cut=None,
+                     image=None, image_path=None):
         """Create BlenderLayer and adds it to layers attribute."""
         if vis_method is not None:
             layer = BlenderLayer(vis_method=vis_method, normalization=normalization, minimum=minimum, maximum=maximum,
-                                 blend_mode=blend_mode, opacity=opacity, image=image, image_path=image_path)
+                                 blend_mode=blend_mode, opacity=opacity, colormap=colormap,
+                                 min_colormap_cut=min_colormap_cut, max_colormap_cut=max_colormap_cut,
+                                 image=image, image_path=image_path)
             self.layers.append(layer)
 
     def add_layer(self, layer: BlenderLayer):
@@ -188,8 +212,15 @@ class BlenderCombination:
         layers_info = []
         for layer in self.layers:
             layers_info.append("layer {}, vis = {}, normalization = {}, min = {}, max = {}, blend_mode = {},"
-                               " opacity = {}".format(layer_nr, layer.vis, layer.normalization, layer.min,
-                                                      layer.max, layer.blend_mode, layer.opacity))
+                               " opacity = {}, colormap = {},"
+                               " min_colormap_cut = {}, max_colormap_cut".format(layer_nr, layer.vis,
+                                                                                 layer.normalization,
+                                                                                 layer.min,
+                                                                                 layer.max, layer.blend_mode,
+                                                                                 layer.opacity,
+                                                                                 layer.colormap,
+                                                                                 layer.min_colormap_cut,
+                                                                                 layer.max_colormap_cut))
             layer_nr += 1
         return layers_info
 
@@ -219,8 +250,32 @@ class BlenderCombination:
             norm_max = float(layer["max"])
             blend_mode = str(layer["blend_mode"])
             opacity = int(layer["opacity"])
+            colormap = None
+            min_colormap_cut = None
+            max_colormap_cut = None
+            try:
+                colormap = str(layer["colormap"])
+                if colormap.lower() == "null" or colormap.lower() == "none":
+                    colormap = None
+            except:
+                colormap = None
+            if colormap is not None:
+                try:
+                    min_colormap_cut = str(layer["min_colormap_cut"])
+                    if min_colormap_cut.lower() == "null" or min_colormap_cut.lower() == "none":
+                        min_colormap_cut = None
+                except:
+                    min_colormap_cut = None
+                try:
+                    max_colormap_cut = str(layer["max_colormap_cut"])
+                    if max_colormap_cut.lower() == "null" or max_colormap_cut.lower() == "none":
+                        max_colormap_cut = None
+                except:
+                    max_colormap_cut = None
+
             self.add_layer(BlenderLayer(vis_method=vis_method, normalization=norm, minimum=norm_min, maximum=norm_max,
-                                        blend_mode=blend_mode, opacity=opacity))
+                                        blend_mode=blend_mode, opacity=opacity, colormap=colormap,
+                                        min_colormap_cut=min_colormap_cut, max_colormap_cut=max_colormap_cut))
 
     def save_to_file(self, file_path):
         """Save layers (manually) to .json file. Parameters image and image_path in each layer have to be None,
@@ -237,10 +292,36 @@ class BlenderCombination:
                                      }}
         i_layer = 1
         for layer in self.layers:
-            json_data["combination"]["layers"].append({"layer": str(i_layer), "visualization_method": layer.vis,
-                                                       "norm": layer.normalization, "min": layer.min,
-                                                       "max": layer.max, "blend_mode": layer.blend_mode,
-                                                       "opacity": layer.opacity})
+            if layer.colormap is None:
+                json_data["combination"]["layers"].append({"layer": str(i_layer), "visualization_method": layer.vis,
+                                                           "norm": layer.normalization, "min": layer.min,
+                                                           "max": layer.max, "blend_mode": layer.blend_mode,
+                                                           "opacity": layer.opacity})
+            else:
+                if layer.min_colormap_cut is None and layer.max_colormap_cut is None:
+                    json_data["combination"]["layers"].append({"layer": str(i_layer), "visualization_method": layer.vis,
+                                                               "norm": layer.normalization, "min": layer.min,
+                                                               "max": layer.max, "blend_mode": layer.blend_mode,
+                                                               "opacity": layer.opacity, "colormap": layer.colormap})
+                elif layer.min_colormap_cut is not None and layer.max_colormap_cut is None:
+                    json_data["combination"]["layers"].append({"layer": str(i_layer), "visualization_method": layer.vis,
+                                                               "norm": layer.normalization, "min": layer.min,
+                                                               "max": layer.max, "blend_mode": layer.blend_mode,
+                                                               "opacity": layer.opacity, "colormap": layer.colormap,
+                                                               "min_colormap_cut": layer.min_colormap_cut})
+                elif layer.min_colormap_cut is None and layer.max_colormap_cut is not None:
+                    json_data["combination"]["layers"].append({"layer": str(i_layer), "visualization_method": layer.vis,
+                                                               "norm": layer.normalization, "min": layer.min,
+                                                               "max": layer.max, "blend_mode": layer.blend_mode,
+                                                               "opacity": layer.opacity, "colormap": layer.colormap,
+                                                               "max_colormap_cut": layer.max_colormap_cut})
+                elif layer.min_colormap_cut is not None and layer.max_colormap_cut is not None:
+                    json_data["combination"]["layers"].append({"layer": str(i_layer), "visualization_method": layer.vis,
+                                                               "norm": layer.normalization, "min": layer.min,
+                                                               "max": layer.max, "blend_mode": layer.blend_mode,
+                                                               "opacity": layer.opacity, "colormap": layer.colormap,
+                                                               "min_colormap_cut": layer.min_colormap_cut,
+                                                               "max_colormap_cut": layer.max_colormap_cut})
             i_layer += 1
         return json_data
 
@@ -483,6 +564,14 @@ class BlenderCombination:
                         image = default.get_mstp(dem_arr=self.dem_arr, no_data=no_data)
                         norm_image = normalize_image(visualization, image, min_norm, max_norm, normalization)
 
+            colormap = self.layers[i_img].colormap
+            min_colormap_cut = self.layers[i_img].min_colormap_cut
+            max_colormap_cut = self.layers[i_img].max_colormap_cut
+            if colormap is not None and len(image.shape) < 3:
+                norm_image = gray_scale_to_color_ramp(gray_scale=norm_image, colormap=colormap, output_8bit=False,
+                                                      min_colormap_cut=min_colormap_cut,
+                                                      max_colormap_cut=max_colormap_cut)
+
             # if current layer has visualization applied, but there has been no rendering
             # of images yet, than current layer will be the initial value of rendered_image
             if rendered_image == []:
@@ -634,6 +723,12 @@ class BlenderCombination:
             dat.write("Norm: {}\n".format(layer.normalization))
             dat.write("Linear normalization, min: {}, max: {}\n".format(layer.min, layer.max))
             dat.write("Opacity: {}\n".format(layer.opacity))
+            if layer.colormap is not None:
+                dat.write("Colormap: {}\n".format(layer.colormap))
+                if layer.min_colormap_cut is not None:
+                    dat.write("Minimum Colormap cut: {}\n".format(layer.min_colormap_cut))
+                if layer.max_colormap_cut is not None:
+                    dat.write("Maximum Colormap cut: {}\n".format(layer.max_colormap_cut))
             dat.write("\n")
 
             i_layer += 1
@@ -1121,3 +1216,126 @@ class TerrainsSettings:
         for terrain_setting in self.terrains_settings:
             if terrain_setting.name == name:
                 return terrain_setting
+
+
+# Advance blending combinations
+def color_relief_image_map(dem, resolution, default: rvt.default.DefaultValues = rvt.default.DefaultValues(),
+                           slope_norm=("value", 0, 50), op_on_norm=("value", -28, 28),
+                           colormap="Reds_r", min_colormap_cut=0.5, max_colormap_cut=1, no_data=None):
+    """
+    RVT Color relief image map (CRIM)
+    Blending combination where layers are:
+    1st: Openness positive - Openness negative, overlay, 50% opacity
+    2nd: Openness positive - Openness negative, luminosity, 50% opacity
+    3rd: Slope gradient, colored with matplotlib colormap
+
+    Parameters
+    ----------
+    dem : numpy.ndarray
+        Input digital elevation model as 2D numpy array.
+    resolution : float
+        DEM pixel size.
+    default : rvt.default.DefaultValues
+        Default values for visualization functions.
+    slope_norm : tuple(mode, min, max)
+        Cutoff normalization for slope.
+        Mode can be 'value' or 'percent' (cut-off units).
+        Values min and max define stretch borders (in mode units).
+    op_on_norm : tuple(mode, min, max)
+        Cutoff normalization for (openness positive - openness negative).
+        Mode can be 'value' or 'percent' (cut-off units).
+        Values min and max define stretch borders (in mode units).
+    colormap : str
+        Colormap form matplotlib (https://matplotlib.org/3.3.2/tutorials/colors/colormaps.html).
+    min_colormap_cut : float
+        What lower part of colormap to cut. Between 0 and 1, if 0.2 it cuts off (deletes) 20% of lower colors
+         in colormap.
+        If None cut is not applied.
+    max_colormap_cut : float
+        What upper part of colormap to cut. Between 0 and 1, if 0.8 it cuts off (deletes) 20% of upper colors
+         in colormap.
+        If None cut is not applied.
+    no_data : int or float
+        Value that represents no_data, all pixels with this value are changed to np.nan .
+
+    Returns
+    -------
+    crim_out : numpy.ndarray
+        2D numpy result array of Color relief image map.
+    """
+    if no_data is not None:
+        dem[dem == no_data] = np.nan
+
+    opns_pos_arr = default.get_sky_view_factor(dem_arr=dem, resolution=resolution,
+                                               compute_svf=False, compute_asvf=False, compute_opns=True,
+                                               no_data=None)["opns"]
+    opns_neg_arr = default.get_sky_view_factor(dem_arr=-1 * dem, resolution=resolution,
+                                               compute_svf=False, compute_asvf=False, compute_opns=True,
+                                               no_data=None)["opns"]
+    opns_pos_neg_arr = opns_pos_arr - opns_neg_arr
+    slope_arr = rvt.vis.slope_aspect(dem=dem, resolution_x=resolution, resolution_y=resolution, output_units="degree")[
+        "slope"]
+
+    blend_combination = rvt.blend.BlenderCombination()
+    blend_combination.create_layer(vis_method="Openness_Pos-Neg", normalization=op_on_norm[0], minimum=op_on_norm[1],
+                                   maximum=op_on_norm[2], blend_mode="overlay", opacity=50,
+                                   image=opns_pos_neg_arr)
+    blend_combination.create_layer(vis_method="Openness_Pos-Neg", normalization=op_on_norm[0], minimum=op_on_norm[1],
+                                   maximum=op_on_norm[2], blend_mode="luminosity", opacity=50,
+                                   image=opns_pos_neg_arr)
+    blend_combination.create_layer(vis_method="slope gradient", normalization=slope_norm[0], minimum=slope_norm[1],
+                                   maximum=slope_norm[2], blend_mode="normal", opacity=100, colormap=colormap,
+                                   min_colormap_cut=min_colormap_cut, max_colormap_cut=max_colormap_cut,
+                                   image=slope_arr)
+    crim_out = blend_combination.render_all_images()
+    return crim_out
+
+
+def e3mstp(dem, resolution, default: rvt.default.DefaultValues = rvt.default.DefaultValues(), no_data=None):
+    """
+    RVT enahanced version 3 Multi-scale topographic position (e3MSTP)
+    Blending combination where layers are:
+    1st: Simple local relief model (SLRM), sreen, 25% opacity
+    2nd: Color relief image map where cmap=Reds_r(0.5-1) (CRIM_Reds_r), soft_light, 70% opacity
+    3rd: Multi-scale topographic postion (MSTP)
+
+    Parameters
+    ----------
+    dem : numpy.ndarray
+        Input digital elevation model as 2D numpy array.
+    resolution : float
+        DEM pixel size.
+    default : rvt.default.DefaultValues
+        Default values for visualization functions.
+    no_data : int or float
+        Value that represents no_data, all pixels with this value are changed to np.nan .
+
+    Returns
+    -------
+    crim_out : numpy.ndarray
+        2D numpy result array of Color relief image map.
+    """
+    if no_data is not None:
+        dem[dem == no_data] = np.nan
+    slrm_arr = default.get_slrm(dem_arr=dem)
+    crim_red_arr = color_relief_image_map(dem=dem, resolution=resolution, default=default,
+                                          slope_norm=("value", 0, 50), op_on_norm=("value", -28, 28),
+                                          colormap="Reds_r", min_colormap_cut=0.5, max_colormap_cut=1)
+    mstp_arr = default.get_mstp(dem_arr=dem)
+
+    blend_combination = rvt.blend.BlenderCombination()
+    blend_combination.create_layer(vis_method="slrm", normalization=default.slrm_bytscl[0],
+                                   minimum=default.slrm_bytscl[1],
+                                   maximum=default.slrm_bytscl[2], blend_mode="screen", opacity=25,
+                                   image=slrm_arr)
+    blend_combination.create_layer(vis_method="crim_red", normalization="value",
+                                   minimum=0,
+                                   maximum=1, blend_mode="soft_light", opacity=70,
+                                   image=crim_red_arr)
+    blend_combination.create_layer(vis_method="mstp", normalization="value",
+                                   minimum=0,
+                                   maximum=255, blend_mode="normal", opacity=100,
+                                   image=mstp_arr)
+    e3mstp_out = blend_combination.render_all_images()
+    return e3mstp_out
+
