@@ -596,7 +596,7 @@ class BlenderCombination:
                 rvt.default.save_raster(src_raster_path=self.dem_path, out_raster_path=save_render_path,
                                         out_raster_arr=rendered_image)
             if save_8bit:
-                rendered_image_8bit = rvt.vis.byte_scale(rendered_image)
+                rendered_image_8bit = rvt.vis.byte_scale(rendered_image, c_min=0, c_max=1)
                 rvt.default.save_raster(src_raster_path=self.dem_path, out_raster_path=save_render_8bit_path,
                                         out_raster_arr=rendered_image_8bit, e_type=1)
         return rendered_image  # returns float
