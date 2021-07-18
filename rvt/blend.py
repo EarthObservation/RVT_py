@@ -589,14 +589,14 @@ class BlenderCombination:
                 top = blend_images(blend_mode, active, background)
                 rendered_image = render_images(top, background, opacity)
 
-                if np.nanmin(background) < 0 or np.nanmax(background > 1):
+                if np.nanmin(rendered_image) < 0 or np.nanmax(rendered_image > 1):
                     warnings.warn("rvt.blend.BlenderCombination.render_all_images: Rendered image scale distorted")
         if save_render_path is not None:  # if paths presented it saves image
             if save_float:
                 rvt.default.save_raster(src_raster_path=self.dem_path, out_raster_path=save_render_path,
                                         out_raster_arr=rendered_image)
             if save_8bit:
-                rendered_image_8bit = rvt.vis.byte_scale(rendered_image, c_min=0, c_max=1)
+                rendered_image_8bit = rvt.vis.byte_scale(rendered_image)
                 rvt.default.save_raster(src_raster_path=self.dem_path, out_raster_path=save_render_8bit_path,
                                         out_raster_arr=rendered_image_8bit, e_type=1)
         return rendered_image  # returns float
