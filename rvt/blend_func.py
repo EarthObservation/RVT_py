@@ -239,10 +239,10 @@ def blend_overlay(active, background):
 
 
 def blend_soft_light(active, background):
-    idx1 = np.where(background >= 0.5)
-    idx2 = np.where(background < 0.5)
-    background[idx1] = (2*active[idx1] * (1-background[idx1]) + np.sqrt(active[idx1])*(2*background[idx1]-1))
-    background[idx2] = (2*active[idx2]*background[idx2] + (active[idx2]**2) * (1-2*background[idx2]))
+    idx1 = np.where(active > 0.5)
+    idx2 = np.where(active <= 0.5)
+    background[idx1] = 1 - (1-background[idx1]) * (1-(active[idx1]-0.5))
+    background[idx2] = background[idx2] * (active[idx2]+0.5)
     return background
 
 
