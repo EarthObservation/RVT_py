@@ -4,7 +4,7 @@ Release history
 ===============
 
 1.0.0a11
--------
+--------
 
 *   Blending with Multiple directions hillshade bug fixed. Now MHS 8-bit is used.
 *   Fixed SVF, ASVF, OPNS file name, added noise remove parameter in the output name.
@@ -15,7 +15,7 @@ May 20, 2021
 
 
 1.0.0a10
--------
+--------
 
 *   Added fill no data methods (IDW, Nearest neighbour, K-D Tree)
 *   Fixed Negative Openness 8bit image (reverted colours).

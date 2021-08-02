@@ -1194,7 +1194,7 @@ def sky_illumination(dem,
     fill_no_data : bool
         If True it fills where np.nan (no_data).
     fill_method : str
-        Method for the fill_no_data (if true) interpolation (look fill_where_nan() function for methods).
+        Method for the fill_no_data (if true) interpolation (look fill_where_nan () function for methods).
     keep_original_no_data : if True it changes all output pixels to np.nan where dem has no_data
 
     Returns
@@ -1788,8 +1788,8 @@ def fill_where_nan(dem, method="idw"):
         'linear_row', Linear row interpolation, array is flattened and then linear interpolation is performed.
         This method is fast but very inaccurate.
         'idw_r_p', Inverse Distance Weighting interpolation. If you only input idw it will take default parameters
-         (r=20, p=2). You can also input interpolation radius (r) and power (p) for weights. (Example:
-         idw_5_2 means radius = 5, power = 2.)
+        (r=20, p=2). You can also input interpolation radius (r) and power (p) for weights. (Example:
+        idw_5_2 means radius = 5, power = 2.)
         'kd_tree', K-D Tree interpolation.
         'nearest_neighbour', Nearest neighbour interpolation.
     """

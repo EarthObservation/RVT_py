@@ -1219,9 +1219,7 @@ class TerrainsSettings:
 
 
 # Advance blending combinations
-def color_relief_image_map(dem, resolution, default: rvt.default.DefaultValues = rvt.default.DefaultValues(),
-                           slope_norm=("value", 0, 50), op_on_norm=("value", -28, 28),
-                           colormap="Reds_r", min_colormap_cut=0.5, max_colormap_cut=1, no_data=None):
+def color_relief_image_map(dem, resolution, default: rvt.default.DefaultValues = rvt.default.DefaultValues(), slope_norm=("value", 0, 50), op_on_norm=("value", -28, 28), colormap="Reds_r", min_colormap_cut=0.5, max_colormap_cut=1, no_data=None):
     """
     RVT Color relief image map (CRIM)
     Blending combination where layers are:
@@ -1248,12 +1246,10 @@ def color_relief_image_map(dem, resolution, default: rvt.default.DefaultValues =
     colormap : str
         Colormap form matplotlib (https://matplotlib.org/3.3.2/tutorials/colors/colormaps.html).
     min_colormap_cut : float
-        What lower part of colormap to cut. Between 0 and 1, if 0.2 it cuts off (deletes) 20% of lower colors
-         in colormap.
+        What lower part of colormap to cut. Between 0 and 1, if 0.2 it cuts off (deletes) 20% of lower colors in colormap.
         If None cut is not applied.
     max_colormap_cut : float
-        What upper part of colormap to cut. Between 0 and 1, if 0.8 it cuts off (deletes) 20% of upper colors
-         in colormap.
+        What upper part of colormap to cut. Between 0 and 1, if 0.8 it cuts off (deletes) 20% of upper colors in colormap.
         If None cut is not applied.
     no_data : int or float
         Value that represents no_data, all pixels with this value are changed to np.nan .
@@ -1261,7 +1257,7 @@ def color_relief_image_map(dem, resolution, default: rvt.default.DefaultValues =
     Returns
     -------
     crim_out : numpy.ndarray
-        2D numpy result array of Color relief image map.
+        2D numpy result array of Color relief image map. 
     """
     if no_data is not None:
         dem[dem == no_data] = np.nan
