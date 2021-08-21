@@ -1220,7 +1220,6 @@ class TerrainsSettings:
 
 # Advance blending combinations
 def color_relief_image_map(dem, resolution, default: rvt.default.DefaultValues = rvt.default.DefaultValues(),
-                           slope_norm=("value", 0, 50), op_on_norm=("value", -28, 28),
                            colormap="Reds_r", min_colormap_cut=0.5, max_colormap_cut=1, no_data=None):
     """
     RVT Color relief image map (CRIM)
@@ -1263,6 +1262,10 @@ def color_relief_image_map(dem, resolution, default: rvt.default.DefaultValues =
     crim_out : numpy.ndarray
         2D numpy result array of Color relief image map.
     """
+    slope_norm = ("value", 0, 0.8)  # ("value", 0, 50) deg
+    op_on_norm = ("value", -28, 28)
+    default.svf_r_max = 10
+
     if no_data is not None:
         dem[dem == no_data] = np.nan
 
@@ -1273,7 +1276,7 @@ def color_relief_image_map(dem, resolution, default: rvt.default.DefaultValues =
                                                compute_svf=False, compute_asvf=False, compute_opns=True,
                                                no_data=None)["opns"]
     opns_pos_neg_arr = opns_pos_arr - opns_neg_arr
-    slope_arr = rvt.vis.slope_aspect(dem=dem, resolution_x=resolution, resolution_y=resolution, output_units="degree")[
+    slope_arr = rvt.vis.slope_aspect(dem=dem, resolution_x=resolution, resolution_y=resolution, output_units="radian")[
         "slope"]
 
     blend_combination = rvt.blend.BlenderCombination()
@@ -1283,7 +1286,7 @@ def color_relief_image_map(dem, resolution, default: rvt.default.DefaultValues =
     blend_combination.create_layer(vis_method="Openness_Pos-Neg", normalization=op_on_norm[0], minimum=op_on_norm[1],
                                    maximum=op_on_norm[2], blend_mode="luminosity", opacity=50,
                                    image=opns_pos_neg_arr)
-    blend_combination.create_layer(vis_method="slope gradient", normalization=slope_norm[0], minimum=slope_norm[1],
+    blend_combination.create_layer(vis_method="slope gradient rad", normalization=slope_norm[0], minimum=slope_norm[1],
                                    maximum=slope_norm[2], blend_mode="normal", opacity=100, colormap=colormap,
                                    min_colormap_cut=min_colormap_cut, max_colormap_cut=max_colormap_cut,
                                    image=slope_arr)
@@ -1319,14 +1322,13 @@ def e3mstp(dem, resolution, default: rvt.default.DefaultValues = rvt.default.Def
         dem[dem == no_data] = np.nan
     slrm_arr = default.get_slrm(dem_arr=dem)
     crim_red_arr = color_relief_image_map(dem=dem, resolution=resolution, default=default,
-                                          slope_norm=("value", 0, 50), op_on_norm=("value", -28, 28),
-                                          colormap="Reds_r", min_colormap_cut=0.5, max_colormap_cut=1)
+                                          colormap="OrRd", min_colormap_cut=0, max_colormap_cut=1)
     mstp_arr = default.get_mstp(dem_arr=dem)
 
     blend_combination = rvt.blend.BlenderCombination()
-    blend_combination.create_layer(vis_method="slrm", normalization=default.slrm_bytscl[0],
-                                   minimum=default.slrm_bytscl[1],
-                                   maximum=default.slrm_bytscl[2], blend_mode="screen", opacity=25,
+    blend_combination.create_layer(vis_method="slrm", normalization="value",
+                                   minimum=-0.5,
+                                   maximum=0.5, blend_mode="screen", opacity=25,
                                    image=slrm_arr)
     blend_combination.create_layer(vis_method="crim_red", normalization="value",
                                    minimum=0,
