@@ -268,8 +268,8 @@ class DefaultValues:
         self.msrm_scaling_factor = 2
         # multi-scale topographic position
         self.mstp_compute = 0
-        self.mstp_local_scale = (1, 10, 1)
-        self.mstp_meso_scale = (10, 50, 5)
+        self.mstp_local_scale = (1, 5, 1)
+        self.mstp_meso_scale = (5, 50, 5)
         self.mstp_broad_scale = (50, 500, 50)
         self.mstp_lightness = 1.2
         # save float
