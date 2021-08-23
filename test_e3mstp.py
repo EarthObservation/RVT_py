@@ -11,7 +11,7 @@ dem_dict = rvt.default.get_raster_arr(dem_path)
 dem_arr = dem_dict["array"]
 dem_res = dem_dict["resolution"][0]
 
-output_e3mstp_path = "{}_{}.tif".format(dem_path.rstrip(".tif"), "e3mstp_soft_light")
+output_e3mstp_path = "{}_{}.tif".format(dem_path.rstrip(".tif"), "e3mstp")
 default = rvt.default.DefaultValues()
 default.mstp_local_scale = (1, 5, 1)
 default.mstp_meso_scale = (5, 50, 5)
