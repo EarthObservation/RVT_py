@@ -443,24 +443,15 @@ class BlenderCombination:
                         red_band_arr = rvt.vis.hillshade(dem=self.dem_arr, resolution_x=self.dem_resolution,
                                                          resolution_y=self.dem_resolution,
                                                          sun_elevation=default.mhs_sun_el, sun_azimuth=315,
-                                                         no_data=no_data,
-                                                         fill_no_data=bool(default.fill_no_data),
-                                                         fill_method=str(default.fill_method),
-                                                         keep_original_no_data=bool(default.keep_original_no_data))
+                                                         no_data=no_data)
                         green_band_arr = rvt.vis.hillshade(dem=self.dem_arr, resolution_x=self.dem_resolution,
                                                            resolution_y=self.dem_resolution,
                                                            sun_elevation=default.mhs_sun_el, sun_azimuth=22.5,
-                                                           no_data=no_data,
-                                                           fill_no_data=bool(default.fill_no_data),
-                                                           fill_method=str(default.fill_method),
-                                                           keep_original_no_data=bool(default.keep_original_no_data))
+                                                           no_data=no_data)
                         blue_band_arr = rvt.vis.hillshade(dem=self.dem_arr, resolution_x=self.dem_resolution,
                                                           resolution_y=self.dem_resolution,
                                                           sun_elevation=default.mhs_sun_el, sun_azimuth=90,
-                                                          no_data=no_data,
-                                                          fill_no_data=bool(default.fill_no_data),
-                                                          fill_method=str(default.fill_method),
-                                                          keep_original_no_data=bool(default.keep_original_no_data))
+                                                          no_data=no_data)
                         image = np.array([red_band_arr, green_band_arr, blue_band_arr])
                         norm_image = normalize_image(visualization, image, min_norm, max_norm, normalization)
                 elif self.layers[i_img].vis.lower() == "simple local relief model":
