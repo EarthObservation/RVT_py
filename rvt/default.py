@@ -983,7 +983,8 @@ class DefaultValues:
         """Returns Multi-scale topographic position name, dem name (from dem_path) with added mstp parameters.
         If bit8 it returns 8bit file name."""
         dem_name = os.path.basename(dem_path).split(".")[0]  # base name without extension
-        return "{}_MSTP_L{}.tif".format(dem_name, self.mstp_lightness)
+        return "{}_MSTP_{}_{}_{}_L{}.tif".format(dem_name, self.mstp_local_scale[1], self.mstp_meso_scale[1],
+                                                 self.mstp_broad_scale[1], self.mstp_lightness)
 
     def get_mstp_path(self, dem_path):
         return os.path.normpath(os.path.join(os.path.dirname(dem_path), self.get_mstp_file_name(dem_path)))
