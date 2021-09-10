@@ -1380,9 +1380,14 @@ def max_elevation_deviation(dem, minimum_radius, maximum_radius, step):
     dev_out : numpy.ndarray
         2D numpy result array of maxDEV - Maximum Deviation from mean elevation.
     """
+    # TODO: Temporary fix DEM nans are changed to 0 and in the result back to nan, find a better solution.
     minimum_radius = int(minimum_radius)
     maximum_radius = int(maximum_radius)
     step = int(step)
+
+    # change nan to 0 and store positions of nan
+    idx_nan = np.isnan(dem)
+    dem[idx_nan] = 0
 
     dem_pad = np.pad(dem, (maximum_radius + 1, maximum_radius), mode="symmetric")
     dem_i1 = integral_image(dem_pad)
@@ -1398,6 +1403,11 @@ def max_elevation_deviation(dem, minimum_radius, maximum_radius, step):
             rad_max_out = np.where(np.abs(dev_max_out) >= np.abs(dev), rad_max_out, kernel_radius)
             dev_max_out = np.where(np.abs(dev_max_out) >= np.abs(dev), dev_max_out, dev)
     # rad_max_out, radius of DEV for maxDEV (for each pixel)
+
+    # change where dem nan back to nan
+    rad_max_out[idx_nan] = np.nan
+    dev_max_out[idx_nan] = np.nan
+
     return dev_max_out
 
 
