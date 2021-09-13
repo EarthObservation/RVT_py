@@ -366,34 +366,36 @@ def mean_filter(dem, kernel_radius):
     if kernel_radius == 0:
         return dem
 
+    # store nans
+    idx_nan_dem = np.isnan(dem)
+
     # mean filter
-    if np.isnan(dem).any():  # contains at least one nan (can't use summed area table approach)
-        # array shifting approach (a little bit slower that summed area table)
-        dem_pad = np.pad(array=dem, pad_width=radius_cell, mode="edge")  # padding
-        mean_out = np.copy(dem_pad)
-        for i_y_roll in range(radius_cell):
-            roll = i_y_roll + 1  # y direction roll
-            mean_out += np.roll(np.copy(dem_pad), roll, axis=0)  # roll positive direction
-            mean_out += np.roll(np.copy(dem_pad), -roll, axis=0)  # roll negative direction
-        y_rolls_sum = np.copy(mean_out)  # sum of all rolls in y direction
-        for i_x_roll in range(radius_cell):  # x direction roll
-            roll = i_x_roll + 1
-            mean_out += np.roll(np.copy(y_rolls_sum), roll, axis=1)  # roll positive direction
-            mean_out += np.roll(np.copy(y_rolls_sum), -roll, axis=1)  # roll negative direction
-        del y_rolls_sum
-        mean_out = mean_out / ((2 * radius_cell + 1) ** 2)  # calculate mean
-        mean_out = mean_out[radius_cell:-radius_cell, radius_cell:-radius_cell]  # remove padding
-    else:  # dem doesn't contains np.nan
-        # summed area table (integral) approach
-        dem_pad = np.pad(dem, (radius_cell + 1, radius_cell), mode="edge")
-        dem_i1 = integral_image(dem_pad)
-        mean_out = np.roll(dem_i1, (radius_cell, radius_cell), axis=(0, 1)) + \
-                     np.roll(dem_i1, (-radius_cell - 1, -radius_cell - 1), axis=(0, 1)) - \
-                     np.roll(dem_i1, (-radius_cell - 1, radius_cell), axis=(0, 1)) - \
-                     np.roll(dem_i1, (radius_cell, -radius_cell - 1), axis=(0, 1))
-        mean_out = mean_out.astype(np.float32)
-        mean_out = mean_out / (2 * radius_cell + 1) ** 2
-        mean_out = mean_out[radius_cell:-(radius_cell + 1), radius_cell:-(radius_cell + 1)]  # remove padding
+    dem_pad = np.pad(dem, (radius_cell + 1, radius_cell), mode="edge")
+    # store nans
+    idx_nan_dem_pad = np.isnan(dem_pad)
+    # change nan to 0
+    dem_pad[idx_nan_dem_pad] = 0
+
+    # kernel nr pixel integral image
+    dem_i_nr_pixels = np.ones(dem_pad.shape)
+    dem_i_nr_pixels[idx_nan_dem_pad] = 0
+    dem_i_nr_pixels = integral_image(dem_i_nr_pixels, np.int)
+
+    dem_i1 = integral_image(dem_pad)
+
+    kernel_nr_pix_arr = (np.roll(dem_i_nr_pixels, (radius_cell, radius_cell), axis=(0, 1)) +
+                         np.roll(dem_i_nr_pixels, (-radius_cell - 1, -radius_cell - 1), axis=(0, 1)) -
+                         np.roll(dem_i_nr_pixels, (-radius_cell - 1, radius_cell), axis=(0, 1)) -
+                         np.roll(dem_i_nr_pixels, (radius_cell, -radius_cell - 1), axis=(0, 1)))
+    mean_out = np.roll(dem_i1, (radius_cell, radius_cell), axis=(0, 1)) + \
+               np.roll(dem_i1, (-radius_cell - 1, -radius_cell - 1), axis=(0, 1)) - \
+               np.roll(dem_i1, (-radius_cell - 1, radius_cell), axis=(0, 1)) - \
+               np.roll(dem_i1, (radius_cell, -radius_cell - 1), axis=(0, 1))
+    mean_out = mean_out / kernel_nr_pix_arr
+    mean_out = mean_out.astype(np.float32)
+    mean_out = mean_out[radius_cell:-(radius_cell + 1), radius_cell:-(radius_cell + 1)]  # remove padding
+    # nan back to nan
+    mean_out[idx_nan_dem] = np.nan
 
     return mean_out
 
@@ -1295,7 +1297,7 @@ def msrm(dem,
     return msrm_out
 
 
-def integral_image(dem):
+def integral_image(dem, data_type=np.float64):
     """
     Calculates integral image (summed-area table), where origin is left upper corner.
 
@@ -1312,11 +1314,11 @@ def integral_image(dem):
      [13. 26. 42. 49.]
      [19. 38. 61. 74.]]
     """
-    dem = dem.astype(np.float64)
+    dem = dem.astype(data_type)
     return dem.cumsum(axis=0).cumsum(axis=1)
 
 
-def topographic_dev(dem, dem_i1, dem_i2, kernel_radius):
+def topographic_dev(dem, dem_i_nr_pixels, dem_i1, dem_i2, kernel_radius):
     """
     Calculates topographic DEV - Deviation from mean elevation. DEV(D) = (z0 - zmD) / sD.
     Where D is radius of kernel, z0 is center pixel value, zmD is mean of all kernel values,
@@ -1326,6 +1328,8 @@ def topographic_dev(dem, dem_i1, dem_i2, kernel_radius):
     ----------
     dem : numpy.ndarray
         Input digital elevation model as 2D numpy array.
+    dem_i_nr_pixels : numpy.ndarray
+        Summed area table (itegral image) of number of pixels.
     dem_i1 : numpy.ndarray
         Summed area table (itegral image) of dem.
     dem_i2 : numpy.ndarray
@@ -1342,17 +1346,25 @@ def topographic_dev(dem, dem_i1, dem_i2, kernel_radius):
     if radius_cell <= 0:
         return dem
 
+    kernel_nr_pix_arr = (np.roll(dem_i_nr_pixels, (radius_cell, radius_cell), axis=(0, 1)) +
+                         np.roll(dem_i_nr_pixels, (-radius_cell - 1, -radius_cell - 1), axis=(0, 1)) -
+                         np.roll(dem_i_nr_pixels, (-radius_cell - 1, radius_cell), axis=(0, 1)) -
+                         np.roll(dem_i_nr_pixels, (radius_cell, -radius_cell - 1), axis=(0, 1)))
+
+    # sum
     dem_mean = np.roll(dem_i1, (radius_cell, radius_cell), axis=(0, 1)) + \
                np.roll(dem_i1, (-radius_cell - 1, -radius_cell - 1), axis=(0, 1)) - \
                np.roll(dem_i1, (-radius_cell - 1, radius_cell), axis=(0, 1)) - \
                np.roll(dem_i1, (radius_cell, -radius_cell - 1), axis=(0, 1))
-    dem_mean = dem_mean / (2 * radius_cell + 1) ** 2
+    # divide with nr of pixels inside kernel
+    dem_mean = dem_mean / kernel_nr_pix_arr
 
+    # std
     dem_std = np.roll(dem_i2, (radius_cell, radius_cell), axis=(0, 1)) + \
               np.roll(dem_i2, (-radius_cell - 1, -radius_cell - 1), axis=(0, 1)) - \
               np.roll(dem_i2, (-radius_cell - 1, radius_cell), axis=(0, 1)) - \
               np.roll(dem_i2, (radius_cell, -radius_cell - 1), axis=(0, 1))
-    dem_std = np.sqrt(np.abs(dem_std / (2 * radius_cell + 1) ** 2 - dem_mean ** 2))
+    dem_std = np.sqrt(np.abs(dem_std / kernel_nr_pix_arr - dem_mean ** 2))
 
     dev_out = (np.roll(dem, (-1, -1), axis=(0, 1)) - dem_mean) / (dem_std + 1e-6)  # add 1e-6 to prevent division with 0
 
@@ -1380,21 +1392,30 @@ def max_elevation_deviation(dem, minimum_radius, maximum_radius, step):
     dev_out : numpy.ndarray
         2D numpy result array of maxDEV - Maximum Deviation from mean elevation.
     """
-    # TODO: Temporary fix DEM nans are changed to 0 and in the result back to nan, find a better solution.
     minimum_radius = int(minimum_radius)
     maximum_radius = int(maximum_radius)
     step = int(step)
 
-    # change nan to 0 and store positions of nan
-    idx_nan = np.isnan(dem)
-    dem[idx_nan] = 0
+    # store positions of nan
+    idx_nan_dem = np.isnan(dem)
 
     dem_pad = np.pad(dem, (maximum_radius + 1, maximum_radius), mode="symmetric")
+    # store nans
+    idx_nan_dem_pad = np.isnan(dem_pad)
+    # change nan to 0
+    dem_pad[idx_nan_dem_pad] = 0
+
+    # number of pixels for summed area table
+    dem_i_nr_pixels = np.ones(dem_pad.shape)
+    dem_i_nr_pixels[idx_nan_dem_pad] = 0
+    dem_i_nr_pixels = integral_image(dem_i_nr_pixels, np.int)
+
     dem_i1 = integral_image(dem_pad)
     dem_i2 = integral_image(dem_pad ** 2)
 
     for kernel_radius in range(minimum_radius, maximum_radius + 1, step):
-        dev = topographic_dev(dem_pad, dem_i1, dem_i2, kernel_radius)[maximum_radius:-(maximum_radius + 1),
+        dev = topographic_dev(dem_pad, dem_i_nr_pixels, dem_i1, dem_i2, kernel_radius)[
+              maximum_radius:-(maximum_radius + 1),
               maximum_radius:-(maximum_radius + 1)]
         if kernel_radius == minimum_radius:
             dev_max_out = dev
@@ -1405,8 +1426,8 @@ def max_elevation_deviation(dem, minimum_radius, maximum_radius, step):
     # rad_max_out, radius of DEV for maxDEV (for each pixel)
 
     # change where dem nan back to nan
-    rad_max_out[idx_nan] = np.nan
-    dev_max_out[idx_nan] = np.nan
+    dev_max_out[idx_nan_dem] = np.nan
+    rad_max_out[idx_nan_dem] = np.nan
 
     return dev_max_out
 
@@ -1446,7 +1467,7 @@ def mstp(dem,
     """
     if local_scale[0] > local_scale[1] or meso_scale[0] > meso_scale[1] or broad_scale[0] > broad_scale[1]:
         raise Exception("rvt.vis.mstp: local_scale, meso_scale, broad_scale min has to be smaller than max!")
-    if (local_scale[1] - local_scale[0] < local_scale[2]) or (meso_scale[1] - meso_scale[0] < meso_scale[2]) or\
+    if (local_scale[1] - local_scale[0] < local_scale[2]) or (meso_scale[1] - meso_scale[0] < meso_scale[2]) or \
             (broad_scale[1] - broad_scale[0] < broad_scale[2]):
         raise Exception("rvt.vis.mstp: local_scale, meso_scale, broad_scale step has to be within min and max!")
     if not (1000 >= ve_factor >= -1000):
