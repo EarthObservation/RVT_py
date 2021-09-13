@@ -3,6 +3,14 @@
 QGIS Plugin Release history
 ===========================
 
+v 0.8.0
+-------
+
+*   Luminosity blending bug fix.
+*   Added enhanced Multi-Scale Topographic Position (e3MSTP)
+*   Fixed summed area table (used in MSTP, SLRM, MSRM) bug when DEM contains nodata.
+*   Removed fill no-data option from visualizations (is still available under Other tab).
+
 v 0.7.1
 -------
 
