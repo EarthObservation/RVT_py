@@ -7,7 +7,8 @@ v 0.8.0
 -------
 
 *   Luminosity blending bug fix.
-*   Added enhanced Multi-Scale Topographic Position (e3MSTP)
+*   Added soft light blending mode.
+*   Added enhanced Multi-Scale Topographic Position (e3MSTP).
 *   Fixed summed area table (used in MSTP, SLRM, MSRM) bug when DEM contains nodata.
 *   Removed fill no-data option from visualizations (is still available under Other tab).
 
