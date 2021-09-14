@@ -3,6 +3,19 @@
 Release history
 ===============
 
+1.0.0
+--------
+*   Added soft light blending mode.
+*   Added Color Relief Image Map (CRIM) blending combination visualization.
+*   Added enhance Multi-Scale Topographic Position (e3MSTP) blending combination visualization.
+*   Fixed luminosity blending bug.
+*   Fixed summed area table algorithm (used in SLRM, MSRM, MSTP) no data bug.
+
+RELEASE
+
+September 14, 2021
+
+
 1.0.0a11
 --------
 
