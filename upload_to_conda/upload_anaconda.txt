@@ -9,11 +9,21 @@ In meta.yaml change name from "rvt-py" to "rvt_py".
 
 Build package from meta.yaml:
 	"conda-build rvt-py"
+	"conda-build rvt-py --python=3.8"  for every version
 
 Built tar is in (conda-build rvt-py ouputs path where it is) "C:\Users\Uporabnik\Anaconda3\conda-bld" or smth like "C:\Users\jsmith\miniconda\conda-bld".
 
-Run "anaconda login" and write username and password.
-	"anaconda login"
+To upload multiple:
+	change and run upload_conda.py
 
-Then to upload run:
-	"anaconda upload path_to_tar" (path_to_tar example = C:\Users\Uporabnik\Anaconda3\conda-bld\win-64\rvt_py-1.0.0a6-py37h39e3cac_0.tar.bz2)
+To upload single:
+	Make for all platforms
+		"conda convert --platform all ~/anaconda/conda-bld/linux-64/click-7.0-py37_0.tar.bz2 -o outputdir/"
+		"conda convert --platform all "C:\Users\Uporabnik\Anaconda3\conda-bld\win-64\rvt_py-1.0.0-py37h39e3cac_0.tar.bz2" -o "C:\Users\Uporabnik\Anaconda3\conda-bld\win-64\all_versions"
+
+	Run "anaconda login" and write username and password.
+		"anaconda login"
+
+	Then to upload (single) run:
+		"anaconda upload path_to_tar" (path_to_tar example = C:\Users\Uporabnik\Anaconda3\conda-bld\win-64\rvt_py-1.0.0a6-py37h39e3cac_0.tar.bz2)
+
