@@ -1,0 +1,5 @@
+BibTeX generate
+
+References are maintained in a Citavi database
+Update and check for duplicates
+Export RVT Simple

@@ -30,8 +30,8 @@ May 20, 2021
 1.0.0a10
 --------
 
-*   Added fill no data methods (IDW, Nearest neighbour, K-D Tree)
-*   Fixed Negative Openness 8bit image (reverted colours).
+*   Added fill no data methods (IDW, Nearest neighbor, K-D Tree)
+*   Fixed Negative Openness 8bit image (reverted colors).
 *   Added Multi-scale topographic position (MSTP)
 
 PRE-RELEASE
