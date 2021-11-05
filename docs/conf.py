@@ -23,7 +23,7 @@ sys.path.insert(0, os.path.abspath('..'))  # Source code dir relative to this fi
 
 project = 'Relief Visualization Toolbox in Python'
 copyright = '2010-2021, ZRC SAZU and University of Ljubljana'
-author = 'Žiga Kokalj, Krištof Oštir,\\Klemen Zakšek and Žiga Maroh\\ZRC SAZU and University of Ljubljana'
+author = 'ZRC SAZU and University of Ljubljana'
 
 # -- General configuration ---------------------------------------------------
 
@@ -92,3 +92,19 @@ try:
     shutil.copytree('../examples', examples_folder)
 except:
     raise Exception('Error: Cannot copy examples to Docs')
+
+# Options for LaTeX output
+# ------------------------
+
+# The paper size ('letter' or 'a4').
+latex_paper_size = 'a4'
+
+# Grouping the document tree into LaTeX files.
+# List of tuples:
+#   (source start file, target name, title, author,
+#    document class [howto/manual])
+
+latex_documents = [
+    ('index', 'RVT.tex', 'Relief Visualization Toolbox',
+     'Žiga Kokalj, Krištof Oštir,\\Klemen Zakšek and Žiga Maroh\\ZRC SAZU and University of Ljubljana', 'manual'),
+]
