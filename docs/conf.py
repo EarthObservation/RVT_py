@@ -23,7 +23,7 @@ sys.path.insert(0, os.path.abspath('..'))  # Source code dir relative to this fi
 
 project = 'Relief Visualization Toolbox in Python'
 copyright = '2010-2021, ZRC SAZU and University of Ljubljana'
-author = 'ZRC SAZU and University of Ljubljana'
+author = 'Žiga Kokalj, Krištof Oštir, Klemen Zakšek and Žiga Maroh'
 
 # -- General configuration ---------------------------------------------------
 
