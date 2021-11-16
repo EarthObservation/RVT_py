@@ -152,8 +152,8 @@ def slope_aspect(dem,
     """
     if dem.ndim != 2:
         raise Exception("rvt.vis.slope_aspect: dem has to be 2D np.array!")
-    if not (1000 >= ve_factor >= -1000):
-        raise Exception("rvt.vis.slope_aspect: ve_factor must be between -1000 and 1000!")
+    if not (10000 >= ve_factor >= -10000):
+        raise Exception("rvt.vis.slope_aspect: ve_factor must be between -10000 and 10000!")
     if resolution_x < 0 or resolution_y < 0:
         raise Exception("rvt.vis.slope_aspect: resolution must be a positive number!")
 
@@ -240,8 +240,8 @@ def hillshade(dem,
     """
     if dem.ndim != 2:
         raise Exception("rvt.vis.hillshade: dem has to be 2D np.array!")
-    if not (1000 >= ve_factor >= -1000):
-        raise Exception("rvt.vis.hillshade: ve_factor must be between -1000 and 1000!")
+    if not (10000 >= ve_factor >= -10000):
+        raise Exception("rvt.vis.hillshade: ve_factor must be between -10000 and 10000!")
     if sun_azimuth > 360 or sun_elevation > 90 or sun_azimuth < 0 or sun_elevation < 0:
         raise Exception("rvt.vis.hillshade: sun_azimuth must be [0-360] and sun_elevation [0-90]!")
     if resolution_x < 0 or resolution_y < 0:
@@ -329,8 +329,8 @@ def multi_hillshade(dem,
         raise Exception("rvt.vis.multi_hillshade: resolution must be a positive number!")
     if nr_directions < 1:
         raise Exception("rvt.vis.multi_hillshade: nr_directions must be a positive number!")
-    if not (1000 >= ve_factor >= -1000):
-        raise Exception("rvt.vis.multi_hillshade: ve_factor must be between -1000 and 1000!")
+    if not (10000 >= ve_factor >= -10000):
+        raise Exception("rvt.vis.multi_hillshade: ve_factor must be between -10000 and 10000!")
 
     # change no_data to np.nan
     if no_data is not None:
@@ -428,8 +428,8 @@ def slrm(dem,
         raise Exception("rvt.vis.slrm: dem has to be 2D np.array!")
     if radius_cell < 10 or radius_cell > 50:
         raise Exception("rvt.vis.slrm: Radius for trend assessment needs to be in interval 10-50 pixels!")
-    if not (1000 >= ve_factor >= -1000):
-        raise Exception("rvt.vis.slrm: ve_factor must be between -1000 and 1000!")
+    if not (10000 >= ve_factor >= -10000):
+        raise Exception("rvt.vis.slrm: ve_factor must be between -10000 and 10000!")
 
     # change no_data to np.nan
     if no_data is not None:
@@ -689,8 +689,8 @@ def sky_view_factor(dem,
     """
     if dem.ndim != 2:
         raise Exception("rvt.vis.sky_view_factor: dem has to be 2D np.array!")
-    if not (1000 >= ve_factor >= -1000):
-        raise Exception("rvt.vis.sky_view_factor: ve_factor must be between -1000 and 1000!")
+    if not (10000 >= ve_factor >= -10000):
+        raise Exception("rvt.vis.sky_view_factor: ve_factor must be between -10000 and 10000!")
     if svf_noise != 0 and svf_noise != 1 and svf_noise != 2 and svf_noise != 3:
         raise Exception("rvt.vis.sky_view_factor: svf_noise must be one of the following values (0-don't remove, 1-low,"
                         " 2-med, 3-high)!")
@@ -779,8 +779,8 @@ def local_dominance(dem,
     """
     if dem.ndim != 2:
         raise Exception("rvt.vis.local_dominance: dem has to be 2D np.array!")
-    if not (1000 >= ve_factor >= -1000):
-        raise Exception("rvt.vis.local_dominance: ve_factor must be between -1000 and 1000!")
+    if not (10000 >= ve_factor >= -10000):
+        raise Exception("rvt.vis.local_dominance: ve_factor must be between -10000 and 10000!")
 
     # change no_data to np.nan
     if no_data is not None:
@@ -1009,8 +1009,8 @@ def sky_illumination(dem,
     pyramid_scale = 2
     max_pyramid_radius = 20
 
-    if not (1000 >= ve_factor >= -1000):
-        raise Exception("rvt.vis.sky_illumination: ve_factor must be between -1000 and 1000!")
+    if not (10000 >= ve_factor >= -10000):
+        raise Exception("rvt.vis.sky_illumination: ve_factor must be between -10000 and 10000!")
     if shadow_az > 360 or shadow_az < 0:
         raise Exception("rvt.vis.sky_illumination: shadow_az must be between 0 and 360!")
     if shadow_el > 90 or shadow_el < 0:
@@ -1208,8 +1208,8 @@ def shadow_horizon(dem,
         shadow : 2D binary numpy array (numpy.ndarray) of shadows;
         horizon; 2D numpy array (numpy.ndarray) of horizon.
     """
-    if not (1000 >= ve_factor >= -1000):
-        raise Exception("rvt.vis.shadow_horizon: ve_factor must be between -1000 and 1000!")
+    if not (10000 >= ve_factor >= -10000):
+        raise Exception("rvt.vis.shadow_horizon: ve_factor must be between -10000 and 10000!")
     if shadow_az > 360 or shadow_az < 0:
         raise Exception("rvt.vis.shadow_horizon: shadow_az must be between 0 and 360!")
     if shadow_el > 90 or shadow_el < 0:
@@ -1256,8 +1256,8 @@ def msrm(dem,
     msrm_out : numpy.ndarray
         2D numpy result array of Multi-scale relief model.
     """
-    if not (1000 >= ve_factor >= -1000):
-        raise Exception("rvt.vis.msrm: ve_factor must be between -1000 and 1000!")
+    if not (10000 >= ve_factor >= -10000):
+        raise Exception("rvt.vis.msrm: ve_factor must be between -10000 and 10000!")
     if resolution < 0:
         raise Exception("rvt.vis.msrm: resolution must be a positive number!")
 
@@ -1470,8 +1470,8 @@ def mstp(dem,
     if (local_scale[1] - local_scale[0] < local_scale[2]) or (meso_scale[1] - meso_scale[0] < meso_scale[2]) or \
             (broad_scale[1] - broad_scale[0] < broad_scale[2]):
         raise Exception("rvt.vis.mstp: local_scale, meso_scale, broad_scale step has to be within min and max!")
-    if not (1000 >= ve_factor >= -1000):
-        raise Exception("rvt.vis.mstp: ve_factor must be between -1000 and 1000!")
+    if not (10000 >= ve_factor >= -1000):
+        raise Exception("rvt.vis.mstp: ve_factor must be between -10000 and 10000!")
 
     # change no_data to np.nan
     if no_data is not None:
