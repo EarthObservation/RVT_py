@@ -273,6 +273,8 @@ def hillshade(dem,
     hillshade_out = np.cos(sun_zenith_rad) * np.cos(slope) + np.sin(sun_zenith_rad) * np.sin(slope) * np.cos(
         aspect - sun_azimuth_rad)
 
+    hillshade_out[hillshade_out < 0] = 0  # set all negative to 0
+
     # edges to -1
     hillshade_out[:, 0] = np.nan
     hillshade_out[0, :] = np.nan
