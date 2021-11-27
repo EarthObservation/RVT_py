@@ -3,6 +3,12 @@
 QGIS Plugin Release history
 ===========================
 
+v 0.8.1
+-------
+*   Hillshade negative values set to 0.
+*   Changed vertical exaggeration factor limit from [-1000, 1000] to [-10000, 10000].
+
+
 v 0.8.0
 -------
 
