@@ -178,19 +178,29 @@ def save_visualization_tile_by_tile(
                 visualization_array = visualization_function(dem=tile_array, **function_parameters)
             else:
                 visualization_array = visualization_function(dem=tile_array)
-                
+
             if out_visualization_dict_key is not None:
                 visualization_array = visualization_array[out_visualization_dict_key]
 
             # remove offset from visualization block
-            if right_offset == 0 and bottom_offset == 0:
-                visualization_array = visualization_array[top_offset:, left_offset:]
-            elif right_offset == 0:
-                visualization_array = visualization_array[top_offset:-bottom_offset, left_offset:]
-            elif bottom_offset == 0:
-                visualization_array = visualization_array[top_offset:, left_offset:-right_offset]
+            if out_raster_nr_of_bands == 1:
+                if right_offset == 0 and bottom_offset == 0:
+                    visualization_array = visualization_array[top_offset:, left_offset:]
+                elif right_offset == 0:
+                    visualization_array = visualization_array[top_offset:-bottom_offset, left_offset:]
+                elif bottom_offset == 0:
+                    visualization_array = visualization_array[top_offset:, left_offset:-right_offset]
+                else:
+                    visualization_array = visualization_array[top_offset:-bottom_offset, left_offset:-right_offset]
             else:
-                visualization_array = visualization_array[top_offset:-bottom_offset, left_offset:-right_offset]
+                if right_offset == 0 and bottom_offset == 0:
+                    visualization_array = visualization_array[:, top_offset:, left_offset:]
+                elif right_offset == 0:
+                    visualization_array = visualization_array[:, top_offset:-bottom_offset, left_offset:]
+                elif bottom_offset == 0:
+                    visualization_array = visualization_array[:, top_offset:, left_offset:-right_offset]
+                else:
+                    visualization_array = visualization_array[:, top_offset:-bottom_offset, left_offset:-right_offset]
 
             # write tile
             out_ds = gdal.Open(out_raster_path.as_posix(), gdal.GA_Update)

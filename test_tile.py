@@ -95,3 +95,32 @@ def test_svf_tile_by_tile() -> None:
         svf_r_max=10
     )["svf"]
     assert np.array_equal(svf_tile_by_tile_arr, svf_arr, equal_nan=True)
+
+
+def test_multi_hillshade_tile_by_tile() -> None:
+    out_multi_hillshade_path = Path(r"test_data\TM1_564_146_test_tile_multi_hillshade.tif")
+    # if resolution, resolution_x, resolution_y, no_data are None in function_parameters dict,
+    # they are taken from dem (dem_path)
+    nr_directions = 8
+    function_parameters = {"resolution_x": None, "resolution_y": None, "no_data": None, "nr_directions": nr_directions}
+    rvt.tile.save_visualization_tile_by_tile(
+        visualization_function=rvt.vis.multi_hillshade,
+        function_parameters=function_parameters,
+        dem_path=dem_path,
+        overlap=1,
+        tile_size_x=tile_size_x,
+        tile_size_y=tile_size_y,
+        out_raster_path=out_multi_hillshade_path,
+        out_raster_e_type=6,
+        out_raster_nr_of_bands=nr_directions
+    )
+    multi_hillshade_tile_by_tile_arr = rvt.default.get_raster_arr(out_multi_hillshade_path.as_posix())["array"]
+    dem_arr_dict = rvt.default.get_raster_arr(dem_path.as_posix())
+    multi_hillshade_arr = rvt.vis.multi_hillshade(
+        dem=dem_arr_dict["array"],
+        resolution_x=dem_arr_dict["resolution"][0],
+        resolution_y=dem_arr_dict["resolution"][1],
+        no_data=dem_arr_dict["no_data"],
+        nr_directions=nr_directions
+    )
+    assert np.array_equal(multi_hillshade_tile_by_tile_arr, multi_hillshade_arr, equal_nan=True)
