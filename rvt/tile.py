@@ -174,7 +174,11 @@ def save_visualization_tile_by_tile(
             rows_off = rows + top_offset + bottom_offset
 
             tile_array = np.array(dem_ds.GetRasterBand(1).ReadAsArray(x_off, y_off, cols_off, rows_off))
-            visualization_array = visualization_function(dem=tile_array, **function_parameters)
+            if function_parameters is not None:
+                visualization_array = visualization_function(dem=tile_array, **function_parameters)
+            else:
+                visualization_array = visualization_function(dem=tile_array)
+                
             if out_visualization_dict_key is not None:
                 visualization_array = visualization_array[out_visualization_dict_key]
 
