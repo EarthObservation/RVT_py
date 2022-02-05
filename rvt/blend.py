@@ -114,7 +114,7 @@ class BlenderLayer:
         """ Check Attributes """
         if self.normalization == "percent":
             self.normalization = "perc"
-        if self.vis is None:  # if vis is None everything is None
+        if self.vis is None:  # if visualization is None everything is None
             self.normalization = None
             self.min = None
             self.max = None
@@ -211,7 +211,7 @@ class BlenderCombination:
         layer_nr = 1
         layers_info = []
         for layer in self.layers:
-            layers_info.append("layer {}, vis = {}, normalization = {}, min = {}, max = {}, blend_mode = {},"
+            layers_info.append("layer {}, visualization = {}, normalization = {}, min = {}, max = {}, blend_mode = {},"
                                " opacity = {}, colormap = {},"
                                " min_colormap_cut = {}, max_colormap_cut".format(layer_nr, layer.vis,
                                                                                  layer.normalization,
@@ -279,7 +279,7 @@ class BlenderCombination:
 
     def save_to_file(self, file_path):
         """Save layers (manually) to .json file. Parameters image and image_path in each layer have to be None,
-         vis has to be correct!"""
+         visualization has to be correct!"""
         json_data = self.to_json()
         dat = open(file_path, "w")
         dat.write(json.dumps(json_data, indent=4))

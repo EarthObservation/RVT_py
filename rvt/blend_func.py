@@ -245,8 +245,9 @@ def blend_soft_light(active, background):
     # background[idx2] = background[idx2] * (active[idx2]+0.5)
     idx1 = np.where(active < 0.5)
     idx2 = np.where(active >= 0.5)
-    background[idx1] = 2*background[idx1]*active[idx1] + background[idx1] ** 2 * (1.0 - 2*active[idx1])
-    background[idx2] = 2*background[idx2]*(1.0-active[idx2]) + np.sqrt(background[idx2]) * (2*active[idx2]-1.0)
+    background[idx1] = 2 * background[idx1] * active[idx1] + background[idx1] ** 2 * (1.0 - 2 * active[idx1])
+    background[idx2] = 2 * background[idx2] * (1.0 - active[idx2]) + np.sqrt(background[idx2]) * (
+                2 * active[idx2] - 1.0)
     return background
 
 
@@ -410,7 +411,7 @@ def normalize_image(visualization, image, min_norm, max_norm, normalization):
 
     # make sure it scales 0 to 1
     if np.nanmax(norm_image) > 1:
-        if visualization.lower() == "multiple directions hillshade":
+        if visualization.lower() == "multiple directions hillshade" or visualization == "mhs":
             norm_image = scale_0_to_1(norm_image)
         else:
             norm_image = scale_0_to_1(norm_image)
@@ -420,7 +421,8 @@ def normalize_image(visualization, image, min_norm, max_norm, normalization):
 
     # for slope, invert scale
     # meaning high slopes will be black
-    if visualization.lower() == "slope gradient" or visualization.lower() == "openness - negative":
+    if visualization.lower() == "slope gradient" or visualization.lower() == "openness - negative" or \
+            visualization == "slp" or visualization == "neg_opns":
         norm_image = 1 - norm_image
     return norm_image
 
