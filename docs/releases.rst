@@ -3,6 +3,15 @@
 Release history
 ===============
 
+2.0.0
+--------
+*   Module multiproc.py replaced with tile.py.
+
+RELEASE
+
+February 5, 2022
+
+
 1.0.0
 --------
 *   Added soft light blending mode.
