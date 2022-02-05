@@ -2,7 +2,7 @@
 Relief Visualization Toolbox – Visualization Functions
 
 Contains all default values for visualisation functions, which can be changed.
-Allows computing from rvt.vis with using defined default values and saving
+Allows computing from rvt.visualization with using defined default values and saving
 output rasters with default names (dependent on default values).
 
 Credits:
@@ -15,20 +15,40 @@ Credits:
     Žiga Maroh
 
 Copyright:
-    2010-2020 Research Centre of the Slovenian Academy of Sciences and Arts
-    2016-2020 University of Ljubljana, Faculty of Civil and Geodetic Engineering
+    2010-2022 Research Centre of the Slovenian Academy of Sciences and Arts
+    2016-2022 University of Ljubljana, Faculty of Civil and Geodetic Engineering
 """
 
 import warnings
+from enum import Enum
+from pathlib import Path
+from typing import Optional, Tuple
+
 import rvt.vis
 import rvt.blend_func
-import rvt.multiproc
+import rvt.tile
 import os
 from osgeo import gdal
 import numpy as np
 import json
 import datetime
 import time
+
+
+class RVTVisualization(Enum):
+    SLOPE = "slp"
+    HILLSHADE = "hs"
+    SHADOW = "shd"
+    MULTI_HILLSHADE = "mhs"
+    SIMPLE_LOCAL_RELIEF_MODEL = "slrm"
+    SKY_VIEW_FACTOR = "svf"
+    ANISOTROPIC_SKY_VIEW_FACTOR = "asvf"
+    POSITIVE_OPENNESS = "pos_opns"
+    NEGATIVE_OPENNESS = "neg_opns"
+    SKY_ILLUMINATION = "sim"
+    LOCAL_DOMINANCE = "ld"
+    MULTI_SCALE_RELIEF_MODEL = "msrm"
+    MULTI_SCALE_TOPOGRAPHIC_POSITION = "mstp"
 
 
 class DefaultValues:
@@ -40,7 +60,7 @@ class DefaultValues:
     overwrite : bool
         When saving visualisation functions and file already exists, if 0 it doesn't compute it, if 1 it overwrites it.
     ve_factor : float
-        For all vis functions. Vertical exaggeration.
+        For all visualization functions. Vertical exaggeration.
     slp_compute : bool
         If compute Slope. Parameter for GUIs.
     slp_output_units : str
@@ -120,13 +140,15 @@ class DefaultValues:
     mstp_compute : bool
         If compute Multi-scale topographic position (MSTP).
     mstp_local_scale : tuple(min_radius, max_radius, step)
-        Local scale minimum radius, maximum radius and step in pixels to calculate maximum mean deviation from elevation.
+        Local scale minimum radius, maximum radius and step in pixels to calculate maximum mean deviation from
+        elevation.
         All have to be integers!
     mstp_meso_scale : tuple(min_radius, max_radius, step)
         Meso scale minimum radius, maximum radius and step in pixels to calculate maximum mean deviation from elevation.
         All have to be integers!
     mstp_broad_scale : tuple(min_radius, max_radius, step)
-        Broad scale minimum radius, maximum radius and step in pixels to calculate maximum mean deviation from elevation.
+        Broad scale minimum radius, maximum radius and step in pixels to calculate maximum mean deviation from
+        elevation.
         All have to be integers!
     mstp_lightness : float
         Lightness of image.
@@ -199,10 +221,10 @@ class DefaultValues:
     msrm_bytscl : tuple(mode, min, max)
         Multi-scale relief model, linear stretch, bytescale (0-255) for 8bit raster. Mode can be 'value' or 'percent'
         (cut-off units). Values min and max define stretch borders (in mode units).
-    multiproc_size_limit : int
-        If array size bigger than multiproc_size_limit it uses multiprocessing.
-    multiproc_block_size : tuple(x_size, y_size)
-        Size of single block when multiprocessing.
+    tile_size_limit : int
+        If array size bigger than tile_size_limit it uses saving tile by tile (rvt.tile module).
+    tile_size : tuple(x_size, y_size)
+        Size of single tile when saving tile by tile.
     """
 
     def __init__(self):
@@ -294,9 +316,9 @@ class DefaultValues:
         self.sim_bytscl = ("percent", 0.25, 0)
         self.ld_bytscl = ("value", 0.5, 1.8)
         self.msrm_bytscl = ("percent", 2, 2)
-        # multiprocessing
-        self.multiproc_size_limit = 10000 * 10000  # if arr size > multiproc_size_limit, it uses multiprocessing
-        self.multiproc_block_size = (4000, 4000)  # size of single block (x_size, y_size)
+        # tile
+        self.tile_size_limit = 10000 * 10000  # if arr size > tile_size limit, it uses tile module
+        self.tile_size = (4000, 4000)  # size of single tile when using tile module (x_size, y_size)
 
     def save_default_to_file(self, file_path=None):
         """Saves default attributes into .json file."""
@@ -965,89 +987,107 @@ class DefaultValues:
     def get_mstp_path(self, dem_path):
         return os.path.normpath(os.path.join(os.path.dirname(dem_path), self.get_mstp_file_name(dem_path)))
 
-    def get_vis_file_name(self, dem_path, vis, bit8=False):
-        """Returns vis (visualization) file name. Dem name (from dem_path) with added vis parameters.
-        If bit8 it returns 8bit file name. Parameter vis can be: "hillshade", "shadow", "slope gradient",
-        "multiple directions hillshade", "simple local relief model", "sky-view factor", "anisotropic sky-view factor",
-        "openness - positive", "openness - negative", "sky illumination", "local dominance"."""
-        if vis.lower() == "hillshade":
-            return self.get_hillshade_file_name(dem_path=dem_path, bit8=bit8)
-        if vis.lower() == "shadow":
+    def get_visualization_file_name(self,
+                                    rvt_visualization: RVTVisualization,
+                                    dem_path: Path,
+                                    path_8bit: bool
+                                    ) -> str:
+        """"Return visualization path."""
+        if rvt_visualization == rvt.default.RVTVisualization.SLOPE:
+            return self.get_slope_file_name(dem_path=dem_path, bit8=path_8bit)
+        elif rvt_visualization == rvt.default.RVTVisualization.HILLSHADE:
+            return self.get_hillshade_file_name(dem_path=dem_path, bit8=path_8bit)
+        elif rvt_visualization == rvt.default.RVTVisualization.SHADOW:
             return self.get_shadow_file_name(dem_path=dem_path)
-        elif vis.lower() == "multiple directions hillshade":
-            return self.get_multi_hillshade_file_name(dem_path=dem_path, bit8=bit8)
-        elif vis.lower() == "slope gradient":
-            return self.get_slope_file_name(dem_path=dem_path, bit8=bit8)
-        elif vis.lower() == "simple local relief model":
-            return self.get_slrm_file_name(dem_path=dem_path, bit8=bit8)
-        elif vis.lower() == "sky-view factor":
-            return self.get_svf_file_name(dem_path=dem_path, bit8=bit8)
-        elif vis.lower() == "anisotropic sky-view factor":
-            return self.get_asvf_file_name(dem_path=dem_path, bit8=bit8)
-        elif vis.lower() == "openness - positive":
-            return self.get_opns_file_name(dem_path=dem_path, bit8=bit8)
-        elif vis.lower() == "openness - negative":
-            return self.get_neg_opns_file_name(dem_path=dem_path, bit8=bit8)
-        elif vis.lower() == "sky illumination":
-            return self.get_sky_illumination_file_name(dem_path=dem_path, bit8=bit8)
-        elif vis.lower() == "local dominance":
-            return self.get_local_dominance_file_name(dem_path=dem_path, bit8=bit8)
-        elif vis.lower() == "multi-scale relief model":
-            return self.get_msrm_file_name(dem_path=dem_path, bit8=bit8)
-        elif vis.lower() == "multi-scale topographic position":
+        elif rvt_visualization == rvt.default.RVTVisualization.MULTI_HILLSHADE:
+            return self.get_multi_hillshade_file_name(dem_path=dem_path, bit8=path_8bit)
+        elif rvt_visualization == rvt.default.RVTVisualization.SIMPLE_LOCAL_RELIEF_MODEL:
+            return self.get_slrm_file_name(dem_path=dem_path, bit8=path_8bit)
+        elif rvt_visualization == rvt.default.RVTVisualization.SKY_VIEW_FACTOR:
+            return self.get_svf_file_name(dem_path=dem_path, bit8=path_8bit)
+        elif rvt_visualization == rvt.default.RVTVisualization.ANISOTROPIC_SKY_VIEW_FACTOR:
+            return self.get_asvf_file_name(dem_path=dem_path, bit8=path_8bit)
+        elif rvt_visualization == rvt.default.RVTVisualization.POSITIVE_OPENNESS:
+            return self.get_opns_file_name(dem_path=dem_path, bit8=path_8bit)
+        elif rvt_visualization == rvt.default.RVTVisualization.NEGATIVE_OPENNESS:
+            return self.get_neg_opns_file_name(dem_path=dem_path, bit8=path_8bit)
+        elif rvt_visualization == rvt.default.RVTVisualization.SKY_ILLUMINATION:
+            return self.get_sky_illumination_file_name(dem_path=dem_path, bit8=path_8bit)
+        elif rvt_visualization == rvt.default.RVTVisualization.LOCAL_DOMINANCE:
+            return self.get_local_dominance_file_name(dem_path=dem_path, bit8=path_8bit)
+        elif rvt_visualization == rvt.default.RVTVisualization.MULTI_SCALE_RELIEF_MODEL:
+            return self.get_msrm_file_name(dem_path=dem_path, bit8=path_8bit)
+        elif rvt_visualization == rvt.default.RVTVisualization.MULTI_SCALE_TOPOGRAPHIC_POSITION:
             return self.get_mstp_file_name(dem_path=dem_path)
-        else:
-            raise Exception("rvt.default.DefaultValues.get_vis_file_name: Wrong vis (visualization) parameter!")
 
-    def get_vis_path(self, dem_path, vis, bit8=False):
-        """Returns vis (visualization) path. Generates vis name which is dem name (from dem_path) with added vis
-        parameters. Vis name added in the same directory as dem (dem_path). If bit8 it returns 8bit path.
-        Parameter vis can be: "hillshade", "slope gradient", "multiple directions hillshade", "shadow",
-        simple local relief model", "sky-view factor", "anisotropic sky-view factor", "openness - positive",
-        "openness - negative", "sky illumination", "local dominance"."""
-        if vis.lower() == "hillshade":
-            return self.get_hillshade_path(dem_path=dem_path, bit8=bit8)
-        elif vis.lower() == "shadow":
-            return self.get_shadow_path(dem_path=dem_path)
-        elif vis.lower() == "multiple directions hillshade":
-            return self.get_multi_hillshade_path(dem_path=dem_path, bit8=bit8)
-        elif vis.lower() == "slope gradient":
-            return self.get_slope_path(dem_path=dem_path, bit8=bit8)
-        elif vis.lower() == "simple local relief model":
-            return self.get_slrm_path(dem_path=dem_path, bit8=bit8)
-        elif vis.lower() == "sky-view factor":
-            return self.get_svf_path(dem_path=dem_path, bit8=bit8)
-        elif vis.lower() == "anisotropic sky-view factor":
-            return self.get_asvf_path(dem_path=dem_path, bit8=bit8)
-        elif vis.lower() == "openness - positive":
-            return self.get_opns_path(dem_path=dem_path, bit8=bit8)
-        elif vis.lower() == "openness - negative":
-            return self.get_neg_opns_path(dem_path=dem_path, bit8=bit8)
-        elif vis.lower() == "sky illumination":
-            return self.get_sky_illumination_path(dem_path=dem_path, bit8=bit8)
-        elif vis.lower() == "local dominance":
-            return self.get_local_dominance_path(dem_path=dem_path, bit8=bit8)
-        elif vis.lower() == "multi-scale relief model":
-            return self.get_msrm_path(dem_path=dem_path, bit8=bit8)
-        elif vis.lower() == "multi-scale topographic position":
-            return self.get_mstp_path(dem_path=dem_path)
-        else:
-            raise Exception("rvt.default.DefaultValues.get_vis_file_name: Wrong vis (visualization) parameter!")
+    def get_visualization_path(
+            self,
+            rvt_visualization: RVTVisualization,
+            dem_path: Path,
+            output_dir_path: Path,
+            path_8bit: bool
+    ) -> Path:
+        """"Return visualization path."""
+        if rvt_visualization == rvt.default.RVTVisualization.SLOPE:
+            return output_dir_path / Path(self.get_slope_file_name(dem_path=dem_path, bit8=path_8bit))
+        elif rvt_visualization == rvt.default.RVTVisualization.HILLSHADE:
+            return output_dir_path / Path(self.get_hillshade_file_name(dem_path=dem_path, bit8=path_8bit))
+        elif rvt_visualization == rvt.default.RVTVisualization.SHADOW:
+            return output_dir_path / Path(self.get_shadow_file_name(dem_path=dem_path))
+        elif rvt_visualization == rvt.default.RVTVisualization.MULTI_HILLSHADE:
+            return output_dir_path / Path(self.get_multi_hillshade_file_name(dem_path=dem_path, bit8=path_8bit))
+        elif rvt_visualization == rvt.default.RVTVisualization.SIMPLE_LOCAL_RELIEF_MODEL:
+            return output_dir_path / Path(self.get_slrm_file_name(dem_path=dem_path, bit8=path_8bit))
+        elif rvt_visualization == rvt.default.RVTVisualization.SKY_VIEW_FACTOR:
+            return output_dir_path / Path(self.get_svf_file_name(dem_path=dem_path, bit8=path_8bit))
+        elif rvt_visualization == rvt.default.RVTVisualization.ANISOTROPIC_SKY_VIEW_FACTOR:
+            return output_dir_path / Path(self.get_asvf_file_name(dem_path=dem_path, bit8=path_8bit))
+        elif rvt_visualization == rvt.default.RVTVisualization.POSITIVE_OPENNESS:
+            return output_dir_path / Path(self.get_opns_file_name(dem_path=dem_path, bit8=path_8bit))
+        elif rvt_visualization == rvt.default.RVTVisualization.NEGATIVE_OPENNESS:
+            return output_dir_path / Path(self.get_neg_opns_file_name(dem_path=dem_path, bit8=path_8bit))
+        elif rvt_visualization == rvt.default.RVTVisualization.SKY_ILLUMINATION:
+            return output_dir_path / Path(self.get_sky_illumination_file_name(dem_path=dem_path, bit8=path_8bit))
+        elif rvt_visualization == rvt.default.RVTVisualization.LOCAL_DOMINANCE:
+            return output_dir_path / Path(self.get_local_dominance_file_name(dem_path=dem_path, bit8=path_8bit))
+        elif rvt_visualization == rvt.default.RVTVisualization.MULTI_SCALE_RELIEF_MODEL:
+            return output_dir_path / Path(self.get_msrm_file_name(dem_path=dem_path, bit8=path_8bit))
+        elif rvt_visualization == rvt.default.RVTVisualization.MULTI_SCALE_TOPOGRAPHIC_POSITION:
+            return output_dir_path / Path(self.get_mstp_file_name(dem_path=dem_path))
 
-    def float_to_8bit(self, float_arr, vis, x_res=None, y_res=None, no_data=None):
+    def float_to_8bit(
+            self,
+            float_arr: np.array,
+            visualization: RVTVisualization,
+            x_res: float = None,
+            y_res: float = None,
+            no_data: Optional[float] = None
+    ):
         """Converts (byte scale) float visualization to 8bit. Resolution (x_res, y_res) and no_data needed only for
          multiple directions hillshade! Method first normalize then byte scale (0-255)."""
-        if vis.lower() == "hillshade":
-            norm_arr = rvt.blend_func.normalize_image(visualization="hillshade", image=float_arr,
+        if visualization == RVTVisualization.HILLSHADE:
+            norm_arr = rvt.blend_func.normalize_image(visualization="hs", image=float_arr,
                                                       min_norm=self.hs_bytscl[1], max_norm=self.hs_bytscl[2],
                                                       normalization=self.hs_bytscl[0])
-            return rvt.vis.byte_scale(data=norm_arr, no_data=np.nan)
-        elif vis.lower() == "slope gradient":
-            norm_arr = rvt.blend_func.normalize_image(visualization=vis.lower(), image=float_arr,
+            if self.hs_bytscl[0] == "value":
+                return rvt.vis.byte_scale(
+                    data=norm_arr, no_data=np.nan, c_min=self.hs_bytscl[1], c_max=self.hs_bytscl[2]
+                )
+            else:
+                return rvt.vis.byte_scale(data=norm_arr, no_data=np.nan)
+        elif visualization == RVTVisualization.SLOPE:
+            norm_arr = rvt.blend_func.normalize_image(visualization="slp", image=float_arr,
                                                       min_norm=self.slp_bytscl[1], max_norm=self.slp_bytscl[2],
                                                       normalization=self.slp_bytscl[0])
-            return rvt.vis.byte_scale(data=norm_arr, no_data=np.nan)
-        elif vis.lower() == "multiple directions hillshade":
+            if self.slp_bytscl[0] == "value":
+                return rvt.vis.byte_scale(
+                    data=norm_arr, no_data=np.nan, c_min=self.slp_bytscl[1], c_max=self.slp_bytscl[2]
+                )
+            else:
+                return rvt.vis.byte_scale(data=norm_arr, no_data=np.nan)
+        elif visualization == RVTVisualization.SHADOW:
+            return float_arr
+        elif visualization == RVTVisualization.MULTI_HILLSHADE:
             # Be careful when multihillshade we input dem, because we have to calculate hillshade in 3 directions
             red_band_arr = rvt.vis.hillshade(dem=float_arr, resolution_x=x_res, resolution_y=y_res,
                                              sun_elevation=self.mhs_sun_el, sun_azimuth=315, no_data=no_data)
@@ -1056,73 +1096,125 @@ class DefaultValues:
             blue_band_arr = rvt.vis.hillshade(dem=float_arr, resolution_x=x_res, resolution_y=y_res,
                                               sun_elevation=self.mhs_sun_el, sun_azimuth=90, no_data=no_data)
             if self.mhs_bytscl[0].lower() == "percent" or self.slp_bytscl[0].lower() == "perc":
-                red_band_arr = rvt.blend_func.normalize_perc(image=red_band_arr, minimum=self.mhs_bytscl[1],
-                                                             maximum=self.mhs_bytscl[2])
+                red_band_arr = rvt.blend_func.normalize_perc(
+                    image=red_band_arr, minimum=self.mhs_bytscl[1], maximum=self.mhs_bytscl[2]
+                )
                 red_band_arr = rvt.vis.byte_scale(data=red_band_arr, no_data=np.nan)
-                green_band_arr = rvt.blend_func.normalize_perc(image=green_band_arr, minimum=self.mhs_bytscl[1],
-                                                               maximum=self.mhs_bytscl[2])
+                green_band_arr = rvt.blend_func.normalize_perc(
+                    image=green_band_arr, minimum=self.mhs_bytscl[1], maximum=self.mhs_bytscl[2]
+                )
                 green_band_arr = rvt.vis.byte_scale(data=green_band_arr, no_data=np.nan)
-                blue_band_arr = rvt.blend_func.normalize_perc(image=blue_band_arr, minimum=self.mhs_bytscl[1],
-                                                              maximum=self.mhs_bytscl[2])
+                blue_band_arr = rvt.blend_func.normalize_perc(
+                    image=blue_band_arr, minimum=self.mhs_bytscl[1], maximum=self.mhs_bytscl[2]
+                )
                 blue_band_arr = rvt.vis.byte_scale(data=blue_band_arr, no_data=np.nan)
             else:  # self.mhs_bytscl[0] == "value"
-                red_band_arr = rvt.blend_func.normalize_lin(image=red_band_arr, minimum=self.mhs_bytscl[1],
-                                                            maximum=self.mhs_bytscl[2])
-                red_band_arr = rvt.vis.byte_scale(data=red_band_arr, no_data=np.nan)
-                green_band_arr = rvt.blend_func.normalize_lin(image=green_band_arr, minimum=self.mhs_bytscl[1],
-                                                              maximum=self.mhs_bytscl[2])
-                green_band_arr = rvt.vis.byte_scale(data=green_band_arr, no_data=np.nan)
-                blue_band_arr = rvt.blend_func.normalize_lin(image=blue_band_arr, minimum=self.mhs_bytscl[1],
-                                                             maximum=self.mhs_bytscl[2])
-                blue_band_arr = rvt.vis.byte_scale(data=blue_band_arr, no_data=np.nan)
+                red_band_arr = rvt.blend_func.normalize_lin(
+                    image=red_band_arr, minimum=self.mhs_bytscl[1], maximum=self.mhs_bytscl[2]
+                )
+                red_band_arr = rvt.vis.byte_scale(
+                    data=red_band_arr, no_data=np.nan, c_min=self.mhs_bytscl[1], c_max=self.mhs_bytscl[2]
+                )
+                green_band_arr = rvt.blend_func.normalize_lin(
+                    image=green_band_arr, minimum=self.mhs_bytscl[1], maximum=self.mhs_bytscl[2]
+                )
+                green_band_arr = rvt.vis.byte_scale(
+                    data=green_band_arr, no_data=np.nan, c_min=self.mhs_bytscl[1], c_max=self.mhs_bytscl[2]
+                )
+                blue_band_arr = rvt.blend_func.normalize_lin(
+                    image=blue_band_arr, minimum=self.mhs_bytscl[1], maximum=self.mhs_bytscl[2]
+                )
+                blue_band_arr = rvt.vis.byte_scale(
+                    data=blue_band_arr, no_data=np.nan, c_min=self.mhs_bytscl[1], c_max=self.mhs_bytscl[2]
+                )
             multi_hillshade_8bit_arr = np.array([red_band_arr, green_band_arr, blue_band_arr])
             return multi_hillshade_8bit_arr
-        elif vis.lower() == "simple local relief model":
-            norm_arr = rvt.blend_func.normalize_image(visualization="simple local relief model", image=float_arr,
+        elif visualization == RVTVisualization.SIMPLE_LOCAL_RELIEF_MODEL:
+            norm_arr = rvt.blend_func.normalize_image(visualization="slrm", image=float_arr,
                                                       min_norm=self.slrm_bytscl[1], max_norm=self.slrm_bytscl[2],
                                                       normalization=self.slrm_bytscl[0])
-            return rvt.vis.byte_scale(data=norm_arr, no_data=np.nan)
-        elif vis.lower() == "sky-view factor":
-            norm_arr = rvt.blend_func.normalize_image(visualization="sky-view factor", image=float_arr,
+            if self.slrm_bytscl[0] == "value":
+                return rvt.vis.byte_scale(
+                    data=norm_arr, no_data=np.nan, c_min=self.slrm_bytscl[1], c_max=self.slrm_bytscl[2]
+                )
+            else:
+                return rvt.vis.byte_scale(data=norm_arr, no_data=np.nan)
+        elif visualization == RVTVisualization.SKY_VIEW_FACTOR:
+            norm_arr = rvt.blend_func.normalize_image(visualization="svf", image=float_arr,
                                                       min_norm=self.svf_bytscl[1], max_norm=self.svf_bytscl[2],
                                                       normalization=self.svf_bytscl[0])
-            return rvt.vis.byte_scale(data=norm_arr, no_data=np.nan)
-        elif vis.lower() == "anisotropic sky-view factor":
-            norm_arr = rvt.blend_func.normalize_image(visualization="anisotropic sky-view factor", image=float_arr,
+            if self.svf_bytscl[0] == "value":
+                return rvt.vis.byte_scale(
+                    data=norm_arr, no_data=np.nan, c_min=self.svf_bytscl[1], c_max=self.svf_bytscl[2]
+                )
+            else:
+                return rvt.vis.byte_scale(data=norm_arr, no_data=np.nan)
+        elif visualization == RVTVisualization.ANISOTROPIC_SKY_VIEW_FACTOR:
+            norm_arr = rvt.blend_func.normalize_image(visualization="asvf", image=float_arr,
                                                       min_norm=self.asvf_bytscl[1], max_norm=self.asvf_bytscl[2],
                                                       normalization=self.asvf_bytscl[0])
-            return rvt.vis.byte_scale(data=norm_arr, no_data=np.nan)
-        elif vis.lower() == "openness - positive":
-            norm_arr = rvt.blend_func.normalize_image(visualization="openness - positive", image=float_arr,
+            if self.asvf_bytscl[0] == "value":
+                return rvt.vis.byte_scale(
+                    data=norm_arr, no_data=np.nan, c_min=self.asvf_bytscl[1], c_max=self.asvf_bytscl[2]
+                )
+            else:
+                return rvt.vis.byte_scale(data=norm_arr, no_data=np.nan)
+        elif visualization == RVTVisualization.POSITIVE_OPENNESS:
+            norm_arr = rvt.blend_func.normalize_image(visualization="pos_opns", image=float_arr,
                                                       min_norm=self.pos_opns_bytscl[1],
                                                       max_norm=self.pos_opns_bytscl[2],
                                                       normalization=self.pos_opns_bytscl[0])
-            return rvt.vis.byte_scale(data=norm_arr, no_data=np.nan)
-        elif vis.lower() == "openness - negative":
-            norm_arr = rvt.blend_func.normalize_image(visualization="openness - negative", image=float_arr,
+            if self.pos_opns_bytscl[0] == "value":
+                return rvt.vis.byte_scale(
+                    data=norm_arr, no_data=np.nan, c_min=self.pos_opns_bytscl[1], c_max=self.pos_opns_bytscl[2]
+                )
+            else:
+                return rvt.vis.byte_scale(data=norm_arr, no_data=np.nan)
+        elif visualization == RVTVisualization.NEGATIVE_OPENNESS:
+            norm_arr = rvt.blend_func.normalize_image(visualization="neg_opns", image=float_arr,
                                                       min_norm=self.neg_opns_bytscl[1],
                                                       max_norm=self.neg_opns_bytscl[2],
                                                       normalization=self.neg_opns_bytscl[0])
-            return rvt.vis.byte_scale(data=norm_arr, no_data=np.nan)
-        elif vis.lower() == "sky illumination":
-            norm_arr = rvt.blend_func.normalize_image(visualization="sky illumination", image=float_arr,
+            if self.neg_opns_bytscl[0] == "value":
+                return rvt.vis.byte_scale(
+                    data=norm_arr, no_data=np.nan, c_min=self.neg_opns_bytscl[1], c_max=self.neg_opns_bytscl[2]
+                )
+            else:
+                return rvt.vis.byte_scale(data=norm_arr, no_data=np.nan)
+        elif visualization == RVTVisualization.SKY_ILLUMINATION:
+            norm_arr = rvt.blend_func.normalize_image(visualization="sim", image=float_arr,
                                                       min_norm=self.sim_bytscl[1], max_norm=self.sim_bytscl[2],
                                                       normalization=self.sim_bytscl[0])
-            return rvt.vis.byte_scale(data=norm_arr, no_data=np.nan)
-        elif vis.lower() == "local dominance":
-            norm_arr = rvt.blend_func.normalize_image(visualization="local dominance", image=float_arr,
+            if self.sim_bytscl[0] == "value":
+                return rvt.vis.byte_scale(
+                    data=norm_arr, no_data=np.nan, c_min=self.sim_bytscl[1], c_max=self.sim_bytscl[2]
+                )
+            else:
+                return rvt.vis.byte_scale(data=norm_arr, no_data=np.nan)
+        elif visualization == RVTVisualization.LOCAL_DOMINANCE:
+            norm_arr = rvt.blend_func.normalize_image(visualization="ld", image=float_arr,
                                                       min_norm=self.ld_bytscl[1], max_norm=self.ld_bytscl[2],
                                                       normalization=self.ld_bytscl[0])
-            return rvt.vis.byte_scale(data=norm_arr, no_data=np.nan)
-        elif vis.lower() == "multi-scale relief model":
-            norm_arr = rvt.blend_func.normalize_image(visualization="multi-scale relief model", image=float_arr,
+            if self.ld_bytscl[0] == "value":
+                return rvt.vis.byte_scale(
+                    data=norm_arr, no_data=np.nan, c_min=self.ld_bytscl[1], c_max=self.ld_bytscl[2]
+                )
+            else:
+                return rvt.vis.byte_scale(data=norm_arr, no_data=np.nan)
+        elif visualization == RVTVisualization.MULTI_SCALE_RELIEF_MODEL:
+            norm_arr = rvt.blend_func.normalize_image(visualization="msrm", image=float_arr,
                                                       min_norm=self.msrm_bytscl[1], max_norm=self.msrm_bytscl[2],
                                                       normalization=self.msrm_bytscl[0])
-            return rvt.vis.byte_scale(data=norm_arr, no_data=np.nan)
-        elif vis.lower() == "multi-scale topographic position":
+            if self.msrm_bytscl[0] == "value":
+                return rvt.vis.byte_scale(
+                    data=norm_arr, no_data=np.nan, c_min=self.msrm_bytscl[1], c_max=self.msrm_bytscl[2]
+                )
+            else:
+                return rvt.vis.byte_scale(data=norm_arr, no_data=np.nan)
+        elif visualization == "mstp":
             return float_arr
         else:
-            raise Exception("rvt.default.DefaultValues.float_to_8bit: Wrong vis (visualization) parameter!")
+            raise Exception("rvt.default.DefaultValues.float_to_8bit: Wrong visualization (visualization) parameter!")
 
     def get_slope(self, dem_arr, resolution_x, resolution_y, no_data=None):
         slope_arr = rvt.vis.slope_aspect(dem=dem_arr, resolution_x=resolution_x, resolution_y=resolution_y,
@@ -1168,12 +1260,17 @@ class DefaultValues:
                 return 0
 
         dem_size = get_raster_size(raster_path=dem_path)
-        if dem_size[0] * dem_size[1] > self.multiproc_size_limit:  # multiprocess, calculating on blocks
-            rvt.multiproc.save_multiprocess_vis(dem_path=dem_path, vis="slope gradient", default=self,
-                                                custom_dir=custom_dir,
-                                                save_float=save_float, save_8bit=save_8bit,
-                                                x_block_size=self.multiproc_block_size[0],
-                                                y_block_size=self.multiproc_block_size[1])
+        if dem_size[0] * dem_size[1] > self.tile_size_limit:  # tile by tile calculation
+            if custom_dir is None:
+                custom_dir = Path(dem_path).parent
+            rvt.tile.save_rvt_visualization_tile_by_tile(
+                rvt_visualization=RVTVisualization.SLOPE,
+                rvt_default=self,
+                dem_path=Path(dem_path),
+                output_dir_path=Path(custom_dir),
+                save_float=save_float,
+                save_8bit=save_8bit
+            )
             return 1
         else:  # singleprocess
             dict_arr_res = get_raster_arr(raster_path=dem_path)
@@ -1192,7 +1289,7 @@ class DefaultValues:
                 if os.path.isfile(slope_8bit_path) and not self.overwrite:  # file exists and overwrite=0
                     pass
                 else:
-                    slope_8bit_arr = self.float_to_8bit(float_arr=slope_arr, vis="slope gradient")
+                    slope_8bit_arr = self.float_to_8bit(float_arr=slope_arr, visualization=RVTVisualization.SLOPE)
                     save_raster(src_raster_path=dem_path, out_raster_path=slope_8bit_path,
                                 out_raster_arr=slope_8bit_arr, e_type=1)
             return 1
@@ -1259,17 +1356,26 @@ class DefaultValues:
                 return 0
 
         dem_size = get_raster_size(raster_path=dem_path)
-        if dem_size[0] * dem_size[1] > self.multiproc_size_limit:  # multiprocess, calculating on blocks
-            rvt.multiproc.save_multiprocess_vis(dem_path=dem_path, vis="hillshade", default=self,
-                                                custom_dir=custom_dir,
-                                                save_float=save_float, save_8bit=save_8bit,
-                                                x_block_size=self.multiproc_block_size[0],
-                                                y_block_size=self.multiproc_block_size[1])
-            rvt.multiproc.save_multiprocess_vis(dem_path=dem_path, vis="shadow", default=self,
-                                                custom_dir=custom_dir,
-                                                save_float=True, save_8bit=False,
-                                                x_block_size=self.multiproc_block_size[0],
-                                                y_block_size=self.multiproc_block_size[1])
+        if dem_size[0] * dem_size[1] > self.tile_size_limit:  # tile by tile
+            if custom_dir is None:
+                custom_dir = Path(dem_path).parent
+            rvt.tile.save_rvt_visualization_tile_by_tile(
+                rvt_visualization=RVTVisualization.HILLSHADE,
+                rvt_default=self,
+                dem_path=Path(dem_path),
+                output_dir_path=Path(custom_dir),
+                save_float=save_float,
+                save_8bit=save_8bit
+            )
+            if save_shadow:
+                rvt.tile.save_rvt_visualization_tile_by_tile(
+                    rvt_visualization=RVTVisualization.SHADOW,
+                    rvt_default=self,
+                    dem_path=Path(dem_path),
+                    output_dir_path=Path(custom_dir),
+                    save_float=True,
+                    save_8bit=False
+                )
             return 1
         else:  # singleprocess
             dict_arr_res = get_raster_arr(raster_path=dem_path)
@@ -1289,7 +1395,9 @@ class DefaultValues:
                 if os.path.isfile(hillshade_8bit_path) and not self.overwrite:  # file exists and overwrite=0
                     pass
                 else:
-                    hillshade_8_bit_arr = self.float_to_8bit(float_arr=hillshade_arr, vis="hillshade")
+                    hillshade_8_bit_arr = self.float_to_8bit(
+                        float_arr=hillshade_arr, visualization=RVTVisualization.HILLSHADE
+                    )
                     save_raster(src_raster_path=dem_path, out_raster_path=hillshade_8bit_path,
                                 out_raster_arr=hillshade_8_bit_arr, e_type=1)
             if save_shadow:
@@ -1347,12 +1455,17 @@ class DefaultValues:
                 return 0
 
         dem_size = get_raster_size(raster_path=dem_path)
-        if dem_size[0] * dem_size[1] > self.multiproc_size_limit:  # multiprocess, calculating on blocks
-            rvt.multiproc.save_multiprocess_vis(dem_path=dem_path, vis="multiple directions hillshade", default=self,
-                                                custom_dir=custom_dir,
-                                                save_float=save_float, save_8bit=save_8bit,
-                                                x_block_size=self.multiproc_block_size[0],
-                                                y_block_size=self.multiproc_block_size[1])
+        if dem_size[0] * dem_size[1] > self.tile_size_limit:  # tile by tile
+            if custom_dir is None:
+                custom_dir = Path(dem_path).parent
+            rvt.tile.save_rvt_visualization_tile_by_tile(
+                rvt_visualization=RVTVisualization.MULTI_HILLSHADE,
+                rvt_default=self,
+                dem_path=Path(dem_path),
+                output_dir_path=Path(custom_dir),
+                save_float=save_float,
+                save_8bit=save_8bit
+            )
             return 1
         else:  # singleprocess
             dict_arr_res = get_raster_arr(raster_path=dem_path)
@@ -1373,9 +1486,13 @@ class DefaultValues:
                 if os.path.isfile(multi_hillshade_8bit_path) and not self.overwrite:  # file exists and overwrite=0
                     pass
                 else:
-                    multi_hillshade_8bit_arr = self.float_to_8bit(float_arr=dem_arr,
-                                                                  vis="multiple directions hillshade",
-                                                                  x_res=x_res, y_res=y_res, no_data=no_data)
+                    multi_hillshade_8bit_arr = self.float_to_8bit(
+                        float_arr=dem_arr,
+                        visualization=RVTVisualization.MULTI_HILLSHADE,
+                        x_res=x_res,
+                        y_res=y_res,
+                        no_data=no_data
+                    )
                     save_raster(src_raster_path=dem_path, out_raster_path=multi_hillshade_8bit_path,
                                 out_raster_arr=multi_hillshade_8bit_arr, e_type=1)
             return 1
@@ -1422,12 +1539,17 @@ class DefaultValues:
                 return 0
 
         dem_size = get_raster_size(raster_path=dem_path)
-        if dem_size[0] * dem_size[1] > self.multiproc_size_limit:  # multiprocess, calculating on blocks
-            rvt.multiproc.save_multiprocess_vis(dem_path=dem_path, vis="simple local relief model", default=self,
-                                                custom_dir=custom_dir,
-                                                save_float=save_float, save_8bit=save_8bit,
-                                                x_block_size=self.multiproc_block_size[0],
-                                                y_block_size=self.multiproc_block_size[1])
+        if dem_size[0] * dem_size[1] > self.tile_size_limit:  # tile by tile
+            if custom_dir is None:
+                custom_dir = Path(dem_path).parent
+            rvt.tile.save_rvt_visualization_tile_by_tile(
+                rvt_visualization=RVTVisualization.SIMPLE_LOCAL_RELIEF_MODEL,
+                rvt_default=self,
+                dem_path=Path(dem_path),
+                output_dir_path=Path(custom_dir),
+                save_float=save_float,
+                save_8bit=save_8bit
+            )
             return 1
         else:  # singleprocess
             dict_arr_res = get_raster_arr(raster_path=dem_path)
@@ -1444,7 +1566,9 @@ class DefaultValues:
                 if os.path.isfile(slrm_8bit_path) and not self.overwrite:  # file exists and overwrite=0
                     pass
                 else:
-                    slrm_8bit_arr = self.float_to_8bit(float_arr=slrm_arr, vis="simple local relief model")
+                    slrm_8bit_arr = self.float_to_8bit(
+                        float_arr=slrm_arr, visualization=RVTVisualization.SIMPLE_LOCAL_RELIEF_MODEL
+                    )
                     save_raster(src_raster_path=dem_path, out_raster_path=slrm_8bit_path, out_raster_arr=slrm_8bit_arr,
                                 e_type=1)
             return 1
@@ -1523,14 +1647,36 @@ class DefaultValues:
                 return 0
 
         dem_size = get_raster_size(raster_path=dem_path)
-        if dem_size[0] * dem_size[1] > self.multiproc_size_limit:  # multiprocess, calculating on blocks
-            self.svf_compute = int(save_svf)
-            self.asvf_compute = int(save_asvf)
-            self.pos_opns_compute = int(save_opns)
-            rvt.multiproc.save_multiprocess_vis(dem_path=dem_path, vis="sky-view factor default", default=self,
-                                                custom_dir=custom_dir, save_float=save_float, save_8bit=save_8bit,
-                                                x_block_size=self.multiproc_block_size[0],
-                                                y_block_size=self.multiproc_block_size[1])
+        if dem_size[0] * dem_size[1] > self.tile_size_limit:  # tile by tile
+            if custom_dir is None:
+                custom_dir = Path(dem_path).parent
+            if save_svf:
+                rvt.tile.save_rvt_visualization_tile_by_tile(
+                    rvt_visualization=RVTVisualization.SKY_VIEW_FACTOR,
+                    rvt_default=self,
+                    dem_path=Path(dem_path),
+                    output_dir_path=Path(custom_dir),
+                    save_float=save_float,
+                    save_8bit=save_8bit
+                )
+            if save_asvf:
+                rvt.tile.save_rvt_visualization_tile_by_tile(
+                    rvt_visualization=RVTVisualization.ANISOTROPIC_SKY_VIEW_FACTOR,
+                    rvt_default=self,
+                    dem_path=Path(dem_path),
+                    output_dir_path=Path(custom_dir),
+                    save_float=save_float,
+                    save_8bit=save_8bit
+                )
+            if save_opns:
+                rvt.tile.save_rvt_visualization_tile_by_tile(
+                    rvt_visualization=RVTVisualization.POSITIVE_OPENNESS,
+                    rvt_default=self,
+                    dem_path=Path(dem_path),
+                    output_dir_path=Path(custom_dir),
+                    save_float=save_float,
+                    save_8bit=save_8bit
+                )
             return 1
         else:
             dict_arr_res = get_raster_arr(raster_path=dem_path)
@@ -1565,23 +1711,28 @@ class DefaultValues:
                     if os.path.isfile(svf_8bit_path) and not self.overwrite:  # file exists and overwrite=0
                         pass
                     else:  # svf_8bit_path, file doesn't exists or exists and overwrite=1
-                        svf_8bit_arr = self.float_to_8bit(float_arr=dict_svf_asvf_opns["svf"], vis="sky-view factor")
+                        svf_8bit_arr = self.float_to_8bit(
+                            float_arr=dict_svf_asvf_opns["svf"], visualization=RVTVisualization.SKY_VIEW_FACTOR
+                        )
                         save_raster(src_raster_path=dem_path, out_raster_path=svf_8bit_path,
                                     out_raster_arr=svf_8bit_arr, e_type=1)
                 if save_asvf:
                     if os.path.isfile(asvf_8bit_path) and not self.overwrite:  # file exists and overwrite=0
                         pass
                     else:  # asvf_8bit_path, file doesn't exists or exists and overwrite=1
-                        asvf_8bit_arr = self.float_to_8bit(float_arr=dict_svf_asvf_opns["asvf"],
-                                                           vis="anisotropic sky-view factor")
+                        asvf_8bit_arr = self.float_to_8bit(
+                            float_arr=dict_svf_asvf_opns["asvf"],
+                            visualization=RVTVisualization.ANISOTROPIC_SKY_VIEW_FACTOR
+                        )
                         save_raster(src_raster_path=dem_path, out_raster_path=asvf_8bit_path,
                                     out_raster_arr=asvf_8bit_arr, e_type=1)
                 if save_opns:
                     if os.path.isfile(opns_8bit_path) and not self.overwrite:  # file exists and overwrite=0
                         pass
                     else:  # opns_8bit_path, file doesn't exists or exists and overwrite=1
-                        opns_8bit_arr = self.float_to_8bit(float_arr=dict_svf_asvf_opns["opns"],
-                                                           vis="openness - positive")
+                        opns_8bit_arr = self.float_to_8bit(
+                            float_arr=dict_svf_asvf_opns["opns"], visualization=RVTVisualization.POSITIVE_OPENNESS
+                        )
                         save_raster(src_raster_path=dem_path, out_raster_path=opns_8bit_path,
                                     out_raster_arr=opns_8bit_arr, e_type=1)
             return 1
@@ -1633,11 +1784,17 @@ class DefaultValues:
                 return 0
 
         dem_size = get_raster_size(raster_path=dem_path)
-        if dem_size[0] * dem_size[1] > self.multiproc_size_limit:  # multiprocess, calculating on blocks
-            rvt.multiproc.save_multiprocess_vis(dem_path=dem_path, vis="openness - negative", default=self,
-                                                custom_dir=custom_dir, save_float=save_float, save_8bit=save_8bit,
-                                                x_block_size=self.multiproc_block_size[0],
-                                                y_block_size=self.multiproc_block_size[1])
+        if dem_size[0] * dem_size[1] > self.tile_size_limit:  # tile by tile
+            if custom_dir is None:
+                custom_dir = Path(dem_path).parent
+            rvt.tile.save_rvt_visualization_tile_by_tile(
+                rvt_visualization=RVTVisualization.NEGATIVE_OPENNESS,
+                rvt_default=self,
+                dem_path=Path(dem_path),
+                output_dir_path=Path(custom_dir),
+                save_float=save_float,
+                save_8bit=save_8bit
+            )
             return 1
         else:  # singleprocess
             dict_arr_res = get_raster_arr(raster_path=dem_path)
@@ -1657,7 +1814,9 @@ class DefaultValues:
                 if os.path.isfile(neg_opns_8bit_path) and not self.overwrite:  # file exists and overwrite=0
                     pass
                 else:
-                    neg_opns_8bit_arr = self.float_to_8bit(float_arr=neg_opns_arr, vis="openness - negative")
+                    neg_opns_8bit_arr = self.float_to_8bit(
+                        float_arr=neg_opns_arr, visualization=RVTVisualization.NEGATIVE_OPENNESS
+                    )
                     save_raster(src_raster_path=dem_path, out_raster_path=neg_opns_8bit_path,
                                 out_raster_arr=neg_opns_8bit_arr, e_type=1)
             return 1
@@ -1711,11 +1870,17 @@ class DefaultValues:
                 return 0
 
         dem_size = get_raster_size(raster_path=dem_path)
-        if dem_size[0] * dem_size[1] > self.multiproc_size_limit:  # multiprocess, calculating on blocks
-            rvt.multiproc.save_multiprocess_vis(dem_path=dem_path, vis="sky illumination", default=self,
-                                                custom_dir=custom_dir, save_float=save_float, save_8bit=save_8bit,
-                                                x_block_size=self.multiproc_block_size[0],
-                                                y_block_size=self.multiproc_block_size[1])
+        if dem_size[0] * dem_size[1] > self.tile_size_limit:  # tile by tile
+            if custom_dir is None:
+                custom_dir = Path(dem_path).parent
+            rvt.tile.save_rvt_visualization_tile_by_tile(
+                rvt_visualization=RVTVisualization.SKY_ILLUMINATION,
+                rvt_default=self,
+                dem_path=Path(dem_path),
+                output_dir_path=Path(custom_dir),
+                save_float=save_float,
+                save_8bit=save_8bit
+            )
             return 1
         else:  # singleprocess
             dict_arr_res = get_raster_arr(raster_path=dem_path)
@@ -1736,8 +1901,9 @@ class DefaultValues:
                 if os.path.isfile(sky_illumination_8bit_path) and not self.overwrite:  # file exists and overwrite=0
                     pass
                 else:
-                    sky_illumination_8bit_arr = self.float_to_8bit(float_arr=sky_illumination_arr,
-                                                                   vis="sky illumination")
+                    sky_illumination_8bit_arr = self.float_to_8bit(
+                        float_arr=sky_illumination_arr, visualization=RVTVisualization.SKY_ILLUMINATION
+                    )
                     save_raster(src_raster_path=dem_path, out_raster_path=sky_illumination_8bit_path,
                                 out_raster_arr=sky_illumination_8bit_arr, e_type=1)
             return 1
@@ -1789,11 +1955,17 @@ class DefaultValues:
                 return 0
 
         dem_size = get_raster_size(raster_path=dem_path)
-        if dem_size[0] * dem_size[1] > self.multiproc_size_limit:  # multiprocess, calculating on blocks
-            rvt.multiproc.save_multiprocess_vis(dem_path=dem_path, vis="local dominance", default=self,
-                                                custom_dir=custom_dir, save_float=save_float, save_8bit=save_8bit,
-                                                x_block_size=self.multiproc_block_size[0],
-                                                y_block_size=self.multiproc_block_size[1])
+        if dem_size[0] * dem_size[1] > self.tile_size_limit:  # tile by tile
+            if custom_dir is None:
+                custom_dir = Path(dem_path).parent
+            rvt.tile.save_rvt_visualization_tile_by_tile(
+                rvt_visualization=RVTVisualization.LOCAL_DOMINANCE,
+                rvt_default=self,
+                dem_path=Path(dem_path),
+                output_dir_path=Path(custom_dir),
+                save_float=save_float,
+                save_8bit=save_8bit
+            )
             return 1
         else:  # singleprocess
             dict_arr_res = get_raster_arr(raster_path=dem_path)
@@ -1810,7 +1982,9 @@ class DefaultValues:
                 if os.path.isfile(local_dominance_8bit_path) and not self.overwrite:  # file exists and overwrite=0
                     pass
                 else:
-                    local_dominance_8bit_arr = self.float_to_8bit(float_arr=local_dominance_arr, vis="local dominance")
+                    local_dominance_8bit_arr = self.float_to_8bit(
+                        float_arr=local_dominance_arr, visualization=RVTVisualization.LOCAL_DOMINANCE
+                    )
                     save_raster(src_raster_path=dem_path, out_raster_path=local_dominance_8bit_path,
                                 out_raster_arr=local_dominance_8bit_arr, e_type=1)
             return 1
@@ -1859,12 +2033,17 @@ class DefaultValues:
                 return 0
 
         dem_size = get_raster_size(raster_path=dem_path)
-        if dem_size[0] * dem_size[1] > self.multiproc_size_limit:  # multiprocess, calculating on blocks
-            rvt.multiproc.save_multiprocess_vis(dem_path=dem_path, vis="multi-scale relief model", default=self,
-                                                custom_dir=custom_dir,
-                                                save_float=save_float, save_8bit=save_8bit,
-                                                x_block_size=self.multiproc_block_size[0],
-                                                y_block_size=self.multiproc_block_size[1])
+        if dem_size[0] * dem_size[1] > self.tile_size_limit:  # tile by tile
+            if custom_dir is None:
+                custom_dir = Path(dem_path).parent
+            rvt.tile.save_rvt_visualization_tile_by_tile(
+                rvt_visualization=RVTVisualization.MULTI_SCALE_RELIEF_MODEL,
+                rvt_default=self,
+                dem_path=Path(dem_path),
+                output_dir_path=Path(custom_dir),
+                save_float=save_float,
+                save_8bit=save_8bit
+            )
             return 1
         else:  # singleprocess
             dict_arr_res = get_raster_arr(raster_path=dem_path)
@@ -1884,7 +2063,9 @@ class DefaultValues:
                 if os.path.isfile(msrm_8bit_path) and not self.overwrite:  # file exists and overwrite=0
                     pass
                 else:
-                    msrm_8bit_arr = self.float_to_8bit(float_arr=msrm_arr, vis="multi-scale relief model")
+                    msrm_8bit_arr = self.float_to_8bit(
+                        float_arr=msrm_arr, visualization=RVTVisualization.MULTI_SCALE_RELIEF_MODEL
+                    )
                     save_raster(src_raster_path=dem_path, out_raster_path=msrm_8bit_path, out_raster_arr=msrm_8bit_arr,
                                 e_type=1)
             return 1
@@ -1909,12 +2090,17 @@ class DefaultValues:
             return 0
 
         dem_size = get_raster_size(raster_path=dem_path)
-        if dem_size[0] * dem_size[1] > self.multiproc_size_limit:  # multiprocess, calculating on blocks
-            rvt.multiproc.save_multiprocess_vis(dem_path=dem_path, vis="multi-scale topographic position", default=self,
-                                                custom_dir=custom_dir,
-                                                save_float=False, save_8bit=True,
-                                                x_block_size=self.multiproc_block_size[0],
-                                                y_block_size=self.multiproc_block_size[1])
+        if dem_size[0] * dem_size[1] > self.tile_size_limit:  # tile by tile calculation
+            if custom_dir is None:
+                custom_dir = Path(dem_path).parent
+            rvt.tile.save_rvt_visualization_tile_by_tile(
+                rvt_visualization=RVTVisualization.MULTI_SCALE_TOPOGRAPHIC_POSITION,
+                rvt_default=self,
+                dem_path=Path(dem_path),
+                output_dir_path=Path(custom_dir),
+                save_float=False,
+                save_8bit=True
+            )
             return 1
         else:  # singleprocess
             dict_arr_res = get_raster_arr(raster_path=dem_path)
@@ -1927,8 +2113,8 @@ class DefaultValues:
             return 1
 
     def save_visualizations(self, dem_path, custom_dir=None):
-        """Save all visualizations where self.'vis'_compute = True also saves float where self.'vis'_save_float = True
-        and 8bit where self.'vis'_save_8bit = True. In the end method creates log file."""
+        """Save all visualizations where self.'visualization'_compute = True also saves float where self.'visualization'
+        _save_float = True and 8bit where self.'visualization'_save_8bit = True. In the end method creates log file."""
         start_time = time.time()
         if self.slp_compute:
             self.save_slope(dem_path, custom_dir=custom_dir)
@@ -1954,6 +2140,104 @@ class DefaultValues:
         end_time = time.time()
         compute_time = end_time - start_time
         self.create_log_file(dem_path=dem_path, custom_dir=custom_dir, compute_time=compute_time)
+
+    def calculate_visualization(
+            self,
+            visualization: RVTVisualization,
+            dem: np.array,
+            resolution_x: float,
+            resolution_y: float,
+            no_data: Optional[float] = None,
+            save_float: bool = True,
+            save_8bit: bool = False
+    ) -> Optional[Tuple[np.array, np.array]]:  # tuple[vis_float_arr, vis_8bit_arr]
+        vis_arr = None
+        vis_float_arr = None
+        vis_8bit_arr = None
+        if visualization == RVTVisualization.SLOPE:
+            vis_arr = self.get_slope(
+                dem_arr=dem, resolution_x=resolution_x, resolution_y=resolution_y, no_data=no_data
+            )
+        elif visualization == RVTVisualization.SHADOW:
+            vis_arr = self.get_shadow(
+                dem_arr=dem, resolution=resolution_x, no_data=no_data
+            )
+        elif visualization == RVTVisualization.HILLSHADE:
+            vis_arr = self.get_hillshade(
+                dem_arr=dem, resolution_x=resolution_x, resolution_y=resolution_y, no_data=no_data
+            )
+        elif visualization == RVTVisualization.MULTI_HILLSHADE:
+            vis_arr = self.get_multi_hillshade(
+                dem_arr=dem, resolution_x=resolution_x, resolution_y=resolution_y, no_data=no_data
+            )
+        elif visualization == RVTVisualization.SIMPLE_LOCAL_RELIEF_MODEL:
+            vis_arr = self.get_slrm(
+                dem_arr=dem, no_data=no_data
+            )
+        elif visualization == RVTVisualization.SKY_VIEW_FACTOR:
+            vis_arr = self.get_sky_view_factor(
+                dem_arr=dem,
+                resolution=resolution_x,
+                compute_svf=True,
+                compute_asvf=False,
+                compute_opns=False,
+                no_data=no_data
+            )["svf"]
+        elif visualization == RVTVisualization.ANISOTROPIC_SKY_VIEW_FACTOR:
+            vis_arr = self.get_sky_view_factor(
+                dem_arr=dem,
+                resolution=resolution_x,
+                compute_svf=False,
+                compute_asvf=True,
+                compute_opns=False,
+                no_data=no_data
+            )["asvf"]
+        elif visualization == RVTVisualization.POSITIVE_OPENNESS:
+            vis_arr = self.get_sky_view_factor(
+                dem_arr=dem,
+                resolution=resolution_x,
+                compute_svf=False,
+                compute_asvf=False,
+                compute_opns=True,
+                no_data=no_data
+            )["opns"]
+        elif visualization == RVTVisualization.NEGATIVE_OPENNESS:
+            vis_arr = self.get_neg_opns(
+                dem_arr=dem, resolution=resolution_x, no_data=no_data
+            )
+        elif visualization == RVTVisualization.SKY_ILLUMINATION:
+            vis_arr = self.get_sky_illumination(
+                dem_arr=dem, resolution=resolution_x, no_data=no_data
+            )
+        elif visualization == RVTVisualization.LOCAL_DOMINANCE:
+            vis_arr = self.get_local_dominance(
+                dem_arr=dem, no_data=no_data
+            )
+        elif visualization == RVTVisualization.MULTI_SCALE_RELIEF_MODEL:
+            vis_arr = self.get_msrm(
+                dem_arr=dem, resolution=resolution_x, no_data=no_data
+            )
+        elif visualization == RVTVisualization.MULTI_SCALE_TOPOGRAPHIC_POSITION:
+            vis_arr = self.get_mstp(
+                dem_arr=dem, no_data=no_data
+            )
+        if save_float:
+            vis_float_arr = vis_arr
+        if save_8bit:
+            if visualization == RVTVisualization.MULTI_HILLSHADE:
+                vis_8bit_arr = self.float_to_8bit(
+                    float_arr=dem,
+                    visualization=visualization,
+                    x_res=resolution_x,
+                    y_res=resolution_y,
+                    no_data=no_data
+                )
+            else:
+                vis_8bit_arr = self.float_to_8bit(
+                    float_arr=vis_arr,
+                    visualization=visualization
+                )
+        return vis_float_arr, vis_8bit_arr
 
     def create_log_file(self, dem_path, custom_dir=None, compute_time=None):
         """Creates log file in custom_dir, if custom_dir=None it creates it in dem directory (dem_path).
@@ -2005,12 +2289,12 @@ class DefaultValues:
         dat.write("# Selected visualization parameters\n")
         dat.write("\tOverwrite: {}\n".format(self.overwrite))
         dat.write("\tVertical exaggeration factor: {}\n".format(self.ve_factor))
-        if nr_rows * nr_cols > self.multiproc_size_limit:
-            dat.write("\tMultiprocessing: {}\n".format("ON"))
-            dat.write("\t\tMultiprocess block size: {}x{}\n".format(self.multiproc_block_size[0],
-                                                                    self.multiproc_block_size[1]))
+        if nr_rows * nr_cols > self.tile_size_limit:
+            dat.write("\tCalculating tile by tile: {}\n".format("ON"))
+            dat.write("\t\tTile block size: {}x{}\n".format(self.tile_size[0],
+                                                            self.tile_size[1]))
         else:
-            dat.write("\tMultiprocessing: {}\n".format("OFF"))
+            dat.write("\tCalculating tile by tile: {}\n".format("OFF"))
 
         dat.write("\n")
 

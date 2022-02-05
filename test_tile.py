@@ -4,7 +4,7 @@ import rvt.vis
 import rvt.default
 import numpy as np
 
-# pytest tile module
+# pytest rvt.tile.save_visualization_tile_by_tile
 
 dem_path = Path(r"test_data\TM1_564_146.tif")
 tile_size_x = 100
