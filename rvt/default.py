@@ -1069,22 +1069,12 @@ class DefaultValues:
             norm_arr = rvt.blend_func.normalize_image(visualization="hs", image=float_arr,
                                                       min_norm=self.hs_bytscl[1], max_norm=self.hs_bytscl[2],
                                                       normalization=self.hs_bytscl[0])
-            if self.hs_bytscl[0] == "value":
-                return rvt.vis.byte_scale(
-                    data=norm_arr, no_data=np.nan, c_min=self.hs_bytscl[1], c_max=self.hs_bytscl[2]
-                )
-            else:
-                return rvt.vis.byte_scale(data=norm_arr, no_data=np.nan)
+            return rvt.vis.byte_scale(data=norm_arr, no_data=np.nan, c_min=0, c_max=1)
         elif visualization == RVTVisualization.SLOPE:
             norm_arr = rvt.blend_func.normalize_image(visualization="slp", image=float_arr,
                                                       min_norm=self.slp_bytscl[1], max_norm=self.slp_bytscl[2],
                                                       normalization=self.slp_bytscl[0])
-            if self.slp_bytscl[0] == "value":
-                return rvt.vis.byte_scale(
-                    data=norm_arr, no_data=np.nan, c_min=self.slp_bytscl[1], c_max=self.slp_bytscl[2]
-                )
-            else:
-                return rvt.vis.byte_scale(data=norm_arr, no_data=np.nan)
+            return rvt.vis.byte_scale(data=norm_arr, no_data=np.nan, c_min=0, c_max=1)
         elif visualization == RVTVisualization.SHADOW:
             return float_arr
         elif visualization == RVTVisualization.MULTI_HILLSHADE:
@@ -1099,33 +1089,33 @@ class DefaultValues:
                 red_band_arr = rvt.blend_func.normalize_perc(
                     image=red_band_arr, minimum=self.mhs_bytscl[1], maximum=self.mhs_bytscl[2]
                 )
-                red_band_arr = rvt.vis.byte_scale(data=red_band_arr, no_data=np.nan)
+                red_band_arr = rvt.vis.byte_scale(data=red_band_arr, no_data=np.nan, c_min=0, c_max=1)
                 green_band_arr = rvt.blend_func.normalize_perc(
                     image=green_band_arr, minimum=self.mhs_bytscl[1], maximum=self.mhs_bytscl[2]
                 )
-                green_band_arr = rvt.vis.byte_scale(data=green_band_arr, no_data=np.nan)
+                green_band_arr = rvt.vis.byte_scale(data=green_band_arr, no_data=np.nan, c_min=0, c_max=1)
                 blue_band_arr = rvt.blend_func.normalize_perc(
                     image=blue_band_arr, minimum=self.mhs_bytscl[1], maximum=self.mhs_bytscl[2]
                 )
-                blue_band_arr = rvt.vis.byte_scale(data=blue_band_arr, no_data=np.nan)
+                blue_band_arr = rvt.vis.byte_scale(data=blue_band_arr, no_data=np.nan, c_min=0, c_max=1)
             else:  # self.mhs_bytscl[0] == "value"
                 red_band_arr = rvt.blend_func.normalize_lin(
                     image=red_band_arr, minimum=self.mhs_bytscl[1], maximum=self.mhs_bytscl[2]
                 )
                 red_band_arr = rvt.vis.byte_scale(
-                    data=red_band_arr, no_data=np.nan, c_min=self.mhs_bytscl[1], c_max=self.mhs_bytscl[2]
+                    data=red_band_arr, no_data=np.nan, c_min=0, c_max=1
                 )
                 green_band_arr = rvt.blend_func.normalize_lin(
                     image=green_band_arr, minimum=self.mhs_bytscl[1], maximum=self.mhs_bytscl[2]
                 )
                 green_band_arr = rvt.vis.byte_scale(
-                    data=green_band_arr, no_data=np.nan, c_min=self.mhs_bytscl[1], c_max=self.mhs_bytscl[2]
+                    data=green_band_arr, no_data=np.nan, c_min=0, c_max=1
                 )
                 blue_band_arr = rvt.blend_func.normalize_lin(
                     image=blue_band_arr, minimum=self.mhs_bytscl[1], maximum=self.mhs_bytscl[2]
                 )
                 blue_band_arr = rvt.vis.byte_scale(
-                    data=blue_band_arr, no_data=np.nan, c_min=self.mhs_bytscl[1], c_max=self.mhs_bytscl[2]
+                    data=blue_band_arr, no_data=np.nan, c_min=0, c_max=1
                 )
             multi_hillshade_8bit_arr = np.array([red_band_arr, green_band_arr, blue_band_arr])
             return multi_hillshade_8bit_arr
@@ -1133,85 +1123,45 @@ class DefaultValues:
             norm_arr = rvt.blend_func.normalize_image(visualization="slrm", image=float_arr,
                                                       min_norm=self.slrm_bytscl[1], max_norm=self.slrm_bytscl[2],
                                                       normalization=self.slrm_bytscl[0])
-            if self.slrm_bytscl[0] == "value":
-                return rvt.vis.byte_scale(
-                    data=norm_arr, no_data=np.nan, c_min=self.slrm_bytscl[1], c_max=self.slrm_bytscl[2]
-                )
-            else:
-                return rvt.vis.byte_scale(data=norm_arr, no_data=np.nan)
+            return rvt.vis.byte_scale(data=norm_arr, no_data=np.nan, c_min=0, c_max=1)
         elif visualization == RVTVisualization.SKY_VIEW_FACTOR:
             norm_arr = rvt.blend_func.normalize_image(visualization="svf", image=float_arr,
                                                       min_norm=self.svf_bytscl[1], max_norm=self.svf_bytscl[2],
                                                       normalization=self.svf_bytscl[0])
-            if self.svf_bytscl[0] == "value":
-                return rvt.vis.byte_scale(
-                    data=norm_arr, no_data=np.nan, c_min=self.svf_bytscl[1], c_max=self.svf_bytscl[2]
-                )
-            else:
-                return rvt.vis.byte_scale(data=norm_arr, no_data=np.nan)
+            return rvt.vis.byte_scale(data=norm_arr, no_data=np.nan, c_min=0, c_max=1)
         elif visualization == RVTVisualization.ANISOTROPIC_SKY_VIEW_FACTOR:
             norm_arr = rvt.blend_func.normalize_image(visualization="asvf", image=float_arr,
                                                       min_norm=self.asvf_bytscl[1], max_norm=self.asvf_bytscl[2],
                                                       normalization=self.asvf_bytscl[0])
-            if self.asvf_bytscl[0] == "value":
-                return rvt.vis.byte_scale(
-                    data=norm_arr, no_data=np.nan, c_min=self.asvf_bytscl[1], c_max=self.asvf_bytscl[2]
-                )
-            else:
-                return rvt.vis.byte_scale(data=norm_arr, no_data=np.nan)
+            return rvt.vis.byte_scale(data=norm_arr, no_data=np.nan, c_min=0, c_max=1)
         elif visualization == RVTVisualization.POSITIVE_OPENNESS:
             norm_arr = rvt.blend_func.normalize_image(visualization="pos_opns", image=float_arr,
                                                       min_norm=self.pos_opns_bytscl[1],
                                                       max_norm=self.pos_opns_bytscl[2],
                                                       normalization=self.pos_opns_bytscl[0])
-            if self.pos_opns_bytscl[0] == "value":
-                return rvt.vis.byte_scale(
-                    data=norm_arr, no_data=np.nan, c_min=self.pos_opns_bytscl[1], c_max=self.pos_opns_bytscl[2]
-                )
-            else:
-                return rvt.vis.byte_scale(data=norm_arr, no_data=np.nan)
+            return rvt.vis.byte_scale(data=norm_arr, no_data=np.nan, c_min=0, c_max=1)
         elif visualization == RVTVisualization.NEGATIVE_OPENNESS:
             norm_arr = rvt.blend_func.normalize_image(visualization="neg_opns", image=float_arr,
                                                       min_norm=self.neg_opns_bytscl[1],
                                                       max_norm=self.neg_opns_bytscl[2],
                                                       normalization=self.neg_opns_bytscl[0])
-            if self.neg_opns_bytscl[0] == "value":
-                return rvt.vis.byte_scale(
-                    data=norm_arr, no_data=np.nan, c_min=self.neg_opns_bytscl[1], c_max=self.neg_opns_bytscl[2]
-                )
-            else:
-                return rvt.vis.byte_scale(data=norm_arr, no_data=np.nan)
+            return rvt.vis.byte_scale(data=norm_arr, no_data=np.nan, c_min=0, c_max=1)
         elif visualization == RVTVisualization.SKY_ILLUMINATION:
             norm_arr = rvt.blend_func.normalize_image(visualization="sim", image=float_arr,
                                                       min_norm=self.sim_bytscl[1], max_norm=self.sim_bytscl[2],
                                                       normalization=self.sim_bytscl[0])
-            if self.sim_bytscl[0] == "value":
-                return rvt.vis.byte_scale(
-                    data=norm_arr, no_data=np.nan, c_min=self.sim_bytscl[1], c_max=self.sim_bytscl[2]
-                )
-            else:
-                return rvt.vis.byte_scale(data=norm_arr, no_data=np.nan)
+            return rvt.vis.byte_scale(data=norm_arr, no_data=np.nan, c_min=0, c_max=1)
         elif visualization == RVTVisualization.LOCAL_DOMINANCE:
             norm_arr = rvt.blend_func.normalize_image(visualization="ld", image=float_arr,
                                                       min_norm=self.ld_bytscl[1], max_norm=self.ld_bytscl[2],
                                                       normalization=self.ld_bytscl[0])
-            if self.ld_bytscl[0] == "value":
-                return rvt.vis.byte_scale(
-                    data=norm_arr, no_data=np.nan, c_min=self.ld_bytscl[1], c_max=self.ld_bytscl[2]
-                )
-            else:
-                return rvt.vis.byte_scale(data=norm_arr, no_data=np.nan)
+            return rvt.vis.byte_scale(data=norm_arr, no_data=np.nan, c_min=0, c_max=1)
         elif visualization == RVTVisualization.MULTI_SCALE_RELIEF_MODEL:
             norm_arr = rvt.blend_func.normalize_image(visualization="msrm", image=float_arr,
                                                       min_norm=self.msrm_bytscl[1], max_norm=self.msrm_bytscl[2],
                                                       normalization=self.msrm_bytscl[0])
-            if self.msrm_bytscl[0] == "value":
-                return rvt.vis.byte_scale(
-                    data=norm_arr, no_data=np.nan, c_min=self.msrm_bytscl[1], c_max=self.msrm_bytscl[2]
-                )
-            else:
-                return rvt.vis.byte_scale(data=norm_arr, no_data=np.nan)
-        elif visualization == "mstp":
+            return rvt.vis.byte_scale(data=norm_arr, no_data=np.nan, c_min=0, c_max=1)
+        elif visualization == RVTVisualization.MULTI_SCALE_TOPOGRAPHIC_POSITION:
             return float_arr
         else:
             raise Exception("rvt.default.DefaultValues.float_to_8bit: Wrong visualization (visualization) parameter!")
