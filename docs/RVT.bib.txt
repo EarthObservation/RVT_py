@@ -1,4 +1,4 @@
-BibTeX generate
+Generate RVT.bib BibTeX
 
 References are maintained in a Citavi database
 Update and check for duplicates
