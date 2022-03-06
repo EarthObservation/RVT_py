@@ -14,3 +14,5 @@ upload to pypi:
 "python -m twine upload dist/*"
 
 when uploading for user name use: "__token__", for password use your token (https://pypi.org/help/#apitoken)
+
+Don't forget to add changes to changelog (docs/releases.rst).
