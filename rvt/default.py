@@ -305,17 +305,17 @@ class DefaultValues:
         self.ld_save_8bit = 0
         self.msrm_save_8bit = 0
         # 8-bit bytescale parameters
-        self.slp_bytscl = ("value", 0., 51.)
+        self.slp_bytscl = ("value", 0.00, 51.00)
         self.hs_bytscl = ("value", 0.00, 1.00)
         self.mhs_bytscl = ("value", 0.00, 1.00)
-        self.slrm_bytscl = ("percent", 2, 2)
+        self.slrm_bytscl = ("value", -2.00, 2.00)
         self.svf_bytscl = ("value", 0.6375, 1.00)
-        self.asvf_bytscl = ("percent", 2, 2)
-        self.pos_opns_bytscl = ("value", 60, 95.)
-        self.neg_opns_bytscl = ("value", 60, 95.)
-        self.sim_bytscl = ("percent", 0.25, 0)
-        self.ld_bytscl = ("value", 0.5, 1.8)
-        self.msrm_bytscl = ("percent", 2, 2)
+        self.asvf_bytscl = ("value", 0.70, 0.90)
+        self.pos_opns_bytscl = ("value", 60.00, 95.00)
+        self.neg_opns_bytscl = ("value", 60.00, 95.00)
+        self.sim_bytscl = ("percent", 0.25, 0.00)
+        self.ld_bytscl = ("value", 0.50, 1.80)
+        self.msrm_bytscl = ("value", -2.50, 2.50)
         # tile
         self.tile_size_limit = 10000 * 10000  # if arr size > tile_size limit, it uses tile module
         self.tile_size = (4000, 4000)  # size of single tile when using tile module (x_size, y_size)

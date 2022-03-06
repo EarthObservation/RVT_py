@@ -3,6 +3,14 @@
 Release history
 ===============
 
+2.1.0
+--------
+*   Changed 8bit (bytescale) parameters of some visualizations (all changed to value mode, to avoid tiling effect when using tile module).
+*   Float to 8bit bug fix.
+
+NOT RELEASED YET
+
+
 2.0.0
 --------
 *   Module multiproc.py replaced with tile.py.

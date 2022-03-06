@@ -110,9 +110,9 @@
                 "description": "If 1 it saves 8bit raster, if 0 it doesn't."
             },
             "slrm_bytscl": {
-                "mode": "percent",
-                "min": 2,
-                "max": 2,
+                "mode": "value",
+                "min": -2.0,
+                "max": 2.0,
                 "description": "Linear stretch and byte scale (0-255) for 8bit raster. Mode can be 'value' or 'percent' (cut-off units). Values min and max define stretch borders (in mode units)."
             }
         },
@@ -142,9 +142,9 @@
                 "description": "If 1 it saves 8bit raster, if 0 it doesn't."
             },
             "msrm_bytscl": {
-                "mode": "percent",
-                "min": 2,
-                "max": 2,
+                "mode": "value",
+                "min": -2.5,
+                "max": 2.5,
                 "description": "Linear stretch and byte scale (0-255) for 8bit raster. Mode can be 'value' or 'percent' (cut-off units). Values min and max define stretch borders (in mode units)."
             }
         },
@@ -194,9 +194,9 @@
                 "description": "Level of anisotropy [1-low, 2-high]."
             },
             "asvf_bytscl": {
-                "mode": "percent",
-                "min": 2,
-                "max": 2,
+                "mode": "value",
+                "min": 0.7,
+                "max": 0.9,
                 "description": "Linear stretch and byte scale (0-255) for 8bit raster. Mode can be 'value' or 'percent' (cut-off units). Values min and max define stretch borders (in mode units)."
             }
         },
@@ -207,7 +207,7 @@
             },
             "pos_opns_bytscl": {
                 "mode": "value",
-                "min": 60,
+                "min": 60.0,
                 "max": 95.0,
                 "description": "Linear stretch and byte scale (0-255) for 8bit raster. Mode can be 'value' or 'percent' (cut-off units). Values min and max define stretch borders (in mode units)."
             }
@@ -227,7 +227,7 @@
             },
             "neg_opns_bytscl": {
                 "mode": "value",
-                "min": 60,
+                "min": 60.0,
                 "max": 95.0,
                 "description": "Linear stretch and byte scale (0-255) for 8bit raster. Mode can be 'value' or 'percent' (cut-off units). Values min and max define stretch borders (in mode units)."
             }
@@ -272,7 +272,7 @@
             "sim_bytscl": {
                 "mode": "percent",
                 "min": 0.25,
-                "max": 0,
+                "max": 0.0,
                 "description": "Linear stretch and byte scale (0-255) for 8bit raster. Mode can be 'value' or 'percent' (cut-off units). Values min and max define stretch borders (in mode units)."
             }
         },
