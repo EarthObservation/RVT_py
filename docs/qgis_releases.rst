@@ -3,6 +3,12 @@
 QGIS Plugin Release history
 ===========================
 
+v 0.9.0
+-------
+*   Added tiling module, visualizations on huge rasters are now calculated tile by tile.
+*   Changed bytescale to 8bit parameters of all the visualizations to value mode (value ranges are different on each tile, this is why percent mode is not suitable).
+
+
 v 0.8.1
 -------
 *   Hillshade negative values set to 0.
