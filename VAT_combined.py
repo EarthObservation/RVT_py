@@ -18,22 +18,21 @@ import rvt.vis
 import rvt.blend
 import rvt.default
 import os
-import multiprocessing as mp
+from dask.distributed import Client, LocalCluster, Lock
 
 input_dir_path = "input_dir"
 output_dir_path = "output_dir"
 general_opacity = 50
 vat_combination_json_path = "settings/blender_VAT.json"
 terrains_sett_json_path = "settings/default_terrains_settings.json"
-nr_processes = 2
 save_float = True
-save_8bit = True
+save_8bit = False
 save_VAT_general = True
 save_VAT_flat = True
 
 
 def combined_VAT(input_dir_path, output_dir_path, general_opacity, vat_combination_json_path=None,
-                 terrains_sett_json_path=None, nr_processes=7, save_float=True, save_8bit=False,
+                 terrains_sett_json_path=None, save_float=True, save_8bit=False,
                  save_VAT_general=False, save_VAT_flat=False):
     if not save_float and not save_8bit:
         raise Exception("save_float and save_8bit are both False!")
@@ -78,6 +77,8 @@ def combined_VAT(input_dir_path, output_dir_path, general_opacity, vat_combinati
     # prepare for multiprocessing
     dem_list = os.listdir(input_dir_path)
     input_process_list = []
+    general_list = []
+    flat_list = []
     for input_dem_name in dem_list:
         if ".tif" not in input_dem_name:  # preskoči če se file ne konča .tif
             continue
@@ -103,24 +104,52 @@ def combined_VAT(input_dir_path, output_dir_path, general_opacity, vat_combinati
         out_comb_vat_general_path = os.path.abspath(os.path.join(output_dir_path, out_comb_vat_general_name))
         out_comb_vat_flat_name = "{}_Archaeological_(VAT_flat).tif".format(input_dem_name.rstrip(".tif"))
         out_comb_vat_flat_path = os.path.abspath(os.path.join(output_dir_path, out_comb_vat_flat_name))
-        input_process_list.append((general_combination, flat_combination, general_default, flat_default,
-                                   input_dem_path, out_comb_vat_path,
-                                   general_opacity, save_float, save_8bit, save_VAT_general,
-                                   out_comb_vat_general_path, save_VAT_flat, out_comb_vat_flat_path))
+        # input_process_list.append((general_combination, flat_combination, general_default, flat_default,
+        #                            input_dem_path, out_comb_vat_path,
+        #                            general_opacity, save_float, save_8bit, save_VAT_general,
+        #                            out_comb_vat_general_path, save_VAT_flat, out_comb_vat_flat_path))
 
-    # multiprocessing
-    with mp.Pool(nr_processes) as p:
-        realist = [p.apply_async(compute_save_VAT_combined, r) for r in input_process_list]
-        for result in realist:
-            print(result.get())
+    compute_save_VAT_combined(general_combination, flat_combination, general_default, flat_default,
+                              input_dem_path, out_comb_vat_path,
+                              general_opacity, save_float, save_8bit, save_VAT_general,
+                              out_comb_vat_general_path, save_VAT_flat, out_comb_vat_flat_path)
 
 
-# function which is multiprocessing
+    # #### COMPUTE VAT GENERAL AND VAT FLAT IN PARALLEL 
+    #     general_list.append((general_combination, general_default, input_dem_path, 
+    #                         general_opacity, save_float , save_8bit , out_comb_vat_general_path))
+    #     flat_list.append((flat_combination, flat_default, input_dem_path, 
+    #                         general_opacity, save_float , save_8bit , out_comb_vat_flat_path))
+    #     input_process_list = [general_list, flat_list]
+    
+    # delayed_results = [dask.delayed(delayed_save_VAT)(*file_name) for file_name, in input_process_list]
+    # dask.compute(*delayed_results)
+    ###in case of saving ok to call compute there and and also on delayed function here (check best practices)
+
+
+# def delayed_save_VAT(type_combination, type_default, input_dem_path,
+#                               general_transparency, save_float, save_8bit, out_comb_path):
+#     dict_arr_res_nd = rvt.default.get_raster_dask_arr(raster_path=input_dem_path) ## returned 
+#                                                 #dictionary contains ARRAY (= orginal input dem), resolution data and "no_data" key
+#     # create and blend VAT general
+#     type_combination.add_dem_arr(dem_arr=dict_arr_res_nd["array"], ## addd above ARrAY here to general_combination.dem_arr
+#                                     dem_resolution=dict_arr_res_nd["resolution"][0])
+#     if save_float:
+#         type_combination.add_dem_path(dem_path=input_dem_path)
+#         vat_arr = type_combination.render_all_images(save_render_path = out_comb_path, 
+#                                                           save_float=save_float, save_8bit=save_8bit,
+#                                                           default = type_default, no_data=dict_arr_res_nd["no_data"])
+#         print("Saving.")
+#     else:
+#         # vat_arr_= type_combination.render_all_images(default = type_default, no_data=dict_arr_res_nd["no_data"])
+#         print("Do nothing.")
+
+
 def compute_save_VAT_combined(general_combination, flat_combination, general_default, flat_default,
                               input_dem_path, out_comb_vat_path,
                               general_transparency, save_float, save_8bit, save_VAT_general, out_comb_vat_general_path,
                               save_VAT_flat, out_comb_vat_flat_path):
-    dict_arr_res_nd = rvt.default.get_raster_arr(raster_path=input_dem_path)
+    dict_arr_res_nd = rvt.default.get_raster_dask_arr(raster_path=input_dem_path)
 
     # create and blend VAT general
     general_combination.add_dem_arr(dem_arr=dict_arr_res_nd["array"],
@@ -144,7 +173,8 @@ def compute_save_VAT_combined(general_combination, flat_combination, general_def
     else:
         vat_arr_2 = flat_combination.render_all_images(default=flat_default, no_data=dict_arr_res_nd["no_data"])
 
-    # create combination which blends VAT flat and VAT general together
+    # create combination which blends VAT flat and VAT general together 
+    # - if both are already computed and saved - check and read from file!
     combination = rvt.blend.BlenderCombination()
     combination.create_layer(vis_method="VAT general", image=vat_arr_1, normalization="Value", minimum=0,
                              maximum=1, blend_mode="Normal", opacity=general_transparency)
@@ -168,7 +198,19 @@ def compute_save_VAT_combined(general_combination, flat_combination, general_def
 
 # Program start
 if __name__ == '__main__':
+
+    cluster = LocalCluster(n_workers=1, threads_per_worker = 8,
+                        memory_limit=None)
+    client = Client(cluster)
+    print(client)  ## <- open in browser to see dask diagnostics dashboard live
+
+    ## Chosing apropriate cluster parameters and dask.array chunk sizes is important! Can result in memory errors otherwise.
+    ## Chunk size is currently manually defined in rvt.default.get_raster_dask_arr()
+    ## node  = cluster/machine; nr of possible processes = nr of cores in machine (worker = process?); thread = shared memory but GIL "for" loops
+
     combined_VAT(input_dir_path=input_dir_path, output_dir_path=output_dir_path,
                  general_opacity=general_opacity, vat_combination_json_path=vat_combination_json_path,
-                 terrains_sett_json_path=terrains_sett_json_path, nr_processes=nr_processes, save_float=save_float,
+                 terrains_sett_json_path=terrains_sett_json_path, save_float=save_float,
                  save_8bit=save_8bit, save_VAT_general=save_VAT_general, save_VAT_flat=save_VAT_flat)
+
+    client.shutdown()

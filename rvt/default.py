@@ -19,6 +19,7 @@ Copyright:
     2016-2022 University of Ljubljana, Faculty of Civil and Geodetic Engineering
 """
 
+from logging import raiseExceptions
 import warnings
 from enum import Enum
 from pathlib import Path
@@ -26,6 +27,7 @@ from typing import Optional, Tuple
 
 import rvt.vis
 import rvt.blend_func
+import rvt.blend_func_dask
 import rvt.tile
 import os
 from osgeo import gdal
@@ -33,6 +35,15 @@ import numpy as np
 import json
 import datetime
 import time
+from functools import partial
+import dask
+import dask.array as da
+from dask.distributed import Client, LocalCluster, Lock
+import zarr
+import rioxarray
+import xarray as xr
+from typing import Union, Dict, List, Any, Tuple, Optional
+from nptyping import NDArray
 
 
 class RVTVisualization(Enum):
@@ -317,7 +328,8 @@ class DefaultValues:
         self.ld_bytscl = ("value", 0.50, 1.80)
         self.msrm_bytscl = ("value", -2.50, 2.50)
         # tile
-        self.tile_size_limit = 10000 * 10000  # if arr size > tile_size limit, it uses tile module
+        self.tile_size_limit = float('inf') ##temp turn off tile module 
+        # self.tile_size_limit = 10000 * 10000  # if arr size > tile_size limit, it uses tile module
         self.tile_size = (4000, 4000)  # size of single tile when using tile module (x_size, y_size)
 
     def save_default_to_file(self, file_path=None):
@@ -1055,9 +1067,9 @@ class DefaultValues:
         elif rvt_visualization == rvt.default.RVTVisualization.MULTI_SCALE_TOPOGRAPHIC_POSITION:
             return output_dir_path / Path(self.get_mstp_file_name(dem_path=dem_path))
 
-    def float_to_8bit(
+    def dask_float_to_8bit(
             self,
-            float_arr: np.array,
+            float_arr: NDArray[np.float32],
             visualization: RVTVisualization,
             x_res: float = None,
             y_res: float = None,
@@ -1066,18 +1078,20 @@ class DefaultValues:
         """Converts (byte scale) float visualization to 8bit. Resolution (x_res, y_res) and no_data needed only for
          multiple directions hillshade! Method first normalize then byte scale (0-255)."""
         if visualization == RVTVisualization.HILLSHADE:
-            norm_arr = rvt.blend_func.normalize_image(visualization="hs", image=float_arr,
+            norm_arr = rvt.blend_func_dask.dask_normalize_image(visualization="hs", image=float_arr,
                                                       min_norm=self.hs_bytscl[1], max_norm=self.hs_bytscl[2],
                                                       normalization=self.hs_bytscl[0])
-            return rvt.vis.byte_scale(data=norm_arr, no_data=np.nan, c_min=0, c_max=1)
+            return rvt.vis.dask_byte_scale(data=norm_arr, no_data=np.nan, c_min=0, c_max=1)
         elif visualization == RVTVisualization.SLOPE:
-            norm_arr = rvt.blend_func.normalize_image(visualization="slp", image=float_arr,
+            norm_arr = rvt.blend_func_dask.dask_normalize_image(visualization="slp", image=float_arr,
                                                       min_norm=self.slp_bytscl[1], max_norm=self.slp_bytscl[2],
                                                       normalization=self.slp_bytscl[0])
-            return rvt.vis.byte_scale(data=norm_arr, no_data=np.nan, c_min=0, c_max=1)
+            return rvt.vis.dask_byte_scale(data=norm_arr, no_data=np.nan, c_min=0, c_max=1)
         elif visualization == RVTVisualization.SHADOW:
+            raise Exception(f"{visualization} is not implemented with dask yet!")
             return float_arr
         elif visualization == RVTVisualization.MULTI_HILLSHADE:
+            raise Exception(f"{visualization} is not implemented with dask yet!")
             # Be careful when multihillshade we input dem, because we have to calculate hillshade in 3 directions
             red_band_arr = rvt.vis.hillshade(dem=float_arr, resolution_x=x_res, resolution_y=y_res,
                                              sun_elevation=self.mhs_sun_el, sun_azimuth=315, no_data=no_data)
@@ -1120,59 +1134,93 @@ class DefaultValues:
             multi_hillshade_8bit_arr = np.array([red_band_arr, green_band_arr, blue_band_arr])
             return multi_hillshade_8bit_arr
         elif visualization == RVTVisualization.SIMPLE_LOCAL_RELIEF_MODEL:
+            raise Exception(f"{visualization} is not implemented with dask yet!")
             norm_arr = rvt.blend_func.normalize_image(visualization="slrm", image=float_arr,
                                                       min_norm=self.slrm_bytscl[1], max_norm=self.slrm_bytscl[2],
                                                       normalization=self.slrm_bytscl[0])
             return rvt.vis.byte_scale(data=norm_arr, no_data=np.nan, c_min=0, c_max=1)
         elif visualization == RVTVisualization.SKY_VIEW_FACTOR:
-            norm_arr = rvt.blend_func.normalize_image(visualization="svf", image=float_arr,
+            norm_arr = rvt.blend_func_dask.dask_normalize_image(visualization="svf", image=float_arr,
                                                       min_norm=self.svf_bytscl[1], max_norm=self.svf_bytscl[2],
                                                       normalization=self.svf_bytscl[0])
-            return rvt.vis.byte_scale(data=norm_arr, no_data=np.nan, c_min=0, c_max=1)
+            return rvt.vis.dask_byte_scale(data=norm_arr, no_data=np.nan, c_min=0, c_max=1)
         elif visualization == RVTVisualization.ANISOTROPIC_SKY_VIEW_FACTOR:
+            raise Exception(f"{visualization} is not implemented with dask yet!")
             norm_arr = rvt.blend_func.normalize_image(visualization="asvf", image=float_arr,
                                                       min_norm=self.asvf_bytscl[1], max_norm=self.asvf_bytscl[2],
                                                       normalization=self.asvf_bytscl[0])
             return rvt.vis.byte_scale(data=norm_arr, no_data=np.nan, c_min=0, c_max=1)
         elif visualization == RVTVisualization.POSITIVE_OPENNESS:
-            norm_arr = rvt.blend_func.normalize_image(visualization="pos_opns", image=float_arr,
+            norm_arr = rvt.blend_func_dask.dask_normalize_image(visualization="pos_opns", image=float_arr,
                                                       min_norm=self.pos_opns_bytscl[1],
                                                       max_norm=self.pos_opns_bytscl[2],
                                                       normalization=self.pos_opns_bytscl[0])
-            return rvt.vis.byte_scale(data=norm_arr, no_data=np.nan, c_min=0, c_max=1)
+            return rvt.vis.dask_byte_scale(data=norm_arr, no_data=np.nan, c_min=0, c_max=1)
         elif visualization == RVTVisualization.NEGATIVE_OPENNESS:
+            raise Exception(f"{visualization} is not implemented with dask yet!")
             norm_arr = rvt.blend_func.normalize_image(visualization="neg_opns", image=float_arr,
                                                       min_norm=self.neg_opns_bytscl[1],
                                                       max_norm=self.neg_opns_bytscl[2],
                                                       normalization=self.neg_opns_bytscl[0])
             return rvt.vis.byte_scale(data=norm_arr, no_data=np.nan, c_min=0, c_max=1)
         elif visualization == RVTVisualization.SKY_ILLUMINATION:
+            raise Exception(f"{visualization} is not implemented with dask yet!")
             norm_arr = rvt.blend_func.normalize_image(visualization="sim", image=float_arr,
                                                       min_norm=self.sim_bytscl[1], max_norm=self.sim_bytscl[2],
                                                       normalization=self.sim_bytscl[0])
             return rvt.vis.byte_scale(data=norm_arr, no_data=np.nan, c_min=0, c_max=1)
         elif visualization == RVTVisualization.LOCAL_DOMINANCE:
+            raise Exception(f"{visualization} is not implemented with dask yet!")
             norm_arr = rvt.blend_func.normalize_image(visualization="ld", image=float_arr,
                                                       min_norm=self.ld_bytscl[1], max_norm=self.ld_bytscl[2],
                                                       normalization=self.ld_bytscl[0])
             return rvt.vis.byte_scale(data=norm_arr, no_data=np.nan, c_min=0, c_max=1)
         elif visualization == RVTVisualization.MULTI_SCALE_RELIEF_MODEL:
+            raise Exception(f"{visualization} is not implemented with dask yet!")
             norm_arr = rvt.blend_func.normalize_image(visualization="msrm", image=float_arr,
                                                       min_norm=self.msrm_bytscl[1], max_norm=self.msrm_bytscl[2],
                                                       normalization=self.msrm_bytscl[0])
             return rvt.vis.byte_scale(data=norm_arr, no_data=np.nan, c_min=0, c_max=1)
         elif visualization == RVTVisualization.MULTI_SCALE_TOPOGRAPHIC_POSITION:
+            raise Exception(f"{visualization} is not implemented with dask yet!")
             return float_arr
         else:
-            raise Exception("rvt.default.DefaultValues.float_to_8bit: Wrong visualization (visualization) parameter!")
+            raise Exception("rvt.default.DefaultValues.dask_float_to_8bit: Wrong visualization (visualization) parameter!")
 
-    def get_slope(self, dem_arr, resolution_x, resolution_y, no_data=None):
-        slope_arr = rvt.vis.slope_aspect(dem=dem_arr, resolution_x=resolution_x, resolution_y=resolution_y,
-                                         ve_factor=self.ve_factor, output_units=self.slp_output_units,
-                                         no_data=no_data)["slope"]
-        return slope_arr
 
-    def save_slope(self, dem_path, custom_dir=None, save_float=None, save_8bit=None):
+    def _slope_aspect_wrapper(self, np_chunk: NDArray[np.float32], resolution_x: Union[int, float],
+                             resolution_y: Union[int, float], no_data = Union[int, None]) -> NDArray[np.float32]: 
+        result_dict = rvt.vis.slope_aspect(dem = np_chunk, resolution_x = resolution_x, 
+                                            resolution_y= resolution_y, ve_factor = self.ve_factor, 
+                                            output_units= self.slp_output_units, no_data= no_data)
+        slope_out = result_dict["slope"]
+        aspect_out = result_dict["aspect"]
+        return slope_out
+        # output_for_dask_slo_asp = np.stack((slope_out, aspect_out))
+        # return output_for_dask_slo_asp
+
+    def get_dask_slope(self, 
+                        input_dem: da.Array, 
+                        resolution_x,
+                        resolution_y,
+                        no_data = None) -> da.Array:
+        input_dem = input_dem.astype(np.float32)
+        data_volume = input_dem 
+        _func = partial(self._slope_aspect_wrapper,
+                        resolution_x = resolution_x,
+                        resolution_y = resolution_y,
+                        no_data = no_data)
+        depth = { 0: 1, 1: 1}
+        # boundary = {0: 0, 0: 'periodic', 2: 'periodic'}     # (outter edges of) slope_out not ok
+        boundary = {0: np.nan, 1: np.nan}           # (outter edges of) aspect_out not ok
+        out_slp = data_volume.map_overlap(_func,
+                               depth=depth,
+                               boundary=boundary,
+                               meta=np.array((), dtype=np.float32))
+        return out_slp
+
+
+    def save_dask_slope(self, dem_path, custom_dir=None, save_float=None, save_8bit=None):
         """Calculates and saves Slope from dem (dem_path) with default parameters. If custom_dir is None it saves
         in dem directory else in custom_dir. If path to file already exists we can overwrite file (overwrite=0) or
         not (overwrite=1). If save_float is True method creates Gtiff with real values,
@@ -1186,10 +1234,10 @@ class DefaultValues:
             save_8bit = self.slp_save_8bit
 
         if not save_float and not save_8bit:
-            raise Exception("rvt.default.DefaultValues.save_slope: Both save_float and save_8bit are False,"
+            raise Exception("rvt.default.DefaultValues.dask_save_slope: Both save_float and save_8bit are False,"
                             " at least one of them has to be True!")
         if not os.path.isfile(dem_path):
-            raise Exception("rvt.default.DefaultValues.save_slope: dem_path doesn't exist!")
+            raise Exception("rvt.default.DefaultValues.dask_save_slope: dem_path doesn't exist!")
 
         if custom_dir is None:
             slope_path = self.get_slope_path(dem_path)
@@ -1209,40 +1257,26 @@ class DefaultValues:
             if os.path.isfile(slope_8bit_path) and not self.overwrite:
                 return 0
 
-        dem_size = get_raster_size(raster_path=dem_path)
-        if dem_size[0] * dem_size[1] > self.tile_size_limit:  # tile by tile calculation
-            if custom_dir is None:
-                custom_dir = Path(dem_path).parent
-            rvt.tile.save_rvt_visualization_tile_by_tile(
-                rvt_visualization=RVTVisualization.SLOPE,
-                rvt_default=self,
-                dem_path=Path(dem_path),
-                output_dir_path=Path(custom_dir),
-                save_float=save_float,
-                save_8bit=save_8bit
-            )
-            return 1
-        else:  # singleprocess
-            dict_arr_res = get_raster_arr(raster_path=dem_path)
-            dem_arr = dict_arr_res["array"]
-            no_data = dict_arr_res["no_data"]
-            x_res = dict_arr_res["resolution"][0]
-            y_res = dict_arr_res["resolution"][1]
-            slope_arr = self.get_slope(dem_arr=dem_arr, resolution_x=x_res, resolution_y=y_res, no_data=no_data)
-            if save_float:
-                if os.path.isfile(slope_path) and not self.overwrite:  # file exists and overwrite=0
-                    pass
-                else:
-                    save_raster(src_raster_path=dem_path, out_raster_path=slope_path, out_raster_arr=slope_arr,
-                                no_data=np.nan)
-            if save_8bit:
-                if os.path.isfile(slope_8bit_path) and not self.overwrite:  # file exists and overwrite=0
-                    pass
-                else:
-                    slope_8bit_arr = self.float_to_8bit(float_arr=slope_arr, visualization=RVTVisualization.SLOPE)
-                    save_raster(src_raster_path=dem_path, out_raster_path=slope_8bit_path,
-                                out_raster_arr=slope_8bit_arr, e_type=1)
-            return 1
+        ## always wtith dask (temp - chunk options?)
+        dict_arr_res = get_raster_dask_arr(raster_path=dem_path)
+        dem_arr = dict_arr_res["array"]
+        no_data = dict_arr_res["no_data"]
+        x_res = dict_arr_res["resolution"][0]
+        y_res = dict_arr_res["resolution"][1]
+        slope_arr = self.get_dask_slope(input_dem=dem_arr, resolution_x=x_res, resolution_y=y_res, no_data=no_data)
+        if save_float:
+            if os.path.isfile(slope_path) and not self.overwrite:  # file exists and overwrite=0
+                pass
+            else:
+                dask_save_raster_zarr(src_raster_path=dem_path, out_raster_path=slope_path, out_raster_arr=slope_arr)
+        if save_8bit:
+            if os.path.isfile(slope_8bit_path) and not self.overwrite:  # file exists and overwrite=0
+                pass
+            else:
+                slope_8bit_arr = self.dask_float_to_8bit(float_arr=slope_arr, visualization=RVTVisualization.SLOPE)
+                dask_save_raster_zarr(src_raster_path=dem_path, out_raster_path=slope_8bit_path,
+                            out_raster_arr=slope_8bit_arr)
+        return 1
 
     def get_shadow(self, dem_arr, resolution, no_data=None):
         shadow_arr = rvt.vis.shadow_horizon(dem=dem_arr, resolution=resolution, shadow_az=self.hs_sun_azi,
@@ -1250,13 +1284,38 @@ class DefaultValues:
                                             no_data=no_data)["shadow"]
         return shadow_arr
 
-    def get_hillshade(self, dem_arr, resolution_x, resolution_y, no_data=None):
-        hillshade_arr = rvt.vis.hillshade(dem=dem_arr, resolution_x=resolution_x, resolution_y=resolution_y,
-                                          sun_azimuth=self.hs_sun_azi, sun_elevation=self.hs_sun_el,
-                                          ve_factor=self.ve_factor, no_data=no_data)
-        return hillshade_arr
 
-    def save_hillshade(self, dem_path, custom_dir=None, save_float=None, save_8bit=None, save_shadow=None):
+    def _hillshade_wrapper(self, np_chunk: NDArray[np.float32],
+                        resolution_x: Union[int,float],
+                        resolution_y: Union[int,float],
+                        no_data:Union[int, None] ) -> NDArray[np.float32]: 
+        result_out = rvt.vis.hillshade(dem = np_chunk, resolution_x = resolution_x, resolution_y = resolution_y,
+                                      sun_azimuth = self.hs_sun_azi, sun_elevation = self.hs_sun_el,
+                                      ve_factor=self.ve_factor, no_data = no_data)
+        output_for_dask_hs = result_out
+        return output_for_dask_hs
+
+
+    def get_dask_hillshade(self, 
+                        input_dem: da.Array,
+                        resolution_x,
+                        resolution_y ,
+                        no_data = None) -> da.Array:
+        input_dem = input_dem.astype(np.float32)
+        data_volume = input_dem 
+        _func = partial(self._hillshade_wrapper, 
+                        resolution_x = resolution_x, 
+                        resolution_y = resolution_y,
+                        no_data = no_data)
+        depth =  {0: 1, 1: 1}
+        boundary = {0: 'periodic', 1: 'periodic'}    
+        out_hs = data_volume.map_overlap(_func,
+                               depth=depth,
+                               boundary=boundary,
+                               meta=np.array((), dtype=np.float32))
+        return out_hs
+
+    def save_dask_hillshade(self, dem_path, custom_dir=None, save_float=None, save_8bit=None, save_shadow=None):
         """Calculates and saves Hillshade from dem (dem_path) with default parameters. If custom_dir is None it saves
         in dem directory else in custom_dir. If path to file already exists we can overwrite file (overwrite=1)
         or not (overwrite=0). If save_float is True method creates Gtiff with real values,
@@ -1273,10 +1332,10 @@ class DefaultValues:
             save_shadow = self.hs_shadow
 
         if not save_float and not save_8bit:
-            raise Exception("rvt.default.DefaultValues.save_hillshade: Both save_float and save_8bit are False,"
+            raise Exception("rvt.default.DefaultValues.dask_save_hillshade: Both save_float and save_8bit are False,"
                             " at least one of them has to be True!")
         if not os.path.isfile(dem_path):
-            raise Exception("rvt.default.DefaultValues.save_hillshade: dem_path doesn't exist!")
+            raise Exception("rvt.default.DefaultValues.dask_save_hillshade: dem_path doesn't exist!")
 
         if custom_dir is None:
             hillshade_path = self.get_hillshade_path(dem_path)
@@ -1305,59 +1364,35 @@ class DefaultValues:
             if os.path.isfile(hillshade_8bit_path) and os.path.isfile(shadow_path) and not self.overwrite:
                 return 0
 
-        dem_size = get_raster_size(raster_path=dem_path)
-        if dem_size[0] * dem_size[1] > self.tile_size_limit:  # tile by tile
-            if custom_dir is None:
-                custom_dir = Path(dem_path).parent
-            rvt.tile.save_rvt_visualization_tile_by_tile(
-                rvt_visualization=RVTVisualization.HILLSHADE,
-                rvt_default=self,
-                dem_path=Path(dem_path),
-                output_dir_path=Path(custom_dir),
-                save_float=save_float,
-                save_8bit=save_8bit
-            )
-            if save_shadow:
-                rvt.tile.save_rvt_visualization_tile_by_tile(
-                    rvt_visualization=RVTVisualization.SHADOW,
-                    rvt_default=self,
-                    dem_path=Path(dem_path),
-                    output_dir_path=Path(custom_dir),
-                    save_float=True,
-                    save_8bit=False
-                )
-            return 1
-        else:  # singleprocess
-            dict_arr_res = get_raster_arr(raster_path=dem_path)
-            dem_arr = dict_arr_res["array"]
-            no_data = dict_arr_res["no_data"]
-            x_res = dict_arr_res["resolution"][0]
-            y_res = dict_arr_res["resolution"][1]
-            hillshade_arr = self.get_hillshade(dem_arr=dem_arr, resolution_x=x_res, resolution_y=y_res,
-                                               no_data=no_data).astype('float32')
-            if save_float:
-                if os.path.isfile(hillshade_path) and not self.overwrite:  # file exists and overwrite=0
-                    pass
-                else:
-                    save_raster(src_raster_path=dem_path, out_raster_path=hillshade_path, out_raster_arr=hillshade_arr,
-                                no_data=np.nan)
-            if save_8bit:
-                if os.path.isfile(hillshade_8bit_path) and not self.overwrite:  # file exists and overwrite=0
-                    pass
-                else:
-                    hillshade_8_bit_arr = self.float_to_8bit(
-                        float_arr=hillshade_arr, visualization=RVTVisualization.HILLSHADE
-                    )
-                    save_raster(src_raster_path=dem_path, out_raster_path=hillshade_8bit_path,
-                                out_raster_arr=hillshade_8_bit_arr, e_type=1)
-            if save_shadow:
-                shadow_arr = self.get_shadow(dem_arr=dem_arr, resolution=x_res)
-                if os.path.isfile(shadow_path) and not self.overwrite:  # file exists and overwrite=0
-                    pass
-                else:
-                    save_raster(src_raster_path=dem_path, out_raster_path=shadow_path, out_raster_arr=shadow_arr,
-                                no_data=np.nan)
-            return 1
+        dict_arr_res = get_raster_dask_arr(raster_path=dem_path)
+        dem_arr = dict_arr_res["array"]
+        no_data = dict_arr_res["no_data"]
+        x_res = dict_arr_res["resolution"][0]
+        y_res = dict_arr_res["resolution"][1]
+        hillshade_arr = self.get_dask_hillshade(input_dem=dem_arr, resolution_x=x_res, resolution_y=y_res,
+                                            no_data=no_data)
+        if save_float:
+            if os.path.isfile(hillshade_path) and not self.overwrite:  # file exists and overwrite=0
+                pass
+            else:
+                dask_save_raster_zarr(src_raster_path=dem_path, out_raster_path=hillshade_path, out_raster_arr=hillshade_arr)
+        if save_8bit:
+            if os.path.isfile(hillshade_8bit_path) and not self.overwrite:  # file exists and overwrite=0
+                pass
+            else:
+                hillshade_8_bit_arr = self.dask_float_to_8bit(
+                    float_arr=hillshade_arr, visualization=RVTVisualization.HILLSHADE)
+                dask_save_raster_zarr(src_raster_path=dem_path, out_raster_path=hillshade_8bit_path,
+                            out_raster_arr=hillshade_8_bit_arr)
+        if save_shadow:
+            shadow_arr = self.get_shadow(dem_arr=dem_arr, resolution=x_res)
+            if os.path.isfile(shadow_path) and not self.overwrite:  # file exists and overwrite=0
+                pass
+            else:
+                dask_save_raster_zarr(src_raster_path=dem_path, out_raster_path=shadow_path, out_raster_arr=shadow_arr,
+                            no_data=np.nan)
+        return 1
+
 
     def get_multi_hillshade(self, dem_arr, resolution_x, resolution_y, no_data=None):
         multi_hillshade_arr = rvt.vis.multi_hillshade(dem=dem_arr, resolution_x=resolution_x, resolution_y=resolution_y,
@@ -1523,17 +1558,39 @@ class DefaultValues:
                                 e_type=1)
             return 1
 
-    def get_sky_view_factor(self, dem_arr, resolution, compute_svf=True, compute_asvf=False, compute_opns=False,
-                            no_data=None):
-        dict_svf_asvf_opns = rvt.vis.sky_view_factor(dem=dem_arr, resolution=resolution, compute_svf=compute_svf,
-                                                     compute_opns=compute_opns, compute_asvf=compute_asvf,
-                                                     svf_n_dir=self.svf_n_dir, svf_r_max=self.svf_r_max,
-                                                     svf_noise=self.svf_noise, asvf_dir=self.asvf_dir,
-                                                     asvf_level=self.asvf_level, ve_factor=self.ve_factor,
-                                                     no_data=no_data)
-        return dict_svf_asvf_opns
 
-    def save_sky_view_factor(self, dem_path, save_svf=True, save_asvf=False, save_opns=False, custom_dir=None,
+    def _sky_view_factor_wrapper(self, np_chunk: NDArray[np.float32], resolution: Union[int, float],  
+                                compute_svf:bool, compute_opns: bool, compute_asvf: bool,
+                                no_data: Union[int, None]) -> NDArray[np.float32]:  
+        result_dict = rvt.vis.sky_view_factor(dem = np_chunk, resolution = resolution, compute_svf = compute_svf,
+                                                    compute_opns = compute_opns, compute_asvf= compute_asvf,
+                                                    svf_n_dir=self.svf_n_dir, svf_r_max=self.svf_r_max,
+                                                    svf_noise=self.svf_noise, asvf_dir=self.asvf_dir,
+                                                    asvf_level=self.asvf_level, ve_factor=self.ve_factor,
+                                                    no_data = no_data)
+        svf_out, = result_dict.values() #assume calculation of ONLY ONE vis at a time and return
+        return svf_out   
+    
+    def get_dask_sky_view_factor(self, input_dem: da.Array,
+                          resolution, compute_svf,
+                          compute_opns, compute_asvf,
+                          no_data)-> da.Array: 
+        input_dem = input_dem.astype(np.float32)
+        data_volume = input_dem 
+        _func = partial(self._sky_view_factor_wrapper,
+                        resolution = resolution, compute_svf = compute_svf,
+                        compute_opns = compute_opns, compute_asvf = compute_asvf,
+                        no_data = no_data) 
+        radius_max = self.svf_r_max
+        depth = { 0: radius_max, 1: radius_max} 
+        boundary = { 0: "reflect", 1: "reflect"}
+        out_svf = data_volume.map_overlap(_func,
+                                          depth = depth,
+                                          boundary = boundary,
+                                          meta=np.array((), dtype = np.float32))
+        return out_svf
+
+    def save_dask_sky_view_factor(self, dem_path, save_svf=True, save_asvf=False, save_opns=False, custom_dir=None,
                              save_float=None, save_8bit=None):
         """Calculates and saves Sky-view factor(save_svf=True), Anisotropic Sky-view factor(save_asvf=True) and
         Positive Openness(save_opns=True) from dem (dem_path) with default parameters.
@@ -1549,10 +1606,10 @@ class DefaultValues:
             save_8bit = self.svf_save_8bit
 
         if not save_float and not save_8bit:
-            raise Exception("rvt.default.DefaultValues.save_sky_view_factor: Both save_float and save_8bit are False,"
+            raise Exception("rvt.default.DefaultValues.save_dask_sky_view_factor: Both save_float and save_8bit are False,"
                             " at least one of them has to be True!")
         if not os.path.isfile(dem_path):
-            raise Exception("rvt.default.DefaultValues.save_sky_view_factor: dem_path doesn't exist!")
+            raise Exception("rvt.default.DefaultValues.save_dask_sky_view_factor: dem_path doesn't exist!")
 
         svf_path = ""
         asvf_path = ""
@@ -1596,96 +1653,63 @@ class DefaultValues:
                     and not self.overwrite:
                 return 0
 
-        dem_size = get_raster_size(raster_path=dem_path)
-        if dem_size[0] * dem_size[1] > self.tile_size_limit:  # tile by tile
-            if custom_dir is None:
-                custom_dir = Path(dem_path).parent
+        dict_arr_res = get_raster_dask_arr(raster_path=dem_path)
+        dem_arr = dict_arr_res["array"]
+        no_data = dict_arr_res["no_data"]
+        x_res = dict_arr_res["resolution"][0]
+        y_res = dict_arr_res["resolution"][1]
+        dict_svf_asvf_opns = self.get_dask_sky_view_factor(input_dem=dem_arr, resolution=x_res, compute_svf=save_svf,
+                                                        compute_asvf=save_asvf, compute_opns=save_opns,
+                                                        no_data=no_data)
+        if save_float:
             if save_svf:
-                rvt.tile.save_rvt_visualization_tile_by_tile(
-                    rvt_visualization=RVTVisualization.SKY_VIEW_FACTOR,
-                    rvt_default=self,
-                    dem_path=Path(dem_path),
-                    output_dir_path=Path(custom_dir),
-                    save_float=save_float,
-                    save_8bit=save_8bit
-                )
+                if os.path.isfile(svf_path) and not self.overwrite:  # file exists and overwrite=0
+                    pass
+                else:  # svf_path, file doesn't exists or exists and overwrite=1
+                    dask_save_raster_zarr(src_raster_path=dem_path, out_raster_path=svf_path,
+                                out_raster_arr=dict_svf_asvf_opns)
             if save_asvf:
-                rvt.tile.save_rvt_visualization_tile_by_tile(
-                    rvt_visualization=RVTVisualization.ANISOTROPIC_SKY_VIEW_FACTOR,
-                    rvt_default=self,
-                    dem_path=Path(dem_path),
-                    output_dir_path=Path(custom_dir),
-                    save_float=save_float,
-                    save_8bit=save_8bit
-                )
+                if os.path.isfile(asvf_path) and not self.overwrite:  # file exists and overwrite=0
+                    pass
+                else:  # asvf_path, file doesn't exists or exists and overwrite=1
+                    dask_save_raster_zarr(src_raster_path=dem_path, out_raster_path=asvf_path,
+                                out_raster_arr=dict_svf_asvf_opns)
             if save_opns:
-                rvt.tile.save_rvt_visualization_tile_by_tile(
-                    rvt_visualization=RVTVisualization.POSITIVE_OPENNESS,
-                    rvt_default=self,
-                    dem_path=Path(dem_path),
-                    output_dir_path=Path(custom_dir),
-                    save_float=save_float,
-                    save_8bit=save_8bit
-                )
-            return 1
-        else:
-            dict_arr_res = get_raster_arr(raster_path=dem_path)
-            dem_arr = dict_arr_res["array"]
-            no_data = dict_arr_res["no_data"]
-            x_res = dict_arr_res["resolution"][0]
-            y_res = dict_arr_res["resolution"][1]
-            dict_svf_asvf_opns = self.get_sky_view_factor(dem_arr=dem_arr, resolution=x_res, compute_svf=save_svf,
-                                                          compute_asvf=save_asvf, compute_opns=save_opns,
-                                                          no_data=no_data)
-            if save_float:
-                if save_svf:
-                    if os.path.isfile(svf_path) and not self.overwrite:  # file exists and overwrite=0
-                        pass
-                    else:  # svf_path, file doesn't exists or exists and overwrite=1
-                        save_raster(src_raster_path=dem_path, out_raster_path=svf_path,
-                                    out_raster_arr=dict_svf_asvf_opns["svf"].astype('float32'), no_data=np.nan)
-                if save_asvf:
-                    if os.path.isfile(asvf_path) and not self.overwrite:  # file exists and overwrite=0
-                        pass
-                    else:  # asvf_path, file doesn't exists or exists and overwrite=1
-                        save_raster(src_raster_path=dem_path, out_raster_path=asvf_path,
-                                    out_raster_arr=dict_svf_asvf_opns["asvf"].astype('float32'), no_data=np.nan)
-                if save_opns:
-                    if os.path.isfile(opns_path) and not self.overwrite:  # file exists and overwrite=0
-                        pass
-                    else:  # opns_path, file doesn't exists or exists and overwrite=1
-                        save_raster(src_raster_path=dem_path, out_raster_path=opns_path,
-                                    out_raster_arr=dict_svf_asvf_opns["opns"].astype('float32'), no_data=np.nan)
-            if save_8bit:
-                if save_svf:
-                    if os.path.isfile(svf_8bit_path) and not self.overwrite:  # file exists and overwrite=0
-                        pass
-                    else:  # svf_8bit_path, file doesn't exists or exists and overwrite=1
-                        svf_8bit_arr = self.float_to_8bit(
-                            float_arr=dict_svf_asvf_opns["svf"], visualization=RVTVisualization.SKY_VIEW_FACTOR
-                        )
-                        save_raster(src_raster_path=dem_path, out_raster_path=svf_8bit_path,
-                                    out_raster_arr=svf_8bit_arr, e_type=1)
-                if save_asvf:
-                    if os.path.isfile(asvf_8bit_path) and not self.overwrite:  # file exists and overwrite=0
-                        pass
-                    else:  # asvf_8bit_path, file doesn't exists or exists and overwrite=1
-                        asvf_8bit_arr = self.float_to_8bit(
-                            float_arr=dict_svf_asvf_opns["asvf"],
-                            visualization=RVTVisualization.ANISOTROPIC_SKY_VIEW_FACTOR
-                        )
-                        save_raster(src_raster_path=dem_path, out_raster_path=asvf_8bit_path,
-                                    out_raster_arr=asvf_8bit_arr, e_type=1)
-                if save_opns:
-                    if os.path.isfile(opns_8bit_path) and not self.overwrite:  # file exists and overwrite=0
-                        pass
-                    else:  # opns_8bit_path, file doesn't exists or exists and overwrite=1
-                        opns_8bit_arr = self.float_to_8bit(
-                            float_arr=dict_svf_asvf_opns["opns"], visualization=RVTVisualization.POSITIVE_OPENNESS
-                        )
-                        save_raster(src_raster_path=dem_path, out_raster_path=opns_8bit_path,
-                                    out_raster_arr=opns_8bit_arr, e_type=1)
-            return 1
+                if os.path.isfile(opns_path) and not self.overwrite:  # file exists and overwrite=0
+                    pass
+                else:  # opns_path, file doesn't exists or exists and overwrite=1
+                    dask_save_raster_zarr(src_raster_path=dem_path, out_raster_path=opns_path,
+                                out_raster_arr=dict_svf_asvf_opns)
+        if save_8bit:
+            if save_svf:
+                if os.path.isfile(svf_8bit_path) and not self.overwrite:  # file exists and overwrite=0
+                    pass
+                else:  # svf_8bit_path, file doesn't exists or exists and overwrite=1
+                    svf_8bit_arr = self.dask_float_to_8bit(
+                        float_arr=dict_svf_asvf_opns, visualization=RVTVisualization.SKY_VIEW_FACTOR
+                    )
+                    dask_save_raster_zarr(src_raster_path=dem_path, out_raster_path=svf_8bit_path,
+                                out_raster_arr=svf_8bit_arr)
+            if save_asvf:
+                if os.path.isfile(asvf_8bit_path) and not self.overwrite:  # file exists and overwrite=0
+                    pass
+                else:  # asvf_8bit_path, file doesn't exists or exists and overwrite=1
+                    asvf_8bit_arr = self.dask_float_to_8bit(
+                        float_arr=dict_svf_asvf_opns,
+                        visualization=RVTVisualization.ANISOTROPIC_SKY_VIEW_FACTOR
+                    )
+                    dask_save_raster_zarr(src_raster_path=dem_path, out_raster_path=asvf_8bit_path,
+                                out_raster_arr=asvf_8bit_arr)
+            if save_opns:
+                if os.path.isfile(opns_8bit_path) and not self.overwrite:  # file exists and overwrite=0
+                    pass
+                else:  # opns_8bit_path, file doesn't exists or exists and overwrite=1
+                    opns_8bit_arr = self.dask_float_to_8bit(
+                        float_arr=dict_svf_asvf_opns, visualization=RVTVisualization.POSITIVE_OPENNESS
+                    )
+                    dask_save_raster_zarr(src_raster_path=dem_path, out_raster_path=opns_8bit_path,
+                                out_raster_arr=opns_8bit_arr)
+        return 1
 
     def get_neg_opns(self, dem_arr, resolution, no_data=None):
         dem_arr = -1 * dem_arr
@@ -2067,25 +2091,32 @@ class DefaultValues:
         _save_float = True and 8bit where self.'visualization'_save_8bit = True. In the end method creates log file."""
         start_time = time.time()
         if self.slp_compute:
-            self.save_slope(dem_path, custom_dir=custom_dir)
+            self.save_dask_slope(dem_path, custom_dir=custom_dir)
         if self.hs_compute:
-            self.save_hillshade(dem_path, custom_dir=custom_dir)
+            self.save_dask_hillshade(dem_path, custom_dir=custom_dir)
         if self.mhs_compute:
+            raise Exception("save_visualizations not implemented yet with dask!")
             self.save_multi_hillshade(dem_path, custom_dir=custom_dir)
         if self.slrm_compute:
+            raise Exception("save_visualizations not implemented yet with dask!")
             self.save_slrm(dem_path, custom_dir=custom_dir)
         if self.svf_compute or self.asvf_compute or self.pos_opns_compute:
-            self.save_sky_view_factor(dem_path, save_svf=bool(self.svf_compute), save_asvf=bool(self.asvf_compute),
+            self.save_dask_sky_view_factor(dem_path, save_svf=bool(self.svf_compute), save_asvf=bool(self.asvf_compute),
                                       save_opns=bool(self.pos_opns_compute), custom_dir=custom_dir)
         if self.neg_opns_compute:
+            raise Exception("save_visualizations not implemented yet with dask!")
             self.save_neg_opns(dem_path, custom_dir=custom_dir)
         if self.sim_compute:
+            raise Exception("save_visualizations not implemented yet with dask!")
             self.save_sky_illumination(dem_path, custom_dir=custom_dir)
         if self.ld_compute:
+            raise Exception("save_visualizations not implemented yet with dask!")
             self.save_local_dominance(dem_path, custom_dir=custom_dir)
         if self.msrm_compute:
+            raise Exception("save_visualizations not implemented yet with dask!")
             self.save_msrm(dem_path, custom_dir=custom_dir)
         if self.mstp_compute:
+            raise Exception("save_visualizations not implemented yet with dask!")
             self.save_mstp(dem_path, custom_dir=custom_dir)
         end_time = time.time()
         compute_time = end_time - start_time
@@ -2449,6 +2480,115 @@ class DefaultValues:
         if compute_time is not None:
             dat.write("# Computation time: {:.3f}s".format(compute_time))
         dat.close()
+
+
+def get_raster_dask_arr(raster_path):
+    """
+    Reads raster from raster_path. Lazy xarray dataset.
+    Not yet implemented for multiple bands.
+
+    Parameters
+    ----------
+    raster_path : str
+        Path to raster
+
+    Returns
+    -------
+    dict_out : dict
+        Returns {"array": delayed array, "resolution": (x_res, y_res), "no_data": no_data} : dict("array": da.Array,
+        "resolution": tuple(float, float), "no_data": float).
+        Returns dictionary with keys: array, resolution and no_data. Key resolution is tuple where first element is x
+        resolution and second is y resolution. Key no_data represent value of no data.
+    """
+    chunk_size = {'x': 1150, 'y': 700} ## MID ARRAY (helena)
+    # chunk_size = {'x': 2560, 'y': 2560} ## LARGE ARRAY (tabasco)
+    # chunk_size = {'x': 2300, 'y': 1400}
+
+    data_set = rioxarray.open_rasterio(raster_path, chunks = chunk_size, cache = False, lock = False) 
+
+    x_res = abs(data_set.rio.resolution()[0])
+    y_res = abs(data_set.rio.resolution()[1])
+    no_data = data_set.rio.nodata  # we assume that all the bands have same no_data val 
+
+
+    if data_set.band == 1:  # only one band
+        array = data_set.data[0] ##2d chunked dask array, we lose other metadata
+        data_set = None
+        return {"array": array, "resolution": (x_res, y_res), "no_data": no_data}
+    else:  
+        raise Exception("Multiple bands are not implemented yet.")
+
+
+def get_raster_zarr_arr(raster_path):
+    """
+    Reads raster from raster_path and returns its delayed array(dask) and resolution. 
+    Not yet implemented for multiple bands.
+
+    Parameters
+    ----------
+    raster_path : str
+        Path to raster
+
+    Returns
+    -------
+    dict_out : dict
+        Returns {"array": delayed array, "resolution": (x_res, y_res), "no_data": no_data} : dict("array": da.Array,
+        "resolution": tuple(float, float), "no_data": float).
+        Returns dictionary with keys: array, resolution and no_data. Key resolution is tuple where first element is x
+        resolution and second is y resolution. Key no_data represent value of no data.
+    """
+    zarr_path = raster_path.rstrip(".tif") + '.zarr'
+    array = da.from_zarr(zarr_path)
+
+    # Read resolution from .zattrs file (when save single visualisations = True)
+    zattr_dict = os.path.join(zarr_path, '.zattrs')
+    with open(zattr_dict) as f:
+        zattrs = json.load(f)
+    x_res = zattrs['resolution_x']
+    y_res = zattrs['resolution_y']
+
+    no_data = 0.0
+    return {"array": array, "resolution": (x_res, y_res), "no_data": no_data}
+
+
+def dask_save_raster_zarr(src_raster_path, out_raster_path, out_raster_arr: da.Array): 
+    """TODO: Multiband info to .zatrr""" 
+
+    zarr_arr_path = out_raster_path[:-4] + '.zarr'
+    raster_path = zarr.DirectoryStore(zarr_arr_path)
+    out_raster_arr.to_zarr(raster_path, compute = True, overwrite = True)
+    
+    y, x = out_raster_arr.chunksize
+    data_set = rioxarray.open_rasterio(src_raster_path, chunks = {'x': x, 'y': y}, cache = False, lock = False) 
+    x_res = abs(data_set.rio.resolution()[0])
+    y_res = abs(data_set.rio.resolution()[1])
+
+    zattr_dict = {"resolution_x": x_res, "resolution_y" : y_res}
+    outfile = os.path.join(zarr_arr_path, '.zattrs')
+    with open(outfile, "w") as out:
+        json.dump(zattr_dict, out)
+    return 0
+
+    ##if not calling compute from here
+    # raster_to_save = out_raster_arr.to_zarr(raster_path, compute = False, overwrite = True)
+    # return raster_to_save
+
+def dask_save_raster_tif(src_raster_path, out_raster_path, out_raster_arr: da.Array): 
+    """Saves raster to .tif chunk by chunk.
+    TODO: Check lock, multiband"""
+
+    tif_arr_path = out_raster_path
+
+    y, x = out_raster_arr.chunksize
+    src_data_set = rioxarray.open_rasterio(src_raster_path, chunks = {'x': x, 'y': y}, cache = False, lock = False)
+
+    out_raster_xarr = xr.DataArray(out_raster_arr,  dims = src_data_set.dims[1:], attrs = src_data_set.attrs.copy())
+    out_raster_xarr.rio.to_raster(tif_arr_path,
+                                  tiled = True,
+                                  lock = Lock("rio"),
+                                # lock = Lock("rio", client = client),
+                                   )
+    return 0
 
 
 def get_raster_arr(raster_path):

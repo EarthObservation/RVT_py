@@ -381,7 +381,7 @@ def scale_strict_0_to_1(numeric_value):
     scaled = (numeric_value - min_value) / (max_value - min_value)
 
     if np.nanmin(scaled) > -0.01:
-        scaled[0 > scaled > -0.01] = 0
+        scaled[(0 > scaled) & (scaled > -0.01)] = 0
 
     return scaled
 

@@ -24,6 +24,10 @@ import scipy.ndimage.filters
 import scipy.ndimage.morphology
 import scipy.spatial
 import warnings
+import dask.array as da
+from typing import Union, Dict, List, Any, Tuple, Optional
+from nptyping import NDArray
+from functools import partial
 
 
 def byte_scale(data,
@@ -113,6 +117,33 @@ def byte_scale(data,
         return byte_data_bands[0]
     else:  # multiple bands
         return np.array(byte_data_bands)
+
+
+def _dask_byte_scale_wrapper(data: NDArray[np.float32],
+                             c_min: Union[int, float],
+                             c_max: Union[int, float],
+                             high: int,
+                             low: int,
+                             no_data: Union[int, float, None]) -> NDArray[np.float32]:
+    scaled_image = byte_scale(data = data, c_min = c_min, c_max = c_max, high = high, 
+                              low = low, no_data = no_data )
+    return scaled_image
+
+def dask_byte_scale(data: da.Array, 
+                    c_min = None,
+                    c_max = None,
+                    high = 255,
+                    low = 0,
+                    no_data = None) -> da.Array:
+    """Wraps byte_scale function and maps it over dask.array. Temp? TODO: Multiple bands"""
+    _func = partial(_dask_byte_scale_wrapper, 
+                    c_min = c_min, c_max = c_max,
+                    high = high, low = low,
+                    no_data = no_data)
+    out_scaled_image = da.map_blocks(_func, 
+                                     data, 
+                                     dtype = np.float32)
+    return out_scaled_image
 
 
 def slope_aspect(dem,
