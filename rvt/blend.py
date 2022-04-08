@@ -24,6 +24,7 @@ import numpy as np
 import warnings
 import rvt.default
 import rvt.vis
+import rvt.vis_dask
 import rvt.blend_func_dask
 from rvt.blend_func import *
 import os
@@ -426,7 +427,7 @@ class BlenderCombination:
                         norm_image = rvt.blend_func_dask.dask_normalize_image(image = rvt.default.get_raster_zarr_arr(image_path)["array"],
                                                                          visualization =  visualization, min_norm = min_norm, max_norm = max_norm, normalization = normalization)
                     else:
-                        image = default.get_dask_slope(input_dem=self.dem_arr, resolution_x=self.dem_resolution,
+                        image = default.get_dask_slope(dem_arr=self.dem_arr, resolution_x=self.dem_resolution,
                                                         resolution_y=self.dem_resolution, no_data=no_data)
                         norm_image = rvt.blend_func_dask.dask_normalize_image(image= image, visualization = visualization,
                                                                 min_norm = min_norm, max_norm = max_norm, normalization = normalization)
@@ -439,7 +440,7 @@ class BlenderCombination:
                         norm_image = rvt.blend_func_dask.dask_normalize_image(image = rvt.default.get_raster_zarr_arr(image_path)["array"],
                                                                          visualization =  visualization, min_norm = min_norm, max_norm = max_norm, normalization = normalization)
                     else:
-                        image = default.get_dask_hillshade(input_dem=self.dem_arr, resolution_x=self.dem_resolution,
+                        image = default.get_dask_hillshade(dem_arr=self.dem_arr, resolution_x=self.dem_resolution,
                                                       resolution_y=self.dem_resolution, no_data=no_data)
                         norm_image = rvt.blend_func_dask.dask_normalize_image(image= image, visualization = visualization, min_norm = 
                                                                             min_norm, max_norm = max_norm, normalization = normalization)
@@ -502,7 +503,7 @@ class BlenderCombination:
                         norm_image = rvt.blend_func_dask.dask_normalize_image(image = rvt.default.get_raster_zarr_arr(image_path)["array"],
                                                                          visualization =  visualization, min_norm = min_norm, max_norm = max_norm, normalization = normalization)
                     else:
-                        image = default.get_dask_sky_view_factor(input_dem=self.dem_arr, resolution=self.dem_resolution,
+                        image = default.get_dask_sky_view_factor(dem_arr=self.dem_arr, resolution=self.dem_resolution,
                                                             compute_svf=True, compute_asvf=False,
                                                             compute_opns=False, no_data=no_data)
                         norm_image = rvt.blend_func_dask.dask_normalize_image(image= image, visualization = visualization, min_norm = 
@@ -531,7 +532,7 @@ class BlenderCombination:
                         norm_image = rvt.blend_func_dask.dask_normalize_image(image = rvt.default.get_raster_zarr_arr(image_path)["array"],
                                                                          visualization =  visualization, min_norm = min_norm, max_norm = max_norm, normalization = normalization)
                     else:
-                        image = default.get_dask_sky_view_factor(input_dem=self.dem_arr, resolution=self.dem_resolution,
+                        image = default.get_dask_sky_view_factor(dem_arr=self.dem_arr, resolution=self.dem_resolution,
                                                             compute_svf=False, compute_asvf=False,
                                                             compute_opns=True, no_data=no_data)
                         norm_image = rvt.blend_func_dask.dask_normalize_image(image= image, visualization = visualization, min_norm = 
@@ -626,7 +627,7 @@ class BlenderCombination:
                 rvt.default.dask_save_raster_tif(src_raster_path=self.dem_path, out_raster_path=save_render_path,
                                         out_raster_arr=rendered_image)
             if save_8bit:
-                rendered_image_8bit = rvt.vis.dask_byte_scale(data = rendered_image, c_min = 0, c_max = 1)
+                rendered_image_8bit = rvt.vis_dask.dask_byte_scale(data = rendered_image, c_min = 0, c_max = 1)
                 rvt.default.dask_save_raster_tif(src_raster_path=self.dem_path, out_raster_arr = rendered_image_8bit, 
                                                 out_raster_path = save_render_8bit_path)
         return rendered_image  # returns float

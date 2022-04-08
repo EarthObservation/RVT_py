@@ -1080,12 +1080,12 @@ class DefaultValues:
             norm_arr = rvt.blend_func_dask.dask_normalize_image(visualization="hs", image=float_arr,
                                                       min_norm=self.hs_bytscl[1], max_norm=self.hs_bytscl[2],
                                                       normalization=self.hs_bytscl[0])
-            return rvt.vis.dask_byte_scale(data=norm_arr, no_data=np.nan, c_min=0, c_max=1)
+            return rvt.vis_dask.dask_byte_scale(data=norm_arr, no_data=np.nan, c_min=0, c_max=1)
         elif visualization == RVTVisualization.SLOPE:
             norm_arr = rvt.blend_func_dask.dask_normalize_image(visualization="slp", image=float_arr,
                                                       min_norm=self.slp_bytscl[1], max_norm=self.slp_bytscl[2],
                                                       normalization=self.slp_bytscl[0])
-            return rvt.vis.dask_byte_scale(data=norm_arr, no_data=np.nan, c_min=0, c_max=1)
+            return rvt.vis_dask.dask_byte_scale(data=norm_arr, no_data=np.nan, c_min=0, c_max=1)
         elif visualization == RVTVisualization.SHADOW:
             raise Exception(f"{visualization} is not implemented with dask yet!")
             return float_arr
@@ -1142,7 +1142,7 @@ class DefaultValues:
             norm_arr = rvt.blend_func_dask.dask_normalize_image(visualization="svf", image=float_arr,
                                                       min_norm=self.svf_bytscl[1], max_norm=self.svf_bytscl[2],
                                                       normalization=self.svf_bytscl[0])
-            return rvt.vis.dask_byte_scale(data=norm_arr, no_data=np.nan, c_min=0, c_max=1)
+            return rvt.vis_dask.dask_byte_scale(data=norm_arr, no_data=np.nan, c_min=0, c_max=1)
         elif visualization == RVTVisualization.ANISOTROPIC_SKY_VIEW_FACTOR:
             raise Exception(f"{visualization} is not implemented with dask yet!")
             norm_arr = rvt.blend_func.normalize_image(visualization="asvf", image=float_arr,
@@ -1154,7 +1154,7 @@ class DefaultValues:
                                                       min_norm=self.pos_opns_bytscl[1],
                                                       max_norm=self.pos_opns_bytscl[2],
                                                       normalization=self.pos_opns_bytscl[0])
-            return rvt.vis.dask_byte_scale(data=norm_arr, no_data=np.nan, c_min=0, c_max=1)
+            return rvt.vis_dask.dask_byte_scale(data=norm_arr, no_data=np.nan, c_min=0, c_max=1)
         elif visualization == RVTVisualization.NEGATIVE_OPENNESS:
             raise Exception(f"{visualization} is not implemented with dask yet!")
             norm_arr = rvt.blend_func.normalize_image(visualization="neg_opns", image=float_arr,
@@ -1507,7 +1507,7 @@ class DefaultValues:
             return 1
 
 
-    def get_dask_sky_view_fator(self, dem_arr, resolution, compute_svf, compute_asvf, compute_opns,no_data=None):
+    def get_dask_sky_view_factor(self, dem_arr, resolution, compute_svf, compute_asvf, compute_opns,no_data=None):
         svf_arr = rvt.vis_dask.dask_sky_view_factor(input_dem = dem_arr, resolution = resolution, compute_svf = compute_svf,
                                                     compute_opns = compute_opns, compute_asvf= compute_asvf,
                                                     svf_n_dir=self.svf_n_dir, svf_r_max=self.svf_r_max,
