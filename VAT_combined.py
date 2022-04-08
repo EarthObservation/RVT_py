@@ -20,13 +20,17 @@ import rvt.default
 import os
 from dask.distributed import Client, LocalCluster, Lock
 
-input_dir_path = "input_dir"
-output_dir_path = "output_dir"
+# input_dir_path = "input_dir"
+# output_dir_path = "output_dir"
+input_dir_path = "C:/Users/HP/Documents/rvt example/dodatno/midlarg/"
+output_dir_path = "C:/Users/HP/Documents/rvt example/dodatno/midlarg/"
 general_opacity = 50
-vat_combination_json_path = "settings/blender_VAT.json"
-terrains_sett_json_path = "settings/default_terrains_settings.json"
+# vat_combination_json_path = "settings/blender_VAT.json"
+# terrains_sett_json_path = "settings/default_terrains_settings.json"
+vat_combination_json_path = "C:/Users/HP/Documents/FMF/FIZ RAC 2020/tomo/settings_blender_VAT.json"
+terrains_sett_json_path = "C:/Users/HP/Documents/FMF/FIZ RAC 2020/tomo/default_terrain_settings.json"
 save_float = True
-save_8bit = False
+save_8bit = True
 save_VAT_general = True
 save_VAT_flat = True
 

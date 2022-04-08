@@ -24,6 +24,7 @@ import warnings
 from enum import Enum
 from pathlib import Path
 import rvt.vis
+import rvt.vis_dask
 import rvt.blend_func
 import rvt.blend_func_dask
 import rvt.tile
@@ -1186,37 +1187,10 @@ class DefaultValues:
             raise Exception("rvt.default.DefaultValues.dask_float_to_8bit: Wrong visualization (visualization) parameter!")
 
 
-    def _slope_aspect_wrapper(self, np_chunk: NDArray[np.float32], resolution_x: Union[int, float],
-                             resolution_y: Union[int, float], no_data = Union[int, None]) -> NDArray[np.float32]: 
-        result_dict = rvt.vis.slope_aspect(dem = np_chunk, resolution_x = resolution_x, 
-                                            resolution_y= resolution_y, ve_factor = self.ve_factor, 
-                                            output_units= self.slp_output_units, no_data= no_data)
-        slope_out = result_dict["slope"]
-        aspect_out = result_dict["aspect"]
-        return slope_out
-        # output_for_dask_slo_asp = np.stack((slope_out, aspect_out))
-        # return output_for_dask_slo_asp
-
-    def get_dask_slope(self, 
-                        input_dem: da.Array, 
-                        resolution_x,
-                        resolution_y,
-                        no_data = None) -> da.Array:
-        input_dem = input_dem.astype(np.float32)
-        data_volume = input_dem 
-        _func = partial(self._slope_aspect_wrapper,
-                        resolution_x = resolution_x,
-                        resolution_y = resolution_y,
-                        no_data = no_data)
-        depth = { 0: 1, 1: 1}
-        # boundary = {0: 0, 0: 'periodic', 2: 'periodic'}     # (outter edges of) slope_out not ok
-        boundary = {0: np.nan, 1: np.nan}           # (outter edges of) aspect_out not ok
-        out_slp = data_volume.map_overlap(_func,
-                               depth=depth,
-                               boundary=boundary,
-                               meta=np.array((), dtype=np.float32))
-        return out_slp
-
+    def get_dask_slope(self, dem_arr, resolution_x, resolution_y, no_data=None):
+        slp_arr = rvt.vis_dask.dask_slope_aspect(input_dem=dem_arr, resolution_x=resolution_x, resolution_y=resolution_y, 
+                                                ve_factor = self.ve_factor, output_units= self.slp_output_units, no_data=no_data)
+        return slp_arr[0,: , :]
 
     def save_dask_slope(self, dem_path, custom_dir=None, save_float=None, save_8bit=None):
         """Calculates and saves Slope from dem (dem_path) with default parameters. If custom_dir is None it saves
@@ -1261,7 +1235,7 @@ class DefaultValues:
         no_data = dict_arr_res["no_data"]
         x_res = dict_arr_res["resolution"][0]
         y_res = dict_arr_res["resolution"][1]
-        slope_arr = self.get_dask_slope(input_dem=dem_arr, resolution_x=x_res, resolution_y=y_res, no_data=no_data)
+        slope_arr = self.get_dask_slope(dem_arr = dem_arr, resolution_x=x_res, resolution_y=y_res, no_data=no_data)
         if save_float:
             if os.path.isfile(slope_path) and not self.overwrite:  # file exists and overwrite=0
                 pass
@@ -1283,35 +1257,11 @@ class DefaultValues:
         return shadow_arr
 
 
-    def _hillshade_wrapper(self, np_chunk: NDArray[np.float32],
-                        resolution_x: Union[int,float],
-                        resolution_y: Union[int,float],
-                        no_data:Union[int, None] ) -> NDArray[np.float32]: 
-        result_out = rvt.vis.hillshade(dem = np_chunk, resolution_x = resolution_x, resolution_y = resolution_y,
-                                      sun_azimuth = self.hs_sun_azi, sun_elevation = self.hs_sun_el,
-                                      ve_factor=self.ve_factor, no_data = no_data)
-        output_for_dask_hs = result_out
-        return output_for_dask_hs
-
-
-    def get_dask_hillshade(self, 
-                        input_dem: da.Array,
-                        resolution_x,
-                        resolution_y ,
-                        no_data = None) -> da.Array:
-        input_dem = input_dem.astype(np.float32)
-        data_volume = input_dem 
-        _func = partial(self._hillshade_wrapper, 
-                        resolution_x = resolution_x, 
-                        resolution_y = resolution_y,
-                        no_data = no_data)
-        depth =  {0: 1, 1: 1}
-        boundary = {0: 'periodic', 1: 'periodic'}    
-        out_hs = data_volume.map_overlap(_func,
-                               depth=depth,
-                               boundary=boundary,
-                               meta=np.array((), dtype=np.float32))
-        return out_hs
+    def get_dask_hillshade(self, dem_arr, resolution_x, resolution_y, no_data = None):
+        hs_arr = rvt.vis_dask.dask_hillshade(input_dem = dem_arr, resolution_x = resolution_x, resolution_y = resolution_y,
+                                  sun_azimuth = self.hs_sun_azi, sun_elevation = self.hs_sun_el,
+                                  ve_factor=self.ve_factor, no_data = no_data)
+        return hs_arr
 
     def save_dask_hillshade(self, dem_path, custom_dir=None, save_float=None, save_8bit=None, save_shadow=None):
         """Calculates and saves Hillshade from dem (dem_path) with default parameters. If custom_dir is None it saves
@@ -1367,8 +1317,8 @@ class DefaultValues:
         no_data = dict_arr_res["no_data"]
         x_res = dict_arr_res["resolution"][0]
         y_res = dict_arr_res["resolution"][1]
-        hillshade_arr = self.get_dask_hillshade(input_dem=dem_arr, resolution_x=x_res, resolution_y=y_res,
-                                            no_data=no_data)
+        hillshade_arr = self.get_dask_hillshade(dem_arr = dem_arr, resolution_x=x_res, resolution_y=y_res,
+                                               no_data=no_data)
         if save_float:
             if os.path.isfile(hillshade_path) and not self.overwrite:  # file exists and overwrite=0
                 pass
@@ -1557,36 +1507,14 @@ class DefaultValues:
             return 1
 
 
-    def _sky_view_factor_wrapper(self, np_chunk: NDArray[np.float32], resolution: Union[int, float],  
-                                compute_svf:bool, compute_opns: bool, compute_asvf: bool,
-                                no_data: Union[int, None]) -> NDArray[np.float32]:  
-        result_dict = rvt.vis.sky_view_factor(dem = np_chunk, resolution = resolution, compute_svf = compute_svf,
+    def get_dask_sky_view_fator(self, dem_arr, resolution, compute_svf, compute_asvf, compute_opns,no_data=None):
+        svf_arr = rvt.vis_dask.dask_sky_view_factor(input_dem = dem_arr, resolution = resolution, compute_svf = compute_svf,
                                                     compute_opns = compute_opns, compute_asvf= compute_asvf,
                                                     svf_n_dir=self.svf_n_dir, svf_r_max=self.svf_r_max,
                                                     svf_noise=self.svf_noise, asvf_dir=self.asvf_dir,
                                                     asvf_level=self.asvf_level, ve_factor=self.ve_factor,
-                                                    no_data = no_data)
-        svf_out, = result_dict.values() #assume calculation of ONLY ONE vis at a time and return
-        return svf_out   
-    
-    def get_dask_sky_view_factor(self, input_dem: da.Array,
-                          resolution, compute_svf,
-                          compute_opns, compute_asvf,
-                          no_data)-> da.Array: 
-        input_dem = input_dem.astype(np.float32)
-        data_volume = input_dem 
-        _func = partial(self._sky_view_factor_wrapper,
-                        resolution = resolution, compute_svf = compute_svf,
-                        compute_opns = compute_opns, compute_asvf = compute_asvf,
-                        no_data = no_data) 
-        radius_max = self.svf_r_max
-        depth = { 0: radius_max, 1: radius_max} 
-        boundary = { 0: "reflect", 1: "reflect"}
-        out_svf = data_volume.map_overlap(_func,
-                                          depth = depth,
-                                          boundary = boundary,
-                                          meta=np.array((), dtype = np.float32))
-        return out_svf
+                                                    no_data = no_data) 
+        return svf_arr
 
     def save_dask_sky_view_factor(self, dem_path, save_svf=True, save_asvf=False, save_opns=False, custom_dir=None,
                              save_float=None, save_8bit=None):
@@ -1656,7 +1584,7 @@ class DefaultValues:
         no_data = dict_arr_res["no_data"]
         x_res = dict_arr_res["resolution"][0]
         y_res = dict_arr_res["resolution"][1]
-        dict_svf_asvf_opns = self.get_dask_sky_view_factor(input_dem=dem_arr, resolution=x_res, compute_svf=save_svf,
+        dict_svf_asvf_opns = self.get_dask_sky_view_factor(dem_arr=dem_arr, resolution=x_res, compute_svf=save_svf,
                                                         compute_asvf=save_asvf, compute_opns=save_opns,
                                                         no_data=no_data)
         if save_float:

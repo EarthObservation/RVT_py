@@ -144,3 +144,10 @@ cython_debug/
 
 # VS Code
 .vscode/
+
+# Dask
+dask-worker-space/
+mydask.png
+
+#tests - temp
+*_test*
