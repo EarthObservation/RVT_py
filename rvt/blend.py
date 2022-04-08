@@ -625,11 +625,11 @@ class BlenderCombination:
                 # rvt.default.dask_save_raster_zarr(src_raster_path=self.dem_path, out_raster_path=save_render_path,
                 #                         out_raster_arr=rendered_image)
                 rvt.default.dask_save_raster_tif(src_raster_path=self.dem_path, out_raster_path=save_render_path,
-                                        out_raster_arr=rendered_image)
+                                        out_raster_arr=rendered_image, dtype_to_save= "float32")
             if save_8bit:
                 rendered_image_8bit = rvt.vis_dask.dask_byte_scale(data = rendered_image, c_min = 0, c_max = 1)
                 rvt.default.dask_save_raster_tif(src_raster_path=self.dem_path, out_raster_arr = rendered_image_8bit, 
-                                                out_raster_path = save_render_8bit_path)
+                                                out_raster_path = save_render_8bit_path, dtype_to_save="uint8")
         return rendered_image  # returns float
 
     def create_log_file(self, dem_path, combination_name, render_path, default: rvt.default.DefaultValues,

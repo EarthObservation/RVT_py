@@ -2499,7 +2499,7 @@ def dask_save_raster_zarr(src_raster_path, out_raster_path, out_raster_arr: da.A
     # raster_to_save = out_raster_arr.to_zarr(raster_path, compute = False, overwrite = True)
     # return raster_to_save
 
-def dask_save_raster_tif(src_raster_path, out_raster_path, out_raster_arr: da.Array): 
+def dask_save_raster_tif(src_raster_path, out_raster_path, out_raster_arr: da.Array, dtype_to_save: str): 
     """Saves raster to .tif chunk by chunk.
     TODO: Check lock, multiband"""
 
@@ -2513,6 +2513,7 @@ def dask_save_raster_tif(src_raster_path, out_raster_path, out_raster_arr: da.Ar
                                   tiled = True,
                                   lock = Lock("rio"),
                                 # lock = Lock("rio", client = client),
+                                  dtype = dtype_to_save,
                                    )
     return 0
 
