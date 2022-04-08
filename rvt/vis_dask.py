@@ -58,6 +58,7 @@ def dask_byte_scale(data: da.Array,
 def _slope_aspect_wrapper(np_chunk: NDArray[np.float32], resolution_x: Union[int, float],
                             resolution_y: Union[int, float], ve_factor: Union[int, float], output_units: str,
                             no_data : Union[int, None]) -> NDArray[np.float32]: 
+    """Wrapper function for vis.dask_slope_aspect. Calculates slope and aspect. Returns array dim (2, y, x). """ 
     result_dict = rvt.vis.slope_aspect(dem = np_chunk[0,:,:].squeeze(), resolution_x = resolution_x, 
                                         resolution_y= resolution_y, ve_factor = ve_factor, 
                                         output_units= output_units, no_data= no_data)
@@ -73,6 +74,8 @@ def dask_slope_aspect( input_dem: da.Array,
                     ve_factor,
                     output_units,
                     no_data = None) -> da.Array:
+    """Maps function vis.slope_aspect over dask.array chunks with some overlap.
+    FIXME: Most outter edges (set in vis.slope_aspect) not ok for both outputs."""
     input_dem = input_dem.astype(np.float32)
     data_volume = da.stack([input_dem, input_dem])[[0,0]]  ##magic numbers to avoid rechunking, fix when map_overlap supports input and output of different shapes
     _func = partial(_slope_aspect_wrapper,
@@ -99,6 +102,7 @@ def _hillshade_wrapper(np_chunk: NDArray[np.float32],
                     sun_elevation: Union[int, float],
                     ve_factor : Union[int, float],
                     no_data: Union[int, None]) -> NDArray[np.float32]: 
+    """Wrapper function for vis.dask_hillshade.""" 
     result_out = rvt.vis.hillshade(dem = np_chunk, resolution_x = resolution_x, resolution_y = resolution_y,
                                   sun_azimuth = sun_azimuth, sun_elevation = sun_elevation,
                                   ve_factor=ve_factor, no_data = no_data)
@@ -112,6 +116,7 @@ def dask_hillshade(input_dem: da.Array,
                     sun_elevation,
                     ve_factor,
                     no_data = None) -> da.Array:
+    """Maps function vis.dask_hillshade over dask.array chunks with some overlap."""
     input_dem = input_dem.astype(np.float32)
     data_volume = input_dem 
     _func = partial(_hillshade_wrapper, 
@@ -132,17 +137,18 @@ def dask_hillshade(input_dem: da.Array,
 
 def _sky_view_factor_wrapper(np_chunk: NDArray[np.float32], resolution: Union[int, float],  
                             compute_svf:bool, compute_opns: bool, compute_asvf: bool,
-                            svf_n_dir : Union[int, float], svf_r_max:Union[int,float],
-                            svf_noise : Union[int, float], asvf_dir:Union[int,float], 
+                            svf_n_dir : int, svf_r_max:Union[int,float],
+                            svf_noise : Union[int, float], asvf_dir:int, 
                             asvf_level: Union[int, float], ve_factor:Union[int,float],
-                            no_data: Union[int, None]) -> NDArray[np.float32]:  
+                            no_data: Union[int, None]) -> NDArray[np.float32]: 
+    """Wrapper function for vis.sky_viw_factor. Assumes calculation of only one visualization at a time.""" 
     result_dict = rvt.vis.sky_view_factor(dem = np_chunk, resolution = resolution, compute_svf = compute_svf,
                                                 compute_opns = compute_opns, compute_asvf= compute_asvf,
                                                 svf_n_dir=svf_n_dir, svf_r_max=svf_r_max,
                                                 svf_noise=svf_noise, asvf_dir=asvf_dir,
                                                 asvf_level=asvf_level, ve_factor=ve_factor,
                                                 no_data = no_data)
-    svf_out, = result_dict.values()             #assume calculation of ONLY ONE vis at a time and return
+    svf_out, = result_dict.values()            
     return svf_out   
 
 def dask_sky_view_factor(input_dem: da.Array,
@@ -152,6 +158,7 @@ def dask_sky_view_factor(input_dem: da.Array,
                         svf_noise, asvf_dir,
                         asvf_level, ve_factor,
                         no_data)-> da.Array: 
+    """Maps function vis.dask_sky_view_factor over dask.array chunks with some overlap."""
     input_dem = input_dem.astype(np.float32)
     data_volume = input_dem 
     _func = partial(_sky_view_factor_wrapper,
