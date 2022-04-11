@@ -375,7 +375,6 @@ def multi_hillshade(dem,
         return lazy_hillshading
     
     delayed_hillshades_result = [dask.delayed(lazy_multi_hillshade)(nr_directions, i_dir) for i_dir in range(nr_directions)]
-
     ##Return np.array - computed: 
     ##See dask best practices, section `Compute on lots of computation at once`: https://docs.dask.org/en/stable/delayed-best-practices.html
     multi_hillshade_out = dask.compute(*delayed_hillshades_result)

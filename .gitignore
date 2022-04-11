@@ -149,7 +149,8 @@ cython_debug/
 dask-worker-space/
 mydask.png
 
-#tests - temp
+#Dask implementation - temp
 test_*
 VAT_combined_*
 *.ipynb
+lazy_*

@@ -176,7 +176,7 @@ def _multi_hillshade_wrapper(np_chunk: NDArray[np.float32],
                     ve_factor : Union[int, float],
                     no_data: Union[int, None]) -> NDArray[np.float32]: 
     """Wrapper function for vis.dask_multi_hillshade. Calculates `multi_hillshade` for each dask array chunk (np.array). 
-    Returns np.array dim (x, y).""" 
+    Returns np.array dim (nr_directions, x, y).""" 
     result_out = rvt.vis.multi_hillshade(dem = np_chunk[0,:,:].squeeze(), resolution_x = resolution_x, resolution_y = resolution_y,
                                   nr_directions = nr_directions, sun_elevation = sun_elevation,
                                   ve_factor=ve_factor, no_data = no_data)
@@ -199,12 +199,12 @@ def dask_multi_hillshade(input_dem,
     :param sun_elevation: Solar vertical angle in degrees.
     :param ve_factor: Integer or float of vertical exaggeration factor.
     :param no_data: The value that represents no data.
-    :return: A 2D dask array of calculated `multi_hillshade` of the `input_dem` raster.
+    :return: A multidimensional (nr_directions, x, y) dask array of calculated `multi_hillshade` of the `input_dem` raster.
     TODO: Can  params `slope` or `aspect` be calculated input?! Slicing produces large chunk (dim_nr_directions). Ok to do like this?
     FIXME: Most outter edges not ok."""
 
     input_dem = input_dem.astype(np.float32)
-    data_volume = da.stack([input_dem for _ in range(nr_directions)], axis=0) [[0 for _ in range(nr_directions)]]
+    data_volume = da.stack([input_dem for _ in range(nr_directions)], axis=0) [[0 for _ in range(nr_directions)]] ##check memory/speed performance
     _func = partial(_multi_hillshade_wrapper, 
                     resolution_x = resolution_x, 
                     resolution_y = resolution_y,
@@ -214,11 +214,49 @@ def dask_multi_hillshade(input_dem,
                     no_data = no_data)
     depth = {0: 0, 1: 1, 2: 1}
     boundary = {0: 0, 1: 'periodic', 2: 'periodic'}    
-    out_hs = data_volume.map_overlap(_func,
+    out_mhs = data_volume.map_overlap(_func,
                                     depth=depth,
                                     boundary=boundary,
                                     meta=np.array((), dtype=np.float32))
-    return out_hs
+    return out_mhs
+
+
+# def _slrm_wrapper(np_chunk: NDArray[np.float32],
+#                     radius_cell: int,
+#                     ve_factor : Union[int, float],
+#                     no_data: Union[int, None]) -> NDArray[np.float32]: 
+#     """Wrapper function for vis.dask_slrm. Calculates `slrm` for each dask array chunk (np.array). 
+#     Returns np.array dim (x, y).""" 
+#     result_out = rvt.vis.slrm(dem = np_chunk, radius_cell = radius_cell,
+#                             ve_factor=ve_factor, no_data = no_data)
+#     output_for_dask_slrm = result_out
+#     return output_for_dask_slrm
+    
+# def dask_slrm(input_dem,
+#          radius_cell,
+#          ve_factor,
+#          no_data=None) -> da.Array:
+#     """Maps slrm function over dask.array (with overlap of `depth`).
+
+#     :param da.Array input_dem: The input dask array.
+#     :param radius_cell: Radius for trend assessment in pixels.
+#     :param ve_factor: Integer or float of vertical exaggeration factor.
+#     :param no_data: The value that represents no data.
+#     :return: A 2D dask array of calculated `slrm` of the `input_dem` raster."""
+
+#     input_dem = input_dem.astype(np.float32)
+#     data_volume = input_dem
+#     _func = partial(_slrm_wrapper, 
+#                     radius_cell = radius_cell,
+#                     ve_factor = ve_factor,
+#                     no_data = no_data)
+#     depth = {0: radius_cell + 1, 1: radius_cell + 1}
+#     boundary = {0: 'reflect', 1: 'reflect'}    
+#     out_slrm = data_volume.map_overlap(_func,
+#                                     depth=depth,
+#                                     boundary=boundary,
+#                                     meta=np.array((), dtype=np.float32))
+#     return out_slrm
 
 
 def _sky_view_factor_wrapper(np_chunk: NDArray[np.float32], resolution: Union[int, float],  
@@ -278,3 +316,58 @@ def dask_sky_view_factor(input_dem,
                                         boundary = boundary,
                                         meta=np.array((), dtype = np.float32))
     return out_svf
+
+
+def _local_dominance(np_chunk: NDArray[np.float32],
+                    min_rad: Union[int,float],
+                    max_rad: Union[int,float],
+                    rad_inc: Union[int, float],
+                    angular_res: Union[int, float],
+                    observer_height: Union[int, float],
+                    ve_factor : Union[int, float],
+                    no_data: Union[int, None]) -> NDArray[np.float32]: 
+    """Wrapper function for vis.dask_local_dominance. Calculates `local_dominance` for each dask array chunk (np.array). 
+    Returns np.array dim (x, y).""" 
+    result_out = rvt.vis.local_dominance(dem = np_chunk, min_rad = min_rad, max_rad = max_rad,
+                                  rad_inc = rad_inc, angular_res = angular_res, observer_height = observer_height,
+                                  ve_factor=ve_factor, no_data = no_data)
+    output_for_dask_ld = result_out
+    return output_for_dask_ld 
+    
+def dask_local_dominance(input_dem,
+                    min_rad,
+                    max_rad ,
+                    rad_inc,
+                    angular_res,
+                    observer_height,
+                    ve_factor,
+                    no_data = None) -> da.Array:
+    """Maps local_dominance function over dask.array (with overlap of `depth`).
+
+    :param da.Array input_dem: The input dask array.
+    :param min_rad:  Minimum radial distance (in pixels) at which the algorithm starts with visualization computation.
+    :param max_rad: Maximum radial distance (in pixels) at which the algorithm starts with visualization computation.
+    :param rad_inc: Radial distance steps in pixels.
+    :param angular_res: Angular step for determination of number of angular directions.
+    :param observer_height: Height at which we observe the terrain.
+    :param ve_factor: Integer or float of vertical exaggeration factor.
+    :param no_data: The value that represents no data.
+    :return: A 2D dask array of calculated `local_dominance` of the `input_dem` raster."""
+
+    input_dem = input_dem.astype(np.float32)
+    data_volume = input_dem 
+    _func = partial(_local_dominance, 
+                    min_rad = min_rad, 
+                    max_rad = max_rad,
+                    rad_inc = rad_inc,
+                    angular_res = angular_res,
+                    observer_height = observer_height,
+                    ve_factor = ve_factor,
+                    no_data = no_data)
+    depth =  {0: max_rad, 1: max_rad}
+    boundary = {0: 'periodic', 1: 'periodic'}    
+    out_ld = data_volume.map_overlap(_func,
+                                    depth=depth,
+                                    boundary=boundary,
+                                    meta=np.array((), dtype=np.float32))
+    return out_ld
