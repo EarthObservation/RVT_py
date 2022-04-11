@@ -38,7 +38,7 @@ def _dask_byte_scale_wrapper(data: NDArray[np.float32],
                               low = low, no_data = no_data )
     return scaled_image
 
-def dask_byte_scale(data: da.Array, 
+def dask_byte_scale(data, 
                     c_min = None,
                     c_max = None,
                     high = 255,
@@ -46,7 +46,7 @@ def dask_byte_scale(data: da.Array,
                     no_data = None) -> da.Array:
     """Maps byte_scale function over dask.array (no overlapping computations).
 
-    :param data: The input dask array (temp 2D).
+    :param da.Array data: The input dask array (temp 2D).
     :param c_min: Integer or float - bias scaling of small values.
     :param c_max: Integer or float - bias scaling of large values.
     :param high: The integer to scale the max value to.
@@ -79,7 +79,7 @@ def _slope_aspect_wrapper(np_chunk: NDArray[np.float32], resolution_x: Union[int
     output_for_dask_slo_asp = np.stack((slope_out, aspect_out))
     return output_for_dask_slo_asp
 
-def dask_slope_aspect(input_dem: da.Array, 
+def dask_slope_aspect(input_dem, 
                     resolution_x,
                     resolution_y,
                     ve_factor,
@@ -87,7 +87,7 @@ def dask_slope_aspect(input_dem: da.Array,
                     no_data = None) -> da.Array:
     """Maps slope_aspect function over dask.array (with overlap of `depth`).
 
-    :param input_dem: The input dask array.
+    :param da.Array input_dem: The input dask array.
     :param resolution_x:  Integer or float of DEM resolution in X direction.
     :param resolution_y: Integer or float of DEM resolution in Y direction.
     :param ve_factor: Integer or float of vertical exaggeration factor.
@@ -130,7 +130,7 @@ def _hillshade_wrapper(np_chunk: NDArray[np.float32],
     output_for_dask_hs = result_out
     return output_for_dask_hs 
     
-def dask_hillshade(input_dem: da.Array,
+def dask_hillshade(input_dem,
                     resolution_x,
                     resolution_y ,
                     sun_azimuth,
@@ -139,7 +139,7 @@ def dask_hillshade(input_dem: da.Array,
                     no_data = None) -> da.Array:
     """Maps hillshade function over dask.array (with overlap of `depth`).
 
-    :param input_dem: The input dask array.
+    :param da.Array input_dem: The input dask array.
     :param resolution_x:  Integer or float of DEM resolution in X direction.
     :param resolution_y: Integer or float of DEM resolution in Y direction.
     :param sun_azimuth: Solar azimuth angle in degrees.
@@ -147,7 +147,8 @@ def dask_hillshade(input_dem: da.Array,
     :param ve_factor: Integer or float of vertical exaggeration factor.
     :param no_data: The value that represents no data.
     :return: A 2D dask array of calculated `hillshade` of the `input_dem` raster.
-    TODO: Can  params `slope` or `aspect` be calculated input?!"""
+    TODO: Can  params `slope` or `aspect` be calculated input?!
+    FIXME: Most outter edges not ok."""
 
     input_dem = input_dem.astype(np.float32)
     data_volume = input_dem 
@@ -160,6 +161,59 @@ def dask_hillshade(input_dem: da.Array,
                     no_data = no_data)
     depth =  {0: 1, 1: 1}
     boundary = {0: 'periodic', 1: 'periodic'}    
+    out_hs = data_volume.map_overlap(_func,
+                                    depth=depth,
+                                    boundary=boundary,
+                                    meta=np.array((), dtype=np.float32))
+    return out_hs
+
+
+def _multi_hillshade_wrapper(np_chunk: NDArray[np.float32],
+                    resolution_x: Union[int,float],
+                    resolution_y: Union[int,float],
+                    nr_directions: Union[int, float],
+                    sun_elevation: Union[int, float],
+                    ve_factor : Union[int, float],
+                    no_data: Union[int, None]) -> NDArray[np.float32]: 
+    """Wrapper function for vis.dask_multi_hillshade. Calculates `multi_hillshade` for each dask array chunk (np.array). 
+    Returns np.array dim (x, y).""" 
+    result_out = rvt.vis.multi_hillshade(dem = np_chunk[0,:,:].squeeze(), resolution_x = resolution_x, resolution_y = resolution_y,
+                                  nr_directions = nr_directions, sun_elevation = sun_elevation,
+                                  ve_factor=ve_factor, no_data = no_data)
+    output_for_dask_mhs = result_out
+    return output_for_dask_mhs 
+    
+def dask_multi_hillshade(input_dem,
+                    resolution_x,
+                    resolution_y ,
+                    nr_directions,
+                    sun_elevation,
+                    ve_factor,
+                    no_data = None) -> da.Array:
+    """Maps multi_hillshade function over dask.array (with overlap of `depth`).
+
+    :param da.Array input_dem: The input dask array.
+    :param resolution_x:  Integer or float of DEM resolution in X direction.
+    :param resolution_y: Integer or float of DEM resolution in Y direction.
+    :param nr_directions: Number of solar azimuth angles.
+    :param sun_elevation: Solar vertical angle in degrees.
+    :param ve_factor: Integer or float of vertical exaggeration factor.
+    :param no_data: The value that represents no data.
+    :return: A 2D dask array of calculated `multi_hillshade` of the `input_dem` raster.
+    TODO: Can  params `slope` or `aspect` be calculated input?! Slicing produces large chunk (dim_nr_directions). Ok to do like this?
+    FIXME: Most outter edges not ok."""
+
+    input_dem = input_dem.astype(np.float32)
+    data_volume = da.stack([input_dem for _ in range(nr_directions)], axis=0) [[0 for _ in range(nr_directions)]]
+    _func = partial(_multi_hillshade_wrapper, 
+                    resolution_x = resolution_x, 
+                    resolution_y = resolution_y,
+                    nr_directions = nr_directions,
+                    sun_elevation = sun_elevation,
+                    ve_factor = ve_factor,
+                    no_data = no_data)
+    depth = {0: 0, 1: 1, 2: 1}
+    boundary = {0: 0, 1: 'periodic', 2: 'periodic'}    
     out_hs = data_volume.map_overlap(_func,
                                     depth=depth,
                                     boundary=boundary,
@@ -184,7 +238,7 @@ def _sky_view_factor_wrapper(np_chunk: NDArray[np.float32], resolution: Union[in
     svf_out, = result_dict.values()            
     return svf_out   
 
-def dask_sky_view_factor(input_dem: da.Array,
+def dask_sky_view_factor(input_dem,
                         resolution, compute_svf,
                         compute_opns, compute_asvf,
                         svf_n_dir, svf_r_max,
@@ -193,7 +247,7 @@ def dask_sky_view_factor(input_dem: da.Array,
                         no_data)-> da.Array: 
     """Maps sky_view_factor function over dask.array (with overlap of `depth`).
 
-    :param input_dem: The input dask array.
+    :param da.Array input_dem: The input dask array.
     :param resolution:  Integer or float of DEM resolution (pixel resolution?).
     :param compute_svf: True if computing `svf` visualization, else False.
     :param compute_opns: True if computing `opns` visualization, else False.
