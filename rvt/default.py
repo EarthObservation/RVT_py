@@ -2409,23 +2409,17 @@ class DefaultValues:
 
 
 def get_raster_dask_arr(raster_path):
-    """
-    Reads raster from raster_path. Lazy xarray dataset.
-    Not yet implemented for multiple bands.
+    
+    """Reads raster from raster_path (Xarray dataset -> dask.array).
 
-    Parameters
-    ----------
-    raster_path : str
-        Path to raster
-
-    Returns
-    -------
-    dict_out : dict
-        Returns {"array": delayed array, "resolution": (x_res, y_res), "no_data": no_data} : dict("array": da.Array,
-        "resolution": tuple(float, float), "no_data": float).
-        Returns dictionary with keys: array, resolution and no_data. Key resolution is tuple where first element is x
-        resolution and second is y resolution. Key no_data represent value of no data.
-    """
+    :param raster_path: The path to raster.
+    :returns : Returns dictionary with keys: array, resolution and no_data. Key resolution is tuple where first element 
+               is x resolution and second is y resolution. Key no_data represent value of no data.
+               {"array": dask.array, "resolution": (x_res, y_res), "no_data": no_data} : dict("array": da.Array,
+                "resolution": tuple(float, float), "no_data": float).
+    
+    TODO: Multiple bands implementation."""
+    
     chunk_size = {'x': 1150, 'y': 700} ## MID ARRAY (helena)
     # chunk_size = {'x': 2560, 'y': 2560} ## LARGE ARRAY (tabasco)
     # chunk_size = {'x': 2300, 'y': 1400}
@@ -2446,23 +2440,16 @@ def get_raster_dask_arr(raster_path):
 
 
 def get_raster_zarr_arr(raster_path):
-    """
-    Reads raster from raster_path and returns its delayed array(dask) and resolution. 
-    Not yet implemented for multiple bands.
+    """ Reads raster from raster_path (Zarr -> dask.array).
 
-    Parameters
-    ----------
-    raster_path : str
-        Path to raster
-
-    Returns
-    -------
-    dict_out : dict
-        Returns {"array": delayed array, "resolution": (x_res, y_res), "no_data": no_data} : dict("array": da.Array,
-        "resolution": tuple(float, float), "no_data": float).
-        Returns dictionary with keys: array, resolution and no_data. Key resolution is tuple where first element is x
-        resolution and second is y resolution. Key no_data represent value of no data.
-    """
+    :param raster_path: The path to raster.
+    :returns : Returns dictionary with keys: array, resolution and no_data. Key resolution is tuple where first element 
+               is x resolution and second is y resolution. Key no_data represent value of no data.
+               {"array": dask.array, "resolution": (x_res, y_res), "no_data": no_data} : dict("array": da.Array,
+                "resolution": tuple(float, float), "no_data": float).
+    
+    TODO: Multiple bands implementation."""
+    
     zarr_path = raster_path.rstrip(".tif") + '.zarr'
     array = da.from_zarr(zarr_path)
 

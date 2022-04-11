@@ -1,7 +1,7 @@
 """
 Relief Visualization Toolbox – Wrapper functions for Visualization Functions
 
-Contains functions for computing the visualizations.
+Module for handling dask version of computing the visualizations.
 
 Credits:
     Žiga Kokalj (ziga.kokalj@zrc-sazu.si)
@@ -44,7 +44,17 @@ def dask_byte_scale(data: da.Array,
                     high = 255,
                     low = 0,
                     no_data = None) -> da.Array:
-    """Wraps byte_scale function and maps it over dask.array. Temp? TODO: Multiple bands"""
+    """Maps byte_scale function over dask.array (no overlapping computations).
+
+    :param data: The input dask array (temp 2D).
+    :param c_min: Integer or float - bias scaling of small values.
+    :param c_max: Integer or float - bias scaling of large values.
+    :param high: The integer to scale the max value to.
+    :param low: The integer to scale the min value to.
+    :param no_data: The value that represents no data.
+    :return: A dask array of byte scaled image `data`.
+
+    TODO: Multiple bands."""
     _func = partial(_dask_byte_scale_wrapper, 
                     c_min = c_min, c_max = c_max,
                     high = high, low = low,
@@ -58,7 +68,8 @@ def dask_byte_scale(data: da.Array,
 def _slope_aspect_wrapper(np_chunk: NDArray[np.float32], resolution_x: Union[int, float],
                             resolution_y: Union[int, float], ve_factor: Union[int, float], output_units: str,
                             no_data : Union[int, None]) -> NDArray[np.float32]: 
-    """Wrapper function for vis.dask_slope_aspect. Calculates slope and aspect. Returns array dim (2, y, x). """ 
+    """Wrapper function for vis.dask_slope_aspect. Calculates `slope` and `aspect` for each dask array chunk (np.array). 
+    Returns np.array dim (2, y, x).""" 
     result_dict = rvt.vis.slope_aspect(dem = np_chunk[0,:,:].squeeze(), resolution_x = resolution_x, 
                                         resolution_y= resolution_y, ve_factor = ve_factor, 
                                         output_units= output_units, no_data= no_data)
@@ -68,14 +79,23 @@ def _slope_aspect_wrapper(np_chunk: NDArray[np.float32], resolution_x: Union[int
     output_for_dask_slo_asp = np.stack((slope_out, aspect_out))
     return output_for_dask_slo_asp
 
-def dask_slope_aspect( input_dem: da.Array, 
+def dask_slope_aspect(input_dem: da.Array, 
                     resolution_x,
                     resolution_y,
                     ve_factor,
                     output_units,
                     no_data = None) -> da.Array:
-    """Maps function vis.slope_aspect over dask.array chunks with some overlap.
+    """Maps slope_aspect function over dask.array (with overlap of `depth`).
+
+    :param input_dem: The input dask array.
+    :param resolution_x:  Integer or float of DEM resolution in X direction.
+    :param resolution_y: Integer or float of DEM resolution in Y direction.
+    :param ve_factor: Integer or float of vertical exaggeration factor.
+    :param output_units: Output units: percent, degree, radian.
+    :param no_data: The value that represents no data.
+    :return: A 3D dask array of calculated `slope` and `aspect` of the `input_dem` raster.
     FIXME: Most outter edges (set in vis.slope_aspect) not ok for both outputs."""
+
     input_dem = input_dem.astype(np.float32)
     data_volume = da.stack([input_dem, input_dem])[[0,0]]  ##magic numbers to avoid rechunking, fix when map_overlap supports input and output of different shapes
     _func = partial(_slope_aspect_wrapper,
@@ -102,7 +122,8 @@ def _hillshade_wrapper(np_chunk: NDArray[np.float32],
                     sun_elevation: Union[int, float],
                     ve_factor : Union[int, float],
                     no_data: Union[int, None]) -> NDArray[np.float32]: 
-    """Wrapper function for vis.dask_hillshade.""" 
+    """Wrapper function for vis.dask_hillshade. Calculates `hillshade` for each dask array chunk (np.array). 
+    Returns np.array dim (x, y).""" 
     result_out = rvt.vis.hillshade(dem = np_chunk, resolution_x = resolution_x, resolution_y = resolution_y,
                                   sun_azimuth = sun_azimuth, sun_elevation = sun_elevation,
                                   ve_factor=ve_factor, no_data = no_data)
@@ -116,7 +137,18 @@ def dask_hillshade(input_dem: da.Array,
                     sun_elevation,
                     ve_factor,
                     no_data = None) -> da.Array:
-    """Maps function vis.dask_hillshade over dask.array chunks with some overlap."""
+    """Maps hillshade function over dask.array (with overlap of `depth`).
+
+    :param input_dem: The input dask array.
+    :param resolution_x:  Integer or float of DEM resolution in X direction.
+    :param resolution_y: Integer or float of DEM resolution in Y direction.
+    :param sun_azimuth: Solar azimuth angle in degrees.
+    :param sun_elevation: Solar vertical angle in degrees.
+    :param ve_factor: Integer or float of vertical exaggeration factor.
+    :param no_data: The value that represents no data.
+    :return: A 2D dask array of calculated `hillshade` of the `input_dem` raster.
+    TODO: Can  params `slope` or `aspect` be calculated input?!"""
+
     input_dem = input_dem.astype(np.float32)
     data_volume = input_dem 
     _func = partial(_hillshade_wrapper, 
@@ -141,7 +173,8 @@ def _sky_view_factor_wrapper(np_chunk: NDArray[np.float32], resolution: Union[in
                             svf_noise : Union[int, float], asvf_dir:int, 
                             asvf_level: Union[int, float], ve_factor:Union[int,float],
                             no_data: Union[int, None]) -> NDArray[np.float32]: 
-    """Wrapper function for vis.sky_viw_factor. Assumes calculation of only one visualization at a time.""" 
+    """Wrapper function for vis.sky_viw_factor. Calculates `svf`, `opns` or `asvf` for each dask array chunk (np.array). 
+    Returns np.array dim (x, y). Assumes calculation of only one visualization at a time.""" 
     result_dict = rvt.vis.sky_view_factor(dem = np_chunk, resolution = resolution, compute_svf = compute_svf,
                                                 compute_opns = compute_opns, compute_asvf= compute_asvf,
                                                 svf_n_dir=svf_n_dir, svf_r_max=svf_r_max,
@@ -158,7 +191,22 @@ def dask_sky_view_factor(input_dem: da.Array,
                         svf_noise, asvf_dir,
                         asvf_level, ve_factor,
                         no_data)-> da.Array: 
-    """Maps function vis.dask_sky_view_factor over dask.array chunks with some overlap."""
+    """Maps sky_view_factor function over dask.array (with overlap of `depth`).
+
+    :param input_dem: The input dask array.
+    :param resolution:  Integer or float of DEM resolution (pixel resolution?).
+    :param compute_svf: True if computing `svf` visualization, else False.
+    :param compute_opns: True if computing `opns` visualization, else False.
+    :param compute_asvf: True if computing `asvf` visualization, else False.
+    :param svf_n_dir: Number of directions of calculating `svf` visualization.
+    :param svf_r_max: Maximal search radius in pixels.
+    :param svf_noise: The level of noise removal.
+    :param asvf_dir: Dirction of anisotropy.
+    :param asvf_level: Level of anisotropy.
+    :param ve_factor: Integer or float of vertical exaggeration factor.
+    :param no_data: The value that represents no data.
+    :return: A 2D dask array of calculated `svf`, `opns` or `asvf` of the `input_dem` raster."""
+
     input_dem = input_dem.astype(np.float32)
     data_volume = input_dem 
     _func = partial(_sky_view_factor_wrapper,

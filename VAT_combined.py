@@ -14,7 +14,7 @@ Parameters are:
     save_VAT_general (if saves VAT general)
     save_VAT_flat (if saves VAT flat)
 """
-import rvt.vis_dask
+import rvt.vis
 import rvt.blend
 import rvt.default
 import os
@@ -28,7 +28,7 @@ terrains_sett_json_path = "settings/default_terrains_settings.json"
 save_float = True
 save_8bit = True
 save_VAT_general = True
-save_VAT_flat = True
+save_VAT_flat = False
 
 
 def combined_VAT(input_dir_path, output_dir_path, general_opacity, vat_combination_json_path=None,

@@ -150,4 +150,5 @@ dask-worker-space/
 mydask.png
 
 #tests - temp
-*_test*
+test_*
+VAT_combined_*
