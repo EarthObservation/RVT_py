@@ -221,42 +221,42 @@ def dask_multi_hillshade(input_dem,
     return out_mhs
 
 
-# def _slrm_wrapper(np_chunk: NDArray[np.float32],
-#                     radius_cell: int,
-#                     ve_factor : Union[int, float],
-#                     no_data: Union[int, None]) -> NDArray[np.float32]: 
-#     """Wrapper function for vis.dask_slrm. Calculates `slrm` for each dask array chunk (np.array). 
-#     Returns np.array dim (x, y).""" 
-#     result_out = rvt.vis.slrm(dem = np_chunk, radius_cell = radius_cell,
-#                             ve_factor=ve_factor, no_data = no_data)
-#     output_for_dask_slrm = result_out
-#     return output_for_dask_slrm
+def _slrm_wrapper(np_chunk: NDArray[np.float32],
+                    radius_cell: int,
+                    ve_factor : Union[int, float],
+                    no_data: Union[int, None]) -> NDArray[np.float32]: 
+    """Wrapper function for vis.dask_slrm. Calculates `slrm` for each dask array chunk (np.array). 
+    Returns np.array dim (x, y).""" 
+    result_out = rvt.vis.slrm(dem = np_chunk, radius_cell = radius_cell,
+                            ve_factor=ve_factor, no_data = no_data)
+    output_for_dask_slrm = result_out
+    return output_for_dask_slrm
     
-# def dask_slrm(input_dem,
-#          radius_cell,
-#          ve_factor,
-#          no_data=None) -> da.Array:
-#     """Maps slrm function over dask.array (with overlap of `depth`).
+def dask_slrm(input_dem,
+         radius_cell,
+         ve_factor,
+         no_data=None) -> da.Array:
+    """Maps slrm function over dask.array (with overlap of `depth`).
 
-#     :param da.Array input_dem: The input dask array.
-#     :param radius_cell: Radius for trend assessment in pixels.
-#     :param ve_factor: Integer or float of vertical exaggeration factor.
-#     :param no_data: The value that represents no data.
-#     :return: A 2D dask array of calculated `slrm` of the `input_dem` raster."""
+    :param da.Array input_dem: The input dask array.
+    :param radius_cell: Radius for trend assessment in pixels.
+    :param ve_factor: Integer or float of vertical exaggeration factor.
+    :param no_data: The value that represents no data.
+    :return: A 2D dask array of calculated `slrm` of the `input_dem` raster."""
 
-#     input_dem = input_dem.astype(np.float32)
-#     data_volume = input_dem
-#     _func = partial(_slrm_wrapper, 
-#                     radius_cell = radius_cell,
-#                     ve_factor = ve_factor,
-#                     no_data = no_data)
-#     depth = {0: radius_cell + 1, 1: radius_cell + 1}
-#     boundary = {0: 'reflect', 1: 'reflect'}    
-#     out_slrm = data_volume.map_overlap(_func,
-#                                     depth=depth,
-#                                     boundary=boundary,
-#                                     meta=np.array((), dtype=np.float32))
-#     return out_slrm
+    input_dem = input_dem.astype(np.float32)
+    data_volume = input_dem
+    _func = partial(_slrm_wrapper, 
+                    radius_cell = radius_cell,
+                    ve_factor = ve_factor,
+                    no_data = no_data)
+    depth = {0: radius_cell + 1, 1: radius_cell + 1}
+    boundary = {0: 'nearest', 1: 'nearest'}    
+    out_slrm = data_volume.map_overlap(_func,
+                                    depth=depth,
+                                    boundary=boundary,
+                                    meta=np.array((), dtype=np.float32))
+    return out_slrm
 
 
 def _sky_view_factor_wrapper(np_chunk: NDArray[np.float32], resolution: Union[int, float],  
