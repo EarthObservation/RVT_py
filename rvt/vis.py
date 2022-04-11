@@ -836,7 +836,8 @@ def local_dominance(dem,
     dist_factr = 2 * distances + rad_inc
 
     local_dom_out = dem * 0
-    for i_s in range(n_shifts):
+    for i_s in range(n_shifts):         ##this is very slow, but can't be parallelized because previous iteration depends on the next one
+        print(local_dom_out)
         dem_moved = np.roll(dem, int(round(y_t[i_s])), axis=0)
         dem_moved = np.roll(dem_moved, int(round(x_t[i_s])), axis=1)
         idx_lower = np.where((dem + observer_height) > dem_moved)
