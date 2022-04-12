@@ -371,3 +371,63 @@ def dask_local_dominance(input_dem,
                                     boundary=boundary,
                                     meta=np.array((), dtype=np.float32))
     return out_ld
+
+
+def _msrm_wrapper(np_chunk: NDArray[np.float32],
+                    resolution: Union[int,float],
+                    feature_min: int,
+                    feature_max: int,
+                    scaling_factor: Union[int, float],
+                    ve_factor : Union[int, float],
+                    no_data: Union[int, None]) -> NDArray[np.float32]: 
+    """Wrapper function for vis.dask_msrm. Calculates `msrm` for each dask array chunk (np.array). 
+    Returns np.array dim (nr_directions, x, y).""" 
+    result_out = rvt.vis.msrm(dem = np_chunk, resolution= resolution, feature_min = feature_min,
+                                  feature_max  = feature_max, scaling_factor = scaling_factor,
+                                  ve_factor=ve_factor, no_data = no_data)
+    output_for_dask_msrm = result_out
+    return output_for_dask_msrm
+    
+def dask_msrm(input_dem,
+                    resolution,
+                    feature_min,
+                    feature_max,
+                    scaling_factor,
+                    ve_factor = 1,
+                    no_data = None) -> da.Array:
+    """Maps msrm function over dask.array (with overlap of `depth`).
+
+    :param da.Array input_dem: The input dask array.
+    :param resolution: Integer or float of DEM resolution.
+    :param feture_min: Minimum size of the feature you want to detect in meters.
+    :param feture_max: Maximum size of the feature you want to detect in meters.
+    :param scaling_factor: Range of MSRM values.
+    :param ve_factor: Integer or float of vertical exaggeration factor.
+    :param no_data: The value that represents no data.
+    :return: A 2D (x, y) dask array of calculated `msrm` of the `input_dem` raster."""
+
+    input_dem = input_dem.astype(np.float32)
+    data_volume = input_dem
+    _func = partial(_msrm_wrapper, 
+                    resolution = resolution,
+                    feature_min = feature_min,
+                    feature_max = feature_max,
+                    scaling_factor = scaling_factor,
+                    ve_factor = ve_factor,
+                    no_data = no_data)
+    depth = {0: feature_max, 1: feature_max}
+    boundary = {0: 'nearest', 1: 'nearest'}    
+    out_mhs = data_volume.map_overlap(_func,
+                                    depth=depth,
+                                    boundary=boundary,
+                                    meta=np.array((), dtype=np.float32))
+    return out_mhs
+
+
+
+## TODO:
+# if given depth of overlap is not integer - round or warning
+# NEGATIVE_OPENNESS = "neg_opns"
+# SHADOW = "shd"
+# SKY_ILLUMINATION = "sim"
+# MULTI_SCALE_TOPOGRAPHIC_POSITION = "mstp"
