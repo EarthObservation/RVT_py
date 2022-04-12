@@ -1133,22 +1133,20 @@ class DefaultValues:
             multi_hillshade_8bit_arr = np.array([red_band_arr, green_band_arr, blue_band_arr])
             return multi_hillshade_8bit_arr
         elif visualization == RVTVisualization.SIMPLE_LOCAL_RELIEF_MODEL:
-            raise Exception(f"{visualization} is not implemented with dask yet!")
-            norm_arr = rvt.blend_func.normalize_image(visualization="slrm", image=float_arr,
+            norm_arr = rvt.blend_func_dask.dask_normalize_image(visualization="slrm", image=float_arr,
                                                       min_norm=self.slrm_bytscl[1], max_norm=self.slrm_bytscl[2],
                                                       normalization=self.slrm_bytscl[0])
-            return rvt.vis.byte_scale(data=norm_arr, no_data=np.nan, c_min=0, c_max=1)
+            return rvt.vis_dask.dask_byte_scale(data=norm_arr, no_data=np.nan, c_min=0, c_max=1)
         elif visualization == RVTVisualization.SKY_VIEW_FACTOR:
             norm_arr = rvt.blend_func_dask.dask_normalize_image(visualization="svf", image=float_arr,
                                                       min_norm=self.svf_bytscl[1], max_norm=self.svf_bytscl[2],
                                                       normalization=self.svf_bytscl[0])
             return rvt.vis_dask.dask_byte_scale(data=norm_arr, no_data=np.nan, c_min=0, c_max=1)
         elif visualization == RVTVisualization.ANISOTROPIC_SKY_VIEW_FACTOR:
-            raise Exception(f"{visualization} is not implemented with dask yet!")
-            norm_arr = rvt.blend_func.normalize_image(visualization="asvf", image=float_arr,
+            norm_arr = rvt.blend_func_dask.dask_normalize_image(visualization="asvf", image=float_arr,
                                                       min_norm=self.asvf_bytscl[1], max_norm=self.asvf_bytscl[2],
                                                       normalization=self.asvf_bytscl[0])
-            return rvt.vis.byte_scale(data=norm_arr, no_data=np.nan, c_min=0, c_max=1)
+            return rvt.vis_dask.dask_byte_scale(data=norm_arr, no_data=np.nan, c_min=0, c_max=1)
         elif visualization == RVTVisualization.POSITIVE_OPENNESS:
             norm_arr = rvt.blend_func_dask.dask_normalize_image(visualization="pos_opns", image=float_arr,
                                                       min_norm=self.pos_opns_bytscl[1],
@@ -1169,17 +1167,15 @@ class DefaultValues:
                                                       normalization=self.sim_bytscl[0])
             return rvt.vis.byte_scale(data=norm_arr, no_data=np.nan, c_min=0, c_max=1)
         elif visualization == RVTVisualization.LOCAL_DOMINANCE:
-            raise Exception(f"{visualization} is not implemented with dask yet!")
-            norm_arr = rvt.blend_func.normalize_image(visualization="ld", image=float_arr,
+            norm_arr = rvt.blend_func_dask.dask_normalize_image(visualization="ld", image=float_arr,
                                                       min_norm=self.ld_bytscl[1], max_norm=self.ld_bytscl[2],
                                                       normalization=self.ld_bytscl[0])
-            return rvt.vis.byte_scale(data=norm_arr, no_data=np.nan, c_min=0, c_max=1)
+            return rvt.vis_dask.dask_byte_scale(data=norm_arr, no_data=np.nan, c_min=0, c_max=1)
         elif visualization == RVTVisualization.MULTI_SCALE_RELIEF_MODEL:
-            raise Exception(f"{visualization} is not implemented with dask yet!")
-            norm_arr = rvt.blend_func.normalize_image(visualization="msrm", image=float_arr,
+            norm_arr = rvt.blend_func_dask.dask_normalize_image(visualization="msrm", image=float_arr,
                                                       min_norm=self.msrm_bytscl[1], max_norm=self.msrm_bytscl[2],
                                                       normalization=self.msrm_bytscl[0])
-            return rvt.vis.byte_scale(data=norm_arr, no_data=np.nan, c_min=0, c_max=1)
+            return rvt.vis_dask.dask_byte_scale(data=norm_arr, no_data=np.nan, c_min=0, c_max=1)
         elif visualization == RVTVisualization.MULTI_SCALE_TOPOGRAPHIC_POSITION:
             raise Exception(f"{visualization} is not implemented with dask yet!")
             return float_arr
