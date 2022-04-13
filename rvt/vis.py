@@ -361,20 +361,10 @@ def multi_hillshade(dem,
     #     hillshades_arr_list.append(hillshading)
     # multi_hillshade_out = np.asarray(hillshades_arr_list)
     # return multi_hillshade_out
-
-    def lazy_multi_hillshade(num_directions, i_dir):
-        """Function that computes `hillshade` for each direction. It is later dalayed and applied to each direction.
-
-        :param int num_directions: Number of solar azimuth angles.
-        :param int i_dir: Number of a direction.
-        :returns:  Multidimensional np.array  (nr.directions, x, y) of calcualted hillshades.
-        TODO: The reason for this was to get rid of the `for` loop above. Check how scheduling `task-within-tasks` works when this is part of nested dask functions."""
-        sun_azimuth = (360 / num_directions) * i_dir
-        lazy_hillshading = hillshade(dem=dem, resolution_x=resolution_x, resolution_y=resolution_y,
-                                sun_elevation=sun_elevation, sun_azimuth=sun_azimuth, slope=slope, aspect=aspect)
-        return lazy_hillshading
     
-    delayed_hillshades_result = [dask.delayed(lazy_multi_hillshade)(nr_directions, i_dir) for i_dir in range(nr_directions)]
+    delayed_hillshades_result = [dask.delayed(lazy_multi_hillshade)( i_dir, dem = dem, nr_directions = nr_directions, 
+                                                                    resolution_x = resolution_x, resolution_y = resolution_y, 
+                                                                    sun_elevation = sun_elevation, slope = slope, aspect = aspect) for i_dir in range(nr_directions)]
     ##Return np.array - computed: 
     ##See dask best practices, section `Compute on lots of computation at once`: https://docs.dask.org/en/stable/delayed-best-practices.html
     multi_hillshade_out = dask.compute(*delayed_hillshades_result)
@@ -386,6 +376,17 @@ def multi_hillshade(dem,
     # delayed_hillshades_stckd_arr = da.stack([single_mhs_arr for single_mhs_arr in delayed_hillshades_arr], axis=0)
     # return delayed_hillshades_stckd_arr
    
+def lazy_multi_hillshade(i_dir, dem, nr_directions, resolution_x, resolution_y, sun_elevation, slope, aspect):
+    """Function that computes `hillshade` for each direction. It is later dalayed and applied to each direction.
+    :param int num_directions: Number of solar azimuth angles.
+    :param int i_dir: Number of a direction.
+    :returns:  Multidimensional np.array  (nr.directions, x, y) of calcualted hillshades.
+    TODO: The reason for this was to get rid of the `for` loop above. Check how scheduling `task-within-tasks` works when this is part of nested dask functions."""
+    sun_azimuth = (360 / nr_directions) * i_dir
+    lazy_hillshading = hillshade(dem=dem, resolution_x=resolution_x, resolution_y=resolution_y,
+                            sun_elevation=sun_elevation, sun_azimuth=sun_azimuth, slope=slope, aspect=aspect)
+    return lazy_hillshading
+
 
 def mean_filter(dem, kernel_radius):
     """Applies mean filter (low pass filter) on DEM. Kernel radius is in pixels. Kernel size is 2 * kernel_radius + 1.
@@ -836,8 +837,7 @@ def local_dominance(dem,
     dist_factr = 2 * distances + rad_inc
 
     local_dom_out = dem * 0
-    for i_s in range(n_shifts):         ##this is very slow, but can't be parallelized because previous iteration depends on the next one
-        print(local_dom_out)
+    for i_s in range(n_shifts):         ##this is very slow, but can't be parallelized because previous iteration depends on the next (numba njit doesn't support np.roll axis = ...)
         dem_moved = np.roll(dem, int(round(y_t[i_s])), axis=0)
         dem_moved = np.roll(dem_moved, int(round(x_t[i_s])), axis=1)
         idx_lower = np.where((dem + observer_height) > dem_moved)
