@@ -1460,7 +1460,6 @@ def max_elevation_deviation(dem, minimum_radius, maximum_radius, step):
     # change where dem nan back to nan
     dev_max_out[idx_nan_dem] = np.nan
     rad_max_out[idx_nan_dem] = np.nan
-
     return dev_max_out
 
 
