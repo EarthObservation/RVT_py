@@ -424,10 +424,125 @@ def dask_msrm(input_dem,
     return out_mhs
 
 
+def _sky_illumination_wrapper(np_chunk: NDArray[np.float32], 
+                             resolution: Union[int, float],  
+                             sky_model: str,
+                             compute_shadow: bool,
+                             shadow_horizon_only: bool,
+                             max_fine_radius: int,
+                             num_directions: int,
+                             shadow_az: Union[int, float],
+                             shadow_el:Union[int, float], ve_factor: Union[int,float],
+                            no_data: Union[int, None]) -> NDArray[np.float32]: 
+    """Wrapper function for vis.sky_illumination. Calculates `sky_illumination` for each dask array chunk (np.array). 
+    Returns np.array dim (x, y). Assumes calculation of only one visualization at a time.""" 
+    result_dict = rvt.vis.sky_illumination(dem = np_chunk, resolution = resolution,
+                                            sky_model = sky_model,
+                                            compute_shadow = compute_shadow,
+                                            shadow_horizon_only = shadow_horizon_only,
+                                            max_fine_radius = max_fine_radius,
+                                            num_directions = num_directions,
+                                            shadow_az = shadow_az,
+                                            shadow_el = shadow_el, 
+                                            ve_factor=ve_factor,
+                                            no_data = no_data)
+    si_out = result_dict           
+    return si_out   
+
+def dask_sky_illumination(input_dem,
+                        resolution, 
+                        sky_model,
+                        compute_shadow,
+                        shadow_horizon_only,
+                        max_fine_radius,
+                        num_directions,
+                        shadow_az,
+                        shadow_el,
+                        ve_factor = 1,
+                        no_data = None)-> da.Array: 
+    """Maps sky_illumination function over dask.array (with overlap of `depth`).
+
+    :param da.Array input_dem: The input dask array.
+    :param resolution:  Integer or float of DEM resolution (pixel resolution?).
+    :param sky_model: `overcast` or `uniform`.
+    :param compute_shadow: If True it computes and adds shadow.
+    :param shadow_horizon_only: Bool.
+    :param max_fine_radius: Max shadow modeling distance in pixels.
+    :param num_directions: Number of directions to search for horizon.
+    :param shadow_az: Shadow azimuth.
+    :param shadow_el: Shadow elevation.
+    :param ve_factor: Integer or float of vertical exaggeration factor.
+    :param no_data: The value that represents no data.
+    :return: A 2D dask array of calculated `svf`, `opns` or `asvf` of the `input_dem` raster."""
+
+    input_dem = input_dem.astype(np.float32)
+    data_volume = input_dem 
+    _func = partial(_sky_illumination_wrapper,
+                    resolution = resolution, 
+                    sky_model = sky_model,
+                    compute_shadow = compute_shadow,
+                    shadow_horizon_only = shadow_horizon_only,
+                    max_fine_radius = max_fine_radius,
+                    num_directions = num_directions,
+                    shadow_az = shadow_az,
+                    shadow_el = shadow_el,
+                    ve_factor=ve_factor,
+                    no_data = no_data) 
+    radius_max = max_fine_radius
+    depth = { 0: radius_max, 1: radius_max} 
+    boundary = { 0: "nearest", 1: "nearest"}
+    out_si = data_volume.map_overlap(_func,
+                                        depth = depth,
+                                        boundary = boundary,
+                                        meta=np.array((), dtype = np.float32))
+    return out_si
+
+def dask_shadow_horizon(input_dem,
+                        resolution, 
+                        sky_model,
+                        max_fine_radius,
+                        num_directions,
+                        shadow_az,
+                        shadow_el,
+                        ve_factor = 1,
+                        no_data = None)-> da.Array: 
+    """Maps shadow_horizon function over dask.array (with overlap of `depth`).
+
+    :param da.Array input_dem: The input dask array.
+    :param resolution:  Integer or float of DEM resolution (pixel resolution?).
+    :param sky_model: `overcast` or `uniform`.
+    :param max_fine_radius: Max shadow modeling distance in pixels.
+    :param num_directions: Number of directions to search for horizon.
+    :param shadow_az: Shadow azimuth.
+    :param shadow_el: Shadow elevation.
+    :param ve_factor: Integer or float of vertical exaggeration factor.
+    :param no_data: The value that represents no data.
+    :return: A 2D dask array of calculated `svf`, `opns` or `asvf` of the `input_dem` raster."""
+
+    input_dem = input_dem.astype(np.float32)
+    data_volume = input_dem 
+    _func = partial(_sky_illumination_wrapper,
+                    resolution = resolution, 
+                    sky_model = sky_model,
+                    compute_shadow = True,
+                    shadow_horizon_only = True,
+                    max_fine_radius = max_fine_radius,
+                    num_directions = num_directions,
+                    shadow_az = shadow_az,
+                    shadow_el = shadow_el,
+                    ve_factor=ve_factor,
+                    no_data = no_data) 
+    radius_max = max_fine_radius
+    depth = { 0: radius_max, 1: radius_max} 
+    boundary = { 0: "nearest", 1: "nearest"}
+    out_sh = data_volume.map_overlap(_func,
+                                        depth = depth,
+                                        boundary = boundary,
+                                        meta=np.array((), dtype = np.float32))
+    return out_sh
+
+
 
 ## TODO:
 # if given depth of overlap is not integer - round or warning
-# NEGATIVE_OPENNESS = "neg_opns"
-# SHADOW = "shd"
-# SKY_ILLUMINATION = "sim"
 # MULTI_SCALE_TOPOGRAPHIC_POSITION = "mstp"

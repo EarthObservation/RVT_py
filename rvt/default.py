@@ -1339,12 +1339,12 @@ class DefaultValues:
 
 
     def get_multi_hillshade(self, dem_arr, resolution_x, resolution_y, no_data=None):
-        multi_hillshade_arr = rvt.vis.multi_hillshade(dem=dem_arr, resolution_x=resolution_x, resolution_y=resolution_y,
+        multi_hillshade_arr = rvt.vis_dask.dask_multi_hillshade(input_dem=dem_arr, resolution_x=resolution_x, resolution_y=resolution_y,
                                                       nr_directions=self.mhs_nr_dir, sun_elevation=self.mhs_sun_el,
                                                       ve_factor=self.ve_factor, no_data=no_data)
         return multi_hillshade_arr
 
-    def save_multi_hillshade(self, dem_path, custom_dir=None, save_float=None, save_8bit=None):
+    def save_dask_multi_hillshade(self, dem_path, custom_dir=None, save_float=None, save_8bit=None):
         """Calculates and saves Multidirectional hillshade from dem (dem_path) with default parameters.
         If custom_dir is None it saves in dem directory else in custom_dir. If path to file already exists we can
         overwrite file (overwrite=1) or not (overwrite=0). If save_float is True method creates Gtiff with real values,
@@ -1633,16 +1633,16 @@ class DefaultValues:
                                 out_raster_arr=opns_8bit_arr)
         return 1
 
-    def get_neg_opns(self, dem_arr, resolution, no_data=None):
+
+    def get_dask_neg_opns(self, dem_arr, resolution, no_data=None):
         dem_arr = -1 * dem_arr
-        dict_neg_opns = rvt.vis.sky_view_factor(dem=dem_arr, resolution=resolution, svf_n_dir=self.svf_n_dir,
+        neg_opns_arr = rvt.vis_dask.dask_sky_view_factor(input_dem=dem_arr, resolution=resolution, svf_n_dir=self.svf_n_dir,
                                                 svf_r_max=self.svf_r_max, svf_noise=self.svf_noise,
                                                 compute_svf=False, compute_asvf=False, compute_opns=True,
                                                 ve_factor=self.ve_factor, no_data=no_data)
-        neg_opns_arr = dict_neg_opns["opns"]
         return neg_opns_arr
 
-    def save_neg_opns(self, dem_path, custom_dir=None, save_float=None, save_8bit=None):
+    def save_dask_neg_opns(self, dem_path, custom_dir=None, save_float=None, save_8bit=None):
         """Calculates and saves Negative Openness from dem (dem_path) with default parameters. If custom_dir is None
         it saves in dem directory else in custom_dir. If path to file already exists we can
         overwrite file (overwrite=1) or not (overwrite=0). If save_float is True method creates Gtiff with real values,
@@ -1678,44 +1678,31 @@ class DefaultValues:
         elif not save_float and not save_8bit:
             if os.path.isfile(neg_opns_8bit_path) and not self.overwrite:
                 return 0
+                
+        dict_arr_res = get_raster_dask_arr(raster_path=dem_path)
+        dem_arr = dict_arr_res["array"]
+        no_data = dict_arr_res["no_data"]
+        x_res = dict_arr_res["resolution"][0]
+        y_res = dict_arr_res["resolution"][1]
 
-        dem_size = get_raster_size(raster_path=dem_path)
-        if dem_size[0] * dem_size[1] > self.tile_size_limit:  # tile by tile
-            if custom_dir is None:
-                custom_dir = Path(dem_path).parent
-            rvt.tile.save_rvt_visualization_tile_by_tile(
-                rvt_visualization=RVTVisualization.NEGATIVE_OPENNESS,
-                rvt_default=self,
-                dem_path=Path(dem_path),
-                output_dir_path=Path(custom_dir),
-                save_float=save_float,
-                save_8bit=save_8bit
-            )
-            return 1
-        else:  # singleprocess
-            dict_arr_res = get_raster_arr(raster_path=dem_path)
-            dem_arr = dict_arr_res["array"]
-            no_data = dict_arr_res["no_data"]
-            x_res = dict_arr_res["resolution"][0]
-            y_res = dict_arr_res["resolution"][1]
+        neg_opns_arr = self.get_dask_neg_opns(dem_arr=dem_arr, resolution=x_res, no_data=no_data)
+        if save_float:
+            if os.path.isfile(neg_opns_path) and not self.overwrite:  # file exists and overwrite=0
+                pass
+            else:
+                dask_save_raster_zarr(src_raster_path=dem_path, out_raster_path=neg_opns_path, out_raster_arr=neg_opns_arr,
+                            no_data=np.nan)
+        if save_8bit:
+            if os.path.isfile(neg_opns_8bit_path) and not self.overwrite:  # file exists and overwrite=0
+                pass
+            else:
+                neg_opns_8bit_arr = self.float_to_8bit(
+                    float_arr=neg_opns_arr, visualization=RVTVisualization.NEGATIVE_OPENNESS
+                )
+                dask_save_raster_zarr(src_raster_path=dem_path, out_raster_path=neg_opns_8bit_path,
+                            out_raster_arr=neg_opns_8bit_arr)
+        return 1
 
-            neg_opns_arr = self.get_neg_opns(dem_arr=dem_arr, resolution=x_res, no_data=no_data).astype('float32')
-            if save_float:
-                if os.path.isfile(neg_opns_path) and not self.overwrite:  # file exists and overwrite=0
-                    pass
-                else:
-                    save_raster(src_raster_path=dem_path, out_raster_path=neg_opns_path, out_raster_arr=neg_opns_arr,
-                                no_data=np.nan)
-            if save_8bit:
-                if os.path.isfile(neg_opns_8bit_path) and not self.overwrite:  # file exists and overwrite=0
-                    pass
-                else:
-                    neg_opns_8bit_arr = self.float_to_8bit(
-                        float_arr=neg_opns_arr, visualization=RVTVisualization.NEGATIVE_OPENNESS
-                    )
-                    save_raster(src_raster_path=dem_path, out_raster_path=neg_opns_8bit_path,
-                                out_raster_arr=neg_opns_8bit_arr, e_type=1)
-            return 1
 
     def get_sky_illumination(self, dem_arr, resolution, no_data=None):
         sky_illumination_arr = rvt.vis.sky_illumination(dem=dem_arr, resolution=resolution, sky_model=self.sim_sky_mod,

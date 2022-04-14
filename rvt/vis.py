@@ -997,7 +997,7 @@ def sky_illumination(dem,
                      compute_shadow=False,
                      shadow_horizon_only=False,
                      max_fine_radius=100,
-                     num_directions=32,
+                     num_directions=4,
                      shadow_az=315,
                      shadow_el=35,
                      ve_factor=1,
@@ -1166,7 +1166,8 @@ def sky_illumination(dem,
             horizon_out = np.degrees(_[max_pyramid_radius:-max_pyramid_radius, max_pyramid_radius:-max_pyramid_radius])
             shadow_out = (horizon_out < shadow_el) * 1
             if shadow_horizon_only:
-                return {"shadow": shadow_out, "horizon": horizon_out}
+                # return {"shadow": shadow_out, "horizon": horizon_out}       #### is "horizon" : horizon_out ever used?
+                return shadow_out
 
     # because of numeric stabilty check if the uniform_b is less then pi
     uniform_out = (da) * np.cos(slope) * uniform_a + np.sin(slope) * np.minimum(uniform_b, np.pi)
