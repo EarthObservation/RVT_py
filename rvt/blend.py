@@ -420,11 +420,10 @@ class BlenderCombination:
             else:
                 if self.layers[i_img].vis.lower() == "slope gradient":
                     if save_visualizations:
-                        warnings.warn("Saving of individual visualizations is implemented with zarr.")
                         default.save_dask_slope(dem_path=self.dem_path, custom_dir=save_render_directory, save_float=True,
                                            save_8bit=False)
                         image_path = default.get_slope_path(self.dem_path)
-                        norm_image = rvt.blend_func_dask.dask_normalize_image(image = rvt.default.get_raster_zarr_arr(image_path)["array"],
+                        norm_image = rvt.blend_func_dask.dask_normalize_image(image = rvt.default.get_raster_dask_arr(image_path)["array"],
                                                                          visualization =  visualization, min_norm = min_norm, max_norm = max_norm, normalization = normalization)
                     else:
                         image = default.get_dask_slope(dem_arr=self.dem_arr, resolution_x=self.dem_resolution,
@@ -433,11 +432,10 @@ class BlenderCombination:
                                                                 min_norm = min_norm, max_norm = max_norm, normalization = normalization)
                 elif self.layers[i_img].vis.lower() == "hillshade":
                     if save_visualizations:
-                        warnings.warn("Saving of individual visualizations is implemented with zarr.")
                         default.save_dask_hillshade(dem_path=self.dem_path, custom_dir=save_render_directory,
                                                save_float=True, save_8bit=False)
                         image_path = default.get_hillshade_path(self.dem_path)
-                        norm_image = rvt.blend_func_dask.dask_normalize_image(image = rvt.default.get_raster_zarr_arr(image_path)["array"],
+                        norm_image = rvt.blend_func_dask.dask_normalize_image(image = rvt.default.get_raster_dask_arr(image_path)["array"],
                                                                          visualization =  visualization, min_norm = min_norm, max_norm = max_norm, normalization = normalization)
                     else:
                         image = default.get_dask_hillshade(dem_arr=self.dem_arr, resolution_x=self.dem_resolution,
@@ -495,12 +493,11 @@ class BlenderCombination:
                         norm_image = normalize_image(visualization, image, min_norm, max_norm, normalization)
                 elif self.layers[i_img].vis.lower() == "sky-view factor":
                     if save_visualizations:
-                        warnings.warn("Saving of individual visualizations is implemented with zarr.")
                         default.save_dask_sky_view_factor(dem_path=self.dem_path, save_svf=True, save_asvf=False,
                                                      save_opns=False, custom_dir=save_render_directory, save_float=True,
                                                      save_8bit=False)
                         image_path = default.get_svf_path(self.dem_path)
-                        norm_image = rvt.blend_func_dask.dask_normalize_image(image = rvt.default.get_raster_zarr_arr(image_path)["array"],
+                        norm_image = rvt.blend_func_dask.dask_normalize_image(image = rvt.default.get_raster_dask_arr(image_path)["array"],
                                                                          visualization =  visualization, min_norm = min_norm, max_norm = max_norm, normalization = normalization)
                     else:
                         image = default.get_dask_sky_view_factor(dem_arr=self.dem_arr, resolution=self.dem_resolution,
@@ -524,12 +521,11 @@ class BlenderCombination:
                         norm_image = normalize_image(visualization, image, min_norm, max_norm, normalization)
                 elif self.layers[i_img].vis.lower() == "openness - positive":
                     if save_visualizations:
-                        warnings.warn("Saving of individual visualizations is implemented with zarr.")
                         default.save_dask_sky_view_factor(dem_path=self.dem_path, save_svf=False, save_asvf=False,
                                                      save_opns=True, custom_dir=save_render_directory, save_float=True,
                                                      save_8bit=False)
                         image_path = default.get_opns_path(self.dem_path)
-                        norm_image = rvt.blend_func_dask.dask_normalize_image(image = rvt.default.get_raster_zarr_arr(image_path)["array"],
+                        norm_image = rvt.blend_func_dask.dask_normalize_image(image = rvt.default.get_raster_dask_arr(image_path)["array"],
                                                                          visualization =  visualization, min_norm = min_norm, max_norm = max_norm, normalization = normalization)
                     else:
                         image = default.get_dask_sky_view_factor(dem_arr=self.dem_arr, resolution=self.dem_resolution,
@@ -622,7 +618,7 @@ class BlenderCombination:
 
         if save_render_path is not None:  # if paths presented it saves image
             if save_float:
-                # rvt.default.dask_save_raster_zarr(src_raster_path=self.dem_path, out_raster_path=save_render_path,
+                # rvt.default.dask_save_raster_dask(src_raster_path=self.dem_path, out_raster_path=save_render_path,
                 #                         out_raster_arr=rendered_image)
                 rvt.default.dask_save_raster_tif(src_raster_path=self.dem_path, out_raster_path=save_render_path,
                                         out_raster_arr=rendered_image, dtype_to_save= "float32")
