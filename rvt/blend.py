@@ -481,16 +481,14 @@ class BlenderCombination:
                         image = np.array([red_band_arr, green_band_arr, blue_band_arr])
                         norm_image = normalize_image(visualization, image, min_norm, max_norm, normalization)
                 elif self.layers[i_img].vis.lower() == "simple local relief model":
-                    raise Exception("Not implemented with dask yet!")
                     if save_visualizations:
-                        default.save_slrm(dem_path=self.dem_path, custom_dir=save_render_directory, save_float=True,
+                        default.save_dask_slrm(dem_path=self.dem_path, custom_dir=save_render_directory, save_float=True,
                                           save_8bit=False)
                         image_path = default.get_slrm_path(self.dem_path)
-                        norm_image = normalize_image(visualization, rvt.default.get_raster_arr(image_path)["array"],
-                                                     min_norm, max_norm, normalization)
+                        norm_image = rvt.blend_func_dask.dask_normalize_image(visualization, rvt.default.get_raster_dask_arr(image_path)["array"], min_norm, max_norm, normalization)
                     else:
-                        image = default.get_slrm(dem_arr=self.dem_arr, no_data=no_data)
-                        norm_image = normalize_image(visualization, image, min_norm, max_norm, normalization)
+                        image = default.get_dask_slrm(dem_arr=self.dem_arr, no_data=no_data)
+                        norm_image = rvt.blend_func_dask.dask_normalize_image(visualization, image, min_norm, max_norm, normalization)
                 elif self.layers[i_img].vis.lower() == "sky-view factor":
                     if save_visualizations:
                         default.save_dask_sky_view_factor(dem_path=self.dem_path, save_svf=True, save_asvf=False,
@@ -506,19 +504,17 @@ class BlenderCombination:
                         norm_image = rvt.blend_func_dask.dask_normalize_image(image= image, visualization = visualization, min_norm = 
                                                                             min_norm, max_norm = max_norm, normalization = normalization)
                 elif self.layers[i_img].vis.lower() == "anisotropic sky-view factor":
-                    raise Exception("Not implemented with dask yet!")
                     if save_visualizations:
-                        default.save_sky_view_factor(dem_path=self.dem_path, save_svf=False, save_asvf=True,
+                        default.save_dask_sky_view_factor(dem_path=self.dem_path, save_svf=False, save_asvf=True,
                                                      save_opns=False, custom_dir=save_render_directory, save_float=True,
                                                      save_8bit=False)
                         image_path = default.get_asvf_path(self.dem_path)
-                        norm_image = normalize_image(visualization, rvt.default.get_raster_arr(image_path)["array"],
-                                                     min_norm, max_norm, normalization)
+                        norm_image = rvt.blend_func_dask.dask_normalize_image(visualization, rvt.default.get_raster_arr(image_path)["array"], min_norm, max_norm, normalization)
                     else:
-                        image = default.get_sky_view_factor(dem_arr=self.dem_arr, resolution=self.dem_resolution,
+                        image = default.get_dask_sky_view_factor(dem_arr=self.dem_arr, resolution=self.dem_resolution,
                                                             compute_svf=False, compute_asvf=True,
                                                             compute_opns=False, no_data=no_data)["asvf"]
-                        norm_image = normalize_image(visualization, image, min_norm, max_norm, normalization)
+                        norm_image = rvt.blend_func_dask.dask_normalize_image(visualization, image, min_norm, max_norm, normalization)
                 elif self.layers[i_img].vis.lower() == "openness - positive":
                     if save_visualizations:
                         default.save_dask_sky_view_factor(dem_path=self.dem_path, save_svf=False, save_asvf=False,
@@ -534,17 +530,16 @@ class BlenderCombination:
                         norm_image = rvt.blend_func_dask.dask_normalize_image(image= image, visualization = visualization, min_norm = 
                                                                             min_norm, max_norm = max_norm, normalization = normalization)
                 elif self.layers[i_img].vis.lower() == "openness - negative":
-                    raise Exception("Not implemented with dask yet!")
                     if save_visualizations:
-                        default.save_neg_opns(dem_path=self.dem_path, custom_dir=save_render_directory, save_float=True,
+                        default.save_dask_neg_opns(dem_path=self.dem_path, custom_dir=save_render_directory, save_float=True,
                                               save_8bit=False)
                         image_path = default.get_neg_opns_path(self.dem_path)
-                        norm_image = normalize_image(visualization, rvt.default.get_raster_arr(image_path)["array"],
+                        norm_image = rvt.blend_func_dask.dask_normalize_image(visualization, rvt.default.get_raster_dask_arr(image_path)["array"],
                                                      min_norm, max_norm, normalization)
                     else:
-                        image = default.get_neg_opns(dem_arr=self.dem_arr, resolution=self.dem_resolution,
+                        image = default.get_dask_neg_opns(dem_arr=self.dem_arr, resolution=self.dem_resolution,
                                                      no_data=no_data)
-                        norm_image = normalize_image(visualization, image, min_norm, max_norm, normalization)
+                        norm_image = rvt.blend_func_dask.dask_normalize_image(visualization, image, min_norm, max_norm, normalization)
                 elif self.layers[i_img].vis.lower() == "sky illumination":
                     raise Exception("Not implemented with dask yet!")
                     if save_visualizations:
@@ -558,37 +553,31 @@ class BlenderCombination:
                                                              no_data=no_data)
                         norm_image = normalize_image(visualization, image, min_norm, max_norm, normalization)
                 elif self.layers[i_img].vis.lower() == "local dominance":
-                    raise Exception("Not implemented with dask yet!")
                     if save_visualizations:
-                        default.save_local_dominance(dem_path=self.dem_path, custom_dir=save_render_directory,
+                        default.save_dask_local_dominance(dem_path=self.dem_path, custom_dir=save_render_directory,
                                                      save_float=True, save_8bit=False)
                         image_path = default.get_local_dominance_path(self.dem_path)
-                        norm_image = normalize_image(visualization, rvt.default.get_raster_arr(image_path)["array"],
-                                                     min_norm, max_norm, normalization)
+                        norm_image = rvt.blend_func_dask.dask_normalize_image(visualization, rvt.default.get_raster_dask_arr(image_path)["array"], min_norm, max_norm, normalization)
                     else:
-                        image = default.get_local_dominance(dem_arr=self.dem_arr, no_data=no_data)
-                        norm_image = normalize_image(visualization, image, min_norm, max_norm, normalization)
+                        image = default.get_dask_local_dominance(dem_arr=self.dem_arr, no_data=no_data)
+                        norm_image = rvt.blend_func_dask.dask_normalize_image(visualization, image, min_norm, max_norm, normalization)
                 elif self.layers[i_img].vis.lower() == "multi-scale relief model":
-                    raise Exception("Not implemented with dask yet!")
                     if save_visualizations:
-                        default.save_msrm(dem_path=self.dem_path, custom_dir=save_render_directory,
+                        default.save_dask_msrm(dem_path=self.dem_path, custom_dir=save_render_directory,
                                           save_float=True, save_8bit=False)
                         image_path = default.get_msrm_path(self.dem_path)
-                        norm_image = normalize_image(visualization, rvt.default.get_raster_arr(image_path)["array"],
-                                                     min_norm, max_norm, normalization)
+                        norm_image = rvt.blend_func_dask.dask_normalize_image(visualization, rvt.default.get_raster_dask_arr(image_path)["array"], min_norm, max_norm, normalization)
                     else:
-                        image = default.get_msrm(dem_arr=self.dem_arr, resolution=self.dem_resolution, no_data=no_data)
-                        norm_image = normalize_image(visualization, image, min_norm, max_norm, normalization)
+                        image = default.get_dask_msrm(dem_arr=self.dem_arr, resolution=self.dem_resolution, no_data=no_data)
+                        norm_image = rvt.blend_func_dask.dask_normalize_image(visualization, image, min_norm, max_norm, normalization)
                 elif self.layers[i_img].vis.lower() == "multi-scale topographic position":
-                    raise Exception("Not implemented with dask yet!")
                     if save_visualizations:
-                        default.save_mstp(dem_path=self.dem_path, custom_dir=save_render_directory)
+                        default.save_dask_mstp(dem_path=self.dem_path, custom_dir=save_render_directory)
                         image_path = default.get_mstp_path(self.dem_path)
-                        norm_image = normalize_image(visualization, rvt.default.get_raster_arr(image_path)["array"],
-                                                     min_norm, max_norm, normalization)
+                        norm_image = rvt.blend_func_dask.dask_normalize_image(visualization, rvt.default.get_raster_dask_arr(image_path)["array"], min_norm, max_norm, normalization)
                     else:
                         image = default.get_mstp(dem_arr=self.dem_arr, no_data=no_data)
-                        norm_image = normalize_image(visualization, image, min_norm, max_norm, normalization)
+                        norm_image = rvt.blend_func_dask.dask_normalize_image(visualization, image, min_norm, max_norm, normalization)
 
             colormap = self.layers[i_img].colormap
             min_colormap_cut = self.layers[i_img].min_colormap_cut
