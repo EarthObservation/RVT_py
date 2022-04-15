@@ -34,7 +34,6 @@ import numpy as np
 import json
 import datetime
 import time
-from functools import partial
 import dask
 import dask.array as da
 from dask.distributed import Client, LocalCluster, Lock

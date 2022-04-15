@@ -27,6 +27,10 @@ import dask.array as da
 from typing import Union, Dict, List, Any, Tuple, Optional
 from nptyping import NDArray
 
+## TODO:
+# if given depth of overlap is not integer - round or warning
+# "For" loops and other functions in vis -> delay/rewrite
+# module organization
 
 def _dask_byte_scale_wrapper(data: NDArray[np.float32],
                              c_min: Union[int, float],
@@ -592,8 +596,3 @@ def dask_mstp(input_dem,
                                     meta=np.array((), dtype=np.float32))
     return out_mstp
 
-
-
-## TODO:
-# if given depth of overlap is not integer - round or warning
-# "For" loops and other functions in vis
