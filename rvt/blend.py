@@ -583,10 +583,9 @@ class BlenderCombination:
             min_colormap_cut = self.layers[i_img].min_colormap_cut
             max_colormap_cut = self.layers[i_img].max_colormap_cut
             if colormap is not None and len(image.shape) < 3:
-                raise Exception("Function gray_scale_to_color_ramp not implemented with dask yet!")
-                norm_image = gray_scale_to_color_ramp(gray_scale=norm_image, colormap=colormap, output_8bit=False,
+                norm_image = rvt.blend_func_dask.dask_gray_scale_to_color_ramp(gray_scale=norm_image, colormap=colormap, output_8bit=False,
                                                       min_colormap_cut=min_colormap_cut,
-                                                      max_colormap_cut=max_colormap_cut)
+                                                      max_colormap_cut=max_colormap_cut, alpha=False)
 
             # if current layer has visualization applied, but there has been no rendering
             # of images yet, than current layer will be the initial value of rendered_image

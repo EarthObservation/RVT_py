@@ -1873,7 +1873,7 @@ class DefaultValues:
         #     )
         #     return 1
         # else:  # singleprocess
-        dict_arr_res = get_raster_arr(raster_path=dem_path)
+        dict_arr_res = get_raster_dask_arr(raster_path=dem_path)
         dem_arr = dict_arr_res["array"]
         no_data = dict_arr_res["no_data"]
         local_dominance_arr = self.get_dask_local_dominance(dem_arr=dem_arr, no_data=no_data).astype
@@ -2422,6 +2422,7 @@ def get_raster_dask_arr(raster_path):
     chunk_size = {'x': 1150, 'y': 700} ## MID ARRAY (helena)
     # chunk_size = {'x': 2560, 'y': 2560} ## LARGE ARRAY (tabasco)
     # chunk_size = {'x': 2300, 'y': 1400}
+    # chunk_size = True                ## gives n * (tilex as saved, tiley as saved)
 
     data_set = rioxarray.open_rasterio(raster_path, chunks = chunk_size, cache = False, lock = False) 
 

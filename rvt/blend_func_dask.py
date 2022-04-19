@@ -31,6 +31,68 @@ from functools import partial
 from typing import Union, Dict, List, Any, Tuple, Optional
 from nptyping import NDArray
 
+
+#     Turns normalized gray scale np.array to rgba (np.array of 4 np.arrays r, g, b, a).
+
+#     Parameters
+#     ----------
+#     gray_scale : np.array (2D)
+#         Normalized gray_scale img as np.array (0-1)
+#     colormap : str
+#         Colormap form matplotlib (https://matplotlib.org/3.3.2/tutorials/colors/colormaps.html)
+#     min_colormap_cut : float
+#         What lower part of colormap to cut to select part of colormap.
+#         Valid values are between 0 and 1, if 0.2 it cuts off (deletes) 20% of lower colors in colormap.
+#         If None cut is not applied.
+#     max_colormap_cut : float
+#         What upper part of colormap to cut to select part of colormap.
+#         Valid values are between 0 and 1, if 0.8 it cuts off (deletes) 20% of upper colors in colormap.
+#         If None cut is not applied.
+#     alpha : bool
+#         If True outputs 4D array RGBA, if False outputs 3D array RGB
+#     output_8bit : bool
+#         If true output values will be int 0-255 instead of normalized values.
+#     Returns
+#     -------
+#     rgba_out : np.array (3D: red 0-255, green 0-255, blue 0-255)
+#             If alpha False: np.array (4D: red 0-255, green 0-255, blue 0-255, alpha 0-255)
+
+
+def _gray_scale_to_color_ramp_wrapper(np_chunk: NDArray[np.float32],
+                                      colormap: str,
+                                      min_colormap_cut: float,
+                                      max_colormap_cut: float, 
+                                      alpha: bool,
+                                      output_8bit: bool) -> NDArray[np.float32]:
+    norm_image = rvt.blend_func.gray_scale_to_color_ramp(gray_scale = np_chunk, colormap = colormap, min_colormap_cut = min_colormap_cut, 
+                                max_colormap_cut = max_colormap_cut, alpha = alpha, output_8bit = output_8bit)
+    return norm_image
+    
+def dask_gray_scale_to_color_ramp(gray_scale:da.Array,
+                                colormap,
+                                min_colormap_cut,
+                                max_colormap_cut, 
+                                alpha,
+                                output_8bit) -> da.Array:
+    """Turns normalized gray scale np.array to rgba.
+    :returns da.array rgba_out: (3D: red 0-255, green 0-255, blue 0-255). 
+                If alpha False: (4D: red 0-255, green 0-255, blue 0-255, alpha 0-255) """
+    gray_scale = gray_scale.astype(np.float32)
+    # data_volume = gray_scale
+    _func = partial(_gray_scale_to_color_ramp_wrapper,
+                                colormap = colormap,
+                                min_colormap_cut = min_colormap_cut,
+                                max_colormap_cut = max_colormap_cut, 
+                                alpha = alpha,
+                                output_8bit = output_8bit) 
+    out_normalize = da.map_blocks(_func, 
+                                  gray_scale,
+                                  new_axis = 0,
+                                  dtype = np.float32)
+    return out_normalize
+
+
+
 def _normalize_image_wrapper(np_chunk: NDArray[np.float32],
                                 visualization: str,
                                 min_norm : Union[int, float],
@@ -41,10 +103,10 @@ def _normalize_image_wrapper(np_chunk: NDArray[np.float32],
     return norm_image
 
 def dask_normalize_image(image:da.Array,
-                        visualization =  str,
-                        min_norm = Union[int, float],
-                        max_norm = Union[int, float],
-                        normalization = str) -> da.Array:
+                        visualization,
+                        min_norm,
+                        max_norm,
+                        normalization) -> da.Array:
     image = image.astype(np.float32)
     # data_volume = image
     _func = partial(_normalize_image_wrapper,
@@ -68,9 +130,9 @@ def _blend_images_wrapper(active: NDArray[np.float32],
 
 def dask_blend_images(image:da.Array,
                       image2:da.Array,
-                      blend_mode: str,
-                      min_c = Union[int, float, None],
-                      max_c = Union[int, float, None]) -> da.Array:
+                      blend_mode,
+                      min_c,
+                      max_c) -> da.Array:
     image = image.astype(np.float32)
     # data_volume = image 
     _func = partial(_blend_images_wrapper,
@@ -92,7 +154,7 @@ def _render_images_wrapper(active: NDArray[np.float32],
 
 def dask_render_images(image:da.Array,
                        image2:da.Array, 
-                       opacity: Union[int,float]) -> da.Array:
+                       opacity) -> da.Array:
     image = image.astype(np.float32)
     # data_volume = image 
     _func = partial(_render_images_wrapper,

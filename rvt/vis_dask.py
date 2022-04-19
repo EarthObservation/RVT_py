@@ -29,7 +29,8 @@ from nptyping import NDArray
 
 ## TODO:
 # if given depth of overlap is not integer - round or warning
-# "For" loops and other functions in vis -> delay/rewrite
+# check da.stack perforamnce: https://github.com/dask/dask/issues/5913#issuecomment-714536079
+# Other functions in vis -> delay/rewrite
 # module organization
 
 def _dask_byte_scale_wrapper(data: NDArray[np.float32],
@@ -101,7 +102,8 @@ def dask_slope_aspect(input_dem,
     FIXME: Most outter edges (set in vis.slope_aspect) not ok for both outputs."""
 
     input_dem = input_dem.astype(np.float32)
-    data_volume = da.stack([input_dem, input_dem])[[0,0]]  ##magic numbers to avoid rechunking, fix when map_overlap supports input and output of different shapes
+    data_stacked = da.stack([input_dem, input_dem])[[0,0]]  ##magic numbers to avoid rechunking, fix when 
+    data_volume, = dask.optimize(data_stacked)             ##map_overlap supports input anoutput of different shapes
     _func = partial(_slope_aspect_wrapper,
                     resolution_x = resolution_x,
                     resolution_y = resolution_y,
@@ -208,7 +210,8 @@ def dask_multi_hillshade(input_dem,
     FIXME: Most outter edges not ok."""
 
     input_dem = input_dem.astype(np.float32)
-    data_volume = da.stack([input_dem for _ in range(nr_directions)], axis=0) [[0 for _ in range(nr_directions)]] ##check memory/speed performance
+    data_stacked = da.stack([input_dem for _ in range(nr_directions)], axis=0) [[0 for _ in range(nr_directions)]] ##check memory/speed performance of stack
+    data_volume, = dask.optimize(data_stacked)
     _func = partial(_multi_hillshade_wrapper, 
                     resolution_x = resolution_x, 
                     resolution_y = resolution_y,
@@ -579,7 +582,8 @@ def dask_mstp(input_dem,
     :return: A multidimensional (3, x, y) dask array of calculated `mstp` of the `input_dem` raster."""
 
     input_dem = input_dem.astype(np.float32)
-    data_volume = da.stack([input_dem for _ in range(3)], axis=0) [[0 for _ in range(3)]] ##check memory/speed performance
+    data_stacked = da.stack([input_dem for _ in range(3)], axis=0) [[0 for _ in range(3)]] ##check memory/speed performance
+    data_volume, = dask.optimize(data_stacked)
     _func = partial(_mstp_wrapper, 
                     local_scale = local_scale, 
                     meso_scale = meso_scale,
