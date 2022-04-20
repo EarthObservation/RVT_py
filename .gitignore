@@ -150,7 +150,7 @@ dask-worker-space/
 mydask.png
 
 #Dask implementation - temp
-test_*
+ttest_*
 VAT_combined_*
 *.ipynb
 lazy_*

@@ -32,32 +32,6 @@ from typing import Union, Dict, List, Any, Tuple, Optional
 from nptyping import NDArray
 
 
-#     Turns normalized gray scale np.array to rgba (np.array of 4 np.arrays r, g, b, a).
-
-#     Parameters
-#     ----------
-#     gray_scale : np.array (2D)
-#         Normalized gray_scale img as np.array (0-1)
-#     colormap : str
-#         Colormap form matplotlib (https://matplotlib.org/3.3.2/tutorials/colors/colormaps.html)
-#     min_colormap_cut : float
-#         What lower part of colormap to cut to select part of colormap.
-#         Valid values are between 0 and 1, if 0.2 it cuts off (deletes) 20% of lower colors in colormap.
-#         If None cut is not applied.
-#     max_colormap_cut : float
-#         What upper part of colormap to cut to select part of colormap.
-#         Valid values are between 0 and 1, if 0.8 it cuts off (deletes) 20% of upper colors in colormap.
-#         If None cut is not applied.
-#     alpha : bool
-#         If True outputs 4D array RGBA, if False outputs 3D array RGB
-#     output_8bit : bool
-#         If true output values will be int 0-255 instead of normalized values.
-#     Returns
-#     -------
-#     rgba_out : np.array (3D: red 0-255, green 0-255, blue 0-255)
-#             If alpha False: np.array (4D: red 0-255, green 0-255, blue 0-255, alpha 0-255)
-
-
 def _gray_scale_to_color_ramp_wrapper(np_chunk: NDArray[np.float32],
                                       colormap: str,
                                       min_colormap_cut: float,
@@ -90,7 +64,6 @@ def dask_gray_scale_to_color_ramp(gray_scale:da.Array,
                                   new_axis = 0,
                                   dtype = np.float32)
     return out_normalize
-
 
 
 def _normalize_image_wrapper(np_chunk: NDArray[np.float32],
