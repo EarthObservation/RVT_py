@@ -103,7 +103,7 @@ def dask_slope_aspect(input_dem,
 
     input_dem = input_dem.astype(np.float32)
     data_stacked = da.stack([input_dem, input_dem])[[0,0]]  ##magic numbers to avoid rechunking, fix when 
-    data_volume, = dask.optimize(data_stacked)             ##map_overlap supports input anoutput of different shapes
+    data_volume, = dask.optimize(data_stacked)             ##map_overlap supports input and output of different shapes
     _func = partial(_slope_aspect_wrapper,
                     resolution_x = resolution_x,
                     resolution_y = resolution_y,

@@ -15,7 +15,7 @@ import pytest
 
 input_dem_path = Path(r"test_data/TM1_564_146.tif")
 # default_values = rvt.default.DefaultValues()
-CHUNKSIZE = {'x': 100, 'y':100}
+CHUNKSIZE = {'x': 1000, 'y':1000}
 ## first input dem
 input_arr_1: xr.DataArray = rioxarray.open_rasterio(input_dem_path, chunks = CHUNKSIZE, cache = False, lock = False) 
 
@@ -27,7 +27,7 @@ def get_dask_result():
     ve_factor = 1
     arr_svf = rvt.vis_dask.dask_sky_view_factor(input_dem=input_da_arr, resolution=x_res,compute_svf=True,
                                                 compute_asvf=False, compute_opns=False,
-                                                svf_n_dir=16, svf_r_max=10,
+                                                svf_n_dir=2, svf_r_max=10,
                                                 svf_noise=0, asvf_dir=315,
                                                 asvf_level=1, ve_factor=ve_factor,
                                                 no_data = no_data)
@@ -64,7 +64,7 @@ def test_normalize_eq(norm, minn, maxn):
 def test_blend_eq(blend, minc, maxc):
     np_arr = rvt.blend_func.blend_images(active = np_input_arr , background = np.array(input_arr_1.data[0]), blend_mode = blend,
                                          min_c =  minc, max_c = maxc )
-    da_arr = rvt.blend_func_dask.dask_blend_images(image = da_input_arr , image2 = input_arr_1.data[0], blend_mode = blend,
+    da_arr = rvt.blend_func_dask.dask_blend_images(active = da_input_arr, background = input_arr_1.data[0], blend_mode = blend,
                                                     min_c = minc, max_c = maxc).compute()
     da_inner = da_arr[ 1:-1, 1:-1]
     np_inner = np_arr[ 1:-1, 1:-1]
@@ -83,7 +83,7 @@ def test_blend_eq(blend, minc, maxc):
 @pytest.mark.parametrize("opac", [25, 75])
 def test_render_eq(opac):
     np_arr = rvt.blend_func.render_images(active = np_input_arr , background = np.array(input_arr_1.data[0]), opacity = opac )
-    da_arr = rvt.blend_func_dask.dask_render_images(image = da_input_arr , image2 = input_arr_1.data[0], opacity = opac).compute()
+    da_arr = rvt.blend_func_dask.dask_render_images(active = da_input_arr, background = input_arr_1.data[0], opacity = opac).compute()
     da_inner = da_arr[ 1:-1, 1:-1]
     np_inner = np_arr[ 1:-1, 1:-1]
     da_edges = [da_arr[0, :],
