@@ -15,7 +15,7 @@ import pytest
 
 input_dem_path = Path(r"test_data/TM1_564_146.tif")
 # default_values = rvt.default.DefaultValues()
-CHUNKSIZE = {'x': 1000, 'y':1000}
+CHUNKSIZE = {'x': 100, 'y':100}
 ## first input dem
 input_arr_1: xr.DataArray = rioxarray.open_rasterio(input_dem_path, chunks = CHUNKSIZE, cache = False, lock = False) 
 
@@ -56,10 +56,13 @@ def test_normalize_eq(norm, minn, maxn):
                 np_arr[:, 0],
                 np_arr[:, -1]]
     np.testing.assert_array_equal(np_inner, da_inner)
-    np.testing.assert_array_equal(np_edges[:], da_edges[:])
+    np.testing.assert_array_equal(np_edges[0], da_edges[0])
+    np.testing.assert_array_equal(np_edges[1], da_edges[1])
+    np.testing.assert_array_equal(np_edges[2], da_edges[2])
+    np.testing.assert_array_equal(np_edges[3], da_edges[3])
 
 
-@pytest.mark.parametrize("blend", ["Luminosity", "Multiply", "Overlay"])
+@pytest.mark.parametrize("blend", ["Luminosity", "Multiply", "Normal", "Overlay", "Screen", "Soft_light"])
 @pytest.mark.parametrize("minc, maxc", [(None, None), (0, 15), (0.7, 1)])
 def test_blend_eq(blend, minc, maxc):
     np_arr = rvt.blend_func.blend_images(active = np_input_arr , background = np.array(input_arr_1.data[0]), blend_mode = blend,
@@ -77,7 +80,10 @@ def test_blend_eq(blend, minc, maxc):
                 np_arr[:, 0],
                 np_arr[:, -1]]
     np.testing.assert_array_equal(np_inner, da_inner)
-    np.testing.assert_array_equal(np_edges[:], da_edges[:])
+    np.testing.assert_array_equal(np_edges[0], da_edges[0])
+    np.testing.assert_array_equal(np_edges[1], da_edges[1])
+    np.testing.assert_array_equal(np_edges[2], da_edges[2])
+    np.testing.assert_array_equal(np_edges[3], da_edges[3])
 
 
 @pytest.mark.parametrize("opac", [25, 75])
@@ -95,5 +101,39 @@ def test_render_eq(opac):
                 np_arr[:, 0],
                 np_arr[:, -1]]
     np.testing.assert_array_equal(np_inner, da_inner)
-    np.testing.assert_array_equal(np_edges[:], da_edges[:])
+    np.testing.assert_array_equal(np_edges[0], da_edges[0])
+    np.testing.assert_array_equal(np_edges[1], da_edges[1])
+    np.testing.assert_array_equal(np_edges[2], da_edges[2])
+    np.testing.assert_array_equal(np_edges[3], da_edges[3])
   
+@pytest.mark.parametrize("cmap, min_cmap_cut, max_cmap_cut", [("OrRd", 0.2, 1), ("Blues", 0, 0.7)])
+@pytest.mark.parametrize("alph", [False, True])
+@pytest.mark.parametrize("output_8", [False, True])
+def test_gray_to_color(cmap, min_cmap_cut, max_cmap_cut, alph, output_8):
+    np_arr = rvt.blend_func.gray_scale_to_color_ramp(gray_scale = np_input_arr, colormap = cmap, min_colormap_cut = min_cmap_cut, 
+                                                    max_colormap_cut = max_cmap_cut, alpha = alph, output_8bit = output_8 )
+    da_arr = rvt.blend_func_dask.dask_gray_scale_to_color_ramp(gray_scale = da_input_arr, colormap = cmap, min_colormap_cut = min_cmap_cut, 
+                                                             max_colormap_cut = max_cmap_cut, alpha = alph, 
+                                                             output_8bit = output_8).compute()
+    if alph == True:
+        assert da_arr.shape[0] == 4
+        assert np_arr.shape[0] == 4
+    else:
+        assert da_arr.shape[0] == 3
+        assert np_arr.shape[0] == 3
+    
+    da_inner = da_arr[:, 1:-1, 1:-1]
+    np_inner = np_arr[:, 1:-1, 1:-1]
+    da_edges = [da_arr[:,0, :],
+                da_arr[:,-1, :],
+                da_arr[:, :, 0],
+                da_arr[:, :, -1]]
+    np_edges = [np_arr[:, 0, :],
+                np_arr[:, -1, :],
+                np_arr[:, :, 0],
+                np_arr[:, :, -1]]
+    np.testing.assert_array_equal(np_inner, da_inner)
+    np.testing.assert_array_equal(np_edges[0], da_edges[0])
+    np.testing.assert_array_equal(np_edges[1], da_edges[1])
+    np.testing.assert_array_equal(np_edges[2], da_edges[2])
+    np.testing.assert_array_equal(np_edges[3], da_edges[3])
