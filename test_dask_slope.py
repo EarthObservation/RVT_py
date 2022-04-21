@@ -23,10 +23,10 @@ def get_np_result(output_units = 'degree'):
     y_res = abs(input_arr.rio.resolution()[1])
     no_data = input_arr.rio.nodata
     ve_factor = 1
-    np_result = rvt.vis.slope_aspect(dem=input_np_arr, resolution_x=x_res,
+    dict_slo = rvt.vis.slope_aspect(dem=input_np_arr, resolution_x=x_res,
                                     resolution_y=y_res, ve_factor=ve_factor,
                                     output_units=output_units, no_data= no_data)
-    return np_result
+    return dict_slo
 
 def get_dask_result(output_units = 'degree'): 
     input_da_arr = input_arr.data[0] #dask array 2D
@@ -34,11 +34,10 @@ def get_dask_result(output_units = 'degree'):
     y_res = abs(input_arr.rio.resolution()[1])
     no_data = input_arr.rio.nodata 
     ve_factor = 1
-    arr_slp_asp = rvt.vis_dask.dask_slope_aspect(input_dem=input_da_arr, resolution_x=x_res,
+    arr_slo = rvt.vis_dask.dask_slope_aspect(input_dem=input_da_arr, resolution_x=x_res,
                                         resolution_y=y_res, ve_factor=ve_factor,
                                         output_units=output_units, no_data = no_data)
-    return arr_slp_asp
-
+    return arr_slo
 
 # numpy_result = get_np_result(output_units = 'radian')
 # dask_to_be_computed = get_dask_result(output_units = 'radian')
@@ -46,8 +45,10 @@ numpy_result = get_np_result()
 dask_to_be_computed = get_dask_result()
 dask_result = dask_to_be_computed.compute()
 
+
 def test_general_io_checks():
     assert isinstance(dask_result, type(input_arr.data.compute()))
+    assert dask_result.dtype == np.float32
     # check shape and other attributes 2D -> 3D
     assert input_arr.shape[1:] == dask_to_be_computed.shape[1:]
     assert input_arr.data.chunksize[0] == dask_to_be_computed.chunksize[0] / 2
@@ -68,7 +69,6 @@ def test_arr_edges_slope():
         np.testing.assert_array_equal(np_slope_edge, np.nan)
     # for da_slope_edge in da_slope_edges:
         # np.testing.assert_array_equal(da_slope_edge, np.nan)
-
     ## not passing
     np.testing.assert_array_equal(np_slope_edges[0], da_slope_edges[0])
     np.testing.assert_array_equal(np_slope_edges[1], da_slope_edges[1])
@@ -84,7 +84,6 @@ def test_arr_edges_aspect():
                       dask_result[1,-1,:],
                       dask_result[1,:,0] ,
                       dask_result[1,:,-1]]
-
     np.testing.assert_array_equal(np_aspect_edges[0], da_aspect_edges[0])
     np.testing.assert_array_equal(np_aspect_edges[1], da_aspect_edges[1])
     np.testing.assert_array_equal(np_aspect_edges[2], da_aspect_edges[2])
@@ -95,6 +94,8 @@ def test_arr_inner():
     np_aspect_inner = numpy_result['aspect'][1:-1, 1:-1]
     da_slope_inner = dask_result[0, 1:-1, 1:-1]
     da_aspect_inner = dask_result[1, 1:-1, 1:-1]
-
     np.testing.assert_array_equal(np_slope_inner, da_slope_inner)
     np.testing.assert_array_equal(np_aspect_inner, da_aspect_inner)
+    assert len(numpy_result.keys()) == 2
+    assert dask_result.shape[0] == 2
+

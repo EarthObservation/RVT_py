@@ -104,8 +104,8 @@ def _blend_images_wrapper(active: NDArray[np.float32],
 def dask_blend_images(image:da.Array,
                       image2:da.Array,
                       blend_mode,
-                      min_c,
-                      max_c) -> da.Array:
+                      min_c = None,
+                      max_c = None) -> da.Array:
     image = image.astype(np.float32)
     # data_volume = image 
     _func = partial(_blend_images_wrapper,

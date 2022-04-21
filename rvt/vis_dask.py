@@ -273,7 +273,9 @@ def _sky_view_factor_wrapper(np_chunk: NDArray[np.float32], resolution: Union[in
                             asvf_level: Union[int, float], ve_factor:Union[int,float],
                             no_data: Union[int, None]) -> NDArray[np.float32]: 
     """Wrapper function for vis.sky_viw_factor. Calculates `svf`, `opns` or `asvf` for each dask array chunk (np.array). 
-    Returns np.array dim (x, y). Assumes calculation of only one visualization at a time.""" 
+    Returns np.array dim (x, y).""" 
+    if [compute_svf, compute_opns, compute_asvf].count(True) > 1:
+        raise Exception("dask_sky_view factor assumes calculation of only one visualization (svf, opns or asvf) at a time!")
     result_dict = rvt.vis.sky_view_factor(dem = np_chunk, resolution = resolution, compute_svf = compute_svf,
                                                 compute_opns = compute_opns, compute_asvf= compute_asvf,
                                                 svf_n_dir=svf_n_dir, svf_r_max=svf_r_max,
