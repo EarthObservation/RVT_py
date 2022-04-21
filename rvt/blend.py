@@ -600,8 +600,8 @@ class BlenderCombination:
 
                 active = da.map_blocks(_check_min_max, active, dtype = np.float32)
                 background = da.map_blocks(_check_min_max, background, dtype = np.float32)
-                top = rvt.blend_func_dask.dask_blend_images(image = active, image2 = background, blend_mode = blend_mode)
-                rendered_image = rvt.blend_func_dask.dask_render_images(image = top, image2 = background, opacity = opacity)
+                top = rvt.blend_func_dask.dask_blend_images(active = active, background = background, blend_mode = blend_mode)
+                rendered_image = rvt.blend_func_dask.dask_render_images(active = top, background = background, opacity = opacity)
                 rendered_image = da.map_blocks(_check_min_max_rendered, rendered_image, dtype = np.float32)
 
         if save_render_path is not None:  # if paths presented it saves image

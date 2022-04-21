@@ -101,20 +101,20 @@ def _blend_images_wrapper(active: NDArray[np.float32],
                                       min_c = min_c, max_c = max_c)
     return top
 
-def dask_blend_images(image:da.Array,
-                      image2:da.Array,
+def dask_blend_images(active:da.Array,
+                      background:da.Array,
                       blend_mode,
                       min_c = None,
                       max_c = None) -> da.Array:
-    image = image.astype(np.float32)
-    # data_volume = image 
+    active = active.astype(np.float32)
+    # data_volume = active 
     _func = partial(_blend_images_wrapper,
                     blend_mode = blend_mode,
                     min_c = min_c,
                     max_c = max_c)
     out_top = da.map_blocks(_func, 
-                            image, 
-                            image2,
+                            active, 
+                            background,
                             dtype = np.float32)
     return out_top
 
@@ -125,15 +125,15 @@ def _render_images_wrapper(active: NDArray[np.float32],
     rendered_image = rvt.blend_func.render_images(active = active, background = background , opacity = opacity)
     return rendered_image
 
-def dask_render_images(image:da.Array,
-                       image2:da.Array, 
+def dask_render_images(active:da.Array,
+                       background:da.Array, 
                        opacity) -> da.Array:
-    image = image.astype(np.float32)
+    active = active.astype(np.float32)
     # data_volume = image 
     _func = partial(_render_images_wrapper,
                     opacity = opacity)
     out_rendered_image = da.map_blocks(_func, 
-                                       image, 
-                                       image2,
+                                       active, 
+                                       background,
                                        dtype = np.float32)
     return out_rendered_image
