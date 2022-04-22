@@ -2,6 +2,20 @@
 
 This is the markdown todo file for feature/dask.
 
+### Content
+
+- [ ] Modify rvt to support parallel processing and streaming computation on rasters that don't fit into memory. 
+- [ ] Dask analysis workflow. Generate task graph: 
+  - [ ] Load raster. 
+    - [ ] Apply visualization. 
+    - [ ] Apply normalization. 
+    - [ ] Apply blending. 
+    - [ ] Apply rendering. 
+    - [ ] ... repeat ...
+  - [ ] Save raster. 
+  - [ ] Execute tasks by calling .compute() at the end.
+- [ ] Mapping and chaining of these functions across all dask blocks is done in a same fashion as: https://napari.org/tutorials/processing/dask.html
+
 ### Todo
 
 - [ ] Fix some blend_func functions not passing tests (blend_overlay, blend_soft_light). 

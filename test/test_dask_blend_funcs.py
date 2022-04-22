@@ -14,7 +14,7 @@ import pytest
 # TEST DATA : input 2 dems, test "normalize_image", "blend_images" and "render_images" functions with different parameters
 
 input_dem_path = Path(r"test_data/TM1_564_146.tif")
-CHUNKSIZE = {'x': 250, 'y':250}
+CHUNKSIZE = {'x': 150, 'y':150}
 ## first input dem
 input_arr_1: xr.DataArray = rioxarray.open_rasterio(input_dem_path, chunks = CHUNKSIZE, cache = False, lock = False) 
 
@@ -38,7 +38,7 @@ np_input_arr = get_dask_result().compute()
 
 
 @pytest.mark.parametrize("norm", ["Value", "Percent", None])
-@pytest.mark.parametrize("minn, maxn", [ (0.7, 1)])
+@pytest.mark.parametrize("minn, maxn", [ (0.2, 0.7), (0, 1)])
 def test_normalize_eq(norm, minn, maxn):
     np_arr = rvt.blend_func.normalize_image(image = np_input_arr, visualization= "Sky-View Factor", min_norm=minn, 
                                             max_norm =  maxn, normalization = norm)

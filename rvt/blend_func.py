@@ -131,12 +131,12 @@ def advanced_normalization(image, minimum, maximum, normalization):
     if minimum > maximum and normalization == "value":
         raise Exception("rvt.blend_func.advanced_normalization: If normalization == value, max can't be smaller"
                         " than min!")
-    if normalization.lower() == "value":
+    if normalization is None:
+        equ_image = image
+    elif normalization.lower() == "value":
         equ_image = normalize_lin(image=image, minimum=minimum, maximum=maximum)
     elif normalization.lower() == "perc":
         equ_image = normalize_perc(image=image, minimum=minimum, maximum=maximum)
-    elif normalization is None:
-        equ_image = image
     return equ_image
 
 
