@@ -113,8 +113,8 @@ def dask_blend_images(active:da.Array,
                     min_c = min_c,
                     max_c = max_c)
     out_top = da.map_blocks(_func, 
-                            active, 
-                            background,
+                            active = active, 
+                            background = background,
                             dtype = np.float32)
     return out_top
 
@@ -133,7 +133,7 @@ def dask_render_images(active:da.Array,
     _func = partial(_render_images_wrapper,
                     opacity = opacity)
     out_rendered_image = da.map_blocks(_func, 
-                                       active, 
-                                       background,
+                                       active = active, 
+                                       background = background,
                                        dtype = np.float32)
     return out_rendered_image

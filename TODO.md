@@ -14,11 +14,11 @@ This is the markdown todo file for feature/dask.
     - [ ] ... repeat ...
   - [ ] Save raster. 
   - [ ] Execute tasks by calling .compute() at the end.
-- [ ] Mapping and chaining of these functions across all dask blocks is done in a same fashion as: https://napari.org/tutorials/processing/dask.html
+- [ ] Mapping and chaining of these functions across all dask blocks is done in a same fashion as: https://napari.org/tutorials/processing/dask.html. (Sometimes resulting in long tasks.) 
 
 ### Todo
 
-- [ ] Fix some blend_func functions not passing tests (blend_overlay, blend_soft_light). 
+- [ ] Additional code refactoring. 
 - [ ] Dask memory issues.
   - [ ] Get available memory and compute / set memory (GB) per Dask worker. 
   - [ ] Get / compute optimal chunk size. 
