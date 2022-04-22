@@ -11,15 +11,14 @@ from nptyping import NDArray
 import pytest
 
 # pytest test dask and numpy array equality: 
-# input 2 dems, test "normalize_image", "blend_images" and "render_images" functions with different parameters
+# TEST DATA : input 2 dems, test "normalize_image", "blend_images" and "render_images" functions with different parameters
 
 input_dem_path = Path(r"test_data/TM1_564_146.tif")
-# default_values = rvt.default.DefaultValues()
-CHUNKSIZE = {'x': 100, 'y':100}
+CHUNKSIZE = {'x': 250, 'y':250}
 ## first input dem
 input_arr_1: xr.DataArray = rioxarray.open_rasterio(input_dem_path, chunks = CHUNKSIZE, cache = False, lock = False) 
 
-def get_dask_result(): 
+def get_dask_result() -> da.Array: 
     input_da_arr = input_arr_1.data[0] #dask array 2D
     x_res = abs(input_arr_1.rio.resolution()[0])
     y_res = abs(input_arr_1.rio.resolution()[1])
@@ -106,6 +105,7 @@ def test_render_eq(opac):
     np.testing.assert_array_equal(np_edges[2], da_edges[2])
     np.testing.assert_array_equal(np_edges[3], da_edges[3])
   
+
 @pytest.mark.parametrize("cmap, min_cmap_cut, max_cmap_cut", [("OrRd", 0.2, 1), ("Blues", 0, 0.7)])
 @pytest.mark.parametrize("alph", [False, True])
 @pytest.mark.parametrize("output_8", [False, True])
