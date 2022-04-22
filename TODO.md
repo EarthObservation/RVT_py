@@ -1,6 +1,6 @@
 # TODO
 
-This is the markdown todo file for feature/dask.
+This is the markdown todo file for feature/dask branch of Github Repo [RVT_py](https://github.com/EarthObservation/RVT_py).
 
 ### Content
 
@@ -14,7 +14,7 @@ This is the markdown todo file for feature/dask.
     - [ ] ... repeat ...
   - [ ] Save raster. 
   - [ ] Execute tasks by calling .compute() at the end.
-- [ ] Mapping and chaining of these functions across all dask blocks is done in a same fashion as: https://napari.org/tutorials/processing/dask.html. (Sometimes resulting in long tasks.) 
+- [ ] Mapping and chaining of these functions across all dask blocks is done in a same fashion as described in the third section of  [napari tutorials](https://napari.org/tutorials/processing/dask.html). Multiple cycles of visualisation -> normalization -> blending -> rendering restults in long tasks, taking one chunk "from start to finish".
 
 ### Todo
 

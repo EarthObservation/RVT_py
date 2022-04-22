@@ -30,7 +30,6 @@ from nptyping import NDArray
 ## TODO:
 # if given depth of overlap is not integer - round or warning
 # check da.stack perforamnce: https://github.com/dask/dask/issues/5913#issuecomment-714536079
-# Other functions in vis -> delay/rewrite
 # module organization
 
 def _dask_byte_scale_wrapper(data: NDArray[np.float32],

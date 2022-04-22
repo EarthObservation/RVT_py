@@ -10,8 +10,8 @@ import xarray as xr
 from nptyping import NDArray
 import pytest
 
-# pytest test dask and numpy array equality: 
-# TEST DATA : input 2 dems, test "normalize_image", "blend_images" and "render_images" functions with different parameters
+# Test dask and numpy array equality. Do not run tests on very large rasters. Data must fit in memory.
+# TEST DATA : input 2 dems, test "normalize_image", "blend_images",  "render_images" and gray_scale_to_color_ramp functions with different parameters
 
 input_dem_path = Path(r"test_data/TM1_564_146.tif")
 CHUNKSIZE = {'x': 150, 'y':150}
@@ -85,7 +85,7 @@ def test_blend_eq(blend, minc, maxc):
     np.testing.assert_array_equal(np_edges[3], da_edges[3])
 
 
-@pytest.mark.parametrize("opac", [25, 75])
+@pytest.mark.parametrize("opac", [25, 75, 0, 100, -5])
 def test_render_eq(opac):
     np_arr = rvt.blend_func.render_images(active = np_input_arr , background = np.array(input_arr_1.data[0]), opacity = opac )
     da_arr = rvt.blend_func_dask.dask_render_images(active = da_input_arr, background = input_arr_1.data[0], opacity = opac).compute()
