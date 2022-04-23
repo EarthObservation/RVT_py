@@ -14,7 +14,7 @@ import pytest
 # TEST DATA : input 2 dems, test "normalize_image", "blend_images",  "render_images" and gray_scale_to_color_ramp functions with different parameters
 
 input_dem_path = Path(r"test_data/TM1_564_146.tif")
-CHUNKSIZE = {'x': 150, 'y':150}
+CHUNKSIZE = {'x': 300, 'y':200}
 ## first input dem
 input_arr_1: xr.DataArray = rioxarray.open_rasterio(input_dem_path, chunks = CHUNKSIZE, cache = False, lock = False) 
 
@@ -32,13 +32,13 @@ def get_dask_result() -> da.Array:
                                                 no_data = no_data)
     return arr_svf
 
-## second input dem
-da_input_arr = get_dask_result()
+## second input dem 
 np_input_arr = get_dask_result().compute()
+da_input_arr = da.from_array(np_input_arr, chunks =(CHUNKSIZE['y'], CHUNKSIZE['x']))
 
 
 @pytest.mark.parametrize("norm", ["Value", "Percent", None])
-@pytest.mark.parametrize("minn, maxn", [ (0.2, 0.7), (0, 1)])
+@pytest.mark.parametrize("minn, maxn", [ (0.2, 0.7), (0, 1), (63, 98)])
 def test_normalize_eq(norm, minn, maxn):
     np_arr = rvt.blend_func.normalize_image(image = np_input_arr, visualization= "Sky-View Factor", min_norm=minn, 
                                             max_norm =  maxn, normalization = norm)
@@ -54,6 +54,7 @@ def test_normalize_eq(norm, minn, maxn):
                 np_arr[-1, :],
                 np_arr[:, 0],
                 np_arr[:, -1]]
+    np.testing.assert_array_equal(np_input_arr, da_input_arr)
     np.testing.assert_array_equal(np_inner, da_inner)
     np.testing.assert_array_equal(np_edges[0], da_edges[0])
     np.testing.assert_array_equal(np_edges[1], da_edges[1])
@@ -62,7 +63,7 @@ def test_normalize_eq(norm, minn, maxn):
 
 
 @pytest.mark.parametrize("blend", ["Luminosity", "Multiply", "Normal", "Overlay", "Screen", "Soft_light"])
-@pytest.mark.parametrize("minc, maxc", [(None, None), (0, 15), (0.7, 1)])
+@pytest.mark.parametrize("minc, maxc", [(None, None), (0, 15), (0.7, 1), (63, 98)])
 def test_blend_eq(blend, minc, maxc):
     np_arr = rvt.blend_func.blend_images(active = np_input_arr , background = np.array(input_arr_1.data[0]), blend_mode = blend,
                                          min_c =  minc, max_c = maxc )
@@ -78,6 +79,7 @@ def test_blend_eq(blend, minc, maxc):
                 np_arr[-1, :],
                 np_arr[:, 0],
                 np_arr[:, -1]]
+    np.testing.assert_array_equal(np_input_arr, da_input_arr)
     np.testing.assert_array_equal(np_inner, da_inner)
     np.testing.assert_array_equal(np_edges[0], da_edges[0])
     np.testing.assert_array_equal(np_edges[1], da_edges[1])
@@ -99,6 +101,7 @@ def test_render_eq(opac):
                 np_arr[-1, :],
                 np_arr[:, 0],
                 np_arr[:, -1]]
+    np.testing.assert_array_equal(np_input_arr, da_input_arr)
     np.testing.assert_array_equal(np_inner, da_inner)
     np.testing.assert_array_equal(np_edges[0], da_edges[0])
     np.testing.assert_array_equal(np_edges[1], da_edges[1])

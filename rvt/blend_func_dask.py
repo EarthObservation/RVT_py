@@ -92,13 +92,13 @@ def dask_normalize_image(image:da.Array,
     return out_normalize
 
 
-def _blend_images_wrapper(active: NDArray[np.float32],
-                          background: NDArray[np.float32],
+def _blend_images_wrapper(np_chunk_act: NDArray[np.float32],
+                          np_chunk_bkg: NDArray[np.float32],
                           blend_mode: str,
                           min_c: Union[int, float, None],
                           max_c: Union[int, float, None]) -> NDArray[np.float32]: #numpy 2d CHUNK out from vis.function
-    top = rvt.blend_func.blend_images(blend_mode = blend_mode, active = active, background = background, 
-                                      min_c = min_c, max_c = max_c)
+    top = rvt.blend_func.blend_images(active = np_chunk_act, background = np_chunk_bkg,
+                                      blend_mode = blend_mode, min_c = min_c, max_c = max_c)
     return top
 
 def dask_blend_images(active:da.Array,
@@ -107,33 +107,33 @@ def dask_blend_images(active:da.Array,
                       min_c = None,
                       max_c = None) -> da.Array:
     active = active.astype(np.float32)
-    # data_volume = active 
+    background = background.astype(np.float32)
     _func = partial(_blend_images_wrapper,
                     blend_mode = blend_mode,
                     min_c = min_c,
                     max_c = max_c)
     out_top = da.map_blocks(_func, 
-                            active = active, 
-                            background = background,
+                            active, 
+                            background,
                             dtype = np.float32)
     return out_top
 
 
-def _render_images_wrapper(active: NDArray[np.float32],
-                           background: NDArray[np.float32],
+def _render_images_wrapper(np_chunk_act: NDArray[np.float32],
+                           np_chunk_bkg: NDArray[np.float32],
                            opacity = Union[int,float]) -> NDArray[np.float32]:
-    rendered_image = rvt.blend_func.render_images(active = active, background = background , opacity = opacity)
+    rendered_image = rvt.blend_func.render_images(active = np_chunk_act, background = np_chunk_bkg , opacity = opacity)
     return rendered_image
 
 def dask_render_images(active:da.Array,
                        background:da.Array, 
                        opacity) -> da.Array:
     active = active.astype(np.float32)
-    # data_volume = image 
+    background = background.astype(np.float32)
     _func = partial(_render_images_wrapper,
                     opacity = opacity)
     out_rendered_image = da.map_blocks(_func, 
-                                       active = active, 
-                                       background = background,
+                                       active, 
+                                       background,
                                        dtype = np.float32)
     return out_rendered_image

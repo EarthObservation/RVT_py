@@ -28,6 +28,7 @@ This is the markdown todo file for feature/dask branch of Github Repo [RVT_py](h
 
 - [ ] Work on restoring some of the previously existing non-dask functionality - keep both options.
 - [ ] Fix numpy runtime errors / suppress warnings.
+- [ ] Fix blend_overlay, blend_soft_light (Unredictable behaviour in relation to chunk size in 'y' axis).
 - [ ] Additional testing of visualization functions.
 
 ### Done ✓
