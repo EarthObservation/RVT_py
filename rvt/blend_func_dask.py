@@ -137,3 +137,41 @@ def dask_render_images(active:da.Array,
                                        background,
                                        dtype = np.float32)
     return out_rendered_image
+
+
+def _normalize_lin_wrapper(np_chunk: NDArray[np.float32], 
+                            minimum: Union[int, float],
+                            maximum: Union[int, float]) -> NDArray[np.float32]:
+    norm_lin_image = rvt.blend_func.normalize_lin(image = np_chunk, minimum = minimum, maximum = maximum)
+    return norm_lin_image
+    
+def dask_normalize_lin(image: da.Array, 
+                       minimum, 
+                       maximum) -> da.Array:
+    image.astype(np.float32)
+    _func = partial(_normalize_lin_wrapper,
+                    minimum = minimum, 
+                    maximum = maximum)
+    out_norm_lin_image = da.map_blocks(_func, 
+                                       image, 
+                                       dtype = np.float32)
+    return out_norm_lin_image
+
+
+def _normalize_perc_wrapper(np_chunk: NDArray[np.float32], 
+                            minimum: Union[int, float],
+                            maximum: Union[int, float]) -> NDArray[np.float32]:
+    norm_perc_image = rvt.blend_func.normalize_perc(image = np_chunk, minimum = minimum, maximum = maximum)
+    return norm_perc_image
+
+def dask_normalize_perc(image: da.Array, 
+                       minimum, 
+                       maximum) -> da.Array:
+    image.astype(np.float32)
+    _func = partial(_normalize_perc_wrapper,
+                    minimum = minimum, 
+                    maximum = maximum)
+    out_norm_perc_image = da.map_blocks(_func, 
+                                       image, 
+                                       dtype = np.float32)
+    return out_norm_perc_image
