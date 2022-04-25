@@ -1089,14 +1089,14 @@ class DefaultValues:
             raise Exception(f"{visualization} is not implemented with dask yet!")
             return float_arr
         elif visualization == RVTVisualization.MULTI_HILLSHADE:
-            raise Exception(f"{visualization} is not implemented with dask yet! Fix return.")
+            # raise Exception(f"{visualization} is not implemented with dask yet! Fix return.")
             # Be careful when multihillshade we input dem, because we have to calculate hillshade in 3 directions
             red_band_arr = rvt.vis_dask.dask_hillshade(input_dem=float_arr, resolution_x=x_res, resolution_y=y_res,
-                                             sun_elevation=self.mhs_sun_el, sun_azimuth=315, no_data=no_data)
+                                                       sun_elevation=self.mhs_sun_el, sun_azimuth=315, no_data=no_data)
             green_band_arr = rvt.vis_dask.dask_hillshade(input_dem=float_arr, resolution_x=x_res, resolution_y=y_res,
-                                               sun_elevation=self.mhs_sun_el, sun_azimuth=22.5, no_data=no_data)
+                                                         sun_elevation=self.mhs_sun_el, sun_azimuth=22.5, no_data=no_data)
             blue_band_arr = rvt.vis_dask.dask_hillshade(input_dem=float_arr, resolution_x=x_res, resolution_y=y_res,
-                                              sun_elevation=self.mhs_sun_el, sun_azimuth=90, no_data=no_data)
+                                                        sun_elevation=self.mhs_sun_el, sun_azimuth=90, no_data=no_data)
             if self.mhs_bytscl[0].lower() == "percent" or self.slp_bytscl[0].lower() == "perc":
                 red_band_arr = rvt.blend_func_dask.dask_normalize_perc(
                     image=red_band_arr, minimum=self.mhs_bytscl[1], maximum=self.mhs_bytscl[2]
@@ -1129,9 +1129,9 @@ class DefaultValues:
                 blue_band_arr = rvt.vis_dask.dask_byte_scale(
                     data=blue_band_arr, no_data=np.nan, c_min=0, c_max=1
                 )
-            # multi_hillshade_8bit_arr = np.array([red_band_arr, green_band_arr, blue_band_arr])
-            multi_hillshade_8bit_arr = da.stack((red_band_arr, green_band_arr, blue_band_arr))
-            return multi_hillshade_8bit_arr
+            multi_hillshade_8bit_arr_stacked = da.stack((red_band_arr, green_band_arr, blue_band_arr))
+            # multi_hillshade_8bit_arr, = dask.optimize(multi_hillshade_8bit_arr_stacked[[0 for _ in range(3)]] )
+            return multi_hillshade_8bit_arr_stacked
         elif visualization == RVTVisualization.SIMPLE_LOCAL_RELIEF_MODEL:
             norm_arr = rvt.blend_func_dask.dask_normalize_image(visualization="slrm", image=float_arr,
                                                       min_norm=self.slrm_bytscl[1], max_norm=self.slrm_bytscl[2],
@@ -1404,7 +1404,7 @@ class DefaultValues:
         #     )
         #     return 1
         # else:  # singleprocess
-        dict_arr_res = get_raster_arr(raster_path=dem_path)
+        dict_arr_res = get_raster_dask_arr(raster_path=dem_path)
         dem_arr = dict_arr_res["array"]
         no_data = dict_arr_res["no_data"]
         x_res = dict_arr_res["resolution"][0]
@@ -1417,20 +1417,15 @@ class DefaultValues:
                                                                resolution_y=y_res,
                                                                no_data=no_data)
                 dask_save_raster_tif(src_raster_path=dem_path, out_raster_path=multi_hillshade_path,
-                            out_raster_arr=multi_hillshade_arr, no_data=np.nan, dtype_to_save= "float32")
+                            out_raster_arr=multi_hillshade_arr, dtype_to_save= "float32")
         if save_8bit:
             if os.path.isfile(multi_hillshade_8bit_path) and not self.overwrite:  # file exists and overwrite=0
                 pass
             else:
-                multi_hillshade_8bit_arr = self.dask_float_to_8bit(
-                    float_arr=dem_arr,
-                    visualization=RVTVisualization.MULTI_HILLSHADE,
-                    x_res=x_res,
-                    y_res=y_res,
-                    no_data=no_data
-                )
+                multi_hillshade_8bit_arr = self.dask_float_to_8bit(float_arr=dem_arr, visualization=RVTVisualization.MULTI_HILLSHADE, 
+                                                                   x_res=x_res, y_res=y_res, no_data=no_data)
                 dask_save_raster_tif(src_raster_path=dem_path, out_raster_path=multi_hillshade_8bit_path,
-                            out_raster_arr=multi_hillshade_8bit_arr, dtype_to_save= "uint8")
+                                    out_raster_arr=multi_hillshade_8bit_arr, dtype_to_save= "uint8")
         return 1
 
     def get_dask_slrm(self, dem_arr, no_data=None):
@@ -1497,7 +1492,7 @@ class DefaultValues:
                 pass
             else:
                 dask_save_raster_tif(src_raster_path=dem_path, out_raster_path=slrm_path, out_raster_arr=slrm_arr,
-                            no_data=np.nan, dtype_to_save="float32")
+                                     dtype_to_save="float32")
         if save_8bit:
             if os.path.isfile(slrm_8bit_path) and not self.overwrite:  # file exists and overwrite=0
                 pass
@@ -1883,7 +1878,7 @@ class DefaultValues:
                 pass
             else:
                 dask_save_raster_tif(src_raster_path=dem_path, out_raster_path=local_dominance_path,
-                            out_raster_arr=local_dominance_arr, no_data=np.nan, dtype_to_save="float32")
+                            out_raster_arr=local_dominance_arr, dtype_to_save="float32")
         if save_8bit:
             if os.path.isfile(local_dominance_8bit_path) and not self.overwrite:  # file exists and overwrite=0
                 pass
@@ -1964,7 +1959,7 @@ class DefaultValues:
                 pass
             else:
                 dask_save_raster_tif(src_raster_path=dem_path, out_raster_path=msrm_path, out_raster_arr=msrm_arr,
-                            no_data=np.nan, dtype_to_save="uint8")
+                                    dtype_to_save="uint8")
         if save_8bit:
             if os.path.isfile(msrm_8bit_path) and not self.overwrite:  # file exists and overwrite=0
                 pass
@@ -2417,7 +2412,8 @@ def get_raster_dask_arr(raster_path):
                {"array": dask.array, "resolution": (x_res, y_res), "no_data": no_data} : dict("array": da.Array,
                 "resolution": tuple(float, float), "no_data": float)."""
     
-    chunk_size = {'x': 1150, 'y': 700} ## MID ARRAY (helena)
+    chunk_size = {'x': 100, 'y': 100} 
+    # chunk_size = {'x': 1150, 'y': 700} ## MID ARRAY (helena)
     # chunk_size = True                ## gives n * (tilex as saved, tiley as saved)
     data_set = rioxarray.open_rasterio(raster_path, chunks = chunk_size, cache = False, lock = False)
     if len(data_set.shape) > 3:
@@ -2427,12 +2423,12 @@ def get_raster_dask_arr(raster_path):
     y_res = abs(data_set.rio.resolution()[1])
     no_data = data_set.rio.nodata  # we assume that all the bands have same no_data val 
 
-    if data_set.band == 1:  # only one band
+    if len(data_set.band) == 1:  # only one band
         array = data_set.data.squeeze() ##2D chunked dask array, we lose other metadata
         data_set = None
         return {"array": array, "resolution": (x_res, y_res), "no_data": no_data}
     else: 
-        raise Exception("Visualizations for multiband rasters are not supported.")
+        # raise Exception("Visualizations for multiband rasters are not supported.")
         array = data_set.data ##3D chunked dask array, we lose other metadata
         data_set = None
         return {"array": array, "resolution": (x_res, y_res), "no_data": no_data}

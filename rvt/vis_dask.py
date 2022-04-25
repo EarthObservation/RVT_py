@@ -140,7 +140,7 @@ def dask_hillshade(input_dem,
                     resolution_y ,
                     sun_azimuth,
                     sun_elevation,
-                    ve_factor,
+                    ve_factor = 1,
                     no_data = None) -> da.Array:
     """Maps hillshade function over dask.array (with overlap of `depth`).
 
@@ -152,7 +152,7 @@ def dask_hillshade(input_dem,
     :param ve_factor: Integer or float of vertical exaggeration factor.
     :param no_data: The value that represents no data.
     :return: A 2D dask array of calculated `hillshade` of the `input_dem` raster.
-    TODO: Can  params `slope` or `aspect` be calculated input?!
+    TODO: Can  params `slope` or `aspect` be calculated input (only if data fits in memory?!
     FIXME: Most outter edges not ok."""
 
     input_dem = input_dem.astype(np.float32)

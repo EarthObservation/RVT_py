@@ -33,6 +33,7 @@ import datetime
 import dask.array as da
 from typing import Union, Dict, List, Any, Tuple, Optional
 from nptyping import NDArray
+import dask
 
 
 def create_blender_file_example(file_path=None):
@@ -456,30 +457,32 @@ class BlenderCombination:
                         norm_image = normalize_image(visualization, image, min_norm, max_norm, normalization)
 
                 elif self.layers[i_img].vis.lower() == "multiple directions hillshade":
-                    raise Exception("Not implemented with dask yet!")
+                    warnings.warn("Multiple directions hillshade may contain bugs.")
                     if save_visualizations:
-                        default.save_multi_hillshade(dem_path=self.dem_path, custom_dir=save_render_directory,
+                        default.save_dask_multi_hillshade(dem_path=self.dem_path, custom_dir=save_render_directory,
                                                      save_float=False, save_8bit=True)
                         image_path = default.get_multi_hillshade_path(self.dem_path, bit8=True)
-                        norm_image = normalize_image("", rvt.default.get_raster_arr(image_path)["array"],
-                                                     0, 255, normalization)
-                        norm_image = normalize_image(visualization, norm_image,
-                                                     min_norm, max_norm, normalization)
+                        # norm_image = normalize_image("", rvt.default.get_raster_arr(image_path)["array"],
+                        #                              0, 255, normalization)
+                        norm_image = rvt.blend_func_dask.dask_normalize_image(image = rvt.default.get_raster_dask_arr(image_path)["array"],
+                                                                         visualization =  visualization, min_norm = min_norm, max_norm = max_norm, normalization = normalization)
                     else:
-                        red_band_arr = rvt.vis.hillshade(dem=self.dem_arr, resolution_x=self.dem_resolution,
+                        raise Exception("This mhs functionality is not implement with dask yet.")
+                        red_band_arr = rvt.vis_dask.dask_hillshade(input_dem=self.dem_arr, resolution_x=self.dem_resolution,
                                                          resolution_y=self.dem_resolution,
                                                          sun_elevation=default.mhs_sun_el, sun_azimuth=315,
                                                          no_data=no_data)
-                        green_band_arr = rvt.vis.hillshade(dem=self.dem_arr, resolution_x=self.dem_resolution,
+                        green_band_arr = rvt.vis_dask.dask_hillshade(input_dem=self.dem_arr, resolution_x=self.dem_resolution,
                                                            resolution_y=self.dem_resolution,
                                                            sun_elevation=default.mhs_sun_el, sun_azimuth=22.5,
                                                            no_data=no_data)
-                        blue_band_arr = rvt.vis.hillshade(dem=self.dem_arr, resolution_x=self.dem_resolution,
+                        blue_band_arr = rvt.vis_dask.dask_hillshade(input_dem=self.dem_arr, resolution_x=self.dem_resolution,
                                                           resolution_y=self.dem_resolution,
                                                           sun_elevation=default.mhs_sun_el, sun_azimuth=90,
                                                           no_data=no_data)
-                        image = np.array([red_band_arr, green_band_arr, blue_band_arr])
-                        norm_image = normalize_image(visualization, image, min_norm, max_norm, normalization)
+                        image = da.stack((red_band_arr, green_band_arr, blue_band_arr)) 
+                        norm_image = rvt.blend_func_dask.dask_normalize_image(image= image, visualization = visualization, min_norm = 
+                                                                            min_norm, max_norm = max_norm, normalization = normalization)
                 elif self.layers[i_img].vis.lower() == "simple local relief model":
                     if save_visualizations:
                         default.save_dask_slrm(dem_path=self.dem_path, custom_dir=save_render_directory, save_float=True,
