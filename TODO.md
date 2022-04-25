@@ -4,17 +4,21 @@ This is the markdown todo file for feature/dask branch of Github Repo [RVT_py](h
 
 ### Content
 
-- [ ] Modify rvt to support parallel processing and streaming computation on rasters that don't fit into memory. 
-- [ ] Dask analysis workflow. Generate task graph: 
-  - [ ] Load raster. 
-    - [ ] Apply visualization. 
-    - [ ] Apply normalization. 
-    - [ ] Apply blending. 
-    - [ ] Apply rendering. 
-    - [ ] ... repeat ...
-  - [ ] Save raster. 
-  - [ ] Execute tasks by calling .compute() at the end.
-- [ ] Mapping and chaining of these functions across all dask blocks is done in a same fashion as described in the third section of  [napari tutorials](https://napari.org/tutorials/processing/dask.html). Multiple cycles of visualisation -> normalization -> blending -> rendering restults in long tasks, taking one chunk "from start to finish".
+* Modify rvt to support parallel processing and streaming computation on rasters that don't fit into memory. 
+* Heavy use of dask functions `map_overlap` and `map_blocks`.
+* Dask analysis workflow. Generate task graph: 
+  * Load raster. 
+    * Apply visualization. 
+    * Apply normalization. 
+    * Apply blending. 
+    * Apply rendering. 
+    * ... repeat ...
+  * Save raster. 
+  * Execute tasks by calling .compute() at the end.
+
+* Mapping and chaining of these functions across all dask blocks is done in a same fashion as described in the third section of  [napari tutorials](https://napari.org/tutorials/processing/dask.html). Multiple cycles of visualisation -> normalization -> blending -> rendering restults in long tasks, taking one chunk "from start to finish".\*  
+
+\*With large inputs takes a long time to start calculation (Is there a more efficient way of saying "this input chunk should map to this output chunk"?)
 
 ### Todo
 
@@ -28,7 +32,6 @@ This is the markdown todo file for feature/dask branch of Github Repo [RVT_py](h
 
 - [ ] Work on restoring some of the previously existing non-dask functionality - keep both options.
 - [ ] Fix numpy runtime errors / suppress warnings.
-- [ ] Fix blend_overlay, blend_soft_light (Unredictable behaviour in relation to chunk size in 'y' axis).
 - [ ] Additional testing of visualization functions.
 
 ### Done ✓
