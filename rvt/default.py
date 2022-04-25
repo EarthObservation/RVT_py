@@ -1089,7 +1089,7 @@ class DefaultValues:
             raise Exception(f"{visualization} is not implemented with dask yet!")
             return float_arr
         elif visualization == RVTVisualization.MULTI_HILLSHADE:
-            raise Exception(f"{visualization} is not implemented with dask yet!")
+            raise Exception(f"{visualization} is not implemented with dask yet! Fix return.")
             # Be careful when multihillshade we input dem, because we have to calculate hillshade in 3 directions
             red_band_arr = rvt.vis_dask.dask_hillshade(input_dem=float_arr, resolution_x=x_res, resolution_y=y_res,
                                              sun_elevation=self.mhs_sun_el, sun_azimuth=315, no_data=no_data)
@@ -1098,38 +1098,39 @@ class DefaultValues:
             blue_band_arr = rvt.vis_dask.dask_hillshade(input_dem=float_arr, resolution_x=x_res, resolution_y=y_res,
                                               sun_elevation=self.mhs_sun_el, sun_azimuth=90, no_data=no_data)
             if self.mhs_bytscl[0].lower() == "percent" or self.slp_bytscl[0].lower() == "perc":
-                red_band_arr = rvt.blend_func.normalize_perc(
+                red_band_arr = rvt.blend_func_dask.dask_normalize_perc(
                     image=red_band_arr, minimum=self.mhs_bytscl[1], maximum=self.mhs_bytscl[2]
                 )
                 red_band_arr = rvt.vis_dask.dask_byte_scale(data=red_band_arr, no_data=np.nan, c_min=0, c_max=1)
-                green_band_arr = rvt.blend_func.normalize_perc(
+                green_band_arr = rvt.blend_func_dask.dask_normalize_perc(
                     image=green_band_arr, minimum=self.mhs_bytscl[1], maximum=self.mhs_bytscl[2]
                 )
                 green_band_arr = rvt.vis_dask.dask_byte_scale(data=green_band_arr, no_data=np.nan, c_min=0, c_max=1)
-                blue_band_arr = rvt.blend_func.normalize_perc(
+                blue_band_arr = rvt.blend_func_dask.dask_normalize_perc(
                     image=blue_band_arr, minimum=self.mhs_bytscl[1], maximum=self.mhs_bytscl[2]
                 )
                 blue_band_arr = rvt.vis_dask.dask_byte_scale(data=blue_band_arr, no_data=np.nan, c_min=0, c_max=1)
             else:  # self.mhs_bytscl[0] == "value"
-                red_band_arr = rvt.blend_func.normalize_lin(
+                red_band_arr = rvt.blend_func_dask.dask_normalize_lin(
                     image=red_band_arr, minimum=self.mhs_bytscl[1], maximum=self.mhs_bytscl[2]
                 )
                 red_band_arr = rvt.vis_dask.dask_byte_scale(
                     data=red_band_arr, no_data=np.nan, c_min=0, c_max=1
                 )
-                green_band_arr = rvt.blend_func.normalize_lin(
+                green_band_arr = rvt.blend_func_dask.dask_normalize_lin(
                     image=green_band_arr, minimum=self.mhs_bytscl[1], maximum=self.mhs_bytscl[2]
                 )
                 green_band_arr = rvt.vis_dask.dask_byte_scale(
                     data=green_band_arr, no_data=np.nan, c_min=0, c_max=1
                 )
-                blue_band_arr = rvt.blend_func.normalize_lin(
+                blue_band_arr = rvt.blend_func_dask.dask_normalize_lin(
                     image=blue_band_arr, minimum=self.mhs_bytscl[1], maximum=self.mhs_bytscl[2]
                 )
                 blue_band_arr = rvt.vis_dask.dask_byte_scale(
                     data=blue_band_arr, no_data=np.nan, c_min=0, c_max=1
                 )
-            multi_hillshade_8bit_arr = np.array([red_band_arr, green_band_arr, blue_band_arr])
+            # multi_hillshade_8bit_arr = np.array([red_band_arr, green_band_arr, blue_band_arr])
+            multi_hillshade_8bit_arr = da.stack((red_band_arr, green_band_arr, blue_band_arr))
             return multi_hillshade_8bit_arr
         elif visualization == RVTVisualization.SIMPLE_LOCAL_RELIEF_MODEL:
             norm_arr = rvt.blend_func_dask.dask_normalize_image(visualization="slrm", image=float_arr,
@@ -2408,35 +2409,33 @@ class DefaultValues:
 
 
 def get_raster_dask_arr(raster_path):
-    
     """Reads raster from raster_path (Xarray dataset -> dask.array).
 
     :param raster_path: The path to raster.
     :returns : Returns dictionary with keys: array, resolution and no_data. Key resolution is tuple where first element 
                is x resolution and second is y resolution. Key no_data represent value of no data.
                {"array": dask.array, "resolution": (x_res, y_res), "no_data": no_data} : dict("array": da.Array,
-                "resolution": tuple(float, float), "no_data": float).
-    
-    TODO: Multiple bands implementation."""
+                "resolution": tuple(float, float), "no_data": float)."""
     
     chunk_size = {'x': 1150, 'y': 700} ## MID ARRAY (helena)
-    # chunk_size = {'x': 2560, 'y': 2560} ## LARGE ARRAY (tabasco)
-    # chunk_size = {'x': 2300, 'y': 1400}
     # chunk_size = True                ## gives n * (tilex as saved, tiley as saved)
-
-    data_set = rioxarray.open_rasterio(raster_path, chunks = chunk_size, cache = False, lock = False) 
+    data_set = rioxarray.open_rasterio(raster_path, chunks = chunk_size, cache = False, lock = False)
+    if len(data_set.shape) > 3:
+        raise Exception("Input DEM has to be 2 or 3-dimensional.")
 
     x_res = abs(data_set.rio.resolution()[0])
     y_res = abs(data_set.rio.resolution()[1])
     no_data = data_set.rio.nodata  # we assume that all the bands have same no_data val 
 
-
     if data_set.band == 1:  # only one band
-        array = data_set.data[0] ##2d chunked dask array, we lose other metadata
+        array = data_set.data.squeeze() ##2D chunked dask array, we lose other metadata
         data_set = None
         return {"array": array, "resolution": (x_res, y_res), "no_data": no_data}
-    else:  
-        raise Exception("Multiple bands are not implemented yet.")
+    else: 
+        raise Exception("Visualizations for multiband rasters are not supported.")
+        array = data_set.data ##3D chunked dask array, we lose other metadata
+        data_set = None
+        return {"array": array, "resolution": (x_res, y_res), "no_data": no_data}
 
 
 def get_raster_zarr_arr(raster_path):
@@ -2446,9 +2445,7 @@ def get_raster_zarr_arr(raster_path):
     :returns : Returns dictionary with keys: array, resolution and no_data. Key resolution is tuple where first element 
                is x resolution and second is y resolution. Key no_data represent value of no data.
                {"array": dask.array, "resolution": (x_res, y_res), "no_data": no_data} : dict("array": da.Array,
-                "resolution": tuple(float, float), "no_data": float).
-    
-    TODO: Multiple bands implementation."""
+                "resolution": tuple(float, float), "no_data": float)."""
     
     zarr_path = raster_path.rstrip(".tif") + '.zarr'
     array = da.from_zarr(zarr_path)
@@ -2465,7 +2462,7 @@ def get_raster_zarr_arr(raster_path):
 
 
 def dask_save_raster_zarr(src_raster_path, out_raster_path, out_raster_arr: da.Array): 
-    """TODO: Multiband info to .zatrr""" 
+    """Writes in chunks to .zarr. """ 
 
     zarr_arr_path = out_raster_path[:-4] + '.zarr'
     raster_path = zarr.DirectoryStore(zarr_arr_path)
@@ -2488,21 +2485,28 @@ def dask_save_raster_zarr(src_raster_path, out_raster_path, out_raster_arr: da.A
 
 def dask_save_raster_tif(src_raster_path, out_raster_path, out_raster_arr: da.Array, dtype_to_save: str): 
     """Saves raster to .tif chunk by chunk.
-    TODO: Check lock, multiband"""
+    TODO: IMPORTANT: Understanding the metadata and the file naming convention. How the data is structured (e.g. assumes dims[1:] are x and y. Indexing position always true? Names always the same? Indexing instead of dicts?"""
+    
+    if len(out_raster_arr.shape) > 3 or len(out_raster_arr.shape) < 2:
+        raise Exception("Raster you wish to save has to be 2D or 3D array.")
 
     tif_arr_path = out_raster_path
+    if len(out_raster_arr.shape) == 2:  #2D dask array
+        y, x = out_raster_arr.chunksize
+        src_data_set = rioxarray.open_rasterio(src_raster_path, chunks = {'x': x, 'y': y}, cache = False, lock = False)
+        out_raster_xarr = xr.DataArray(out_raster_arr,  dims = src_data_set.dims[1:], attrs = src_data_set.attrs.copy())
 
-    y, x = out_raster_arr.chunksize
-    src_data_set = rioxarray.open_rasterio(src_raster_path, chunks = {'x': x, 'y': y}, cache = False, lock = False)
+    if len(out_raster_arr.shape) == 3: #3D dask array
+        band, x, y = out_raster_arr.chunksize #see order of axis
+        src_data_set = rioxarray.open_rasterio(src_raster_path, chunks = {'band': band, 'x': x, 'y': y}, cache = False, lock = False)
+        out_raster_xarr = xr.DataArray(out_raster_arr,  dims = src_data_set.dims, attrs = src_data_set.attrs.copy())
 
-    out_raster_xarr = xr.DataArray(out_raster_arr,  dims = src_data_set.dims[1:], attrs = src_data_set.attrs.copy())
     out_raster_xarr.rio.to_raster(tif_arr_path,
-                                  tiled = True,
-                                  lock = Lock("rio"),
-                                # lock = Lock("rio", client = client),
-                                  dtype = dtype_to_save,
-                                   )
-    return 0
+                                    tiled = True,
+                                    lock = Lock("rio"),
+                                    # lock = Lock("rio", client = client),
+                                    dtype = dtype_to_save,
+                                    )
 
 
 def get_raster_arr(raster_path):
