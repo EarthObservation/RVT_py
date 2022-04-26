@@ -19,7 +19,7 @@ CHUNKSIZE = {'x': 300, 'y':200}
 input_arr_1: xr.DataArray = rioxarray.open_rasterio(input_dem_path, chunks = CHUNKSIZE, cache = False, lock = False) 
 
 def get_dask_result() -> da.Array: 
-    input_da_arr = input_arr_1.data[0] #dask array 2D
+    input_da_arr = input_arr_1.data.squeeze()   #dask array 2D
     x_res = abs(input_arr_1.rio.resolution()[0])
     y_res = abs(input_arr_1.rio.resolution()[1])
     no_data = input_arr_1.rio.nodata 
