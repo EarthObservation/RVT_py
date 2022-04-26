@@ -1089,7 +1089,6 @@ class DefaultValues:
             raise Exception(f"{visualization} is not implemented with dask yet!")
             return float_arr
         elif visualization == RVTVisualization.MULTI_HILLSHADE:
-            # raise Exception(f"{visualization} is not implemented with dask yet! Fix return.")
             # Be careful when multihillshade we input dem, because we have to calculate hillshade in 3 directions
             red_band_arr = rvt.vis_dask.dask_hillshade(input_dem=float_arr, resolution_x=x_res, resolution_y=y_res,
                                                        sun_elevation=self.mhs_sun_el, sun_azimuth=315, no_data=no_data)
@@ -1130,7 +1129,7 @@ class DefaultValues:
                     data=blue_band_arr, no_data=np.nan, c_min=0, c_max=1
                 )
             multi_hillshade_8bit_arr_stacked = da.stack((red_band_arr, green_band_arr, blue_band_arr))
-            # multi_hillshade_8bit_arr, = dask.optimize(multi_hillshade_8bit_arr_stacked[[0 for _ in range(3)]] )
+            #.rechunk({0: -1})
             return multi_hillshade_8bit_arr_stacked
         elif visualization == RVTVisualization.SIMPLE_LOCAL_RELIEF_MODEL:
             norm_arr = rvt.blend_func_dask.dask_normalize_image(visualization="slrm", image=float_arr,

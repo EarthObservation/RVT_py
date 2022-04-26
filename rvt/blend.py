@@ -460,14 +460,16 @@ class BlenderCombination:
                     warnings.warn("Multiple directions hillshade may contain bugs.")
                     if save_visualizations:
                         default.save_dask_multi_hillshade(dem_path=self.dem_path, custom_dir=save_render_directory,
-                                                     save_float=False, save_8bit=True)
-                        image_path = default.get_multi_hillshade_path(self.dem_path, bit8=True)
-                        # norm_image = normalize_image("", rvt.default.get_raster_arr(image_path)["array"],
-                        #                              0, 255, normalization)
+                                                     save_float = False, save_8bit=True) 
+                                                     ## save_float (vis multihillshade): nr_dir bands, save_8bit (3 times vis hillshade):
+                                                     ## 3 bands
+                        image_path = default.get_multi_hillshade_path(self.dem_path, bit8=False)
+                        ## This image is already normalized and saved in rvt.default. Why is it normalized again here?
+                        ## This norm_image (save_visualizations = True) is also not equal to the one below (save_visualizations = False). 
+                        ## Normalization in rvt.default is differnt no normalization here...
                         norm_image = rvt.blend_func_dask.dask_normalize_image(image = rvt.default.get_raster_dask_arr(image_path)["array"],
                                                                          visualization =  visualization, min_norm = min_norm, max_norm = max_norm, normalization = normalization)
                     else:
-                        raise Exception("This mhs functionality is not implement with dask yet.")
                         red_band_arr = rvt.vis_dask.dask_hillshade(input_dem=self.dem_arr, resolution_x=self.dem_resolution,
                                                          resolution_y=self.dem_resolution,
                                                          sun_elevation=default.mhs_sun_el, sun_azimuth=315,
@@ -480,7 +482,8 @@ class BlenderCombination:
                                                           resolution_y=self.dem_resolution,
                                                           sun_elevation=default.mhs_sun_el, sun_azimuth=90,
                                                           no_data=no_data)
-                        image = da.stack((red_band_arr, green_band_arr, blue_band_arr)) 
+                        image = da.stack((red_band_arr, green_band_arr, blue_band_arr)).rechunk({0: -1}) #check performance of rechunking
+                        image, = dask.optimize(image)
                         norm_image = rvt.blend_func_dask.dask_normalize_image(image= image, visualization = visualization, min_norm = 
                                                                             min_norm, max_norm = max_norm, normalization = normalization)
                 elif self.layers[i_img].vis.lower() == "simple local relief model":
