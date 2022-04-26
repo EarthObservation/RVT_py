@@ -22,7 +22,7 @@ np_stacked = np.array(stacked_arr)
 da_stacked = da.from_array(np_stacked, chunks = {0: -1, 1: CHUNKSIZE['y'], 2: CHUNKSIZE['x']})
 ##Random 2D data
 dimx, dimy = input_arr.shape
-np_2d = np.array([[i for i in range(dimx)] for j in range(dimy)]).astype('float32')
+np_2d = np.array([[i for i in range(dimy)] for j in range(dimx)]).astype('float32')
 da_2d = da.from_array(np_2d, chunks =(CHUNKSIZE['y'], CHUNKSIZE['x']))
 
 @pytest.mark.parametrize("norm", ["Value", "Percent", None])
