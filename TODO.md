@@ -18,7 +18,7 @@ This is the markdown todo file for feature/dask branch of Github Repo [RVT_py](h
 
 * Mapping and chaining of these functions across all dask blocks is done in a same fashion as described in the third section of  [napari tutorials](https://napari.org/tutorials/processing/dask.html). Multiple cycles of visualisation -> normalization -> blending -> rendering restults in long tasks, taking one chunk "from start to finish".\*  
 
-\*With large inputs takes a long time to start calculation (Is there a more efficient way of saying "this input chunk should map to this output chunk"?)
+\*With [large inputs](https://github.com/dask/dask/issues/3514) takes a long time to start calculation (Is there a more efficient way of saying "this input chunk should map to this output chunk"?)
 
 ### Todo
 
@@ -26,7 +26,15 @@ This is the markdown todo file for feature/dask branch of Github Repo [RVT_py](h
 - [ ] Dask memory issues.
   - [ ] Get available memory and compute / set memory (GB) per Dask worker. 
   - [ ] Get / compute optimal chunk size. 
-- [ ] Read multiband data. 
+
+##### _Notes on Todo_
+- If chunks are too small: huge amount of tasks and a lot of time spent developing the task graph - task scheduler hangs
+- If chunks are too big:  _"Unable to allocate XX MiB for an array with shape (dimx, dimy) and data type float32."_ [Error encountered.](https://stackoverflow.com/questions/62839068/memoryerror-unable-to-allocate-mib-for-an-array-with-shape-and-data-type-when) 
+- Raster datasets and are usually stored in blocks (tiles). It is better to  make dask chunks **N * original tile dimensions** to avoid bringing up more data than is needed each time the data is accesed. 
+- If overlap depth is greater than any chunk along a particular axis, then the array is rechunked -> Strange behavior, error at blending step.
+- Runtime Warnings encountered:
+  - `RuntimeWarning: All-NaN slice encountered if np.nanmin(image_chunk) < 0 or np.nanmax(image_chunk) > 1`
+  - `RuntimeWarning: overflow encountered in long_scalars maxsize = math.ceil(nbytes / (other_numel * itemsize))`
 
 ### In Progress
 
@@ -40,3 +48,4 @@ This is the markdown todo file for feature/dask branch of Github Repo [RVT_py](h
 - [x] Wrap exising blend_func functions and map over dask array. 
 - [x] Read (lazy load) raster in chunks.
 - [x] Save raster in chunk by chunk (.tif and .zarr). Parallel writes. 
+- [x] Read multiband data. 

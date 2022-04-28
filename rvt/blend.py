@@ -463,7 +463,7 @@ class BlenderCombination:
                                                      save_float = False, save_8bit=True) 
                                                      ## save_float (vis multihillshade): nr_dir bands, save_8bit (3 times vis hillshade):
                                                      ## 3 bands
-                        image_path = default.get_multi_hillshade_path(self.dem_path, bit8=False)
+                        image_path = default.get_multi_hillshade_path(self.dem_path, bit8=True)
                         ## This image is already normalized and saved in rvt.default. Why is it normalized again here?
                         ## This norm_image (save_visualizations = True) is also not equal to the one below (save_visualizations = False). 
                         ## Normalization in rvt.default is differnt no normalization here...
@@ -612,8 +612,6 @@ class BlenderCombination:
 
         if save_render_path is not None:  # if paths presented it saves image
             if save_float:
-                # rvt.default.dask_save_raster_dask(src_raster_path=self.dem_path, out_raster_path=save_render_path,
-                #                         out_raster_arr=rendered_image)
                 rvt.default.dask_save_raster_tif(src_raster_path=self.dem_path, out_raster_path=save_render_path,
                                         out_raster_arr=rendered_image, dtype_to_save= "float32")
             if save_8bit:

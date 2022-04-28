@@ -28,9 +28,8 @@ from typing import Union, Dict, List, Any, Tuple, Optional
 from nptyping import NDArray
 
 ## TODO:
-# if given depth of overlap is not integer - round or warning
+# if overlaping depth > chunk_size.dims -> error when blending (shapes, rechunking) - make sure chunksize.dims > overlaping dimensions
 # check da.stack perforamnce: https://github.com/dask/dask/issues/5913#issuecomment-714536079
-# module organization
 
 def _dask_byte_scale_wrapper(data: NDArray[np.float32],
                              c_min: Union[int, float],

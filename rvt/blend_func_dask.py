@@ -81,7 +81,6 @@ def dask_normalize_image(image:da.Array,
                         max_norm,
                         normalization) -> da.Array:
     image = image.astype(np.float32)
-    # data_volume = image
     _func = partial(_normalize_image_wrapper,
                     visualization = visualization,
                     min_norm = min_norm, max_norm = max_norm,
@@ -96,7 +95,7 @@ def _blend_images_wrapper(np_chunk_act: NDArray[np.float32],
                           np_chunk_bkg: NDArray[np.float32],
                           blend_mode: str,
                           min_c: Union[int, float, None],
-                          max_c: Union[int, float, None]) -> NDArray[np.float32]: #numpy 2d CHUNK out from vis.function
+                          max_c: Union[int, float, None]) -> NDArray[np.float32]:
     top = rvt.blend_func.blend_images(active = np_chunk_act, background = np_chunk_bkg,
                                       blend_mode = blend_mode, min_c = min_c, max_c = max_c)
     return top
