@@ -14,7 +14,8 @@ import pytest
 # Test dask and numpy array equality. Do not run tests on very large rasters. Data must fit in memory.
 
 input_dem_path = Path(r"test_data/TM1_564_146.tif")
-CHUNKSIZE = {'x': 300, 'y': 200}
+# input_dem_path = Path(r"test_data/synthetic_dem15_0.50.tif")
+CHUNKSIZE = {'x': 100, 'y': 200}
 ## Load test dem and reshape to 3D. 
 input_arr: xr.DataArray = rioxarray.open_rasterio(input_dem_path, chunks = CHUNKSIZE, cache = False, lock = False).data.squeeze() 
 stacked_arr = da.stack((input_arr, input_arr, input_arr))
