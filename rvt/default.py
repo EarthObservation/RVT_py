@@ -2411,9 +2411,10 @@ def get_raster_dask_arr(raster_path):
                {"array": dask.array, "resolution": (x_res, y_res), "no_data": no_data} : dict("array": da.Array,
                 "resolution": tuple(float, float), "no_data": float)."""
     
-    chunk_size = {'x': 100, 'y': 100} 
-    # chunk_size = {'x': 1150, 'y': 700} ## MID ARRAY (helena)
-    # chunk_size = True                ## gives n * (tilex as saved, tiley as saved)
+    chunk_size = {'x': 100, 'y': 100}           ## test data
+    # chunk_size = {'x': 1150, 'y': 700}        ## MID ARRAY (helena)
+    # chunk_size = {'x': 2560, 'y': 2560}       ## TABASCO (large)
+    # chunk_size = True                         ## gives n * (tilex as saved, tiley as saved) so that chunk is around 120MB
     data_set = rioxarray.open_rasterio(raster_path, chunks = chunk_size, cache = False, lock = False)
     if len(data_set.shape) > 3:
         raise Exception("Input DEM has to be 2 or 3-dimensional.")
@@ -2427,7 +2428,6 @@ def get_raster_dask_arr(raster_path):
         data_set = None
         return {"array": array, "resolution": (x_res, y_res), "no_data": no_data}
     else: 
-        # raise Exception("Visualizations for multiband rasters are not supported.")
         array = data_set.data ##3D chunked dask array, we lose other metadata
         data_set = None
         return {"array": array, "resolution": (x_res, y_res), "no_data": no_data}
@@ -2486,15 +2486,17 @@ def dask_save_raster_tif(src_raster_path, out_raster_path, out_raster_arr: da.Ar
         raise Exception("Raster you wish to save has to be 2D or 3D array.")
 
     tif_arr_path = out_raster_path
-    if len(out_raster_arr.shape) == 2:  #2D dask array
+    if len(out_raster_arr.shape) == 2:  #single band, 2D dask array
         y, x = out_raster_arr.chunksize
         src_data_set = rioxarray.open_rasterio(src_raster_path, chunks = {'x': x, 'y': y}, cache = False, lock = False)
-        out_raster_xarr = xr.DataArray(out_raster_arr,  dims = src_data_set.dims[1:], attrs = src_data_set.attrs.copy())
+        out_raster_xarr = xr.DataArray(out_raster_arr,  dims = src_data_set.dims[1:])
+        # out_raster_xarr = xr.DataArray(out_raster_arr,  dims = src_data_set.dims[1:], attrs = src_data_set.attrs.copy())
 
-    if len(out_raster_arr.shape) == 3: #3D dask array
+    if len(out_raster_arr.shape) == 3: #multiple bands, 3D dask array
         band, x, y = out_raster_arr.chunksize #see order of axis
         src_data_set = rioxarray.open_rasterio(src_raster_path, chunks = {'band': band, 'x': x, 'y': y}, cache = False, lock = False)
-        out_raster_xarr = xr.DataArray(out_raster_arr,  dims = src_data_set.dims, attrs = src_data_set.attrs.copy())
+        out_raster_xarr = xr.DataArray(out_raster_arr,  dims = src_data_set.dims)
+        # out_raster_xarr = xr.DataArray(out_raster_arr,  dims = src_data_set.dims, attrs = src_data_set.attrs.copy())
 
     out_raster_xarr.rio.to_raster(tif_arr_path,
                                     tiled = True,
@@ -2502,7 +2504,8 @@ def dask_save_raster_tif(src_raster_path, out_raster_path, out_raster_arr: da.Ar
                                     # lock = Lock("rio", client = client),
                                     dtype = dtype_to_save, 
                                     # driver="GTiff",
-                                    # windowed = True, 
+                                    # windowed = True,
+                                    # compress='LZW',
                                     )
 
 

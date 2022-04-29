@@ -101,7 +101,7 @@ def dask_slope_aspect(input_dem,
 
     input_dem = input_dem.astype(np.float32)
     data_stacked = da.stack([input_dem, input_dem])[[0,0]]  ##magic numbers to avoid rechunking, fix when 
-    data_volume, = dask.optimize(data_stacked)             ##map_overlap supports input and output of different shapes
+    data_volume, = dask.optimize(data_stacked)              ##map_overlap supports input and output of different shapes or 
     _func = partial(_slope_aspect_wrapper,
                     resolution_x = resolution_x,
                     resolution_y = resolution_y,
@@ -208,7 +208,7 @@ def dask_multi_hillshade(input_dem,
     FIXME: Most outter edges not ok."""
 
     input_dem = input_dem.astype(np.float32)
-    data_stacked = da.stack([input_dem for _ in range(nr_directions)], axis=0) [[0 for _ in range(nr_directions)]] ##check memory/speed performance of stack
+    data_stacked = da.stack([input_dem for _ in range(nr_directions)], axis=0) [[0 for _ in range(nr_directions)]] ##check memory/speed performance of stack (Not optimal, creates very large chunk. Also very large file.)
     data_volume, = dask.optimize(data_stacked)
     _func = partial(_multi_hillshade_wrapper, 
                     resolution_x = resolution_x, 
