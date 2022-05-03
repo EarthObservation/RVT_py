@@ -42,12 +42,14 @@ This is the markdown todo file for feature/dask branch of Github Repo [RVT_py](h
 - [x] Read multiband data. 
 
 ##### _Notes on Todo and Done_
-- If chunks are too small: huge amount of tasks and a lot of time spent developing the task graph - task scheduler hangs
+- If chunks are too small: huge amount of tasks and a lot of time spent developing the task graph - task scheduler hangs.
 - If chunks are too big:  _"Unable to allocate XX MiB for an array with shape (dimx, dimy) and data type float32."_ [Error encountered.](https://stackoverflow.com/questions/62839068/memoryerror-unable-to-allocate-mib-for-an-array-with-shape-and-data-type-when) 
-- Raster datasets and are usually stored in blocks (tiles). It is better to  make dask chunks **N * original tile dimensions** to avoid bringing up more data than is needed each time the data is accesed. If `chunks = True` when loading data with `rioxarray.open_rasterio ` automatic chunkig is done in a way that takes into account default tiling and **N** is determined in a way that each chunk size is 128MiB (_Better success with smaller chunk size, aprox. 8 MiB, but it depends on the hardware and data size...scalability?_). Set chunk size `dask.config.set({"array.chunk-size": limit})`.
-![Comparision for chunk_size 8MiB, 16Mib, 32Mib, 64MiB, 128MiB.](./docs/bmarks/csize_wt_ratio.png)
+- Raster datasets and are usually stored in blocks (tiles). It is better to  make dask chunks **N * original tile dimensions** to avoid bringing up more data than is needed each time the data is accesed. If `chunks = True` when loading data with `rioxarray.open_rasterio ` automatic chunkig is done in a way that takes into account default tiling and **N** is determined in a way that each chunk size is 128MiB (_Dask default, better success was recorded with smaller chunk size, but it depends on the hardware and data size...scalability?_). Set chunk size `dask.config.set({"array.chunk-size": limit})`.
+
+![Comparision for chunk_size 8MiB, 16Mib, 32Mib, 64MiB, 128MiB. Calculation VAT_Combined, float32.](./docs/bmarks/csize_wt_ratio.png)
+- When running `VAT_combined_(dask).py` on larger rasters (30 GB), [problems](https://github.com/dask/distributed/issues/2602) if chunks are bigger and/or number of workers is higher. Data load is faster than it can be computed downstream, eventually overwhelming workers, causing them to run out of memory and crash.
 - If overlap depth is greater than any chunk along a particular axis, then the array is rechunked -> Strange behavior, may result in error at blending step.
-- _Multi_hillshade_ results in very large (chunk and final) output of file size: _nr_directions * original raster file size_. Calculation in each direction is additional raster band.
+- _Multi_hillshade_ (if saving directly from `vis.py`)results is very large (chunk depth and final) output of file size: _nr_directions * original raster file size_. Calculation in each direction is additional raster band.
 - Careful with original or default raster [no_data values](https://corteva.github.io/rioxarray/stable/getting_started/nodata_management.html) (no_data = data_set.rio.nodata, no_data = data_set.rio.encoded_nodata ?). When saving to 8-bit `Error: Python int too large to convert to C long`. Temporary exclude copying attributes from orignal to saved dataset. Fix later. [Issue].(https://github.com/corteva/rioxarray/issues/113)
 - Runtime Warnings encountered:
   - `RuntimeWarning: All-NaN slice encountered if np.nanmin(image_chunk) < 0 or np.nanmax(image_chunk) > 1`
