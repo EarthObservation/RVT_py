@@ -2411,11 +2411,11 @@ def get_raster_dask_arr(raster_path):
                {"array": dask.array, "resolution": (x_res, y_res), "no_data": no_data} : dict("array": da.Array,
                 "resolution": tuple(float, float), "no_data": float)."""
     
-    chunk_size = {'x': 100, 'y': 100}           ## test data
+    # chunk_size = {'x': 100, 'y': 100}           ## test data
     # chunk_size = {'x': 1150, 'y': 700}        ## MID ARRAY (helena)
     # chunk_size = {'x': 2560, 'y': 2560}       ## TABASCO (large)
-    # chunk_size = True                         ## gives n * (tilex as saved, tiley as saved) so that chunk is around 120MB
-    data_set = rioxarray.open_rasterio(raster_path, chunks = chunk_size, cache = False, lock = False)
+    chunk_size = True                         ## gives n * (tilex as saved, tiley as saved) so that chunk is around 120MB
+    data_set = rioxarray.open_rasterio(raster_path, chunks = chunk_size, cache = False, lock = False)  # lock = Lock("rio-read", client = client) when too many file handles open?
     if len(data_set.shape) > 3:
         raise Exception("Input DEM has to be 2 or 3-dimensional.")
 
