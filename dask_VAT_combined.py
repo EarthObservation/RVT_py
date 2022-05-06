@@ -1,5 +1,8 @@
 """
-This is modified python script for calculating VAT Combined blender combination with dask destributed
+This is modified python script for calculating VAT Combined blender combination with dask distributed, Local Cluster
+Apply one blender comb. at a time: general, flat or combined (duration is per chunksize)
+"Luminosity" failing tests in case of multiband data! (present at /blender_VAT.json". MUST FIX! )
+
 (1st layer: VAT general (with opacity set in parameters, blend mode normal), 2nd layer: VAT flat)
 Parameters are:
     input_dir_path (dir that contains GeoTIFFs of DEMs)
@@ -109,9 +112,9 @@ def combined_VAT(input_dir_path, output_dir_path,
         flat_combination = vat_combination_2
         general_default = default_1
         flat_default = default_2
-        out_comb_vat_general_name = "{}_Archaeological_(VAT_general).tif".format(input_dem_name.rstrip(".tif"))
+        out_comb_vat_general_name = "{}_Archaeological_(VAT_general)_chunk{}_w{}_t{}.tif".format(input_dem_name.rstrip(".tif"), test_chunksize, workr, thrds)
         out_comb_vat_general_path = os.path.abspath(os.path.join(output_dir_path, out_comb_vat_general_name))
-        out_comb_vat_flat_name = "{}_Archaeological_(VAT_flat).tif".format(input_dem_name.rstrip(".tif"))
+        out_comb_vat_flat_name = "{}_Archaeological_(VAT_flat)_chunk{}_w{}_t{}.tif".format(input_dem_name.rstrip(".tif"), test_chunksize, workr, thrds)
         out_comb_vat_flat_path = os.path.abspath(os.path.join(output_dir_path, out_comb_vat_flat_name))
 
     compute_save_VAT_combined(general_combination, flat_combination, general_default, flat_default,
@@ -178,15 +181,14 @@ if __name__ == '__main__':
     # total_cores = sum(client.ncores().values())            ## get total number of cores
     # client.shutdown()
 
-    tot_memory = psutil.virtual_memory().total >> 30        ## bytes, shift GB (aprox, rounding error)
+    tot_memory = psutil.virtual_memory().total >> 30          ## bytes, shift to GB (aprox, rounding error)
     total_cores = 16
     workers_threads_pairs = [(1, total_cores), (2, total_cores//2), (4, total_cores//4)]
     # workers_threads_pairs = [(1, total_cores - 2), (2, total_cores//2 - 2), (4, total_cores//4 - 2)] ### don't use all cores, for example - 2 threads per worker
     
     out=[]
     for n_workrs, n_thrds in workers_threads_pairs:
-        print(n_workrs, n_thrds)
-
+        # print(n_workrs, n_thrds)
         cluster = LocalCluster(n_workers = n_workrs, threads_per_worker = n_thrds,
                                 # memory_limit = f'{tot_memory // n_workrs}GB')    ## set memory limit (pauses workers)
                                 memory_limit = None)
@@ -194,11 +196,10 @@ if __name__ == '__main__':
         client.dashboard_link       ## <- open in browser to see dask diagnostics dashboard live
 
         for chunksize in chunksize_mib:
+            start = time.time()
             try:
                 dask.config.set({"array.chunk-size": chunksize})
-                print(dask.config.get("array.chunk-size"))
-
-                start = time.time()
+                # print(dask.config.get("array.chunk-size"))
                 combined_VAT(input_dir_path=input_dir_path, output_dir_path=output_dir_path,
                         test_chunksize =chunksize, workr = n_workrs, thrds = n_thrds, 
                         general_opacity=general_opacity, vat_combination_json_path=vat_combination_json_path,
@@ -211,17 +212,27 @@ if __name__ == '__main__':
                         'chunk_size': chunksize, 
                         'n_workers': n_workrs, 
                         'n_threads': n_thrds}
-                outfile = os.path.join(output_dir_path, f'w{n_workrs}_{n_thrds}_{chunksize}.txt')  ###save intermediate results, in case of workers completly crashing
+                outfile = os.path.join(output_dir_path, f'w{n_workrs}_t{n_thrds}_{chunksize}.txt')  ###save intermediate results, in case of workers completly crashing 
                 with open(outfile, "w") as outf:
                     json.dump(record, outf)
-            
+
             except Exception as e:
-                logger.exception(f"Exception {e}.")     #traceback
-                record = {'Exception': f"Computation failed for chunksize {chunksize} (n_workers: {n_workrs}, n_threads per worker: {n_thrds})."}
+                end = time.time()
+                logger.exception(f"Exception {e}.")
+                record = {'name': f"n_workers: {n_workrs}, n_threads: {n_thrds}", 
+                        'exception at ': end - start,     ## save intermediate results, in case of workers completly crashing
+                        'chunk_size': chunksize, 
+                        'n_workers': n_workrs, 
+                        'n_threads': n_thrds}
+                outfile = os.path.join(output_dir_path, f'w{n_workrs}_t{n_thrds}_{chunksize}.txt')  
+                with open(outfile, "w") as outf:
+                    json.dump(record, outf)
                 continue
+
             finally:
                 out.append(record)
         client.shutdown()
+        time.sleep(2)
 
     outfile = os.path.join(output_dir_path, 'all_results.txt')  ###save all results
     with open(outfile, "w") as outf:
