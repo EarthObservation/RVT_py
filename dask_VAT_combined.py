@@ -1,6 +1,6 @@
 """
 This is modified python script for calculating VAT Combined blender combination with dask distributed, Local Cluster
-Apply one blender comb. at a time: general, flat or combined (duration is per chunksize)
+Apply one blender comb. at a time: general, flat or combined (duration is per chunksize). Flat and general OK individually, combined acting strange for some chunksizes (fix something in create_layer, order or something is being cached?)
 "Luminosity" failing tests in case of multiband data! (present at /blender_VAT.json". MUST FIX! )
 
 (1st layer: VAT general (with opacity set in parameters, blend mode normal), 2nd layer: VAT flat)
@@ -38,10 +38,11 @@ vat_combination_json_path = "settings/blender_VAT.json"
 terrains_sett_json_path = "settings/default_terrains_settings.json"
 save_float = True
 save_8bit = False
-save_VAT_general = False
+save_VAT_general = True
 save_VAT_flat = False
 chunksize_mib = ["8MiB", "16MiB", "32MiB", "64MiB", "128MiB", "256MiB", "512MiB"]  ##try different chunksizes
-# chunksize_mib = ["16MiB", "32MiB", "64MiB", "128MiB" , "256MiB", "512MiB"] 
+# chunksize_mib = ["16MiB", "32MiB", "64MiB", "128MiB" , "256MiB", "512MiB"] ## larger images
+# chunksize_mib = ["1MiB", "2MiB", "4MiB", "8MiB" , "16MiB", "32MiB"]   ##smaller images
 
 
 def combined_VAT(input_dir_path, output_dir_path, 
@@ -151,26 +152,26 @@ def compute_save_VAT_combined(general_combination, flat_combination, general_def
     else:
         vat_arr_2 = flat_combination.render_all_images(default=flat_default, no_data=dict_arr_res_nd["no_data"])
 
-    # create combination which blends VAT flat and VAT general together (check if flat or general are already computed and read from file)
-    combination = rvt.blend.BlenderCombination()
-    combination.create_layer(vis_method="VAT general", image=vat_arr_1, normalization="Value", minimum=0,
-                             maximum=1, blend_mode="Normal", opacity=general_transparency)
-    combination.create_layer(vis_method="VAT flat", image=vat_arr_2, normalization="Value", minimum=0,
-                             maximum=1, blend_mode="Normal", opacity=100)
+    # # create combination which blends VAT flat and VAT general together (check if flat or general are already computed and read from file)
+    # combination = rvt.blend.BlenderCombination()
+    # combination.create_layer(vis_method="VAT general", image=vat_arr_1, normalization="Value", minimum=0,
+    #                          maximum=1, blend_mode="Normal", opacity=general_transparency)
+    # combination.create_layer(vis_method="VAT flat", image=vat_arr_2, normalization="Value", minimum=0,
+    #                          maximum=1, blend_mode="Normal", opacity=100)
 
-    combination.add_dem_path(dem_path=input_dem_path)
+    # combination.add_dem_path(dem_path=input_dem_path)
 
-    # VAT combined
-    combination.render_all_images(save_render_path=out_comb_vat_path, save_visualizations=False,
-                                  save_float=save_float, save_8bit=save_8bit,
-                                  no_data=dict_arr_res_nd["no_data"])
-    out_comb_vat_8bit_path = out_comb_vat_path.rstrip("tif") + "_8bit.tif"
-    if save_float and save_8bit:
-        return "{} and {} successfully calculated and saved!".format(out_comb_vat_path, out_comb_vat_8bit_path)
-    elif save_float:
-        return "{} successfully calculated and saved!".format(out_comb_vat_path)
-    elif save_8bit:
-        return "{} successfully calculated and saved!".format(out_comb_vat_8bit_path)
+    # # VAT combined
+    # combination.render_all_images(save_render_path=out_comb_vat_path, save_visualizations=False,
+    #                               save_float=save_float, save_8bit=save_8bit,
+    #                               no_data=dict_arr_res_nd["no_data"])
+    # out_comb_vat_8bit_path = out_comb_vat_path.rstrip("tif") + "_8bit.tif"
+    # if save_float and save_8bit:
+    #     return "{} and {} successfully calculated and saved!".format(out_comb_vat_path, out_comb_vat_8bit_path)
+    # elif save_float:
+    #     return "{} successfully calculated and saved!".format(out_comb_vat_path)
+    # elif save_8bit:
+    #     return "{} successfully calculated and saved!".format(out_comb_vat_8bit_path)
 
 
 # Program start
