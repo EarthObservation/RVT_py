@@ -55,6 +55,11 @@ Try tweaking some settings in `distributed.yaml` file for smoother process:
 2. set target worker  memory fractions to stay below: `target, spil, pause, terminate`,
 3. set `MALLOC_TRIM_THRESHOLD_` to trim unmanaged memory (only works on linux os),
 4. change `optimization.fuse.ave-width` (to fuse neighbouring tasks together).
+
+Additionally, try improving [graph serialization](https://docs.dask.org/en/latest/phases-of-computation.html):
+1. read data in as a task instead of include it directly,
+2. pre-scatter large data,
+3. wrap in dask.delayed. 
 - Raster datasets are usually stored in blocks (tiles). It is better to  make dask chunks **N * original tile dimensions** to avoid bringing up more data than is needed each time the data is accesed. If `chunks = True` when loading data with `rioxarray.open_rasterio ` automatic chunkig is done in a way that takes into account default tiling and **N** is determined in a way that each chunk size is 128MiB (_Dask default, better performance and higher success/failed to finish ratio was recorded with smaller chunk size, but it depends on the hardware and data size...scalability?_). Set chunk size `dask.config.set({"array.chunk-size": limit})`. Graphs below were generated as results of computations with dask destributed, running Local Cluster on a machine with total of 32 GB RAM (`psutil.virtual_memory().total = 32 GB`) and 16 cores (`sum(client.ncores().values()) = 16`). Aprox. 64 MiB equals chunk of size (4096, 4096) = 32 * (128, 128). For reference, "whole raster in memory, pure numpy  calcualtion" takes around 380 s.
 
 ![Comparision for chunk_size 8MiB, 16Mib, 32Mib, 64MiB, 128MiB, 256MiB, 512MiB. Calculation VAT_Combined, float32. Save tif to disk.](./docs/bmarks/csize_wt_ratio.png)
@@ -72,6 +77,7 @@ Try tweaking some settings in `distributed.yaml` file for smoother process:
 - [Scaling](https://www.jennakwon.page/2021/03/benchmarks-dask-distributed-vs-ray-for.html).
 - [Benchmarks](https://matthewrocklin.com/blog/work/2017/07/03/scaling).
 - When reading/ writing very large arrays to .tif  sometimes error (random, can't reproduce): `RasterioIOError: file used by other process` followed by `distributed.worker - WARNING - Compute Failed`. Current workaround to avoid computation failure is to catch the exception in `rasterio.__init__.py", line 230, in open`, wait for 5 s and try to acquire the lock again. Change the lines 230 - 232 to (first try without this and see if error comes up, it is not ideal to make changes in  rasterio module):
+[x] Adding `windowed = True` argument when writing to tif (`xr.rio.to_raster(...)`) seems to resolve this issue (but is has not been not thoroughly tested).
 ```diff
 - s = get_writer_for_path(path, driver=driver)(
 -  path, mode, driver=driver, sharing=sharing, **kwargs

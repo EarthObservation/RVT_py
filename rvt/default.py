@@ -2504,7 +2504,7 @@ def dask_save_raster_tif(src_raster_path, out_raster_path, out_raster_arr: da.Ar
                                     # lock = Lock("rio", client = client),
                                     dtype = dtype_to_save, 
                                     # driver="GTiff",
-                                    # windowed = True,
+                                    windowed = True,
                                     # compress='LZW',
                                     )
 
