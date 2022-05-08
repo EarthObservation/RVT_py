@@ -3,16 +3,24 @@
 Release history
 ===============
 
+
+UNRELEASED
+----------
+*   Added 1 pixel edge padding before the calculation of hillshade and slope, to avoid no data edge in the final results.
+
+
 2.1.0
---------
+-----
 *   Changed 8bit (bytescale) parameters of some visualizations (all changed to value mode, to avoid tiling effect when using tile module).
 *   Float to 8bit bug fix.
 
-NOT RELEASED YET
+RELEASE
+
+March 6, 2022
 
 
 2.0.0
---------
+-----
 *   Module multiproc.py replaced with tile.py.
 
 RELEASE
@@ -21,7 +29,7 @@ February 5, 2022
 
 
 1.0.0
---------
+-----
 *   Added soft light blending mode.
 *   Added Color Relief Image Map (CRIM) blending combination visualization.
 *   Added enhance Multi-Scale Topographic Position (e3MSTP) blending combination visualization.
