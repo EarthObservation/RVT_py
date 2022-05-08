@@ -3,6 +3,11 @@
 QGIS Plugin Release history
 ===========================
 
+v 0.9.1
+-------
+*   Added 1 pixel edge padding before the calculation of hillshade and slope, to avoid no data edge in the final results.
+
+
 v 0.9.0
 -------
 *   Added tiling module, visualizations on huge rasters are now calculated tile by tile.
