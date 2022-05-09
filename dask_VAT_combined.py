@@ -1,6 +1,6 @@
 """
 This is modified python script for calculating VAT Combined blender combination with dask distributed, Local Cluster
-Apply one blender comb. at a time: general, flat or combined (duration is per chunksize). Flat and general OK individually, combined acting strange for some chunksizes (fix something in create_layer, order or something is being cached?)
+Apply one blender comb. at a time: general, flat or combined (duration is per chunksize). Flat and general OK individually, combined acting strange for some chunksizes (fix something in create_layer when `image` is not None)
 "Luminosity" failing tests in case of multiband data! (present at /blender_VAT.json". MUST FIX! )
 
 (1st layer: VAT general (with opacity set in parameters, blend mode normal), 2nd layer: VAT flat)
@@ -28,6 +28,8 @@ from dask.distributed import Client, LocalCluster, Lock
 import time
 import json
 import psutil
+# import dask_memusage
+import gc
 import logging
 logger = logging.getLogger(__name__)
 
@@ -189,15 +191,16 @@ if __name__ == '__main__':
     
     out=[]
     for n_workrs, n_thrds in workers_threads_pairs:
-        # print(n_workrs, n_thrds)
-        cluster = LocalCluster(n_workers = n_workrs, threads_per_worker = n_thrds,
-                                # memory_limit = f'{tot_memory // n_workrs}GB')    ## set memory limit (pauses workers)
-                                memory_limit = None)
-        client = Client(cluster)
-        client.dashboard_link       ## <- open in browser to see dask diagnostics dashboard live
-
         for chunksize in chunksize_mib:
+            # print(n_workrs, n_thrds)
+            cluster = LocalCluster(n_workers = n_workrs, threads_per_worker = n_thrds,
+                                    # memory_limit = f'{tot_memory // n_workrs}GB')    ## set memory limit (pauses workers)
+                                    memory_limit = None)
+            # dask_memusage.install(cluster.scheduler, f"memusage_{n_workrs}_{chunksize}.csv")
+            client = Client(cluster)
+            client.dashboard_link       ## <- open in browser to see dask diagnostics dashboard live
             start = time.time()
+            
             try:
                 dask.config.set({"array.chunk-size": chunksize})
                 # print(dask.config.get("array.chunk-size"))
@@ -232,9 +235,10 @@ if __name__ == '__main__':
 
             finally:
                 out.append(record)
-        client.shutdown()
-        time.sleep(2)
+                client.shutdown()
+                time.sleep(2)
+                gc.collect()   #garbage collection, force (not sure if this does anything)
 
-    outfile = os.path.join(output_dir_path, 'all_results.txt')  ###save all results
+    outfile = os.path.join(output_dir_path, 'all_results.txt')  ###save all results joined
     with open(outfile, "w") as outf:
         json.dump(out, outf)
