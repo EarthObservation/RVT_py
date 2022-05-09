@@ -67,9 +67,11 @@ Graphs below were generated as results of computations with dask distributed, ru
 ![Comparision for chunk_size 8MiB, 16Mib, 32Mib, 64MiB, 128MiB, 256MiB, 512MiB. Calculation VAT_Combined - combined, float32. Save tif to disk.](./docs/bmarks/csize_wt_ratio.png)
 - Can't "replicate" entire graph above running `dask_VAT_combined` - _general_ on very large rasters (e.g. 30 GB). [Problems](https://github.com/dask/distributed/issues/2602) if chunks are bigger and/or number of workers is higher. Plot only for 1 worker, different number of threads and chunk sizes (All markers ploted below 1000 s are crashes = memory allocation errors). See possible memory issues above. Apply some sort of queue to limit chunks or tasks being processed at the same time, for smoother processing/without pausing workers so much? Why is there such a difference in processing 2 GB vs 30 GB file with same chunksizes and worker/threads ratios?
 
-![Comparision for 1 worker, different chunksizes. Calculation VAT_general, float32. Save tif to disk.](./docs/bmarks/1w_large_vatgeneral.png)
+![Comparision for 1 worker, different chunksizes and number of threads. Calculation VAT_general, float32. Save tif to disk.](./docs/bmarks/1w_large_vatgeneral.png)
 
-![Comparision for 2 workers, different chunksizes. Calculation VAT_general, float32. Save tif to disk.](./docs/bmarks/2w_large_vatgeneral.png)
+![Comparision for 2 workers, different chunksizes and number of threads. Calculation VAT_general, float32. Save tif to disk.](./docs/bmarks/2w_large_vatgeneral.png)
+
+![Comparision for 4 workers, different chunksizes and number of threads. Calculation VAT_general, float32. Save tif to disk.](./docs/bmarks/4w_large_vatgeneral.png)
 - If overlap depth is greater than any chunk along a particular axis, then the array is rechunked -> Strange behavior, may result in error at blending step.
 - _Multi_hillshade_ (if saving directly from `vis.py`)results is very large (chunk depth and final) output of file size: _nr_directions * original raster file size_. Calculation in each direction is additional raster band.
 - Metadata and the file naming convention when reading _.tif_ raster with `rioxarray.open_rasterio`. Understanding how the data is structured (e.g. assumes dims[1:] are named 'x' and 'y'. Name(s) of the bands (not always the same)? Indexing position always true (e.g. `dims[0]= 'band'`, `dims[1] = 'y'`, `dims[2] = 'x'`)?
