@@ -60,20 +60,29 @@ Additionally, try improving [graph serialization](https://docs.dask.org/en/lates
 1. read data in as a task instead of include it directly (queue?),
 2. pre-scatter large data,
 3. wrap in dask.delayed,
-4. possible leak on Local Cluster, revert to dask version [2022.01.1](https://github.com/dask/distributed/issues/5960).
+4. possible leak on Local Cluster, revert to dask version [2022.01.1](https://github.com/dask/distributed/issues/5960).❌
 - Raster datasets are usually stored in blocks (tiles). It is better to  make dask chunks **N * original tile dimensions** to avoid bringing up more data than is needed each time the data is accesed. If `chunks = True` when loading data with `rioxarray.open_rasterio ` automatic chunkig is done in a way that takes into account default tiling and **N** is determined in a way that each chunk size is 128MiB (_Dask default, better performance and higher success/failed to finish ratio was recorded with smaller chunk size, but it depends on the hardware and data size...scalability?_). Set chunk size `dask.config.set({"array.chunk-size": limit})`. 
 Graphs below were generated as results of computations with dask distributed, running Local Cluster on a machine with total of 32 GB RAM (`psutil.virtual_memory().total = 32 GB`) and 16 cores (`sum(client.ncores().values()) = 16`). Aprox. 64 MiB equals chunk of size (4096, 4096) = 32 * (128, 128).
+Computation times for visualization `sky_view_factor`. No significant speedup from 8 cores to 16 cores. Probably can't take adavntage of all cores on a computer, because there is not enough RAM to run more than one task in parallel. Linear increase in computation time with number of directions.
+![Sky view factor, two workers](./docs/bmarks/svf_dir_times_2w.png) 
 
-![Comparision for chunk_size 8MiB, 16Mib, 32Mib, 64MiB, 128MiB, 256MiB, 512MiB. Calculation VAT_Combined - combined, float32. Save tif to disk.](./docs/bmarks/csize_wt_ratio.png)
-- Can't "replicate" entire graph above running `dask_VAT_combined` - _general_ on very large rasters (e.g. 30 GB). [Problems](https://github.com/dask/distributed/issues/2602) if chunks are bigger and/or number of workers is higher. Plot only for 1 worker, different number of threads and chunk sizes (All markers ploted below 1000 s are crashes = memory allocation errors). See possible memory issues above. Apply some sort of queue to limit chunks or tasks being processed at the same time, for smoother processing/without pausing workers so much? Why is there such a difference in processing 2 GB vs 30 GB file with same chunksizes and worker/threads ratios?
+All `dask` resuslts in comparison with pure `numpy` calculation. This is cca. 2 GB size raster and fits in RAM.
+![Sky view factor, all results](./docs/bmarks/svf_np_dir_times.png) 
 
-![Comparision for 1 worker, different chunksizes and number of threads. Calculation VAT_general, float32. Save tif to disk.](./docs/bmarks/1w_large_vatgeneral.png)
+Regarding optimal chunk size and worker vs. thread per worker ratio.
+![Comparision for chunk_size 8MiB, 16Mib, 32Mib, 64MiB, 128MiB, 256MiB, 512MiB. Calculation VAT_Combined - combined, float32. Save tif to disk, n_svf_dir = 1!](./docs/bmarks/csize_wt_ratio.png)
 
-![Comparision for 2 workers, different chunksizes and number of threads. Calculation VAT_general, float32. Save tif to disk.](./docs/bmarks/2w_large_vatgeneral.png)
+- Tricky to determine. It may seem from the plot above that the optimal chunk size is somewhere between 32 MiB and 64 MiB. However, results differ if file is larger (e.g. 30 GB) and/or task of taking single chunk "from start to finish" is longer (e.g. calculating single visualization vs. calcaulating combinations with multiple layers). In a particular case, for a 30 GB file and _general combination_ (`dask_VAT_combined.py`) cluster kept crashing for different chunk sizes and worker/thread settings due to memory allocation error.
+[Problems](https://github.com/dask/distributed/issues/2602) mainly if chunks are bigger and/or number of workers is higher. 
+Following plot is only for the case of 1 worker, different number of threads and chunk sizes (All markers ploted below 1000 s are crashes). See possible memory issues above. Apply some sort of queue to limit chunks or tasks being processed at the same time, for smoother processing/without pausing (and crashing) workers so much? Why is there such a difference in processing 2 GB vs 30 GB file with same chunksizes and worker/threads ratios?
 
-![Comparision for 4 workers, different chunksizes and number of threads. Calculation VAT_general, float32. Save tif to disk.](./docs/bmarks/4w_large_vatgeneral.png)
+![Comparision for 1 worker, different chunksizes and number of threads. Calculation VAT_general, float32. Save tif to disk, n_svf_dir = 1!](./docs/bmarks/1w_large_vatgeneral.png)
+
+![Comparision for 2 workers, different chunksizes and number of threads. Calculation VAT_general, float32. Save tif to disk, n_svf_dir = 1!](./docs/bmarks/2w_large_vatgeneral.png)
+
+![Comparision for 4 workers, different chunksizes and number of threads. Calculation VAT_general, float32. Save tif to disk, n_svf_dir = 1!](./docs/bmarks/4w_large_vatgeneral.png)
 - If overlap depth is greater than any chunk along a particular axis, then the array is rechunked -> Strange behavior, may result in error at blending step.
-- _Multi_hillshade_ (if saving directly from `vis.py`)results is very large (chunk depth and final) output of file size: _nr_directions * original raster file size_. Calculation in each direction is additional raster band.
+- Visualization `(dask)_multi_hillshade` (if saving directly from `vis.py`) results is very large (chunk depth and final) output of file size: _nr_directions * original raster file size_. Calculation in each direction is additional raster band.
 - Metadata and the file naming convention when reading _.tif_ raster with `rioxarray.open_rasterio`. Understanding how the data is structured (e.g. assumes dims[1:] are named 'x' and 'y'. Name(s) of the bands (not always the same)? Indexing position always true (e.g. `dims[0]= 'band'`, `dims[1] = 'y'`, `dims[2] = 'x'`)?
 - How are [no_data values](https://corteva.github.io/rioxarray/stable/getting_started/nodata_management.html) represented (no_data = data_set.rio.nodata, no_data = data_set.rio.encoded_nodata)? When saving to 8-bit `Error: Python int too large to convert to C long`. Temporary exclude copying attributes from orignal to saved dataset. Fix later. [Issue](https://github.com/corteva/rioxarray/issues/113).
 - Runtime Warnings encountered:
