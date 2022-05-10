@@ -1,6 +1,10 @@
 """
 This is modified python script for calculating VAT Combined blender combination with dask distributed, Local Cluster.
-Apply one blender comb. at a time: general, flat or combined (duration is per chunksize). Flat and general OK individually, combined acting strange for some chunksizes (fix something in create_layer when `image` is not None or just the orer ot vat_arr_1 and vat_arr_2 is getting mixed up for some reason in this script?)
+
+Apply ONE blender comb. at a time: general, flat or combined (duration is per chunksize). Flat and general OK individually, combined acting strange for some chunksizes (fix something in create_layer when `image` is not None, is just the order of vat_arr_1 and vat_arr_2 getting mixed up for some reason in this script? If reading VAT_flat and VAT_general from `image_path`, results are ok. Maybe keep just image_path with dask arrays - good practice to save intermediate results to break up workload anyway...)
+If saving MULTIPLE combinations: general, flat and combined at the same time (ONLY on dask distributed - cluster) sometimes problem with aquiring locks when writing (random, hard to reproduce). Look into this, preferably without changing the code in `distributed/lock.py` or 
+`dask/array/core.py`
+
 "Luminosity" failing tests in case of multiband data! (present at /blender_VAT.json". Must fix.)
 
 (1st layer: VAT general (with opacity set in parameters, blend mode normal), 2nd layer: VAT flat)
@@ -43,8 +47,8 @@ save_8bit = False
 save_VAT_general = True
 save_VAT_flat = False
 # chunksize_mib = ["8MiB", "16MiB", "32MiB", "64MiB", "128MiB", "256MiB", "512MiB"]  ##try different chunksizes
-chunksize_mib = ["16MiB", "32MiB", "64MiB", "128MiB" , "256MiB", "512MiB"] ## larger images
-# chunksize_mib = ["1MiB", "2MiB", "4MiB", "8MiB" , "16MiB", "32MiB"]   ##smaller images
+# chunksize_mib = ["16MiB", "32MiB", "64MiB", "128MiB" , "256MiB", "512MiB"] ## larger images
+chunksize_mib = ["1MiB", "2MiB", "4MiB", "8MiB" , "16MiB", "32MiB"]   ##smaller images
 
 
 def combined_VAT(input_dir_path, output_dir_path, 
@@ -97,7 +101,6 @@ def combined_VAT(input_dir_path, output_dir_path,
         if ".tif" not in input_dem_name:  # preskoči če se file ne konča .tif
             continue
         input_dem_path = os.path.join(input_dir_path, input_dem_name)
-        # out_name = "{}_Archaeological_(VAT_combined)_chunk{}_w2_t8.tif".format(input_dem_name.rstrip(".tif"), test_chunksize)
         out_name = "{}_Archaeological_(VAT_combined)_chunk{}_w{}_t{}.tif".format(input_dem_name.rstrip(".tif"), test_chunksize, workr, thrds)
         out_comb_vat_path = os.path.abspath(os.path.join(output_dir_path, out_name))
         out_comb_vat_8bit_path = out_comb_vat_path.rstrip(".tif") + "_8bit.tif"
@@ -141,43 +144,47 @@ def compute_save_VAT_combined(general_combination, flat_combination, general_def
                                     dem_resolution=dict_arr_res_nd["resolution"][0])
     if save_VAT_general:
         general_combination.add_dem_path(dem_path=input_dem_path)
-        vat_arr_1 = general_combination.render_all_images(save_render_path=out_comb_vat_general_path,
-                                                          save_float=save_float, save_8bit=save_8bit,
-                                                          default=general_default, no_data=dict_arr_res_nd["no_data"])
-    else:
-        vat_arr_1 = general_combination.render_all_images(default=general_default, no_data=dict_arr_res_nd["no_data"])
+        general_combination.render_all_images(save_render_path=out_comb_vat_general_path,
+                                              save_float=save_float, save_8bit=save_8bit,
+                                              default=general_default, no_data=dict_arr_res_nd["no_data"])
+    # else:
+    #     vat_arr_1 = general_combination.render_all_images(default=general_default, no_data=dict_arr_res_nd["no_data"])
 
     # create and blend VAT flat
     flat_combination.add_dem_arr(dem_arr = da_arr,
                                  dem_resolution=dict_arr_res_nd["resolution"][0])
     if save_VAT_flat:
         flat_combination.add_dem_path(dem_path=input_dem_path)
-        vat_arr_2 = flat_combination.render_all_images(save_render_path=out_comb_vat_flat_path,
-                                                       save_float=save_float, save_8bit=save_8bit,
-                                                       default=flat_default, no_data=dict_arr_res_nd["no_data"])
-    else:
-        vat_arr_2 = flat_combination.render_all_images(default=flat_default, no_data=dict_arr_res_nd["no_data"])
+        flat_combination.render_all_images(save_render_path=out_comb_vat_flat_path,
+                                           save_float=save_float, save_8bit=save_8bit,
+                                           default=flat_default, no_data=dict_arr_res_nd["no_data"])
+    # else:
+    #     vat_arr_2 = flat_combination.render_all_images(default=flat_default, no_data=dict_arr_res_nd["no_data"])
 
-    # # create combination which blends VAT flat and VAT general together (check if flat or general are already computed and read from file)
-    # combination = rvt.blend.BlenderCombination()
-    # combination.create_layer(vis_method="VAT general", image=vat_arr_1, normalization="Value", minimum=0,
-    #                          maximum=1, blend_mode="Normal", opacity=general_transparency)
-    # combination.create_layer(vis_method="VAT flat", image=vat_arr_2, normalization="Value", minimum=0,
-    #                          maximum=1, blend_mode="Normal", opacity=100)
 
-    # combination.add_dem_path(dem_path=input_dem_path)
+    # # # create combination which blends VAT flat and VAT general together (check if flat or general are already computed and read from file)
+    # if save_VAT_general and save_VAT_flat:
+    #     combination = rvt.blend.BlenderCombination()
+    #     image_path_1 = out_comb_vat_general_path
+    #     image_path_2 = out_comb_vat_flat_path
+    #     combination.create_layer(vis_method="VAT general", image_path=image_path_1, normalization="Value", minimum=0,
+    #                             maximum=1, blend_mode="Normal", opacity=general_transparency)
+    #     combination.create_layer(vis_method="VAT flat", image_path=image_path_2, normalization="Value", minimum=0,
+    #                             maximum=1, blend_mode="Normal", opacity=100)
 
-    # # VAT combined
-    # combination.render_all_images(save_render_path=out_comb_vat_path, save_visualizations=False,
-    #                               save_float=save_float, save_8bit=save_8bit,
-    #                               no_data=dict_arr_res_nd["no_data"])
-    # out_comb_vat_8bit_path = out_comb_vat_path.rstrip("tif") + "_8bit.tif"
-    # if save_float and save_8bit:
-    #     return "{} and {} successfully calculated and saved!".format(out_comb_vat_path, out_comb_vat_8bit_path)
-    # elif save_float:
-    #     return "{} successfully calculated and saved!".format(out_comb_vat_path)
-    # elif save_8bit:
-    #     return "{} successfully calculated and saved!".format(out_comb_vat_8bit_path)
+    #     combination.add_dem_path(dem_path=input_dem_path)
+
+    #     # VAT combined
+    #     combination.render_all_images(save_render_path=out_comb_vat_path, save_visualizations=False,
+    #                                 save_float=save_float, save_8bit=save_8bit,
+    #                                 no_data=dict_arr_res_nd["no_data"])
+    #     out_comb_vat_8bit_path = out_comb_vat_path.rstrip("tif") + "_8bit.tif"
+    #     if save_float and save_8bit:
+    #         return "{} and {} successfully calculated and saved!".format(out_comb_vat_path, out_comb_vat_8bit_path)
+    #     elif save_float:
+    #         return "{} successfully calculated and saved!".format(out_comb_vat_path)
+    #     elif save_8bit:
+    #         return "{} successfully calculated and saved!".format(out_comb_vat_8bit_path)
 
 def txt_output(output_file_path, output_file):
     with open(output_file_path, "w") as outf:
