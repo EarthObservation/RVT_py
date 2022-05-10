@@ -2452,7 +2452,7 @@ def get_raster_zarr_arr(raster_path):
     x_res = zattrs['resolution_x']
     y_res = zattrs['resolution_y']
 
-    no_data = 0.0
+    no_data = 0.0       #keep?
     return {"array": array, "resolution": (x_res, y_res), "no_data": no_data}
 
 
@@ -2488,7 +2488,7 @@ def dask_save_raster_tif(src_raster_path, out_raster_path, out_raster_arr: da.Ar
     tif_arr_path = out_raster_path
     if len(out_raster_arr.shape) == 2:  #single band, 2D dask array
         y, x = out_raster_arr.chunksize
-        src_data_set = rioxarray.open_rasterio(src_raster_path, chunks = {'x': x, 'y': y}, cache = False, lock = False)
+        src_data_set = rioxarray.open_rasterio(src_raster_path, chunks = {'x': x, 'y': y}, cache = False, lock = False) #this is done to keep metadata (dims names, attributes,...)
         out_raster_xarr = xr.DataArray(out_raster_arr,  dims = src_data_set.dims[1:])
         # out_raster_xarr = xr.DataArray(out_raster_arr,  dims = src_data_set.dims[1:], attrs = src_data_set.attrs.copy())
 
@@ -2504,7 +2504,7 @@ def dask_save_raster_tif(src_raster_path, out_raster_path, out_raster_arr: da.Ar
                                     # lock = Lock("rio", client = client),
                                     dtype = dtype_to_save, 
                                     # driver="GTiff",
-                                    windowed = True,
+                                    # windowed = True,  ##has no effect when writing with dask (according to the documentation)
                                     # compress='LZW',
                                     )
 
