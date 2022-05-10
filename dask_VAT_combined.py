@@ -1,7 +1,7 @@
 """
-This is modified python script for calculating VAT Combined blender combination with dask distributed, Local Cluster
-Apply one blender comb. at a time: general, flat or combined (duration is per chunksize). Flat and general OK individually, combined acting strange for some chunksizes (fix something in create_layer when `image` is not None)
-"Luminosity" failing tests in case of multiband data! (present at /blender_VAT.json". MUST FIX! )
+This is modified python script for calculating VAT Combined blender combination with dask distributed, Local Cluster.
+Apply one blender comb. at a time: general, flat or combined (duration is per chunksize). Flat and general OK individually, combined acting strange for some chunksizes (fix something in create_layer when `image` is not None or just the orer ot vat_arr_1 and vat_arr_2 is getting mixed up for some reason in this script?)
+"Luminosity" failing tests in case of multiband data! (present at /blender_VAT.json". Must fix.)
 
 (1st layer: VAT general (with opacity set in parameters, blend mode normal), 2nd layer: VAT flat)
 Parameters are:
@@ -42,16 +42,16 @@ save_float = True
 save_8bit = False
 save_VAT_general = True
 save_VAT_flat = False
-chunksize_mib = ["8MiB", "16MiB", "32MiB", "64MiB", "128MiB", "256MiB", "512MiB"]  ##try different chunksizes
-# chunksize_mib = ["16MiB", "32MiB", "64MiB", "128MiB" , "256MiB", "512MiB"] ## larger images
+# chunksize_mib = ["8MiB", "16MiB", "32MiB", "64MiB", "128MiB", "256MiB", "512MiB"]  ##try different chunksizes
+chunksize_mib = ["16MiB", "32MiB", "64MiB", "128MiB" , "256MiB", "512MiB"] ## larger images
 # chunksize_mib = ["1MiB", "2MiB", "4MiB", "8MiB" , "16MiB", "32MiB"]   ##smaller images
 
 
 def combined_VAT(input_dir_path, output_dir_path, 
-                test_chunksize, workr, thrds, 
-                 general_opacity, vat_combination_json_path=None,
-                 terrains_sett_json_path=None, save_float=True, save_8bit=False,
-                 save_VAT_general=False, save_VAT_flat=False):
+                test_chunksize, workr, thrds,          
+                general_opacity, vat_combination_json_path=None,
+                terrains_sett_json_path=None, save_float=True, save_8bit=False,
+                save_VAT_general=False, save_VAT_flat=False):
     if not save_float and not save_8bit:
         raise Exception("save_float and save_8bit are both False!")
 
@@ -130,10 +130,14 @@ def compute_save_VAT_combined(general_combination, flat_combination, general_def
                               input_dem_path, out_comb_vat_path,
                               general_transparency, save_float, save_8bit, save_VAT_general, out_comb_vat_general_path,
                               save_VAT_flat, out_comb_vat_flat_path):
-    dict_arr_res_nd = rvt.default.get_raster_dask_arr(raster_path=input_dem_path)
+    dict_arr_res_nd = rvt.default.get_raster_dask_arr(raster_path=input_dem_path)  ## this is lazy load, option to:
+   
+    da_arr = dict_arr_res_nd['array']                                   ## compute entire array
+    # h, w = dict_arr_res_nd['array'].shape
+    # da_arr = dict_arr_res_nd['array'][0 : h//4, w//4: 3 * w//4]           ## or compute only desired region of the array, e.g. part of very large raster
 
     # create and blend VAT general
-    general_combination.add_dem_arr(dem_arr=dict_arr_res_nd["array"],
+    general_combination.add_dem_arr(dem_arr = da_arr,
                                     dem_resolution=dict_arr_res_nd["resolution"][0])
     if save_VAT_general:
         general_combination.add_dem_path(dem_path=input_dem_path)
@@ -144,7 +148,7 @@ def compute_save_VAT_combined(general_combination, flat_combination, general_def
         vat_arr_1 = general_combination.render_all_images(default=general_default, no_data=dict_arr_res_nd["no_data"])
 
     # create and blend VAT flat
-    flat_combination.add_dem_arr(dem_arr=dict_arr_res_nd["array"],
+    flat_combination.add_dem_arr(dem_arr = da_arr,
                                  dem_resolution=dict_arr_res_nd["resolution"][0])
     if save_VAT_flat:
         flat_combination.add_dem_path(dem_path=input_dem_path)
@@ -175,13 +179,17 @@ def compute_save_VAT_combined(general_combination, flat_combination, general_def
     # elif save_8bit:
     #     return "{} successfully calculated and saved!".format(out_comb_vat_8bit_path)
 
+def txt_output(output_file_path, output_file):
+    with open(output_file_path, "w") as outf:
+        json.dump(output_file, outf)
+    return 0
 
 # Program start
 if __name__ == '__main__':
 
     # cluster = LocalCluster()
     # client = Client(cluster)
-    # total_cores = sum(client.ncores().values())            ## get total number of cores
+    # total_cores = sum(client.ncores().values())            ## get total number of cores, do this once
     # client.shutdown()
 
     tot_memory = psutil.virtual_memory().total >> 30          ## bytes, shift to GB (aprox, rounding error)
@@ -200,7 +208,7 @@ if __name__ == '__main__':
             client = Client(cluster)
             client.dashboard_link       ## <- open in browser to see dask diagnostics dashboard live
             start = time.time()
-            
+
             try:
                 dask.config.set({"array.chunk-size": chunksize})
                 # print(dask.config.get("array.chunk-size"))
@@ -217,8 +225,7 @@ if __name__ == '__main__':
                         'n_workers': n_workrs, 
                         'n_threads': n_thrds}
                 outfile = os.path.join(output_dir_path, f'w{n_workrs}_t{n_thrds}_{chunksize}.txt')  ###save intermediate results, in case of workers completly crashing 
-                with open(outfile, "w") as outf:
-                    json.dump(record, outf)
+                txt_output(output_file_path=outfile, output_file = record)
 
             except Exception as e:
                 end = time.time()
@@ -229,8 +236,7 @@ if __name__ == '__main__':
                         'n_workers': n_workrs, 
                         'n_threads': n_thrds}
                 outfile = os.path.join(output_dir_path, f'w{n_workrs}_t{n_thrds}_{chunksize}.txt')  
-                with open(outfile, "w") as outf:
-                    json.dump(record, outf)
+                txt_output(output_file_path=outfile, output_file = record)
                 continue
 
             finally:
@@ -240,5 +246,5 @@ if __name__ == '__main__':
                 gc.collect()   #garbage collection, force (not sure if this does anything)
 
     outfile = os.path.join(output_dir_path, 'all_results.txt')  ###save all results joined
-    with open(outfile, "w") as outf:
-        json.dump(out, outf)
+    txt_output(output_file_path=outfile, output_file = out)
+
