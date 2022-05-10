@@ -22,15 +22,16 @@ This is the markdown todo file for feature/dask branch of Github Repo [RVT_py](h
 
 ### Todo
 
-- [ ] Dask memory issues.
-  - [ ] Get available memory and compute / set memory (GB) per Dask worker. 
-  - [ ] Get / compute optimal chunk size. 
 - [ ] Fix most outter padding in some visualization functions in original `vis.py`.
+- [ ] Work on restoring some of the previously existing non-dask functionality - keep both options.
+- [ ] Update env. file.
 
 ### In Progress
 
-- [ ] Work on restoring some of the previously existing non-dask functionality - keep both options.
 - [ ] Additional testing of visualization functions (for i/o functionality, writing and reading raster data.)
+- [ ] Dask memory issues!!
+  - [x] Get available memory and compute / set memory (GB) per Dask worker. 
+  - [ ] Get / compute optimal chunk size. 
 - [ ] Fix failing test with multiband (`rvt.blend_func.blend_images`) blend mode =  "Luminosity".
 
 ### Done ✓
@@ -51,7 +52,7 @@ This is the markdown todo file for feature/dask branch of Github Repo [RVT_py](h
 ![Smooth task stream, computation takes more than 50 mins.](./docs/bmarks/pausing_w2_t6.png)
 Possible issues: Is dask scheduler "too eager" and overcommiting tasks, is computation faster than writing to disk and chunks keep accumulating in memory (issue persists if writing to tif or to zarr), waiting to be written but eventually fail, memory leak, some expensive memory operation (e.g. rechunking in axis = 0 direction when visualizations produce 3D array) in the middle of workflow, is data load faster than it can be computed downstream,..? [Memory issues](https://alimanfoo.github.io/dask/2021/03/22/dask-memory-thought.html). Inspecting _memory by key_ tab on diagnostics dashboard, `concatenate` and `getitem` tasks have by far the highest memory use. Look into how much peak memory each task is using, [RAM/core ratio](https://blog.dask.org/2021/03/11/dask_memory_usage).)
 Try tweaking some settings in `distributed.yaml` or `dask.yaml` file for smoother process:
-1. `default-task-durations`,
+1. `default-task-durations`,❌
 2. set target worker  memory fractions to stay below: `target, spil, pause, terminate`,❌
 3. set `MALLOC_TRIM_THRESHOLD_` to trim unmanaged memory (only works on linux os),❌
 4. change `optimization.fuse.ave-width` (to fuse neighbouring tasks together). ❌
@@ -60,21 +61,24 @@ Additionally, try improving [graph serialization](https://docs.dask.org/en/lates
 1. read data in as a task instead of include it directly (queue?),
 2. pre-scatter large data,
 3. wrap in dask.delayed,
-4. possible leak on Local Cluster, revert to dask version [2022.01.1](https://github.com/dask/distributed/issues/5960).❌
+4. ~~possible leak on Local Cluster, revert to dask version [2022.01.1](https://github.com/dask/distributed/issues/5960).❌~~
 - Raster datasets are usually stored in blocks (tiles). It is better to  make dask chunks **N * original tile dimensions** to avoid bringing up more data than is needed each time the data is accesed. If `chunks = True` when loading data with `rioxarray.open_rasterio ` automatic chunkig is done in a way that takes into account default tiling and **N** is determined in a way that each chunk size is 128MiB (_Dask default, better performance and higher success/failed to finish ratio was recorded with smaller chunk size, but it depends on the hardware and data size...scalability?_). Set chunk size `dask.config.set({"array.chunk-size": limit})`. 
 Graphs below were generated as results of computations with dask distributed, running Local Cluster on a machine with total of 32 GB RAM (`psutil.virtual_memory().total = 32 GB`) and 16 cores (`sum(client.ncores().values()) = 16`). Aprox. 64 MiB equals chunk of size (4096, 4096) = 32 * (128, 128).
-Computation times for visualization `sky_view_factor`. No significant speedup from 8 cores to 16 cores. Probably can't take adavntage of all cores on a computer, because there is not enough RAM to run more tasks in parallel. The times include writing resulting file to disk, but that doesn't seem to be the bottelneck. Linear increase in computation time with number of directions.
+Computation times for visualization `sky_view_factor`. No significant speedup from 8 cores to 16 cores. Probably can't take advantage of all cores on a computer, because there is not enough RAM to run more tasks in parallel. The times include writing resulting file to disk, but that doesn't seem to be the bottelneck. Linear increase in computation time with number of directions.
 
 
 ![Sky view factor, two workers](./docs/bmarks/svf_dir_times_2w.png) 
 
 All `dask` resuslts in comparison with pure `numpy` calculation. This is cca. 2 GB size raster and fits in RAM. 
-![Sky view factor, all results](./docs/bmarks/svf_np_dir_times.png) 
+![Sky view factor, all results.](./docs/bmarks/svf_np_dir_times.png) 
+
+Sky view factor results for calcualtion on 30 GB raster that doesn't fit in RAM,
+![Sky view factor, all results on large raster.](./docs/bmarks/svf_dir_times_large.png) 
 
 Regarding optimal chunk size and worker vs. thread per worker ratio.
 ![Comparision for chunk_size 8MiB, 16Mib, 32Mib, 64MiB, 128MiB, 256MiB, 512MiB. Calculation VAT_Combined - combined, float32. Save tif to disk, n_svf_dir = 1!](./docs/bmarks/csize_wt_ratio.png)
 
-- Tricky to determine. It may seem from the plot above that the optimal chunk size is somewhere between 32 MiB and 64 MiB. However, results differ if file is larger (e.g. 30 GB) and/or task of taking single chunk "from start to finish" is longer (e.g. calculating single visualization vs. calcaulating combinations with multiple layers). In a particular case, for a 30 GB file and _general combination_ (`dask_VAT_combined.py`) cluster kept crashing for different chunk sizes and worker/thread settings due to memory allocation error.
+- Tricky to determine. It may seem from the plot above that the optimal chunk size is somewhere between 32 MiB and 64 MiB. However, results differ if file is larger (e.g. 30 GB) and/or task of taking single chunk "from start to finish" is longer (e.g. calculating single visualization vs. calcaulating combinations with multiple layers). In a particular case, for a 30 GB file and _general combination_ (from `dask_VAT_combined.py`, with modification to `sky_view_factor: nr_dir = 1`.) cluster kept crashing for different chunk sizes and worker/thread settings due to memory allocation error.
 [Problems](https://github.com/dask/distributed/issues/2602) mainly if chunks are bigger and/or number of workers is higher. 
 Following plot is only for the case of 1 worker, different number of threads and chunk sizes (All markers ploted below 1000 s are crashes). See possible memory issues above. Apply some sort of queue to limit chunks or tasks being processed at the same time, for smoother processing/without pausing (and crashing) workers so much? Why is there such a difference in processing 2 GB vs 30 GB file with same chunksizes and worker/threads ratios?
 
@@ -93,7 +97,7 @@ Following plot is only for the case of 1 worker, different number of threads and
   - `RuntimeWarning: overflow encountered in square tan_slope = np.sqrt(dzdx ** 2 + dzdy ** 2)`
 - [Scaling](https://www.jennakwon.page/2021/03/benchmarks-dask-distributed-vs-ray-for.html). [Adaptive](https://github.com/dask/distributed/issues/4471).
 - [Benchmarks](https://matthewrocklin.com/blog/work/2017/07/03/scaling).
-- When reading/ writing very large arrays to .tif  sometimes error (random, hard to reproduce): `RasterioIOError: file used by other process` followed by `distributed.worker - WARNING - Compute Failed`. Current workaround to avoid computation failure is to catch the exception in `rasterio.__init__.py", line 230, in open`, wait for 5 s and try to acquire the lock again. Change the lines 230 - 232 to (first try without this and see if error comes up, it is not ideal to make changes in  rasterio module):
+- When reading/ writing very large arrays to .tif  sometimes error (random, hard to reproduce): `RasterioIOError: file used by other process` followed by `distributed.worker - WARNING - Compute Failed`. Current workaround to avoid computation failure is to catch the exception in `rasterio.__init__.py", line 230, in open`, wait for 5 s and try to acquire the lock again. Change the lines 230 - 232 to (first try without this and see if error comes up, it is not ideal to make changes in  rasterio module; `rasterio-1.2.10`):
 ~~Adding `windowed = True` argument when writing to tif (`xr.rio.to_raster(...)`) seems to resolve this issue (but is has not been thoroughly tested).~~
 ```diff
 - s = get_writer_for_path(path, driver=driver)(
