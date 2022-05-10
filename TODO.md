@@ -73,7 +73,7 @@ All `dask` resuslts in comparison with pure `numpy` calculation. This is cca. 2 
 ![Sky view factor, all results.](./docs/bmarks/svf_np_dir_times.png) 
 
 Sky view factor results for calcualtion on 30 GB raster that doesn't fit in RAM,
-![Sky view factor, all results on large raster.](./docs/bmarks/svf_dir_times_large.png) 
+![Sky view factor, all results on large raster.](./docs/bmarks/svf_dir_times_l.png) 
 
 Regarding optimal chunk size and worker vs. thread per worker ratio.
 ![Comparision for chunk_size 8MiB, 16Mib, 32Mib, 64MiB, 128MiB, 256MiB, 512MiB. Calculation VAT_Combined - combined, float32. Save tif to disk, n_svf_dir = 1!](./docs/bmarks/csize_wt_ratio.png)
