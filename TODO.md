@@ -63,11 +63,12 @@ Additionally, try improving [graph serialization](https://docs.dask.org/en/lates
 4. possible leak on Local Cluster, revert to dask version [2022.01.1](https://github.com/dask/distributed/issues/5960).❌
 - Raster datasets are usually stored in blocks (tiles). It is better to  make dask chunks **N * original tile dimensions** to avoid bringing up more data than is needed each time the data is accesed. If `chunks = True` when loading data with `rioxarray.open_rasterio ` automatic chunkig is done in a way that takes into account default tiling and **N** is determined in a way that each chunk size is 128MiB (_Dask default, better performance and higher success/failed to finish ratio was recorded with smaller chunk size, but it depends on the hardware and data size...scalability?_). Set chunk size `dask.config.set({"array.chunk-size": limit})`. 
 Graphs below were generated as results of computations with dask distributed, running Local Cluster on a machine with total of 32 GB RAM (`psutil.virtual_memory().total = 32 GB`) and 16 cores (`sum(client.ncores().values()) = 16`). Aprox. 64 MiB equals chunk of size (4096, 4096) = 32 * (128, 128).
-Computation times for visualization `sky_view_factor`. No significant speedup from 8 cores to 16 cores. Probably can't take adavntage of all cores on a computer, because there is not enough RAM to run more tasks in parallel. Linear increase in computation time with number of directions.
+Computation times for visualization `sky_view_factor`. No significant speedup from 8 cores to 16 cores. Probably can't take adavntage of all cores on a computer, because there is not enough RAM to run more tasks in parallel. The times include writing resulting file to disk, but that doesn't seem to be the bottelneck. Linear increase in computation time with number of directions.
+
 
 ![Sky view factor, two workers](./docs/bmarks/svf_dir_times_2w.png) 
 
-All `dask` resuslts in comparison with pure `numpy` calculation. This is cca. 2 GB size raster and fits in RAM.
+All `dask` resuslts in comparison with pure `numpy` calculation. This is cca. 2 GB size raster and fits in RAM. 
 ![Sky view factor, all results](./docs/bmarks/svf_np_dir_times.png) 
 
 Regarding optimal chunk size and worker vs. thread per worker ratio.
