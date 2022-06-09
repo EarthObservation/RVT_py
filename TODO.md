@@ -23,8 +23,9 @@ This is the markdown todo file for feature/dask branch of Github Repo [RVT_py](h
 ### Todo
 
 - [ ] Fix most outter padding in some visualization functions in original `vis.py`.
-- [ ] Work on restoring some of the previously existing non-dask functionality - keep both options.
-- [ ] Update env. file.
+- [ ] Restore some of the previously existing non-dask functionality (keep both options or separate module?).
+- [ ] Configure Dask-jobqueue (specification?).
+- [ ] Code rafactoring.
 
 ### In Progress
 
@@ -42,10 +43,12 @@ This is the markdown todo file for feature/dask branch of Github Repo [RVT_py](h
 - [x] Save raster in chunk by chunk (.tif and .zarr). Parallel writes. 
 - [x] Read multiband data. 
 - [x] Fix numpy runtime errors / suppress warnings (keep, not really relevant).
+- [x] Tests for `blend_func_dask.py` and `vis_dask.py`.
 
-##### _Notes on Todo and Done_
-- If chunks are too small: huge amount of tasks and a lot of time spent developing the task graph - task scheduler hangs.
-- If chunks are too big: `Exception has occurred: _ArrayMemoryError`, `Unable to allocate xx MiB for an array with shape (dimx, dimy) and data type float32.` [Error encountered.](https://stackoverflow.com/questions/62839068/memoryerror-unable-to-allocate-mib-for-an-array-with-shape-and-data-type-when). Or `MemoryError: Unable to allocate internal buffer.` This happens only with very large rasters (e.g. 30 GB). For example, computation is successful on 2 GB raster with chunk size ranging from 8 MiB to 512 MiB. The same computation on 30 GB raster is successful only for chunk sizes 16 MiB to 64 MiB (without pausing the workers, which increases computation time significantly. Pausing is not always sufficient and workers eventually get overwhelmed and killed). Example of smooth and paused task stream below (Same computation, on the same 30 GB raster, 16 MiB chunks. The only difference is the number of workers and threads per worker. 1 worker & 12 threads in the case of "ok looking" task stream and 2 workers & 6 threads per worker in the case of workers pausing).
+##### _Notes on Todo and Done (aka confusing mix of different problems, mainly memory issues)_
+- [In theory](https://stackoverflow.com/questions/49406987/how-do-we-choose-nthreads-and-nprocs-per-worker-in-dask-distributed), since the workload is mostly numeric and Numpy releases the GIL well, ratio n_threads >> n_processes should be prefered.
+- If chunks are too small: huge amount of tasks and a lot of time spent developing the task graph - task scheduler hangs. 
+- If chunks are too big: `Exception has occurred: _ArrayMemoryError`, `Unable to allocate xx MiB for an array with shape (dimx, dimy) and data type float32.` [Error encountered.](https://stackoverflow.com/questions/62839068/memoryerror-unable-to-allocate-mib-for-an-array-with-shape-and-data-type-when). Or `MemoryError: Unable to allocate internal buffer.` This happens only with very large rasters (e.g. 30 GB). For example, computation is successful on 2 GB raster with chunk size ranging from 8 MiB to 512 MiB. The same computation on 30 GB raster is successful only for chunk sizes 16 MiB to 64 MiB (without pausing the workers, which increases computation time significantly. Pausing is not always sufficient and workers eventually get overwhelmed and killed). Example of smooth and paused task stream below (Same computation, on the same 30 GB raster, 16 MiB chunks. The only difference is the number of workers and threads per worker. 1 worker & 12 threads in the case of "ok looking" task stream and 2 workers & 6 threads per worker in the case of workers pausing). **TLDR;** Analyse optimal nr. of processes: total computing time = computation time + comunication time (task overhead < 1ms)
 
 ![Smooth task stream, computation takes less than 40 mins.](./docs/bmarks/not_pausing_w1_t12.png)
 
@@ -88,7 +91,7 @@ Following plots are for different number of workers, different number of threads
 ![Comparision for 2 workers, different chunksizes and number of threads. Calculation VAT_general, float32. Save tif to disk, n_svf_dir = 1!](./docs/bmarks/2w_large_vatgeneral.png)
 
 ![Comparision for 4 workers, different chunksizes and number of threads. Calculation VAT_general, float32. Save tif to disk, n_svf_dir = 1!](./docs/bmarks/4w_large_vatgeneral.png)
-- If overlap depth is greater than any chunk along a particular axis, then the array is rechunked -> Strange behavior, may result in error at blending step.
+- ~~If overlap depth is greater than any chunk along a particular axis, then the array is rechunked -> Strange behavior, may result in error at blending step.~~
 - Visualization `(dask)_multi_hillshade` (if saving directly from `vis.py`) results is very large (chunk depth and final) output of file size: _nr_directions * original raster file size_. Calculation in each direction is additional raster band.
 - Metadata and the file naming convention when reading _.tif_ raster with `rioxarray.open_rasterio`. Understanding how the data is structured (e.g. assumes dims[1:] are named 'x' and 'y'. Name(s) of the bands (not always the same)? Indexing position always true (e.g. `dims[0]= 'band'`, `dims[1] = 'y'`, `dims[2] = 'x'`)?
 - How are [no_data values](https://corteva.github.io/rioxarray/stable/getting_started/nodata_management.html) represented (no_data = data_set.rio.nodata, no_data = data_set.rio.encoded_nodata)? When saving to 8-bit `Error: Python int too large to convert to C long`. Temporary exclude copying attributes from orignal to saved dataset. Fix later. [Issue](https://github.com/corteva/rioxarray/issues/113).
@@ -96,9 +99,10 @@ Following plots are for different number of workers, different number of threads
   - `RuntimeWarning: All-NaN slice encountered if np.nanmin(image_chunk) < 0 or np.nanmax(image_chunk) > 1`
   - `RuntimeWarning: overflow encountered in long_scalars maxsize = math.ceil(nbytes / (other_numel * itemsize))`
   - `RuntimeWarning: overflow encountered in square tan_slope = np.sqrt(dzdx ** 2 + dzdy ** 2)`
-- [Scaling](https://www.jennakwon.page/2021/03/benchmarks-dask-distributed-vs-ray-for.html). [Adaptive](https://github.com/dask/distributed/issues/4471).
+- [Scaling](https://www.jennakwon.page/2021/03/benchmarks-dask-distributed-vs-ray-for.html). [Adaptivity](https://github.com/dask/distributed/issues/4471). 
+- LocalCluster vs. for wxample PBSCluster. When running on HPC better adaptive dynamic scaling of workers? [Dask jobqueue](https://jobqueue.dask.org/en/latest/) can adapt the cluster size dynamically based on current load. Helps to scale up the cluster when necessary but scale it down and save resources when not actively computing. 
 - [Benchmarks](https://matthewrocklin.com/blog/work/2017/07/03/scaling).
-- When reading/ writing very large arrays to .tif  sometimes error (random, hard to reproduce): `RasterioIOError: file used by other process` followed by `distributed.worker - WARNING - Compute Failed`. Current workaround to avoid computation failure is to catch the exception in `rasterio.__init__.py", line 230, in open`, wait for 5 s and try to acquire the lock again. Change the lines 230 - 232 to (first try without this and see if error comes up, it is not ideal to make changes in  rasterio module; `rasterio-1.2.10`):
+- When reading/ writing very large arrays to .tif  sometimes error (random, hard to reproduce): `RasterioIOError: file used by other process` followed by `distributed.worker - WARNING - Compute Failed`. Current workaround to avoid computation failure is to catch the exception in `rasterio.__init__.py", line 230, in open`, wait for 5 s and try to acquire the lock again. Change the lines 230 - 232 to (first try without this and see if error comes up, it is not ideal to make changes in  rasterio module; `rasterio-1.2.10`). Also `to_zarr` works fine, so look more into this, when final desired output is defined (format, chunks saved separately,..wait for specification of what final output should be):
 ~~Adding `windowed = True` argument when writing to tif (`xr.rio.to_raster(...)`) seems to resolve this issue (but is has not been thoroughly tested).~~
 ```diff
 - s = get_writer_for_path(path, driver=driver)(
