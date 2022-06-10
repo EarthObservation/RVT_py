@@ -47,8 +47,8 @@ save_8bit = False
 save_VAT_general = True
 save_VAT_flat = False
 # chunksize_mib = ["8MiB", "16MiB", "32MiB", "64MiB", "128MiB", "256MiB", "512MiB"]  ##try different chunksizes
-# chunksize_mib = ["16MiB", "32MiB", "64MiB", "128MiB" , "256MiB", "512MiB"] ## larger images
-chunksize_mib = ["1MiB", "2MiB", "4MiB", "8MiB" , "16MiB", "32MiB"]   ##smaller images
+chunksize_mib = ["16MiB", "32MiB", "64MiB", "128MiB" , "256MiB", "512MiB"] ## larger images
+# chunksize_mib = ["1MiB", "2MiB", "4MiB", "8MiB" , "16MiB", "32MiB"]   ##smaller images
 
 
 def combined_VAT(input_dir_path, output_dir_path, 
@@ -135,9 +135,11 @@ def compute_save_VAT_combined(general_combination, flat_combination, general_def
                               save_VAT_flat, out_comb_vat_flat_path):
     dict_arr_res_nd = rvt.default.get_raster_dask_arr(raster_path=input_dem_path)  ## this is lazy load, option to:
    
-    da_arr = dict_arr_res_nd['array']                                   ## compute entire array
+    ## Option 1: compute entire array
+    da_arr = dict_arr_res_nd['array']                                
+    ## Option 2: or compute only desired region of the array, e.g. part of very large raster
     # h, w = dict_arr_res_nd['array'].shape
-    # da_arr = dict_arr_res_nd['array'][0 : h//4, w//4: 3 * w//4]           ## or compute only desired region of the array, e.g. part of very large raster
+    # da_arr = dict_arr_res_nd['array'][0 : h//4, w//4: 3 * w//4]           
 
     # create and blend VAT general
     general_combination.add_dem_arr(dem_arr = da_arr,
@@ -191,23 +193,30 @@ def txt_output(output_file_path, output_file):
         json.dump(output_file, outf)
     return 0
 
+def get_cluster_resources():
+    """ Get number of cores and the amount of total memory available."""
+    cluster = LocalCluster()
+    client = Client(cluster)
+    total_nr_cores = sum(client.ncores().values())            ## get total number of cores, do this once
+    client.close()
+    client.shutdown()
+    total_memory = psutil.virtual_memory().total >> 30          ## bytes, shift to GB (aprox, rounding error)
+    print(f"LocalCluster: total available cores: {total_nr_cores}, total memory: {total_memory} GB")
+
+    return total_nr_cores, total_memory
+
 # Program start
 if __name__ == '__main__':
+    total_cores, total_memory = get_cluster_resources()
 
-    # cluster = LocalCluster()
-    # client = Client(cluster)
-    # total_cores = sum(client.ncores().values())            ## get total number of cores, do this once
-    # client.shutdown()
-
-    tot_memory = psutil.virtual_memory().total >> 30          ## bytes, shift to GB (aprox, rounding error)
-    total_cores = 16
-    workers_threads_pairs = [(1, total_cores), (2, total_cores//2), (4, total_cores//4)]
+    # total_cores = 16
+    workers_threads_pairs = [(4, total_cores//4), (2, total_cores//2), (1, total_cores)]
     # workers_threads_pairs = [(1, total_cores - 2), (2, total_cores//2 - 2), (4, total_cores//4 - 2)] ### don't use all cores, for example - 2 threads per worker
     
     out=[]
     for n_workrs, n_thrds in workers_threads_pairs:
         for chunksize in chunksize_mib:
-            # print(n_workrs, n_thrds)
+            print(f"Starting LocalCluster with: {n_workrs} workers and {n_thrds} threads per worker.\nArray chunksize: {chunksize}.")
             cluster = LocalCluster(n_workers = n_workrs, threads_per_worker = n_thrds,
                                     # memory_limit = f'{tot_memory // n_workrs}GB')    ## set memory limit (pauses workers)
                                     memory_limit = None)
@@ -248,10 +257,11 @@ if __name__ == '__main__':
 
             finally:
                 out.append(record)
+                print("Closing client.")
+                client.close()
                 client.shutdown()
                 time.sleep(2)
                 gc.collect()   #garbage collection, force (not sure if this does anything)
 
     outfile = os.path.join(output_dir_path, 'all_results.txt')  ###save all results joined
     txt_output(output_file_path=outfile, output_file = out)
-
