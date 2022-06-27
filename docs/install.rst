@@ -66,7 +66,7 @@ The RVT QGIS plugin uses the RVT python (core) library. To use RVT in QGIS, firs
 
 Search for ``RVT`` or ``Relief Visualization Toolbox`` and select ``Install Plugin``.
 
-Once the plugin is installed, it can be accessed from the ``Raster menu`` or just click the icon that should appear on the toolbar. All the visualization functions are also available as processing functions in the ``Processing toolbox``.
+Once the plugin is installed, it can be accessed from the ``Raster menu`` or by selecting the icon that should appear on the toolbar. All the visualization functions are also available as processing functions in the ``Processing toolbox``.
 
 The RVT QGIS plugin can also be downloaded from the `QGIS Python Plugins Repository <https://plugins.qgis.org/plugins/rvt-qgis/>`_.
 
