@@ -3,6 +3,12 @@
 Installation
 ============
 
+Contents
+--------
+.. toctree::
+
+    install
+
 Requirements
 ------------
 
@@ -71,7 +77,3 @@ Once the plugin is installed, it can be accessed from the ``Raster menu`` or by 
 The RVT QGIS plugin can also be downloaded from the `QGIS Python Plugins Repository <https://plugins.qgis.org/plugins/rvt-qgis/>`_.
 
    .. image:: ./figures/rvt_qgis_plugins.png
- 
-.. toctree::
-
-    install
