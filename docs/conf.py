@@ -69,6 +69,8 @@ bibtex_bibfiles = ['RVT.bib']
 # html_theme = 'sphinx_rtd_theme'
 html_theme = 'furo'
 
+html_theme_options = {'navigation_depth': -1}
+
 # Logo
 html_logo = './figures/RVT_head.png'
 
