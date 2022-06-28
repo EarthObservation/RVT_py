@@ -68,7 +68,7 @@ This project is licensed under the terms of the `Apache License <http://www.apac
 © Copyright 2010-2021 ZRC SAZU and University of Ljubljana
 
 .. toctree::
-   :hidden:
+   :maxdepth: 2
    
    install
    quickstart
