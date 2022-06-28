@@ -72,3 +72,6 @@ The RVT QGIS plugin can also be downloaded from the `QGIS Python Plugins Reposit
 
    .. image:: ./figures/rvt_qgis_plugins.png
  
+.. toctree::
+
+    install
