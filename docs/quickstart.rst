@@ -3,19 +3,28 @@
 Getting Started
 ===============
 
-Bellow you have basic explanation how to use ``rvt``, if you need detailed explanation look into :ref:`Examples`.
+This section gives a basic explanation of how to use ``rvt``. 
+
+More detailed explanations of how to use ``rvt`` can be found in :ref:`Examples` and also in the following files in the GitHub repository:
+
+.. code-block:: python
+
+    test_vis.py
+    test_blend.py
+    test_default.py
+    test_custom_color_scheme.py
+
+If you need some data to get started, a `small sample dataset <https://github.com/EarthObservation/RVT_py/blob/master/test_data/TM1_564_146.tif>`_ (2.43 MB) and a `larger sample dataset <https://rebrand.ly/rvt_demo>`_ (152 MB) are available for download. If you have cloned the repository, save the data in the ``test_data`` directory.
 
 .. _Reading and saving raster:
 
-Reading and saving raster
--------------------------
+Reading and saving raster data
+------------------------------
 
-For reading raster (DEM) from files (GeoTIFF) to numpy array we suggest you to use our ``rvt.default`` module (uses gdal).
+For reading raster data (DEMs) from files (GeoTIFFs) to a numpy array we suggest using the ``rvt.default`` module (which uses ``gdal``).
 You can also use ``rasterio``, ``gdal`` or any other module for reading and saving geo rasters.
 
-To read raster with ``rvt.default`` you first have to import module.
-Than call function ``rvt.default.get_raster_arr()`` to get dictionary with keys array (contains numpy array of raster),
-resolution (contains tuple(x resolution, y resolution)) and no_data (contains value of no_data). See example below:
+To read rasters with ``rvt.default``, first import the module. Then call the function ``rvt.default.get_raster_arr()`` to get a dictionary with keys array (contains numpy array of raster), resolution (contains tuple(x resolution, y resolution)) and no_data (contains value of no_data). See example below:
 
 .. code-block:: python
 
@@ -30,9 +39,9 @@ resolution (contains tuple(x resolution, y resolution)) and no_data (contains va
     dem_no_data = dem_dict["no_data"]  # returns value of no_data stored in DEM
 
 
-To save raster with ``rvt.default`` you also have to have imported module. Then you call function ``rvt.default.save_raster()``.
-You have to define function parameters: src_raster_path: source raster path (dem_path) to copy metadata, out_raster_path: path to new file (visualization tif), out_raster_arr: vizualization numpy array, no_data: value of no_data (visualizations return no data as np.nan).
-For example if you compute hillshade (with rvt.vis) in hillshade_arr from dem stored in dem_path location. And you wish to store this hillshade visualiztion to hillshade_path. Saving hillshade would look like:
+To save a raster with ``rvt.default``, import the module then call the function ``rvt.default.save_raster()``. You have to define the function parameters: ``src_raster_path``: source raster path (dem_path) to copy metadata, ``out_raster_path``: path to new file (visualization tif), ``out_raster_arr``: vizualization numpy array, ``no_data``: value of no_data (visualizations return no data as np.nan).
+
+For example, the example below would compute a hillshade (with rvt.vis) in hillshade_arr from a DEM stored in dem_path location, storing this hillshade visualization to hillshade_path:
 
 .. code-block:: python
 
@@ -44,12 +53,12 @@ For example if you compute hillshade (with rvt.vis) in hillshade_arr from dem st
 
 .. _module_vis:
 
-Module vis
+Vis module
 ----------
 
-Module ``rvt.vis`` contains visualization functions. Every function takes dem (as 2D numpy array) with parameters and outputs visualization (as 2D numpy array).
-For example to calculate hillshade you first have to import modules, read DEM (:ref:`Reading and saving raster`) and than call ``rvt.vis.hillshade()`` function with its parameters, then you can save visualization (:ref:`Reading and saving raster`).
-Example of calculating Hillshade with sun azimuth 315° and sun elevation 35°:
+The module ``rvt.vis`` contains visualization functions. Every function takes a DEM (as 2D numpy array) with parameters and outputs a visualization (as 2D numpy array).
+
+For example , to calculate a hillshade, first import the module, read the DEM (:ref:`Reading and saving raster`), call the ``rvt.vis.hillshade()`` function with its parameters, and save the visualization (:ref:`Reading and saving raster`). See example below for calculating a hillshade with sun azimuth 315° and sun elevation 35°:
 
 .. code-block:: python
 
@@ -57,22 +66,18 @@ Example of calculating Hillshade with sun azimuth 315° and sun elevation 35°:
 
     hillshade_arr = rvt.vis.hillshade(dem=dem_arr, sun_azimuth=315, sun_elevation=35, resolution_x=dem_x_resolution, resolution_y=dem_y_resolution, no_data=dem_no_data)
 
-
-To find more about visualization functions and to learn about their parameters look into :ref:`rvt.vis`.
+Find out more about visualization functions and their parameters in :ref:`rvt.vis`.
 
 .. _module_default:
 
-Module default
+Default module
 --------------
 
 For beginner python users we suggest using ``rvt.default`` instead of ``rvt.vis`` to calculate and store visualizations.
-As mentioned before ``rvt.default`` module contains functions to read and save rasters. This module was initially developed for GUI backend use.
-Default module also contains class ``DefaultValues()`` where we can store our visualization functions parameters.
-We can than call methods of this class for saving and computing visualizations with that parameters (methods use ``rvt.vis`` for computing visualizations).
 
+As mentioned before, ``rvt.default`` module contains functions to read and save rasters. This module was initially developed for GUI backend use. The default module also contains the class ``DefaultValues()`` where we can store our visualization functions parameters. We can then call the methods of this class for saving and computing visualizations with those parameters (these methods use ``rvt.vis`` for computing visualizations).
 
-For example to calculate and get or save hillshade with default module, we have to import module and create ``DefaultValues()`` class instance. Than we can change default parameters for hillshade (they are attributes of ``DefaultValues()``, their name starts with ``hs_``).
-After that we call method to get hillshade array or to save hillshade to GeoTIFF. Example:
+For example, to calculate and get or save a hillshade with the default module, we have to import the module and create a ``DefaultValues()`` class instance. Than we can change the default parameters for a hillshade (they are attributes of ``DefaultValues()``, their name starts with ``hs_``). After that we call the method to get the hillshade array or to save hillshade to GeoTIFF. See example below:
 
 .. code-block:: python
 
@@ -89,14 +94,13 @@ After that we call method to get hillshade array or to save hillshade to GeoTIFF
     # this method also uses set hillshade parameters and saves visualization as GeoTIFF in dem_path directory
     default.save_hillshade(dem_path=dem_path, save_float=True, save_8bit=True)  # if we want also 8bit version of result we set save_8bit=True
 
-
-Class ``DefaultValues()`` also contains methods: ``get_slope()``, ``save_slope()``, ``get_multi_hillshade()``, ``save_multi_hillshade()``, ``get_slrm()``,
+The ``DefaultValues()`` class also contains the methods: ``get_slope()``, ``save_slope()``, ``get_multi_hillshade()``, ``save_multi_hillshade()``, ``get_slrm()``,
 ``save_slrm()``, ``get_sky_view_factor()``, ``save_sky_view_factor()``, ``get_neg_opns()``, ``save_neg_opns()``, ``get_local_dominance()``, ``save_local_dominance()``,
-``get_sky_illumination()``, ``save_sky_illumination()``. Additional info (about methods and attributes of ``DefaultValues()`` class) is in :ref:`rvt.default`.
+``get_sky_illumination()``, ``save_sky_illumination()``.
 
+Find out more about the methods and attributes of the ``DefaultValues()`` class in :ref:`rvt.default`.
 
-Parameters of ``DefaultValues()`` instance can be saved to ``JSON`` configuration file which can be edited. Then you can load this file back and overwrite attributes (visualization functions parameters) values.
-Example how to do that:
+Parameters of a ``DefaultValues()`` instance can be saved to a ``JSON`` configuration file which can be edited. You can then load this file back and overwrite the attribute values (visualization functions parameters). See example below:
 
 .. code-block:: python
 
@@ -112,24 +116,25 @@ Example how to do that:
 
 .. _module_blend:
 
-Module blend
+Blend module
 ------------
 
-You can blend manually or automatically. When blending manually you have to define each layer (visualization) in python. Manually blending allows you to use visualizations that are not part of ``rvt``.
-Automatically blending automatically computes visualizations (they need to be a part of ``rvt``) and blends them together from configuration ``JSON`` file (can be edited).
+You can blend manually or automatically. When blending manually you have to define each layer (visualization) in python. Manually blending allows you to use visualizations that are not part of ``rvt``. Automatically blending automatically computes visualizations (they need to be a part of ``rvt``) and blends them together from configuration ``JSON`` file (can be edited).
 
-Main class of ``rvt.blend`` module for blending is ``BlenderCombination`` which has list attribute ``layers`` where are stored instances of class ``BlenderLayer``.
-In ``BlenderLayer`` instance in ``layers`` we store specific visualization and its parameters for blending. ``BlenderCombination`` class has method ``render_all_images()``,
-which blends all ``BlenderLayer`` instances (visualizations) in ``BlenderCombination.layers`` list together and outputs blended image.
+The main class of the ``rvt.blend`` module for blending is ``BlenderCombination`` which has list attribute ``layers`` where instances of class ``BlenderLayer`` are stored.
 
-Additional info is in :ref:`rvt.blend`.
+In ``BlenderLayer`` instances in ``layers`` we store a specific visualization and its parameters for blending. The ``BlenderCombination`` class has the method ``render_all_images()``, which blends together all ``BlenderLayer`` instances (visualizations) in the ``BlenderCombination.layers`` list and outputs the blended image.
+
+Find out more about blending in :ref:`rvt.blend`.
 
 Manual blending
 ^^^^^^^^^^^^^^^
 
-When blending you have to import ``rvt.blend`` module and create ``BlenderCombination`` instance.
-For adding layer (visualization) with parameters to combination you can call ``BlenderCombination.create_layer()`` (creates ``BlenderLayer`` instance and adds it to ``BlenderCombination.layers``).
-For example let's say you have already calculated Simple local relief model (slrm_arr), Slope (slope_arr) and Hillshade (hillshade_arr). Now you want to blend calculated visualizations together:
+When blending, you have to import the ``rvt.blend`` module and create a ``BlenderCombination`` instance. 
+
+For adding a layer (visualization) with parameters to a combination, you can call ``BlenderCombination.create_layer()``. This creates a ``BlenderLayer`` instance and adds it to ``BlenderCombination.layers``.
+
+For example, let's say you have already calculated the simple local relief model (slrm_arr), slope (slope_arr) and hillshade (hillshade_arr), and now you want to blend all the calculated visualizations together:
 
 .. code-block:: python
 
@@ -154,13 +159,14 @@ For example let's say you have already calculated Simple local relief model (slr
     # blend them all together, you can save blend to GeoTIFF if save_render_path presented (and dem_path is added) else it only returns array
     render_arr = combination_manual.render_all_images(save_render_path=output_blend_path)
 
+You can also let the ``BlenderCombination`` class automatically compute the visualization or give the path to a visualization. 
 
-You can also let ``BlenderCombination`` class to automatically computes visualization or give path to visualization.
-If you don't provide parameter image and vis_method parameter is correct (existing rvt visualization function) blender automatically calculates visualization.
-If you provide parameter image_path and not image (if you provide both image will be used), blender will read visualization from image_path.
-When you don't input image and image_path parameter, you have to add ``rvt.default.DefaultValues`` instance as parameter to ``BlenderCombination.render_all_images()``. Blender then takes parameters set in this class when calculating specific visualization.
-You also have to add dem array and its resolution.
-Example to use all three methods.
+If you don't provide parameter image, and vis_method parameter is correct (existing rvt visualization function), blender automatically calculates the visualization. 
+
+If you provide parameter image_path and not image (if you provide both image will be used), blender will read visualization from image_path. 
+
+If you don't input image and image_path parameter, you have to add an ``rvt.default.DefaultValues`` instance as a parameter to ``BlenderCombination.render_all_images()``. Blender then takes parameters set in this class when calculating specific visualization.
+You also have to add dem array and its resolution. See example below which uses all three methods:
 
 .. code-block:: python
 
@@ -200,8 +206,8 @@ You can always add as many layers as you want.
 Automatic blending
 ^^^^^^^^^^^^^^^^^^
 
-Automatic blending is blending from configuration ``JSON`` file. You can create file example and change it to suit your needs.
-To blend from file we create ``BlenderCombination()`` class, call method ``read_from_file()`` and then ``render_all_images()``. In ``render_all_images()`` method we can save (to dem_path directory) specific visualization if we set parameter ``save_visualization`` to True.
+Automatic blending is blending from a configuration ``JSON`` file. You can create an example file and change it to suit your needs.
+To blend from a file we create the ``BlenderCombination()`` class, call the method ``read_from_file()`` and then ``render_all_images()``. In the ``render_all_images()`` method we can save (to dem_path directory) a specific visualization if we set the parameter ``save_visualization`` to True.
 
 .. code-block:: python
 
@@ -223,22 +229,3 @@ To blend from file we create ``BlenderCombination()`` class, call method ``read_
 
     layers_auto.render_all_images(default=default, save_visualizations=True, save_render_path=output_blend_path,
                               save_float=True, save_8bit=True)  # if you also wish to save 8bit version
-
-
-Sample dataset
---------------
-
-A sample dataset for trying RVT python is available in git ``/test_data/TM1_564_146.tif``. Additional files are available here:
-
-`RVT Demo Data <https://rebrand.ly/rvt_demo>`_
-
-Download it, save it in ``test_data`` directory and try the visualisations.
-
-Examples on how to use are in :ref:`Examples`. Some examples are also in the following files in git:
-
-.. code-block:: python
-
-    test_vis.py
-    test_blend.py
-    test_default.py
-    test_custom_color_scheme.py
