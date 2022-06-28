@@ -3,12 +3,6 @@
 Installation
 ============
 
-Contents
---------
-.. toctree::
-
-    install
-
 Requirements
 ------------
 
