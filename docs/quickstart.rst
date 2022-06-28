@@ -5,6 +5,9 @@ Getting Started
 
 This section gives a basic explanation of how to use ``rvt``. 
 
+.. toctree::
+    quickstart
+
 More detailed explanations of how to use ``rvt`` can be found in :ref:`Examples` and also in the following files in the GitHub repository:
 
 .. code-block:: python
