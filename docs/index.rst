@@ -72,9 +72,9 @@ This project is licensed under the terms of the `Apache License <http://www.apac
    
    install
    quickstart
-   examples
+   rvt
    arcgis
    qgis
-   rvt
+   examples
    releases
    bibliography
