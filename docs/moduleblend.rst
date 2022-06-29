@@ -1,7 +1,7 @@
 .. _module_blend:
 
-Blend module
-============
+Blending
+========
 
 You can blend manually or automatically.  
 
