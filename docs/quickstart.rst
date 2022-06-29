@@ -20,7 +20,7 @@ If you need some data to get started, a `small sample dataset <https://github.co
 **CONTENTS**
 
 .. toctree::
-    :maxdepth: 2:
+    :maxdepth: 2
 
     rasterdata
     creatingvis
