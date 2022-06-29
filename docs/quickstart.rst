@@ -5,11 +5,11 @@ Getting started
 
 The ``rvt`` python package contains three modules:
 
-**vis** (:ref:`rvt.vis`): for computing visualizations
+**vis** (:ref:`rvt.vis`) for computing visualizations
 
-**blend** (:ref:`rvt.blend`): for blending visualizations together
+**blend** (:ref:`rvt.blend`) for blending visualizations together
 
-**default** (:ref:`rvt.default`): for defining default parameters with methods to compute and save visualization functions using set parameters
+**default** (:ref:`rvt.default`) for defining default parameters with methods to compute and save visualization functions using set parameters
 
 This section gives a basic explanation of how to use ``rvt`` through these three modules. More detailed explanations of how to use ``rvt`` can be found in :ref:`Examples`
 
