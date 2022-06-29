@@ -1,7 +1,7 @@
-.. _module_blend:
+.. _blendingvis:
 
-Blending
-========
+Blending visualizations
+=======================
 
 You can blend manually or automatically.  
 
