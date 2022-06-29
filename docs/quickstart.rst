@@ -1,6 +1,6 @@
 .. _quickstart:
 
-Getting Started
+Getting started
 ===============
 
 The ``rvt`` python package contains three modules:
