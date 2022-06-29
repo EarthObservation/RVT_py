@@ -5,13 +5,15 @@ Blending visualizations
 
 You can blend manually or automatically.  
 
-Manually blending allows you to use visualizations that are not part of ``rvt``. When blending manually you have to define each layer (visualization) in python.
+Manual blending allows you to use visualizations that are not part of ``rvt``. When blending manually you have to define each layer (visualization) in python.
 
-Automatically blending automatically computes ``rvt`` visualizations and blends them together according to the configuration ``JSON`` file, which can be edited.
+Automatic blending automatically computes ``rvt`` visualizations and blends them together according to the configuration ``JSON`` file, which can be edited.
 
 The main class of the ``rvt.blend`` module for blending is ``BlenderCombination``, which has the list attribute ``layers`` where instances of class ``BlenderLayer`` are stored. In ``BlenderLayer`` instances in ``layers`` we store a specific visualization and its parameters for blending.
 
 The ``BlenderCombination`` class has the method ``render_all_images()``, which blends together all ``BlenderLayer`` instances (visualizations) in the ``BlenderCombination.layers`` list and outputs the blended image.
+
+----
 
 Manual blending
 ---------------
@@ -89,6 +91,8 @@ See example below which uses all three methods:
     render_arr = combination_manual.render_all_images(default=default)
 
 You can add as many layers as you want.
+
+----
 
 Automatic blending
 ------------------
