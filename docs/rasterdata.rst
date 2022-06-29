@@ -6,7 +6,12 @@ Reading and saving raster data
 For reading raster data (DEMs) from files (GeoTIFFs) to a numpy array we suggest using the ``rvt.default`` module (which uses ``gdal``).
 You can also use ``rasterio``, ``gdal`` or any other module for reading and saving geo rasters.
 
-To read rasters with ``rvt.default``, first import the module. Then call the function ``rvt.default.get_raster_arr()`` to get a dictionary with keys array (contains numpy array of raster), resolution (contains tuple(x resolution, y resolution)) and no_data (contains value of no_data). See example below:
+Reading raster data
+-------------------
+
+**Example**
+
+To read rasters with ``rvt.default``, first import the module. Then call the function ``rvt.default.get_raster_arr()`` to get a dictionary with keys array (contains numpy array of raster), resolution (contains tuple(x resolution, y resolution)) and no_data (contains value of no_data).
 
 .. code-block:: python
 
@@ -20,9 +25,14 @@ To read rasters with ``rvt.default``, first import the module. Then call the fun
     dem_y_resolution = dem_resolution_tuple[1]  # second element of resolution tuple is y direction resolution
     dem_no_data = dem_dict["no_data"]  # returns value of no_data stored in DEM
 
-To save a raster with ``rvt.default``, import the module then call the function ``rvt.default.save_raster()``. You have to define the function parameters: ``src_raster_path``: source raster path (dem_path) to copy metadata, ``out_raster_path``: path to new file (visualization tif), ``out_raster_arr``: vizualization numpy array, ``no_data``: value of no_data (visualizations return no data as np.nan).
+Saving raster data
+------------------
 
-For example, the example below would compute a hillshade (with rvt.vis) in hillshade_arr from a DEM stored in dem_path location, storing this hillshade visualization to hillshade_path:
+**Example**
+
+To save a raster with ``rvt.default``, import the module, call the function ``rvt.default.save_raster()``, then define the function parameters: ``src_raster_path``: source raster path (dem_path) to copy metadata, ``out_raster_path``: path to new file (visualization tif), ``out_raster_arr``: vizualization numpy array, ``no_data``: value of no_data (visualizations return no data as np.nan).
+
+The example below would compute a hillshade (with rvt.vis) in hillshade_arr from a DEM stored in dem_path location, storing this hillshade visualization to hillshade_path.
 
 .. code-block:: python
 
