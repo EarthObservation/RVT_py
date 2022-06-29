@@ -69,7 +69,11 @@ bibtex_bibfiles = ['RVT.bib']
 # html_theme = 'sphinx_rtd_theme'
 html_theme = 'furo'
 
-html_theme_options = {'collapse_navigation': False, 'includehidden': True}
+# html_theme_options = {'collapse_navigation': False, 'includehidden': True}
+
+html_theme_options = {
+    "announcement": "🚧 This page is currently under construction 🚧",
+}
 
 # 'navigation_depth': 4,  'titles_only': False
 
