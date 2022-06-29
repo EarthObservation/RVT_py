@@ -22,9 +22,8 @@ If you need some data to get started, a `small sample dataset <https://github.co
 .. toctree::
 
     rasterdata
-    modulevis
-    moduleblend
-    moduledefault
+    creatingvis
+    blendingvis
     
 
 
