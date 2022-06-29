@@ -71,6 +71,7 @@ The example below uses all three methods:
 
 .. code-block:: python
 
+    # import all required modules
     import rvt.blend
     import rvt.default
 
