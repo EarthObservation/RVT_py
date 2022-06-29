@@ -1,7 +1,7 @@
 .. _module_vis:
 
-Vis module
-==========
+Visualization
+=============
 
 The module ``rvt.vis`` contains the ``rvt`` visualization functions. 
 
