@@ -22,7 +22,7 @@ Let's say we need to calculate a hillshade with sun azimuth 315° and sun elevat
     # read the DEM 
     (:ref:`Reading and saving raster`)
     
-    # call the ``rvt.vis.hillshade()`` function with its parameters
+    # call the rvt.vis.hillshade() function with its parameters
     hillshade_arr = rvt.vis.hillshade(dem=dem_arr, sun_azimuth=315, sun_elevation=35, resolution_x=dem_x_resolution, resolution_y=dem_y_resolution, no_data=dem_no_data)
     
     # save the visualization 
@@ -52,7 +52,7 @@ To calculate, get or save a hillshade using ``rvt.default``:
     default = rvt.default.DefaultValues()
     
     # change hillshade parameters default values to our needs 
-    # (they are attributes of ``DefaultValues()``, their name starts with ``hs_``)
+    # (they are attributes of DefaultValues(), their name starts with hs_)
     default.hs_sun_el = 45
     default.hs_sun_azi = 300
     
