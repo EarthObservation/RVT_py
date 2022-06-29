@@ -3,7 +3,7 @@
 Blending visualizations
 =======================
 
-You can blend manually or automatically.  
+You can blend manually or automatically.
 
 Manual blending allows you to use visualizations that are not part of ``rvt``. When blending manually you have to define each layer (visualization) in python.
 
@@ -12,6 +12,8 @@ Automatic blending automatically computes ``rvt`` visualizations and blends them
 The main class of the ``rvt.blend`` module for blending is ``BlenderCombination``, which has the list attribute ``layers`` where instances of class ``BlenderLayer`` are stored. In ``BlenderLayer`` instances in ``layers`` we store a specific visualization and its parameters for blending.
 
 The ``BlenderCombination`` class has the method ``render_all_images()``, which blends together all ``BlenderLayer`` instances (visualizations) in the ``BlenderCombination.layers`` list and outputs the blended image.
+
+You can always add as many layers as you want.
 
 ----
 
@@ -22,7 +24,10 @@ Import the ``rvt.blend`` module and create a ``BlenderCombination`` instance.
 
 To add a layer (visualization) with parameters to a combination, you can call ``BlenderCombination.create_layer()``. This creates a ``BlenderLayer`` instance and adds it to ``BlenderCombination.layers``.
 
-For example, let's say you have already calculated the simple local relief model (slrm_arr), slope (slope_arr) and hillshade (hillshade_arr), and now you want to blend all the calculated visualizations together:
+Example
+^^^^^^^
+
+Let's say you have already calculated the simple local relief model (slrm_arr), slope (slope_arr) and hillshade (hillshade_arr), and now you want to blend all the calculated visualizations together.
 
 .. code-block:: python
 
@@ -47,6 +52,9 @@ For example, let's say you have already calculated the simple local relief model
     # blend them all together, you can save blend to GeoTIFF if save_render_path presented (and dem_path is added) else it only returns array
     render_arr = combination_manual.render_all_images(save_render_path=output_blend_path)
 
+Example
+^^^^^^^
+
 You can also let the ``BlenderCombination`` class automatically compute the visualization or give the path to a visualization. 
 
 If you don't provide the image parameter, and the vis_method parameter is correct (existing rvt visualization function), blender automatically calculates the visualization. 
@@ -56,7 +64,7 @@ If you provide the image_path parameter and not the image parameter (if you prov
 If you don't input the image and image_path parameters, you have to add an ``rvt.default.DefaultValues`` instance as a parameter to ``BlenderCombination.render_all_images()``. Blender then takes the parameters set in this class when calculating specific visualizations.
 You also have to add dem array and its resolution. 
 
-See example below which uses all three methods:
+The example below uses all three methods.
 
 .. code-block:: python
 
@@ -90,14 +98,16 @@ See example below which uses all three methods:
     # blend them all together and add default where are defined slrm parameters
     render_arr = combination_manual.render_all_images(default=default)
 
-You can add as many layers as you want.
-
 ----
 
 Automatic blending
 ------------------
 
 Automatic blending is blending from a configuration ``JSON`` file. You can create an example file and change it to suit your needs.
+
+
+Example
+^^^^^^^
 
 To blend from a file, create the ``BlenderCombination()`` class, call the method ``read_from_file()`` and then ``render_all_images()``. In the ``render_all_images()`` method we can save a specific visualization (to dem_path directory) if we set the parameter ``save_visualization`` to True.
 
@@ -121,7 +131,5 @@ To blend from a file, create the ``BlenderCombination()`` class, call the method
 
     layers_auto.render_all_images(default=default, save_visualizations=True, save_render_path=output_blend_path,
                               save_float=True, save_8bit=True)  # if you also wish to save 8bit version
-                              
-----
 
-Find out more about blending in :ref:`rvt.blend`.
+.. seealso:: Find out more about blending in :ref:`rvt.blend`.
