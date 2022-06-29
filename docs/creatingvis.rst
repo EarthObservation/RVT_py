@@ -8,20 +8,25 @@ Visualizations with rvt.vis
 
 The module ``rvt.vis`` contains the ``rvt`` visualization functions. 
 
-Every function takes a DEM (as 2D numpy array) with parameters and outputs a visualization (as 2D numpy array).
+Every function takes a DEM (as 2D numpy array) with parameters, and outputs a visualization (as 2D numpy array).
 
-Example
-^^^^^^^
+**Example**
 
-To calculate a hillshade, first import the module, read the DEM (:ref:`Reading and saving raster`), call the ``rvt.vis.hillshade()`` function with its parameters, and save the visualization (:ref:`Reading and saving raster`). 
-
-Calculating a hillshade with sun azimuth 315° and sun elevation 35°):
+Let's say we need to calculate a hillshade with sun azimuth 315° and sun elevation 35°:
 
 .. code-block:: python
 
+    # import the module
     import rvt.vis
-
+    
+    # read the DEM 
+    (:ref:`Reading and saving raster`)
+    
+    # call the ``rvt.vis.hillshade()`` function with its parameters
     hillshade_arr = rvt.vis.hillshade(dem=dem_arr, sun_azimuth=315, sun_elevation=35, resolution_x=dem_x_resolution, resolution_y=dem_y_resolution, no_data=dem_no_data)
+    
+    # save the visualization 
+    (:ref:`Reading and saving raster`).
 
 .. seealso:: Find out more about visualization functions and their parameters in :ref:`rvt.vis`.
 
@@ -34,43 +39,50 @@ For beginner python users we suggest using ``rvt.default`` instead of ``rvt.vis`
 
 As well as containing functions to read and save rasters, ``rvt.default`` also contains the class ``DefaultValues()`` where we can store our visualization functions parameters. We can call the methods of this class for saving and computing visualizations with those parameters (these methods use ``rvt.vis`` for computing visualizations).
 
-Example
-^^^^^^^
+**Example**
 
-To calculate and get or save a hillshade with ``rvt.default``, first import the module and create a ``DefaultValues()`` class instance. Then we can change the default parameters for a hillshade (they are attributes of ``DefaultValues()``, their name starts with ``hs_``). After that, call the method to get the hillshade array or to save the hillshade to GeoTIFF:
+To calculate, get or save a hillshade using ``rvt.default``:
 
 .. code-block:: python
 
+    #  import the module 
     import rvt.default
 
-    # create DefaultValues() instance
+    # create a DefaultValues() class instance
     default = rvt.default.DefaultValues()
-    # change hillshade parameters default values to our needs
+    
+    # change hillshade parameters default values to our needs 
+    # (they are attributes of ``DefaultValues()``, their name starts with ``hs_``)
     default.hs_sun_el = 45
     default.hs_sun_azi = 300
-    # call default.get_hillshade() method which uses set parameters and returns hillshade numpy array
-    hillshade_arr = default.get_hillshade(dem_arr=dem_arr, resolution_x=dem_x_resolution, resolution_y=dem_y_resolution, no_data=dem_no_data)
-    # if we don't need hillshade array and we just want to save hillshade we can directly call default.save_hillshade() method
-    # this method also uses set hillshade parameters and saves visualization as GeoTIFF in dem_path directory
-    default.save_hillshade(dem_path=dem_path, save_float=True, save_8bit=True)  # if we want also 8bit version of result we set save_8bit=True
     
+    # call the method default.get_hillshade() which uses the set parameters and returns the hillshade numpy array
+    hillshade_arr = default.get_hillshade(dem_arr=dem_arr, resolution_x=dem_x_resolution, resolution_y=dem_y_resolution, no_data=dem_no_data)
+    
+    # if we don't need the hillshade array and we just want to save hillshade, we can directly call the default.save_hillshade() method
+    # this method also uses the set hillshade parameters and saves visualization as GeoTIFF in dem_path directory
+    # if we also want the 8bit version of the result we set save_8bit=True
+    default.save_hillshade(dem_path=dem_path, save_float=True, save_8bit=True)  
    
 Configuring visualization parameters
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Parameters of a ``DefaultValues()`` instance can be saved to a ``JSON`` configuration file which can be edited. You can then load this file back and overwrite the attribute values (or visualization functions parameters).
 
-Example
-^^^^^^^
+**Example**
 
 .. code-block:: python
 
     import rvt.default
 
     default = rvt.default.DefaultValues()
-    config_json_path = r"C:/rvt_default_values.json"  # change path to where you would like to save config file
+    
+    # change path to where you would like to save config file
+    config_json_path = r"C:/rvt_default_values.json"
+    
     # save set attributes values to JSON configuration file
     default.save_default_to_file(file_path=config_json_path)
+    
     # overwrite DefaultValues() instance (default) attributes values from config file
     default.read_default_from_file(file_path=config_json_path)
    
