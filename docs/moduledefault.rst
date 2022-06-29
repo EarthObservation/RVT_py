@@ -1,9 +1,9 @@
-Default module
+Default values
 ==============
 
 For beginner python users we suggest using ``rvt.default`` instead of ``rvt.vis`` to calculate and store visualizations.
 
-As mentioned before, ``rvt.default`` module contains functions to read and save rasters. This module was initially developed for GUI backend use. The default module also contains the class ``DefaultValues()`` where we can store our visualization functions parameters. We can then call the methods of this class for saving and computing visualizations with those parameters (these methods use ``rvt.vis`` for computing visualizations).
+The ``rvt.default`` module contains functions to read and save rasters. This module was initially developed for GUI backend use. The default module also contains the class ``DefaultValues()`` where we can store our visualization functions parameters. We can then call the methods of this class for saving and computing visualizations with those parameters (these methods use ``rvt.vis`` for computing visualizations).
 
 For example, to calculate and get or save a hillshade with the default module, first import the module and create a ``DefaultValues()`` class instance. Then we can change the default parameters for a hillshade (they are attributes of ``DefaultValues()``, their name starts with ``hs_``). After that, call the method to get the hillshade array or to save hillshade to GeoTIFF. See example below:
 
