@@ -1,6 +1,6 @@
 .. _rvt:
 
-RVT Python Package
+RVT python package
 ==================
 
 The RVT Python package (`rvt`) contains three modules:
