@@ -6,35 +6,24 @@
 Relief Visualization Toolbox
 ============================
 
-Relief Visualization Toolbox was produced to help scientist visualize raster elevation model datasets. We have narrowed down the selection to include techniques that have proven to be effective for identification of small scale features. Default settings therefore assume working with high resolution digital elevation models, derived from airborne laser scanning missions (lidar).
+Relief Visualization Toolbox was produced to help scientists visualize raster elevation model datasets. We have narrowed down the selection to include techniques that have proven to be effective for identification of small scale features. The default settings therefore assume working with high resolution digital elevation models derived from airborne laser scanning missions (lidar).
 
-Despite this, techniques are also used for different other purposes. Sky-view factor, for example, can be efficiently used in numerous studies where digital elevation model visualizations and automatic feature extraction techniques are indispensable, e.g. in geography, archeology,  geomorphology, cartography, hydrology, glaciology, forestry and disaster management. It can be used even in engineering applications, such as, predicting the availability of the GPS signal in urban areas.
+Methods from the Relief Visualization Toolbox can also be used for other purposes. Sky-view factor, for example, can be efficiently used in numerous studies where digital elevation model visualizations and automatic feature extraction techniques are indispensable, e.g. in geography, archaeology,  geomorphology, cartography, hydrology, glaciology, forestry and disaster management. It can even be used in engineering applications, such as predicting the availability of the GPS signal in urban areas.
 
 Methods currently implemented are:
 
-*   hillshading,
-*   hillshading from multiple directions,
-*   slope gradient,
-*   simple local relief model,
-*   multi-scale relief model,
-*   sky illumination,
-*   sky-view factor (as developed by our team),
-*   anisotropic sky-view factor,
-*   positive and negative openness,
-*   local dominance.
+*   hillshading
+*   hillshading from multiple directions
+*   slope gradient
+*   simple local relief model
+*   multi-scale relief model
+*   sky illumination
+*   sky-view factor (as developed by our team)
+*   anisotropic sky-view factor
+*   positive and negative openness
+*   local dominance
 
 .. image:: ./figures/RVT_visualisations.jpg
-
-For a more detailed description see references given at each method in the manual and a comparative paper describing them (e.g. Kokalj and Hesse 2017, see below).
-
-RVT Python package called `rvt` contains modules:
-
-* vis (:ref:`rvt.vis`) - visualization functions (mentioned above), for computing visualizations;
-
-* blend (:ref:`rvt.blend`) - blender (mixer), for blending visualizations;
-
-* default (:ref:`rvt.default`) - default values, class for defining default parameters with methods to compute and save visualization functions using set parameters.
-
 
 References
 ----------
@@ -44,6 +33,12 @@ When using the tools, please cite:
 *   Kokalj, Ž., Somrak, M. 2019. `Why Not a Single Image? Combining Visualizations to Facilitate Fieldwork and On-Screen Mapping <https://www.mdpi.com/2072-4292/11/7/747>`_. Remote Sensing 11(7): 747.
 *   Zakšek, K., Oštir, K., Kokalj, Ž. 2011. `Sky-View Factor as a Relief Visualization Technique <https://www.mdpi.com/2072-4292/3/2/398>`_. Remote Sensing 3: 398-415.
 *   Kokalj, Ž., Zakšek, K., Oštir, K. 2011. `Application of Sky-View Factor for the Visualization of Historic Landscape Features in Lidar-Derived Relief Models <https://www.cambridge.org/core/journals/antiquity/article/application-of-skyview-factor-for-the-visualisation-of-historic-landscape-features-in-lidarderived-relief-models/653F5AE9086CE2028974934C3BBDC104>`_. Antiquity 85, 327: 263-273.
+
+Further reading
+---------------
+
+*   Kokalj, Žiga, Ralf Hesse. 2017. `Airborne laser scanning raster data visualization: A Guide to Good Practice <https://omp.zrc-sazu.si/zalozba/catalog/book/824>`_. Ljubljana: Založba ZRC. (a comparative guide describing each method)
+
 
 Contributing
 ------------
