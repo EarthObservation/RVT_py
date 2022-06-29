@@ -23,7 +23,7 @@ Manual blending
 Example
 ^^^^^^^
 
-Let's say we have already calculated the simple local relief model (slrm_arr), slope (slope_arr) and hillshade (hillshade_arr), and now need to blend all the calculated visualizations together.
+Let's say we have already calculated the simple local relief model (slrm_arr), slope (slope_arr) and hillshade (hillshade_arr), and now need to blend all the calculated visualizations together:
 
 .. code-block:: python
     
@@ -67,7 +67,7 @@ If you **don't** provide the **image and image_path** parameters, you have to ad
 You also have to add dem array and its resolution. 
 
 
-The example below uses all three methods.
+The example below uses all three methods:
 
 .. code-block:: python
 
