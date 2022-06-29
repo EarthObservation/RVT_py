@@ -5,11 +5,11 @@ Getting started
 
 The ``rvt`` python package contains three modules:
 
-**:ref:`rvt.vis`** for computing visualizations
+**vis** (:ref:`rvt.vis`) for computing visualizations
 
-**:ref:`rvt.blend`** for blending visualizations together
+**blend** (:ref:`rvt.blend`) for blending visualizations together
 
-**:ref:`rvt.default`** for defining default parameters with methods to compute and save visualization functions using set parameters
+**default** (:ref:`rvt.default`) for defining default parameters with methods to compute and save visualization functions using set parameters
 
 This section gives a basic explanation of how to use ``rvt`` through these three modules. More detailed explanations of how to use ``rvt`` can be found in :ref:`Examples`
 
@@ -20,8 +20,9 @@ If you need some data to get started, a `small sample dataset <https://github.co
 **CONTENTS**
 
 .. toctree::
+    :maxdepth: 2:
 
     rasterdata
     creatingvis
     blendingvis
-    
+   
