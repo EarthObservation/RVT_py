@@ -72,7 +72,7 @@ html_theme = 'furo'
 # html_theme_options = {'collapse_navigation': False, 'includehidden': True}
 
 html_theme_options = {
-    "announcement": "🚧 This page is currently under construction 🚧",
+    "announcement": "🚧 This page is currently being updated 😊",
 }
 
 # 'navigation_depth': 4,  'titles_only': False
