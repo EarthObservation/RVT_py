@@ -20,7 +20,6 @@ To read rasters with ``rvt.default``, first import the module. Then call the fun
     dem_y_resolution = dem_resolution_tuple[1]  # second element of resolution tuple is y direction resolution
     dem_no_data = dem_dict["no_data"]  # returns value of no_data stored in DEM
 
-
 To save a raster with ``rvt.default``, import the module then call the function ``rvt.default.save_raster()``. You have to define the function parameters: ``src_raster_path``: source raster path (dem_path) to copy metadata, ``out_raster_path``: path to new file (visualization tif), ``out_raster_arr``: vizualization numpy array, ``no_data``: value of no_data (visualizations return no data as np.nan).
 
 For example, the example below would compute a hillshade (with rvt.vis) in hillshade_arr from a DEM stored in dem_path location, storing this hillshade visualization to hillshade_path:
@@ -31,3 +30,5 @@ For example, the example below would compute a hillshade (with rvt.vis) in hills
     import numpy as np
 
     rvt.default.save_raster(src_raster_path=dem_path, out_raster_path=hillshade_path, out_raster_arr=hillshade_arr, no_data=np.nan)
+    
+.. seealso:: Find out more about defining default values in :ref:`rvt.default`.
