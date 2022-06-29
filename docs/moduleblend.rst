@@ -14,7 +14,7 @@ The main class of the ``rvt.blend`` module for blending is ``BlenderCombination`
 The ``BlenderCombination`` class has the method ``render_all_images()``, which blends together all ``BlenderLayer`` instances (visualizations) in the ``BlenderCombination.layers`` list and outputs the blended image.
 
 Manual blending
-^^^^^^^^^^^^^^^
+---------------
 
 Import the ``rvt.blend`` module and create a ``BlenderCombination`` instance. 
 
@@ -91,7 +91,7 @@ See example below which uses all three methods:
 You can add as many layers as you want.
 
 Automatic blending
-^^^^^^^^^^^^^^^^^^
+------------------
 
 Automatic blending is blending from a configuration ``JSON`` file. You can create an example file and change it to suit your needs.
 
