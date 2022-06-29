@@ -23,8 +23,8 @@ If you need some data to get started, a `small sample dataset <https://github.co
 
     rasterdata
     modulevis
-    moduledefault
     moduleblend
+    moduledefault
     
 
 
