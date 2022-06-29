@@ -1,6 +1,6 @@
 .. _qgis_releases:
 
-QGIS Plugin Release history
+QGIS plugin release history
 ===========================
 
 v0.9.2
