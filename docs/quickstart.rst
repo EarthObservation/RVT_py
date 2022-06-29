@@ -3,10 +3,16 @@
 Getting Started
 ===============
 
-This section gives a basic explanation of how to use ``rvt``. 
+**CONTENTS**
 
 .. toctree::
     quickstart
+    
+----
+
+Introduction
+------------
+This section gives a basic explanation of how to use ``rvt``. 
 
 More detailed explanations of how to use ``rvt`` can be found in :ref:`Examples` and also in the following files in the GitHub repository:
 
@@ -18,6 +24,8 @@ More detailed explanations of how to use ``rvt`` can be found in :ref:`Examples`
     test_custom_color_scheme.py
 
 If you need some data to get started, a `small sample dataset <https://github.com/EarthObservation/RVT_py/blob/master/test_data/TM1_564_146.tif>`_ (2.43 MB) and a `larger sample dataset <https://rebrand.ly/rvt_demo>`_ (152 MB) are available for download. If you have cloned the repository, save the data in the ``test_data`` directory.
+
+----
 
 .. _Reading and saving raster:
 
@@ -53,6 +61,7 @@ For example, the example below would compute a hillshade (with rvt.vis) in hills
 
     rvt.default.save_raster(src_raster_path=dem_path, out_raster_path=hillshade_path, out_raster_arr=hillshade_arr, no_data=np.nan)
 
+----
 
 .. _module_vis:
 
@@ -70,6 +79,8 @@ For example , to calculate a hillshade, first import the module, read the DEM (:
     hillshade_arr = rvt.vis.hillshade(dem=dem_arr, sun_azimuth=315, sun_elevation=35, resolution_x=dem_x_resolution, resolution_y=dem_y_resolution, no_data=dem_no_data)
 
 Find out more about visualization functions and their parameters in :ref:`rvt.vis`.
+
+----
 
 .. _module_default:
 
@@ -116,6 +127,7 @@ Parameters of a ``DefaultValues()`` instance can be saved to a ``JSON`` configur
     # overwrite DefaultValues() instance (default) attributes values from config file
     default.read_default_from_file(file_path=config_json_path)
 
+----
 
 .. _module_blend:
 
