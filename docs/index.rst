@@ -66,6 +66,7 @@ This project is licensed under the terms of the `Apache License <http://www.apac
    :hidden:
    
    install
+   listofvis
    quickstart
    rvt
    arcgis
