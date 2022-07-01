@@ -1,6 +1,6 @@
-.. _rvtpyreleases:
+.. _releases_rvtpy:
 
-RVT python package release history
+RVT Python package release history
 ==================================
 
 UNRELEASED

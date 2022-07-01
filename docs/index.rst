@@ -65,12 +65,12 @@ This project is licensed under the terms of the `Apache License <http://www.apac
 .. toctree::
    :hidden:
    
-   install
+   install_main
    listofvis
-   quickstart
-   rvt
-   arcgis
-   qgis
+   start_main
+   rvtfor_python
+   rvtfor_arcgis
+   rvtfor_qgis
    examples
-   releases
+   releases_main
    bibliography

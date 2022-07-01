@@ -50,11 +50,11 @@ Another option is to install required libraries and rvt-py with Python Package I
 
 `pip install rvt-py`
 
-This might not work, because pypi usually has problems installing gdal. To solve that first try to install gdal then run above command.
+This might not work, because pypi usually has problems installing GDAL. To solve that first try to install GDAL then run above command.
 
 ### requirements
 
-We suggest using an Anaconda environment (easiest gdal installation) and Python 3.6 or higher. Required libraries with tested versions (could also work with other versions):
+We suggest using an Anaconda environment (easiest GDAL installation) and Python 3.6 or higher. Required libraries with tested versions (could also work with other versions):
 
 *   numpy 1.19.2
 *   scipy 1.5.2

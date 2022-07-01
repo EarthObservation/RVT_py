@@ -1,4 +1,4 @@
-.. _qgis_releases:
+.. _releases_qgis:
 
 QGIS plugin release history
 ===========================

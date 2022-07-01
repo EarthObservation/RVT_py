@@ -1,4 +1,4 @@
-.. _creating_vis:
+.. _start_vis:
 
 Creating a visualization
 ========================
@@ -20,13 +20,13 @@ Let's say we need to calculate a hillshade with sun azimuth 315° and sun elevat
     import rvt.vis
     
     # read the DEM 
-    # Follow the steps in :ref:`Reading and saving raster`
+    # Follow the steps in :ref:`start_raster`
     
     # call the rvt.vis.hillshade() function with its parameters
     hillshade_arr = rvt.vis.hillshade(dem=dem_arr, sun_azimuth=315, sun_elevation=35, resolution_x=dem_x_resolution, resolution_y=dem_y_resolution, no_data=dem_no_data)
     
     # save the visualization 
-    # Follow the steps in :ref:`Reading and saving raster`
+    # Follow the steps in :ref:`start_raster`
 
 .. seealso:: Find out more about visualization functions and their parameters in :ref:`rvt.vis`.
 

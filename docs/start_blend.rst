@@ -1,4 +1,4 @@
-.. _blendingvis:
+.. _start_blend:
 
 Blending visualizations
 =======================

@@ -1,14 +1,9 @@
-.. _qgis:
+.. _rvtfor_qgis:
 
-QGIS plugin
-===========
+RVT for QGIS
+============
 
-**CONTENTS**
-
-.. toctree::
-    qgis
-    
-----
+The RVT QGIS plugin uses the core RVT python package. The plugin interface offers a user-friendly way to access all the functionality of the python package.
 
 Setting up
 ----------
