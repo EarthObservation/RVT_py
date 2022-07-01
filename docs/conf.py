@@ -69,13 +69,7 @@ bibtex_bibfiles = ['RVT.bib']
 # html_theme = 'sphinx_rtd_theme'
 html_theme = 'furo'
 
-# html_theme_options = {'collapse_navigation': False, 'includehidden': True}
-
-html_theme_options = {
-    "announcement": "🚧 This page is currently being updated 😊",
-}
-
-# 'navigation_depth': 4,  'titles_only': False
+# html_theme_options = {"announcement": "🚧 This page is currently being updated 😊"}
 
 # Logo
 html_logo = './figures/RVT_head.png'
@@ -89,7 +83,7 @@ html_static_path = []
 def setup(app):
     app.connect('autodoc-process-docstring', sphinx.ext.autodoc.between('Credits:', what=['module'], exclude=True))
 
-# Autommatiyally remove GDAL from imports
+# Automatically remove GDAL from imports
 autodoc_mock_imports = ['gdal', 'osgeo']
 
 # Copy examples to docs

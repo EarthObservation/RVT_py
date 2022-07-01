@@ -4,5 +4,5 @@ Release history
 ===============
 
 .. toctree:: 
-    rvtpyreleases
-    qgis_releases
+    releases_rvtpy
+    releases_qgis

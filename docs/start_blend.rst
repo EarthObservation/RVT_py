@@ -5,7 +5,7 @@ Blending visualizations
 
 You can blend manually or automatically.
 
-Manual blending allows you to use visualizations that are not part of ``rvt``. When blending manually you have to define each layer (visualization) in python.
+Manual blending allows you to use visualizations that are not part of ``rvt``. When blending manually you have to define each layer (visualization) in Python.
 
 Automatic blending automatically computes ``rvt`` visualizations and blends them together according to a configuration ``JSON`` file, which can be edited.
 
@@ -20,8 +20,7 @@ You can blend as many layers as you want.
 Manual blending
 ---------------
 
-Example
-^^^^^^^
+**Example**
 
 Let's say we have already calculated the simple local relief model (slrm_arr), slope (slope_arr) and hillshade (hillshade_arr), and now need to blend all the calculated visualizations together:
 
@@ -30,7 +29,7 @@ Let's say we have already calculated the simple local relief model (slrm_arr), s
     # import the module
     import rvt.blend
 
-    # create the BlenderCombination() class which will hold the layers (visualizations)
+    # create the BlenderCombination() class instance which will hold the layers (visualizations)
     combination_manual = rvt.blend.BlenderCombination()
 
     # call BlenderCombination.create_layer() to add a layer
@@ -47,25 +46,25 @@ Let's say we have already calculated the simple local relief model (slrm_arr), s
     combination_manual.create_layer(vis_method="Hillshade", normalization="value", minimum=0, maximum=1,
                               blend_mode="normal", opacity=100, image=hillshade_arr)
 
-    # if we wish to save the blended image to a file we need to add dem_path to combination (for metadata, geodata)
+    # if we want to save the blended image to a file, we need to
+    # add dem_path to the combination (for metadata, geodata)
     combination_manual.add_dem_path(dem_path=input_dem_path)
 
     # blend them all together
-    # you can save the blend to GeoTIFF if save_render_path presented (and dem_path is added), otherwise it only returns array
+    # you can save the blend to GeoTIFF if save_render_path presented 
+    # (and dem_path is added), otherwise it only returns array
     render_arr = combination_manual.render_all_images(save_render_path=output_blend_path)
 
-Example
-^^^^^^^
+**Example**
 
 You can also let the ``BlenderCombination`` class automatically compute the visualization or give the path to a visualization. 
 
-If you **don't** provide the **image** parameter, and the vis_method parameter is correct (existing ``rvt.vis`` function), blender automatically calculates the visualization. 
+If you **don't** provide the **image** parameter, and the vis_method parameter is correct (an existing ``rvt.vis`` function), blender automatically calculates the visualization. 
 
 If you **don't** provide the **image** parameter, but **do** provide the **image_path** parameter (if you provide both image will be used), blender will read the visualization from image_path.
 
 If you **don't** provide the **image and image_path** parameters, you have to add an ``rvt.default.DefaultValues`` instance as a parameter to ``BlenderCombination.render_all_images()``. Blender then takes the parameters set in this class when calculating specific visualizations.
 You also have to add dem array and its resolution. 
-
 
 The example below uses all three methods:
 
@@ -75,7 +74,7 @@ The example below uses all three methods:
     import rvt.blend
     import rvt.default
 
-    # create the BlenderCombination() class which will hold the layers (visualizations)
+    # create the BlenderCombination() class instance which will hold the layers (visualizations)
     combination_manual = rvt.blend.BlenderCombination()
 
     # we will let blender compute the slrm visualization 
@@ -112,8 +111,7 @@ Automatic blending
 
 Automatic blending is blending from a configuration ``JSON`` file. You can create a ``JSON`` file and change it to suit your needs.
 
-Example
-^^^^^^^
+**Example**
 
 .. code-block:: python
 

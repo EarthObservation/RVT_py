@@ -3,11 +3,13 @@
 Getting started
 ===============
 
-The ``rvt`` python package contains three modules:
+The ``rvt`` Python package contains three modules:
 
-**vis** (:ref:`rvt.vis`) for computing visualizations
-**blend** (:ref:`rvt.blend`) for blending visualizations together
-**default** (:ref:`rvt.default`) for defining default parameters with methods to compute and save visualization functions using set parameters
+* **vis** (:ref:`rvt.vis`) for computing visualizations
+
+* **blend** (:ref:`rvt.blend`) for blending visualizations together
+  
+* **default** (:ref:`rvt.default`) for defining default parameters with methods to compute and save visualization functions using set parameters
 
 This section explains how to complete some basic visualisation tasks using these modules.
 
@@ -15,11 +17,7 @@ If you need some data to get started, a `small sample dataset <https://github.co
 
 .. seealso:: For more detailed explanations of how to use ``rvt`` visit :ref:`rvtfor_python`
 
-.. important:: Carlos Carbajal has written an excellent two-part blog post on the use of RVT in Python and QGIS (in Spanish). Please have a look at:
-
-* `Uso del Relief Visualization Toolbox (RVT) con Python y QGIS - Parte 1 <https://carbajallosa.blogspot.com/2021/03/uso-del-relief-visualization-toolbox.html>`_
-
-* `Uso del Relief Visualization Toolbox (RVT) con Python y QGIS - Parte 2 <https://carbajallosa.blogspot.com/2021/03/uso-del-relief-visualization-toolbox_16.html>`_
+.. tip:: Carlos Carbajal has written an excellent two-part blog post on the use of RVT in Python and QGIS (in Spanish). You can check it out here: `Part 1 <https://carbajallosa.blogspot.com/2021/03/uso-del-relief-visualization-toolbox.html>`_ & `Part 2 <https://carbajallosa.blogspot.com/2021/03/uso-del-relief-visualization-toolbox_16.html>`_.
 
 ----
 

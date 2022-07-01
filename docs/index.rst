@@ -66,7 +66,6 @@ This project is licensed under the terms of the `Apache License <http://www.apac
    :hidden:
    
    install_main
-   listofvis
    start_main
    rvtfor_python
    rvtfor_arcgis

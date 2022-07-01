@@ -3,9 +3,9 @@
 Example notebooks
 =================
 
-This section contains example code in two Jupyter Notebooks for using the ``rvt.vis`` and ``rvt.default`` modules. 
+This section contains example code for using the ``rvt.vis`` and ``rvt.default`` modules in two Jupyter Notebooks. 
 
-Both notebooks are available in the `examples folder <https://github.com/EarthObservation/RVT_py/tree/master/examples>`_ in the RVT_py repository.
+Both notebooks are available in the `examples folder <https://github.com/EarthObservation/RVT_py/tree/master/examples>`_ in the repository.
 
 ----
 

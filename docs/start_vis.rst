@@ -8,7 +8,7 @@ Visualizations with rvt.vis
 
 The module ``rvt.vis`` contains the ``rvt`` visualization functions. 
 
-Every function takes a DEM (as 2D numpy array) with parameters, and outputs a visualization (as 2D numpy array).
+Every function takes a DEM (as a 2D numpy array) with parameters, and outputs a visualization (as a 2D numpy array).
 
 **Example**
 
@@ -20,13 +20,20 @@ Let's say we need to calculate a hillshade with sun azimuth 315° and sun elevat
     import rvt.vis
     
     # read the DEM 
-    # Follow the steps in :ref:`start_raster`
+    # Follow the steps in `Reading raster data`
     
     # call the rvt.vis.hillshade() function with its parameters
-    hillshade_arr = rvt.vis.hillshade(dem=dem_arr, sun_azimuth=315, sun_elevation=35, resolution_x=dem_x_resolution, resolution_y=dem_y_resolution, no_data=dem_no_data)
+    hillshade_arr = rvt.vis.hillshade(
+        dem=dem_arr, 
+        sun_azimuth=315, 
+        sun_elevation=35, 
+        resolution_x=dem_x_resolution, 
+        resolution_y=dem_y_resolution, 
+        no_data=dem_no_data
+        )
     
     # save the visualization 
-    # Follow the steps in :ref:`start_raster`
+    # Follow the steps in `Saving raster data`
 
 .. seealso:: Find out more about visualization functions and their parameters in :ref:`rvt.vis`.
 
@@ -35,7 +42,7 @@ Let's say we need to calculate a hillshade with sun azimuth 315° and sun elevat
 Visualizations with rvt.default (beginner)
 ------------------------------------------
 
-For beginner python users we suggest using ``rvt.default`` instead of ``rvt.vis`` to calculate and store visualizations.
+For beginner Python users we suggest using ``rvt.default`` instead of ``rvt.vis`` to calculate and store visualizations.
 
 As well as containing functions to read and save rasters, ``rvt.default`` also contains the class ``DefaultValues()`` where we can store our visualization functions parameters. We can call the methods of this class for saving and computing visualizations with those parameters (these methods use ``rvt.vis`` for computing visualizations).
 
@@ -59,9 +66,11 @@ To calculate, get or save a hillshade using ``rvt.default``:
     # call the method default.get_hillshade() which uses the set parameters and returns the hillshade numpy array
     hillshade_arr = default.get_hillshade(dem_arr=dem_arr, resolution_x=dem_x_resolution, resolution_y=dem_y_resolution, no_data=dem_no_data)
     
-    # if we don't need the hillshade array and we just want to save hillshade, we can directly call the default.save_hillshade() method
-    # this method also uses the set hillshade parameters and saves visualization as GeoTIFF in dem_path directory
-    # if we also want the 8bit version of the result we set save_8bit=True
+    # if we don't need the hillshade array and we just want to save the
+    # hillshade, we can directly call the default.save_hillshade() method
+    # this method also uses the set hillshade parameters and saves the 
+    # visualization as a GeoTIFF in the dem_path directory
+    # to save the 8bit version of the result, set save_8bit=True
     default.save_hillshade(dem_path=dem_path, save_float=True, save_8bit=True)  
    
 Configuring visualization parameters
@@ -73,17 +82,19 @@ Parameters of a ``DefaultValues()`` instance can be saved to a ``JSON`` configur
 
 .. code-block:: python
 
+    # import the module
     import rvt.default
 
+    # create a DefaultValues() class instance
     default = rvt.default.DefaultValues()
     
-    # change path to where you would like to save config file
+    # change this path to where you would like to save the config file
     config_json_path = r"C:/rvt_default_values.json"
     
-    # save set attributes values to JSON configuration file
+    # save set attributes values to a JSON configuration file
     default.save_default_to_file(file_path=config_json_path)
     
-    # overwrite DefaultValues() instance (default) attributes values from config file
+    # overwrite the DefaultValues() instance (default) attributes values from the config file
     default.read_default_from_file(file_path=config_json_path)
    
 DefaultValues() class methods

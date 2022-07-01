@@ -3,7 +3,9 @@
 RVT for QGIS
 ============
 
-The RVT QGIS plugin uses the core RVT python package. The plugin interface offers a user-friendly way to access all the functionality of the python package.
+The RVT QGIS plugin uses the core RVT Python package. The plugin interface offers a user-friendly way to access all the functionality of the Python package.
+
+.. seealso:: Find out how to install RVT for QGIS in:ref:`install_qgis`.
 
 Setting up
 ----------
@@ -63,6 +65,6 @@ The blended image is stored as a GeoTIFF in the same folder as the input file or
 Using the processing functions
 ------------------------------
 
-#. In QGIS go to the ``Processing Toolbox → Relief visualization toolbox`` where all the Relief Visualization Toolbox visualization functions are accessible.
+#. Go to the ``Processing Toolbox → Relief visualization toolbox`` to access all the RVT visualization functions.
 
    .. image:: ./figures/rvt_qgis_processing_toolbox.png
