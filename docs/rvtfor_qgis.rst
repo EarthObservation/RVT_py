@@ -5,7 +5,7 @@ RVT for QGIS
 
 The RVT QGIS plugin uses the core RVT Python package. The plugin interface offers a user-friendly way to access all the functionality of the Python package.
 
-.. seealso:: Find out how to install RVT for QGIS in:ref:`install_qgis`.
+.. seealso:: Find out how to install RVT for QGIS in :ref:`install_qgis`.
 
 ----
 
