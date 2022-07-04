@@ -12,19 +12,23 @@ Unless otherwise referenced, the descriptions are simplified versions of the inf
 Getting started
 ---------------
 
-When choosing a visualization, it is recommended to always begin by looking at a hillshade of the area under investigation, as the provide the most ‘natural’ visual appearance of the topography and can help you decide which other techniques could work well.
+When choosing a visualization, it is recommended to always begin by looking at a hillshade of the area under investigation. They provide the most ‘natural’ visual appearance of the topography and can help you decide which other techniques could work well.
 
-If you need some help to get started after trying a hillshade, consider the type of archaeological feature you're working with:
+If you need some help to get started after trying a hillshade, consider the type of feature you're working with:
 
-**Table 1: Suitability of visualisation techniques for representing selected archaeological topographical features.**
    .. image:: ./figures/vissuitability.png
+      **Table 1: Suitability of visualisation techniques for representing selected archaeological topographical features.**
+
+----
 
 You can also try adding techniques from Table 2, in order from left to right, based on the topography of the area under investigation.
 
-**Table 1: Matrix for the suitability of visualisation techniques for selected archaeological relief features in different topographic settings.**
    .. image:: ./figures/vistechniques.png
+      **Table 2: Matrix for the suitability of visualisation techniques for selected archaeological relief features in different topographic settings.**
 
-Below is a visual version of the information provided in Table 2.
+----
+
+Here's a visual version of the information provided in Table 2.
    .. image:: ./figures/vistopography.png
 
 ----
