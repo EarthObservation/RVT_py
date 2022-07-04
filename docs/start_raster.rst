@@ -64,6 +64,11 @@ Let's say we wanted to use a DEM stored in ``dem_path`` to compute a hillshade  
     #   out_raster_path: path to new file (visualization tif), 
     #   out_raster_arr: vizualization numpy array, 
     #   no_data: value of no_data (visualizations return no data as np.nan)
-    rvt.default.save_raster(src_raster_path=dem_path, out_raster_path=hillshade_path, out_raster_arr=hillshade_arr, no_data=np.nan)
+    rvt.default.save_raster(
+        src_raster_path=dem_path, 
+        out_raster_path=hillshade_path, 
+        out_raster_arr=hillshade_arr, 
+        no_data=np.nan
+        )
     
 .. seealso:: Find out more about defining default values in :ref:`rvt.default`.

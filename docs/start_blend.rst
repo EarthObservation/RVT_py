@@ -35,16 +35,37 @@ Let's say we have already calculated the simple local relief model (slrm_arr), s
     # call BlenderCombination.create_layer() to add a layer
     # this creates a BlenderLayer instance and adds it to BlenderCombination.layers
     # 1st layer: Add slrm layer with 2% perc cuttoff on both sides, multiply blend mode and 25% opacity
-    combination_manual.create_layer(vis_method="Simple local relief model", normalization="perc", minimum=2, maximum=2,
-                              blend_mode="multiply", opacity=25, image=slrm_arr)
+    combination_manual.create_layer(
+        vis_method="Simple local relief model", 
+        normalization="perc", 
+        minimum=2, 
+        maximum=2,
+        blend_mode="multiply", 
+        opacity=25, 
+        image=slrm_arr
+        )
                               
     # 2nd layer: Add slope layer with value stretch from 0 to 51, luminosity blend mode and 50% opacity
-    combination_manual.create_layer(vis_method="Slope gradient", normalization="value", minimum=0, maximum=51,
-                              blend_mode="luminosity", opacity=50, image=slope_arr)
+    combination_manual.create_layer(
+        vis_method="Slope gradient", 
+        normalization="value", 
+        minimum=0, 
+        maximum=51,
+        blend_mode="luminosity", 
+        opacity=50, 
+        image=slope_arr
+        )
                               
     # 3rd layer: Add hillshade layer with value stretch from 0 to 1, normal blend mode and 100% opacity
-    combination_manual.create_layer(vis_method="Hillshade", normalization="value", minimum=0, maximum=1,
-                              blend_mode="normal", opacity=100, image=hillshade_arr)
+    combination_manual.create_layer(
+        vis_method="Hillshade", 
+        normalization="value", 
+        minimum=0, 
+        maximum=1,
+        blend_mode="normal", 
+        opacity=100, 
+        image=hillshade_arr
+        )
 
     # if we want to save the blended image to a file, we need to
     # add dem_path to the combination (for metadata, geodata)
@@ -85,18 +106,38 @@ The example below uses all three methods:
 
     # 1st layer: Add slrm layer with 2% perc cuttoff on both sides, multiply blend mode and 25% opacity
     # image and image_path parameters both not provided, so slrm is calculated automatically
-    combination_manual.create_layer(vis_method="Simple local relief model", normalization="perc", minimum=2, maximum=2,
-                              blend_mode="multiply", opacity=25)
+    combination_manual.create_layer(
+        vis_method="Simple local relief model",
+        normalization="perc", 
+        minimum=2, 
+        maximum=2,
+        blend_mode="multiply", 
+        opacity=25
+        )
                               
     # 2nd layer: Add slope layer with value stretch from 0 to 51, luminosity blend mode and 50% opacity
     # image_path parameter provided to slope, so slope is read from file
-    combination_manual.create_layer(vis_method="Slope gradient", normalization="value", minimum=0, maximum=51,
-                              blend_mode="luminosity", opacity=50, image_path=slope_path)
+    combination_manual.create_layer(
+        vis_method="Slope gradient", 
+        normalization="value", 
+        minimum=0, 
+        maximum=51,
+        blend_mode="luminosity", 
+        opacity=50, 
+        image_path=slope_path
+        )
                               
     # 3rd layer: Add hillshade layer with value stretch from 0 to 1, normal blend mode and 100% opacity
     # image parameter provided
-    combination_manual.create_layer(vis_method="Hillshade", normalization="value", minimum=0, maximum=1,
-                              blend_mode="normal", opacity=100, image=hillshade_arr)
+    combination_manual.create_layer(
+        vis_method="Hillshade", 
+        normalization="value", 
+        minimum=0, 
+        maximum=1,
+        blend_mode="normal",
+        opacity=100,
+        image=hillshade_arr
+        )
 
     # we have to add dem array and resolution so that slrm can be computed
     combination_manual.add_dem_arr(dem_arr=input_dem_arr, dem_resolution=resolution)
@@ -138,7 +179,11 @@ Automatic blending is blending from a configuration ``JSON`` file. You can creat
     # call the method render_all_images() and its parameters
     # we can save a specific visualization (to dem_path directory) if we set the parameter ``save_visualization`` to True
     # set save_8bit=True if you also wish to save an 8bit version
-    layers_auto.render_all_images(default=default, save_visualizations=True, save_render_path=output_blend_path,
-                              save_float=True, save_8bit=True)  # if you also wish to save 8bit version
+    layers_auto.render_all_images(
+        default=default, 
+        save_visualizations=True, 
+        save_render_path=output_blend_path,
+        save_float=True, save_8bit=True
+        )  # if you also wish to save 8bit version
 
 .. seealso:: Find out more about blending in :ref:`rvt.blend`.

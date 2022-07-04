@@ -64,14 +64,23 @@ To calculate, get or save a hillshade using ``rvt.default``:
     default.hs_sun_azi = 300
     
     # call the method default.get_hillshade() which uses the set parameters and returns the hillshade numpy array
-    hillshade_arr = default.get_hillshade(dem_arr=dem_arr, resolution_x=dem_x_resolution, resolution_y=dem_y_resolution, no_data=dem_no_data)
+    hillshade_arr = default.get_hillshade(
+        dem_arr=dem_arr, 
+        resolution_x=dem_x_resolution, 
+        resolution_y=dem_y_resolution, 
+        no_data=dem_no_data
+        )
     
     # if we don't need the hillshade array and we just want to save the
     # hillshade, we can directly call the default.save_hillshade() method
     # this method also uses the set hillshade parameters and saves the 
     # visualization as a GeoTIFF in the dem_path directory
     # to save the 8bit version of the result, set save_8bit=True
-    default.save_hillshade(dem_path=dem_path, save_float=True, save_8bit=True)  
+    default.save_hillshade(
+        dem_path=dem_path, 
+        save_float=True, 
+        save_8bit=True
+        )  
    
 Configuring visualization parameters
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
