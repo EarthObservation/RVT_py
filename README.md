@@ -24,11 +24,11 @@ Methods currently implemented are:
 
 The ``rvt`` Python package contains three modules:
 
-* **vis** (:ref:`rvt.vis`) for computing visualizations
+* `rvt.vis` for computing visualizations
 
-* **blend** (:ref:`rvt.blend`) for blending visualizations together
+* `rvt.blend` for blending visualizations together
   
-* **default** (:ref:`rvt.default`) for defining default parameters with methods to compute and save visualization functions using set parameters
+* ``rvt.default`` for defining default parameters with methods to compute and save visualization functions using set parameters
 
 For every visualization function directory also contains Python Esri raster functions for ArcGIS Pro (rvt_esri_*.py).
 

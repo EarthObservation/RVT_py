@@ -10,6 +10,9 @@ Relief Visualization Toolbox (RVT) was produced to help scientists visualize ras
 
 Sky-view factor, for example, can be efficiently used in numerous studies where digital elevation model visualizations and automatic feature extraction techniques are indispensable, e.g. in geography, archaeology,  geomorphology, cartography, hydrology, glaciology, forestry and disaster management. It can even be used in engineering applications, such as predicting the availability of the GPS signal in urban areas.
 
+RVT visualization methods
+-------------------------
+
 Methods currently implemented are:
 
 *   hillshading
