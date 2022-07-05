@@ -67,7 +67,8 @@ To calculate, get or save a hillshade using ``rvt.default``:
     default.hs_sun_el = 45
     default.hs_sun_azi = 300
     
-    # call the method default.get_hillshade() which uses the set parameters and returns the hillshade numpy array
+    # call the method default.get_hillshade() which uses the set parameters and
+    # returns the hillshade numpy array
     hillshade_arr = default.get_hillshade(
         dem_arr=dem_arr, 
         resolution_x=dem_x_resolution, 
@@ -75,15 +76,13 @@ To calculate, get or save a hillshade using ``rvt.default``:
         no_data=dem_no_data
         )
     
-    # if we don't need the hillshade array and we just want to save the
-    # hillshade, we can directly call the default.save_hillshade() method
-    # this method also uses the set hillshade parameters and saves the 
-    # visualization as a GeoTIFF in the dem_path directory
-    # to save the 8bit version of the result, set save_8bit=True
+    # if we don't need the hillshade array and we just want to save the hillshade, we 
+    # can directly call the default.save_hillshade() method. this method also uses the
+    # set hillshade parameters and saves the visualization as a GeoTIFF in dem_path
     default.save_hillshade(
         dem_path=dem_path, 
         save_float=True, 
-        save_8bit=True
+        save_8bit=True # to save the 8bit version of the result, set save_8bit=True
         )  
    
 Configuring visualization parameters
@@ -107,7 +106,8 @@ Parameters of a ``DefaultValues()`` instance can be saved to a ``JSON`` configur
     # save set attributes values to a JSON configuration file
     default.save_default_to_file(file_path=config_json_path)
     
-    # overwrite the DefaultValues() instance (default) attributes values from the config file
+    # overwrite the DefaultValues() instance (default) attributes values 
+    # from the config file
     default.read_default_from_file(file_path=config_json_path)
    
 DefaultValues() class methods

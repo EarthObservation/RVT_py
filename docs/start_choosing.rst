@@ -31,6 +31,8 @@ You can also try adding techniques from Table 2, in order from left to right, ba
 
 See below for visual examples of the methods suggested in Table 2.
 
+----
+
 Flat terrain
 ^^^^^^^^^^^^
 .. image:: ./figures/choose_flat.png

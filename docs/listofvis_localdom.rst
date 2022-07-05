@@ -12,3 +12,5 @@ Dominance is the average steepness of the angle at which the observer looks down
 In areas with flat or very gentle to moderate topography, local dominance and local relief model are very helpful to highlight very low relief features such as former field boundaries or levelled burial mounds. Local dominanace also delivers very good results for topographic depressions such as dolines, mining traces, or hollow ways.
 
 Local relief model and local dominance are interchangeable to a certain extent. Local relief model produces more realistic relative elevation values of relief anomalies. Local dominance retains a (limited) visual impression of the overall landscape forms as it produces higher values on slopes than on horizontal planes.
+
+.. seealso:: :ref:`listofvis_slrm`.

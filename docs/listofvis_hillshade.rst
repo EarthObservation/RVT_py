@@ -13,7 +13,7 @@ Applying several illumination directions can help to avoid the drawbacks of shad
 
 While very low illumination elevation angles (< 10°) can and should be used to highlight low relief features in areas of low slopes and flat terrain, higher illumination elevation angles (> 35°) are required in steeper topography. 
 
-To investigate features on moderate to steep slopes, shaded relief should be used with (almost) vertical illumination to minimize saturated bright/dark areas on slopes facing towards/away from the illumination. In such cases, shaded relief images become similar to :ref:`listofvis_slope` images, which can be a useful alternative in moderate to steep topography.
+To investigate features on moderate to steep slopes, shaded relief should be used with (almost) vertical illumination to minimize saturated bright/dark areas on slopes facing towards/away from the illumination. In such cases, shaded relief images become similar to slope images, which can be a useful alternative in moderate to steep topography.
 
 Multiple direction hillshading
 ------------------------------
@@ -23,3 +23,5 @@ Multiple direction hillshading
 Producing multiple hillshading outputs by illuminating a surface from multiple directions enhances the visualization of topography. 
 
 Multi-directional hillshading reduces the need to compare multiple images, but the added complexity means they can be tricky to interpret. A step towards an improved understanding of the results is combining multiple shadings by considering only the mean, the maximum, or the range of values, for each pixel.
+
+.. seealso:: :ref:`listofvis_slope`.
