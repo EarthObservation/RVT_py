@@ -3,7 +3,11 @@
 Choosing a visualization
 ========================
 
-When choosing a visualization, it is recommended to always begin by looking at a hillshade of the area under investigation. They provide the most ‘natural’ visual appearance of the topography and can help you decide which other techniques could work well.
+When choosing a visualization, it is recommended to always begin by looking at a hillshade of the area under investigation. Hillshading provides the most ‘natural’ visual appearance of the topography and can help you decide which other techniques could work well.
+
+.. seealso:: Find out more about the visualizations that RVT can produce in :ref:`listofvis_main`.
+
+----
 
 By feature type
 ---------------
@@ -19,27 +23,29 @@ If you need some help to get started after trying a hillshade, consider the type
 By topography type
 ------------------
 
-You can also try adding techniques from Table 2, in order from left to right, based on the topography of the area under investigation (see visual examples below). 
+You can also try adding techniques from Table 2, in order from left to right, based on the topography of the area under investigation. 
 
    .. image:: ./figures/choose_topography.png
 
    **Table 2: Matrix for the suitability of visualisation techniques for selected archaeological relief features in different topographic settings.**
 
+See below for visual examples of the methods suggested in Table 2.
+
 Flat terrain
 ^^^^^^^^^^^^
-   .. image:: ./figures/choose_flat.png
+.. image:: ./figures/choose_flat.png
 
 ----
 
 Gentle slopes
 ^^^^^^^^^^^^^
-   .. image:: ./figures/choose_gentle.png
+.. image:: ./figures/choose_gentle.png
 
 ----
 
 Moderate slopes
 ^^^^^^^^^^^^^^^
-   .. image:: ./figures/choose_moderate.png
+.. image:: ./figures/choose_moderate.png
 
 ----
 

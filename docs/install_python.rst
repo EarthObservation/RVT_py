@@ -19,7 +19,7 @@ PyPI
 
 Another option is to install the ``rvt-py`` package and required libraries `using the Python Package Index <https://pypi.org/project/rvt-py>`_ (PyPI).
 
-PyPI usually has problems installing ``gdal``, so `install ``gdal`` first <https://pypi.org/project/GDAL/>`_ to use this method.
+PyPI usually has problems installing ``gdal``, so install ``gdal`` first <https://pypi.org/project/GDAL/>`_ to use this method.
 
 Then open Command Prompt (Windows) or Terminal (MacOS) and run:
 

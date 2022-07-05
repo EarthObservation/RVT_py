@@ -3,6 +3,10 @@
 Creating a visualization
 ========================
 
+Visualizations can be created with both the ``rvt.vis`` and ``rvt.default`` modules.
+
+----
+
 Visualizations with rvt.vis
 ---------------------------
 

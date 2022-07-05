@@ -13,7 +13,7 @@ The ``rvt`` Python package contains three modules:
 
 This section contains full documentation of each of the ``rvt`` modules.
 
-Two notebooks with examples for using the ``rvt.vis`` and ``rvt.default`` modules can be found in :ref:`examples`
+Two notebooks with examples for using the ``rvt.vis`` and ``rvt.default`` modules can be found in :ref:`examples`.
 
 .. seealso:: For beginner-friendly explanations of how to use ``rvt`` visit :ref:`start_main`
 

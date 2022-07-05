@@ -3,4 +3,4 @@
 Multi-scale relief model (MSRM)
 ===============================
 
-   .. image:: ./figures/rvtvis_msrm.png
+.. image:: ./figures/rvtvis_msrm.png
