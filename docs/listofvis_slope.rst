@@ -1,4 +1,4 @@
-.. _whichvis_slope:
+.. _listofvis_slope:
 
 Slope
 =====

@@ -1,4 +1,4 @@
-.. _whichvis_msrm:
+.. _listofvis_msrm:
 
 Multi-scale topographic position
 ================================

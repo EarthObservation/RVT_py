@@ -1,4 +1,4 @@
-.. _whichvis_localdom:
+.. _listofvis_localdom:
 
 Local dominance
 ===============

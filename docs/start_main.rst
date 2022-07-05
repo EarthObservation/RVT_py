@@ -11,7 +11,7 @@ The ``rvt`` Python package contains three modules:
   
 * **default** (:ref:`rvt.default`) for defining default parameters with methods to compute and save visualization functions using set parameters
 
-This section explains how to complete some basic visualisation tasks using these modules.
+This section explains how to complete some basic visualisation tasks using these modules, as well as some information on how to choose which visualizations to use.
 
 If you need some data to get started, a `small sample dataset <https://github.com/EarthObservation/RVT_py/blob/master/test_data/TM1_564_146.tif>`_ (2.43 MB) and a `larger sample dataset <https://rebrand.ly/rvt_demo>`_ (152 MB) are available for download.
 
@@ -29,4 +29,5 @@ If you need some data to get started, a `small sample dataset <https://github.co
     start_raster
     start_vis
     start_blend
+    start_choosing
    

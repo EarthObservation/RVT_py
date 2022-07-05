@@ -1,7 +1,7 @@
-.. _whichvis_slrm:
+.. _listofvis_slrm:
 
-Simple local relief model (SLRM)
-================================
+Simple local relief model
+=========================
 
    .. image:: ./figures/rvtvis_slrm.png
 

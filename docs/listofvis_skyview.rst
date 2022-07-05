@@ -1,4 +1,4 @@
-.. _whichvis_skyview:
+.. _listofvis_skyview:
 
 Sky-view factor
 ===============

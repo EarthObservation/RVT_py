@@ -1,4 +1,4 @@
-.. _whichvis_openness:
+.. _listofvis_openness:
 
 Openness
 ========

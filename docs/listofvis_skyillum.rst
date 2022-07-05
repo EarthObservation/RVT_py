@@ -1,4 +1,4 @@
-.. _whichvis_skyillum:
+.. _listofvis_skyillum:
 
 Sky illumination
 ================
