@@ -15,4 +15,4 @@ Open or restart ArcGIS Pro. Select ``Imagery → Raster Functions`` to open the 
 
 In the ``Raster Functions`` pane, select the ``Custom`` tab to access the ``rvt-arcgis-pro`` group containing the raster functions.
 
-   .. image:: ./figures/ArcGISPro_raster_functions.png
+.. image:: ./figures/ArcGISPro_raster_functions.png

@@ -18,7 +18,7 @@ To investigate features on moderate to steep slopes, shaded relief should be use
 Multiple direction hillshading
 ------------------------------
 
-   .. image:: ./figures/rvtvis_multihillshade.png
+.. image:: ./figures/rvtvis_multihillshade.png
 
 Producing multiple hillshading outputs by illuminating a surface from multiple directions enhances the visualization of topography. 
 
