@@ -45,4 +45,8 @@ Moderate slopes
 
 Steep slopes or complex topography 
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-   .. image:: ./figures/choose_steep complex.png
+
+.. image:: ./figures/choose_steep.png
+
+
+.. seealso:: Find out more about choosing visualizations in Kokalj, Žiga, Ralf Hesse. 2017. `Airborne laser scanning raster data visualization: A Guide to Good Practice <https://omp.zrc-sazu.si/zalozba/catalog/book/824>`_. Ljubljana: Založba ZRC.

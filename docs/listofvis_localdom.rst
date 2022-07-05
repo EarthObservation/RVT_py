@@ -3,7 +3,7 @@
 Local dominance
 ===============
 
-   .. image:: ./figures/rvtvis_local dominance.png
+   .. image:: ./figures/rvtvis_localdom.png
 
 Local dominance is based on computing how dominant an observer standing on each pixel would be for a local surrounding area. Dominance is the average steepness of the angle at which the observer looks down at the surrounding land surface. It is higher for points on local elevations as well as on slopes and lower for points in local depressions.
 
