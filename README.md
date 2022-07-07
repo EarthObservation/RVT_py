@@ -30,8 +30,6 @@ The ``rvt`` Python package contains three modules:
   
 * ``rvt.default`` for defining default parameters with methods to compute and save visualization functions using set parameters
 
-For every visualization function directory also contains Python Esri raster functions for ArcGIS Pro (rvt_esri_*.py).
-
 ## References
 
 When using the tools, please cite:
@@ -41,9 +39,9 @@ When using the tools, please cite:
 
 ## Installation
 
-RVT can be installed as a package for Python, where it can be used in Python scripts, Jupyter Notebooks and ArcGIS Pro.
+The RVT Python package can be installed using Conda or PyPI, and can be used in Python scripts, Jupyter Notebooks and ArcGIS Pro.
 
-RVT can also be installed as a set of custom raster functions for ArcGIS, and a plugin for QGIS.
+RVT can also be installed as [a set of custom raster functions for ArcGIS](https://rvt-py.readthedocs.io/en/latest/install_arcgis.html "ArcGIS installation"), and [a plugin for QGIS](https://rvt-py.readthedocs.io/en/latest/install_qgis.html "QGIS installation").
 
 You can also clone the repository.
 
