@@ -6,13 +6,13 @@ Python installation
 Conda
 -----
 
-The ``rvt`` package is `available from the Anaconda Cloud repository <https://anaconda.org/zmigyyy/rvt_py>`_. Using Conda to install the ``rvt`` package will include all required libraries.
+The ``rvt`` package is `available from the Anaconda Cloud repository <https://anaconda.org/rvtpy/rvt_py>`_. Using Conda to install the ``rvt`` package will include all required libraries.
 
 First `install Anaconda and Conda <https://docs.conda.io/projects/conda/en/latest/user-guide/getting-started.html>`_.
 
 Then open Anaconda Prompt (Windows) or Terminal (MacOS) and run:
 
-``conda install -c zmigyyy rvt_py``
+``conda install -c rvtpy rvt_py``
 
 PyPI
 ----

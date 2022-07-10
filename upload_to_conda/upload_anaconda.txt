@@ -1,29 +1,6 @@
 To upload library to anaconda.org, we will build library from pypi
 
-Run following command to create meta.yaml:
-	"conda skeleton pypi rvt-py"
+Upload version to pypi and then change version in meta.yaml and also change sha256 (copy it from https://pypi.org/project/rvt-py/#files -> view hashes for source distribution)
 
-Change recipe-maintainers in meta.yaml, add you github id.
-
-In meta.yaml change name from "rvt-py" to "rvt_py".
-
-Build package from meta.yaml:
-	"conda-build rvt-py"
-	"conda-build rvt-py --python=3.8"  for every version
-
-Built tar is in (conda-build rvt-py ouputs path where it is) "C:\Users\Uporabnik\Anaconda3\conda-bld" or smth like "C:\Users\jsmith\miniconda\conda-bld".
-
-To upload multiple:
+To create package builds and upload them to conda cloud:
 	change and run upload_conda.py
-
-To upload single:
-	Make for all platforms
-		"conda convert --platform all ~/anaconda/conda-bld/linux-64/click-7.0-py37_0.tar.bz2 -o outputdir/"
-		"conda convert --platform all "C:\Users\Uporabnik\Anaconda3\conda-bld\win-64\rvt_py-1.0.0-py37h39e3cac_0.tar.bz2" -o "C:\Users\Uporabnik\Anaconda3\conda-bld\win-64\all_versions"
-
-	Run "anaconda login" and write username and password.
-		"anaconda login"
-
-	Then to upload (single) run:
-		"anaconda upload path_to_tar" (path_to_tar example = C:\Users\Uporabnik\Anaconda3\conda-bld\win-64\rvt_py-1.0.0a6-py37h39e3cac_0.tar.bz2)
-
