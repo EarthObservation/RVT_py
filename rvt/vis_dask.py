@@ -109,7 +109,7 @@ def dask_slope_aspect(input_dem,
                     output_units = output_units,
                     no_data = no_data)
     depth = { 0:0, 1: 1, 2: 1}
-    boundary = {0: 0, 1: 'periodic', 2: 'periodic'}         # (outter edges of) slope_out not ok
+    boundary = {0: 0, 1: 'reflect', 2: 'reflect'}         # (outter edges of) slope_out not ok
     # boundary = {0: np.nan, 1: np.nan}                     # (outter edges of) aspect_out not ok
     out_slp = data_volume.map_overlap(_func,
                             depth=depth,

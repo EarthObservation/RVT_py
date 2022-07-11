@@ -167,6 +167,8 @@ def slope_aspect(dem,
         dem[dem == no_data] = np.nan
 
     dem = dem.astype(np.float32)
+    # add 1 pixel edge padding
+    dem = np.pad(array=dem, pad_width=1, mode="edge")
     dem = dem * ve_factor
 
     # derivatives in X and Y direction
@@ -195,11 +197,9 @@ def slope_aspect(dem,
     if output_units == "degree":
         aspect_out = np.rad2deg(aspect_out)
 
-    # edges to np.nan
-    slope_out[:, 0] = np.nan
-    slope_out[0, :] = np.nan
-    slope_out[:, -1] = np.nan
-    slope_out[-1, :] = np.nan
+    # remove padding
+    aspect_out = aspect_out[1:-1, 1:-1]
+    slope_out = slope_out[1:-1, 1:-1]
 
     return {"slope": slope_out, "aspect": aspect_out}
 
@@ -257,6 +257,8 @@ def hillshade(dem,
         dem[dem == no_data] = np.nan
 
     dem = dem.astype(np.float32)
+    # add 1 pixel edge padding
+    dem = np.pad(array=dem, pad_width=1, mode="edge")
     dem = dem * ve_factor
 
     # Convert solar position (degrees) to radians
@@ -279,12 +281,8 @@ def hillshade(dem,
         aspect - sun_azimuth_rad)
 
     hillshade_out[hillshade_out < 0] = 0  # set all negative to 0
-
-    # edges to -1
-    hillshade_out[:, 0] = np.nan
-    hillshade_out[0, :] = np.nan
-    hillshade_out[:, -1] = np.nan
-    hillshade_out[-1, :] = np.nan
+    # remove padding
+    hillshade_out = hillshade_out[1:-1, 1:-1]
 
     return hillshade_out
 

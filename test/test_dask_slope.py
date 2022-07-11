@@ -64,12 +64,7 @@ def test_arr_edges_slope():
                       dask_result[0,-1,:],
                       dask_result[0,:,0] ,
                       dask_result[0,:,-1]]
-    ##test nan - np passing test
-    for np_slope_edge in np_slope_edges:
-        np.testing.assert_array_equal(np_slope_edge, np.nan)
-    # for da_slope_edge in da_slope_edges:
-        # np.testing.assert_array_equal(da_slope_edge, np.nan)
-    ## not passing
+                      
     np.testing.assert_array_equal(np_slope_edges[0], da_slope_edges[0])
     np.testing.assert_array_equal(np_slope_edges[1], da_slope_edges[1])
     np.testing.assert_array_equal(np_slope_edges[2], da_slope_edges[2])
