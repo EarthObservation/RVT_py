@@ -191,6 +191,9 @@ def channel_max(r, g, b):
 
 
 def clip_color(c, min_c=None, max_c=None):
+    if min_c is not None or max_c is not None:
+        raise Exception("Blend mode Luminosity (function clip_color) is broken for background arrays with 3D shape. min_c and max_c inputs to matrix_eq_min_lt_zero and matrix_eq_max_gt_one functions should be np.arrays. Not int or float.")
+
     lum_c = lum(c)
 
     r = np.float32(c[0])
