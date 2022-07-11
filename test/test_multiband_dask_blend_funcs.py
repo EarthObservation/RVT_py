@@ -34,24 +34,10 @@ def test_normalize_eq(norm, minn, maxn):
     np_arr_3d = rvt.blend_func.normalize_image(image = np_stacked, visualization= "Sky-View Factor", min_norm= minn, 
                                             max_norm = maxn, normalization = norm)
 
-    assert len(np_arr_3d.shape) == 3
-    assert len(da_arr_3d.shape) == 3
-
-    np_3d_inner = np_arr_3d[:, 1:-1, 1:-1]
-    da_3d_inner = da_arr_3d[:, 1:-1, 1:-1]
-    np_3d_edges = [np_arr_3d[:, 0, :],
-                     np_arr_3d[:, -1, :],
-                     np_arr_3d[:, :, 0],
-                     np_arr_3d[:, :, -1]]
-    da_3d_edges = [da_arr_3d[:, 0, :],
-                     da_arr_3d[:, -1, :],
-                     da_arr_3d[:, :, 0],
-                     da_arr_3d[:, :, -1]]
-
-    np.testing.assert_array_equal(da_3d_inner, np_3d_inner)
-    for i in range(len(da_3d_edges)):
-        np.testing.assert_array_equal(da_3d_edges[i][0], np_3d_edges[i][0])
-        np.testing.assert_array_equal(da_3d_edges[i][1], np_3d_edges[i][1])
+    if len(np_arr_3d.shape) ==2:
+        np.testing.assert_array_equal(da_arr_3d, np_arr_3d)
+    else: 
+        np.testing.assert_array_equal(da_arr_3d, np_arr_3d)
 
 
 @pytest.mark.parametrize("blend", ["Luminosity", "Multiply", "Normal", "Overlay", "Screen", "Soft_light"])
@@ -60,24 +46,12 @@ def test_blend_eq(blend, minc, maxc):
     da_arr_3d = rvt.blend_func_dask.dask_blend_images(active = da_stacked, background = da_2d, blend_mode = blend,
                                                     min_c = minc, max_c = maxc).compute()
     np_arr_3d = rvt.blend_func.blend_images(active = np_stacked, background = np_2d, blend_mode = blend,
-                                                    min_c = minc, max_c = maxc)  
-    # further parametrize for different shapes of active and background                                              
-    np_3d_inner = np_arr_3d[:, 1:-1, 1:-1]
-    da_3d_inner = da_arr_3d[:, 1:-1, 1:-1]
-    np_3d_edges = [np_arr_3d[:, 0, :],
-                     np_arr_3d[:, -1, :],
-                     np_arr_3d[:, :, 0],
-                     np_arr_3d[:, :, -1]]
-    da_3d_edges = [da_arr_3d[:, 0, :],
-                     da_arr_3d[:, -1, :],
-                     da_arr_3d[:, :, 0],
-                     da_arr_3d[:, :, -1]]
+                                                    min_c = minc, max_c = maxc) 
 
-    np.testing.assert_array_equal(da_3d_inner, np_3d_inner)
-    for i in range(len(da_3d_edges)):
-        np.testing.assert_array_equal(da_3d_edges[i][0], np_3d_edges[i][0])
-        np.testing.assert_array_equal(da_3d_edges[i][1], np_3d_edges[i][1])
-
+    if len(np_arr_3d.shape) ==2:
+        np.testing.assert_array_equal(da_arr_3d, np_arr_3d)
+    else: 
+        np.testing.assert_array_equal(da_arr_3d, np_arr_3d)
 
 @pytest.mark.parametrize("opac", [25, 75, 0, 100, -5])
 def test_render_eq(opac):
@@ -85,19 +59,9 @@ def test_render_eq(opac):
     np_arr_3d = rvt.blend_func.render_images(active = np_stacked, background = np_2d, opacity = opac)  
     # further parametrize for different shapes of active and background  
     
-    np_3d_inner = np_arr_3d[:, 1:-1, 1:-1]
-    da_3d_inner = da_arr_3d[:, 1:-1, 1:-1]
-    np_3d_edges = [np_arr_3d[:, 0, :],
-                     np_arr_3d[:, -1, :],
-                     np_arr_3d[:, :, 0],
-                     np_arr_3d[:, :, -1]]
-    da_3d_edges = [da_arr_3d[:, 0, :],
-                     da_arr_3d[:, -1, :],
-                     da_arr_3d[:, :, 0],
-                     da_arr_3d[:, :, -1]]
+    if len(np_arr_3d.shape) ==2:
+        np.testing.assert_array_equal(da_arr_3d, np_arr_3d)
+    else: 
+        np.testing.assert_array_equal(da_arr_3d, np_arr_3d)
 
-    np.testing.assert_array_equal(da_3d_inner, np_3d_inner)
-    for i in range(len(da_3d_edges)):
-        np.testing.assert_array_equal(da_3d_edges[i][0], np_3d_edges[i][0])
-        np.testing.assert_array_equal(da_3d_edges[i][1], np_3d_edges[i][1])
       
