@@ -67,12 +67,4 @@ def test_render_eq(opac):
     da_arr_3d = rvt.blend_func_dask.dask_render_images(active = da_2d, background = da_stacked, opacity = opac).compute()
     np_arr_3d = rvt.blend_func.render_images(active = np_2d, background = np_stacked, opacity = opac)  
 
-    if len(np_arr_3d.shape) ==2:
-        #np.testing.assert_array_equal(da_arr_3d[:,0:99], np_arr_3d[:,0:99])
-        #np.testing.assert_array_equal(da_arr_3d[:,200:], np_arr_3d[:,200:])
-        # np.testing.assert_array_equal(da_arr_3d[:,99:199], np_arr_3d[:,99:199])
-        np.testing.assert_array_equal(da_arr_3d, np_arr_3d)
-    else: 
-        np.testing.assert_array_equal(da_arr_3d, np_arr_3d)
-
-      
+    np.testing.assert_array_equal(da_arr_3d, np_arr_3d)
