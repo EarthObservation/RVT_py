@@ -69,19 +69,19 @@ def create_blender_file_example(file_path=None):
     dat.close()
 
 
-def _check_min_max(image_chunk: NDArray[np.float32]) -> NDArray[np.float32]:
-    """Returns (un)scaled image_chunk. To be mapped over dask.array. Comparision is evaluated only when calling compute."""
-    if np.nanmin(image_chunk) < 0 or np.nanmax(image_chunk) > 1:
-        new_image_chunk = scale_0_to_1(image_chunk)
-        return new_image_chunk
+def _check_min_max(image: da.Array, abs_max_img, abs_min_img) -> da.Array:
+    """Returns (un)scaled image. To be mapped over dask.array. Comparision is evaluated only when calling compute."""
+    if abs_min_img  < 0 or abs_max_img  > 1:
+        new_image = scale_0_to_1(numeric_value = image, abs_max = abs_max_img, abs_min =abs_min_img)
+        return new_image
     else:
-        return image_chunk
+        return image
 
-def _check_min_max_rendered(image_chunk: NDArray[np.float32]) -> NDArray[np.float32]:
-    """Returns image_chunk (and issues a warning). To be mapped over dask.array. Comparision is evaluated only when calling compute."""
-    if np.nanmin(image_chunk) < 0 or np.nanmax(image_chunk) > 1:
+def _check_min_max_rendered(image: da.Array, abs_max_img, abs_min_img) -> da.Array:
+    """Returns image (and issues a warning). To be mapped over dask.array. Comparision is evaluated only when calling compute."""
+    if abs_min_img  < 0 or abs_max_img  > 1:
         warnings.warn("rvt.blend.BlenderCombination.render_all_images: Rendered image scale distorted")
-    return image_chunk
+    return image
 
 
 class BlenderLayer:
@@ -604,11 +604,11 @@ class BlenderCombination:
                 blend_mode = self.layers[i_img].blend_mode
                 opacity = self.layers[i_img].opacity
 
-                active = da.map_blocks(_check_min_max, active, dtype = np.float32)
-                background = da.map_blocks(_check_min_max, background, dtype = np.float32)
+                active = da.map_blocks(_check_min_max, active, abs_max_img = da.nanmax(active), abs_min_img = da.nanmin(active), dtype = np.float32)
+                background = da.map_blocks(_check_min_max, background, abs_max_img = da.nanmax(background), abs_min_img = da.nanmin(background), dtype = np.float32)
                 top = rvt.blend_func_dask.dask_blend_images(active = active, background = background, blend_mode = blend_mode)
                 rendered_image = rvt.blend_func_dask.dask_render_images(active = top, background = background, opacity = opacity)
-                rendered_image = da.map_blocks(_check_min_max_rendered, rendered_image, dtype = np.float32)
+                rendered_image = da.map_blocks(_check_min_max_rendered, rendered_image, abs_max_img = da.nanmax(rendered_image), abs_min_img = da.nanmin(rendered_image), dtype = np.float32)
 
         if save_render_path is not None:  # if paths presented it saves image
             if save_float:
