@@ -31,12 +31,11 @@ from functools import partial
 from typing import Union, Dict, List, Any, Tuple, Optional
 from nptyping import NDArray
 
-# def get_da_min_max(image:da.Array) -> Union[int, float]:
-#     """Get minimum and maximum values of (2D) whole image. Needed for scaling?
-#     NO, seems like map_blocks takes care of finding abdolute min and max of whole array, not just per chunk."""
-#     da_min = da.min(image)
-#     da_max =da.max(image)
-#     return da_min, da_max
+# def get_da_min(image:da.Array) -> Union[int, float]:
+#     return da.nanmin(image)
+
+# def get_da_max(image:da.Array) -> Union[int, float]:
+#     return da.nanmax(image)
 
 def _gray_scale_to_color_ramp_wrapper(np_chunk: NDArray[np.float32],
                                       colormap: str,
@@ -66,34 +65,9 @@ def dask_gray_scale_to_color_ramp(gray_scale:da.Array,
                                 alpha = alpha,
                                 output_8bit = output_8bit) 
     out_normalize = da.map_blocks(_func, 
-                                  np_chunk = gray_scale,
+                                  gray_scale,
                                   new_axis = 0,
                                   dtype = np.float32)
-    return out_normalize
-
-
-def _normalize_image_wrapper(np_chunk: NDArray[np.float32],
-                                visualization: str,
-                                min_norm : Union[int, float],
-                                max_norm : Union[int, float],
-                                normalization: str) -> NDArray[np.float32]:
-    norm_image = rvt.blend_func.normalize_image(visualization = visualization, image = np_chunk, 
-                                min_norm = min_norm, max_norm = max_norm, normalization = normalization)
-    return norm_image
-
-def dask_normalize_image(image:da.Array,
-                        visualization,
-                        min_norm,
-                        max_norm,
-                        normalization) -> da.Array:
-    image = image.astype(np.float32)
-    _func = partial(_normalize_image_wrapper,
-                    visualization = visualization,
-                    min_norm = min_norm, max_norm = max_norm,
-                    normalization = normalization) 
-    out_normalize = da.map_blocks(_func, 
-                                  np_chunk = image,
-                                  meta=np.array((), dtype=np.float32))
     return out_normalize
 
 
@@ -118,17 +92,21 @@ def dask_blend_images(active:da.Array,
                     min_c = min_c,
                     max_c = max_c)
     out_top = da.map_blocks(_func, 
-                            np_chunk_act = active, 
-                            np_chunk_bkg = background,
-                            #drop_axis = 0, 
+                            active, 
+                            background,
+                            #drop_axis = 0, new_axis (TODO: Blend mode Normal changes dimension, fix based on condition)
                             meta=np.array((), dtype=np.float32))
     return out_top
 
 
 def _render_images_wrapper(np_chunk_act: NDArray[np.float32],
                            np_chunk_bkg: NDArray[np.float32],
-                           opacity = Union[int,float]) -> NDArray[np.float32]:
-    rendered_image = rvt.blend_func.render_images(active = np_chunk_act, background = np_chunk_bkg , opacity = opacity)
+                           opacity: Union[int,float],
+                           bkg_abs_max: Union[int,float],
+                           bkg_abs_min: Union[int,float],
+                           act_abs_max: Union[int,float],
+                           act_abs_min: Union[int,float]) -> NDArray[np.float32]:
+    rendered_image = rvt.blend_func.render_images(active = np_chunk_act, background = np_chunk_bkg , opacity = opacity, bkg_abs_max= bkg_abs_max, bkg_abs_min=bkg_abs_min, act_abs_max= act_abs_max, act_abs_min=act_abs_min)
     return rendered_image
 
 def dask_render_images(active:da.Array,
@@ -136,13 +114,47 @@ def dask_render_images(active:da.Array,
                        opacity) -> da.Array:
     active = active.astype(np.float32)
     background = background.astype(np.float32)
+    bkg_abs_max = da.nanmax(background)  ##TODO: If multiple layers, this has to be calculated per layer
+    bkg_abs_min = da.nanmin(background)
+    act_abs_max = da.nanmax(active)
+    act_abs_min = da.nanmin(active)
     _func = partial(_render_images_wrapper,
                     opacity = opacity)
     out_rendered_image = da.map_blocks(_func, 
-                                       np_chunk_act = active, 
-                                       np_chunk_bkg = background,
+                                       active, 
+                                       background,
+                                       bkg_abs_max = bkg_abs_max,
+                                       bkg_abs_min = bkg_abs_min,
+                                       act_abs_max = act_abs_max,
+                                       act_abs_min = act_abs_min,
                                        meta=np.array((), dtype=np.float32))
     return out_rendered_image
+
+#FIXME: Absolute minimum and maximum of the array are computed in blend_func/advanced_normalizations. Needed for normalization = 'percent'.
+# Possible issue in lin_cutoff_calc_from_perc funtion (destribution calcualtion):dask array does not support nanpercentile.
+def _normalize_image_wrapper(np_chunk: NDArray[np.float32],
+                                visualization: str,
+                                min_norm : Union[int, float],
+                                max_norm : Union[int, float],
+                                normalization: str) -> NDArray[np.float32]:
+    norm_image = rvt.blend_func.normalize_image(visualization = visualization, image = np_chunk, 
+                                min_norm = min_norm, max_norm = max_norm, normalization = normalization)
+    return norm_image
+
+def dask_normalize_image(image:da.Array,
+                        visualization,
+                        min_norm,
+                        max_norm,
+                        normalization) -> da.Array:
+    image = image.astype(np.float32)
+    _func = partial(_normalize_image_wrapper,
+                    visualization = visualization,
+                    min_norm = min_norm, max_norm = max_norm,
+                    normalization = normalization) 
+    out_normalize = da.map_blocks(_func, 
+                                  image,
+                                  meta=np.array((), dtype=np.float32))
+    return out_normalize
 
 
 def _normalize_lin_wrapper(np_chunk: NDArray[np.float32], 
@@ -159,7 +171,7 @@ def dask_normalize_lin(image: da.Array,
                     minimum = minimum, 
                     maximum = maximum)
     out_norm_lin_image = da.map_blocks(_func, 
-                                       np_chunk = image, 
+                                       image, 
                                        dtype = np.float32)
     return out_norm_lin_image
 
@@ -178,6 +190,6 @@ def dask_normalize_perc(image: da.Array,
                     minimum = minimum, 
                     maximum = maximum)
     out_norm_perc_image = da.map_blocks(_func, 
-                                       np_chunk = image, 
+                                       image, 
                                        dtype = np.float32)
     return out_norm_perc_image
