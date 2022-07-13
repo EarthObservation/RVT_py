@@ -107,7 +107,7 @@ def lin_cutoff_calc_from_perc(image, minimum, maximum):
     if minimum + maximum > 100:
         raise Exception("rvt.blend_funct.lin_cutoff_calc_from_perc: if minimum + maximum > 100% then there are no"
                         " values left! You can't cutoff whole image!")
-    distribution = np.nanpercentile(a=image, q=np.array([minimum, 100 - maximum]))
+    distribution = np.nanpercentile(a=image, q=np.array([minimum, 100 - maximum])) #TODO: dask array does not support nanpercentile
     min_lin = distribution[0]
     max_lin = distribution[1]
     if min_lin == max_lin:
@@ -242,10 +242,6 @@ def blend_overlay(active, background):
 
 
 def blend_soft_light(active, background):
-    # idx1 = np.where(active > 0.5)
-    # idx2 = np.where(active <= 0.5)
-    # background[idx1] = 1 - (1-background[idx1]) * (1-(active[idx1]-0.5))
-    # background[idx2] = background[idx2] * (active[idx2]+0.5)
     idx1 = np.nonzero(active < 0.5)
     idx2 = np.nonzero(active >= 0.5)
     background[idx1] = 2 * background[idx1] * active[idx1] + background[idx1] ** 2 * (1.0 - 2 * active[idx1])
@@ -319,11 +315,11 @@ def blend_images(blend_mode, active, background, min_c=None, max_c=None):
         return blend_normal(active, background)
 
 
-def render_images(active, background, opacity):
-    if np.nanmin(active) < 0 or np.nanmax(active) > 1:
-        active = scale_0_to_1(active)
-    if np.nanmin(background) < 0 or np.nanmax(background) > 1:
-        background = scale_0_to_1(background)
+def render_images(active, background, opacity, bkg_abs_max, bkg_abs_min, act_abs_max, act_abs_min):
+    if act_abs_min < 0 or act_abs_max > 1:
+        active = scale_0_to_1(active, act_abs_max, act_abs_min)
+    if bkg_abs_min < 0 or bkg_abs_max > 1:
+        background = scale_0_to_1(background, bkg_abs_max, bkg_abs_min)
 
     a_rgb = len(active.shape) == 3
     b_rgb = len(background.shape) == 3
@@ -345,17 +341,16 @@ def render_images(active, background, opacity):
     return render_image
 
 
-def scale_within_0_and_1(numeric_value):
-    if np.nanmin(numeric_value) >= 0 and np.nanmax(numeric_value) <= 1:
+def scale_within_0_and_1(numeric_value, abs_max, abs_min):
+    if abs_min >= 0 and abs_max <= 1:
         return numeric_value
 
-    numeric_value[np.isnan(numeric_value)] = np.nanmin(numeric_value)  # nan change to nanmin
+    numeric_value[np.isnan(numeric_value)] = abs_min  # nan change to nanmin
 
-    actual_min = np.nanmin(numeric_value)
-    norm_min_value = np.nanmax(np.array(0, actual_min))
-
-    actual_max = np.nanmax(numeric_value)
-    norm_max_value = np.nanmin(np.array(1, actual_max))
+    actual_min = abs_min
+    norm_min_value = min(0, actual_min)
+    actual_max = abs_max
+    norm_max_value = min(1, actual_max)
 
     # do not scale values where max is between 1 and 255 if the max-min values diffrence is at least 30 and min >0
     # and numeric values are integer type
@@ -372,14 +367,14 @@ def scale_within_0_and_1(numeric_value):
     return scaled
 
 
-def scale_strict_0_to_1(numeric_value):
-    if np.nanmin(numeric_value) == 0 and np.nanmax(numeric_value) == 1:
+def scale_strict_0_to_1(numeric_value, abs_max, abs_min):
+    if  abs_min == 0 and abs_max == 1:
         return numeric_value
 
     numeric_value[np.isnan(numeric_value)] = 0  # nan change to 0
-
-    min_value = np.nanmin(numeric_value)
-    max_value = np.nanmax(numeric_value)
+    
+    min_value = abs_min
+    max_value = abs_max
 
     scaled = (numeric_value - min_value) / (max_value - min_value)
 
@@ -389,13 +384,13 @@ def scale_strict_0_to_1(numeric_value):
     return scaled
 
 
-def scale_0_to_1(numeric_value):
-    if 1 >= np.nanmax(numeric_value) > 0.9 and np.nanmin(numeric_value) == 0:
+def scale_0_to_1(numeric_value, abs_max, abs_min):
+    if 1 >= abs_max > 0.9 and abs_min == 0:
         return numeric_value
-    elif np.nanmax(numeric_value) - np.nanmin(numeric_value) > 0.3:
-        return scale_within_0_and_1(numeric_value)
+    elif abs_max - abs_min > 0.3:
+        return scale_within_0_and_1(numeric_value, abs_max, abs_min)
     else:
-        return scale_strict_0_to_1(numeric_value)
+        return scale_strict_0_to_1(numeric_value, abs_max, abs_min)
 
 
 def apply_opacity(active, background, opacity):
@@ -410,10 +405,12 @@ def normalize_image(visualization, image, min_norm, max_norm, normalization):
     if normalization == "percent":
         normalization = "perc"
 
+    #FIXME: advanced_normalization works correct only for normalization = "value" (normalize_lin)
     norm_image = advanced_normalization(image=image, minimum=min_norm, maximum=max_norm, normalization=normalization)
 
     # make sure it scales 0 to 1
-    if np.nanmax(norm_image) > 1:
+    if np.nanmax(norm_image) > 1:   #TODO: get correct max value of complete image, caluclated as a result of advanced_normalization function above. Now max per chunk and may lead to wrong results when normalization = None.
+        raise Exception("Not implemented for np.nanmax(np_chunk) > 1")
         if visualization.lower() == "multiple directions hillshade" or visualization == "mhs":
             norm_image = scale_0_to_1(norm_image)
         else:
