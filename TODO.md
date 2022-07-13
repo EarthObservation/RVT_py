@@ -22,18 +22,19 @@ This is the markdown todo file for feature/dask branch of Github Repo [RVT_py](h
 
 ### Todo
 
-- [ ] Fix most outter padding in some visualization functions in original `vis.py`.
 - [ ] Restore some of the previously existing non-dask functionality (keep both options or separate module?).
 - [ ] Configure Dask-jobqueue (specification?).
-- [ ] Code rafactoring.
+- [ ] Fix (`rvt.blend_func.blend_images`) blend mode = "Luminosity". Broken for multiband background arrays. min_c and max_c inputs to `matrix_eq_min_lt_zero` and `matrix_eq_max_gt_one` functions should be np.array. Not int or float.
 
 ### In Progress
 
-- [ ] Additional testing of visualization functions (for i/o functionality, writing and reading raster data.)
-- [ ] Dask memory issues!!
+- [ ] Code refactoring of `rvt.blend_func.normalize_image`.
+  - [ ] Possible issue in `lin_cutoff_calc_from_perc` funtion (destribution calcualtion). Dask array does not support nanpercentile.
+- [ ] Additional testing of i/o functionality (focus on parallel writing in chunks).
+- [ ] Dask memory issues
   - [x] Get available memory and compute / set memory (GB) per Dask worker. 
   - [ ] Get / compute optimal chunk size. 
-- [ ] Fix failing test with multiband (`rvt.blend_func.blend_images`) blend mode =  "Luminosity".
+
 
 ### Done ✓
 
@@ -44,6 +45,7 @@ This is the markdown todo file for feature/dask branch of Github Repo [RVT_py](h
 - [x] Read multiband data. 
 - [x] Fix numpy runtime errors / suppress warnings (keep, not really relevant).
 - [x] Tests for `blend_func_dask.py` and `vis_dask.py`.
+- [x] Fix most outter padding in some visualization functions in original `vis.py`.
 
 ##### _Notes on Todo and Done (aka confusing mix of different problems, mainly memory issues)_
 - [In theory](https://stackoverflow.com/questions/49406987/how-do-we-choose-nthreads-and-nprocs-per-worker-in-dask-distributed), since the workload is mostly numeric and Numpy releases the GIL well, ratio n_threads >> n_processes should be prefered.
