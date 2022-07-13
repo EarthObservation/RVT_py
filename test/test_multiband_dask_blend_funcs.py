@@ -77,6 +77,6 @@ def test_render_eq(opac):
     np_2d = copy.deepcopy(np_2dim)    
 
     da_arr_3d = rvt.blend_func_dask.dask_render_images(active = da_2d, background = da_stacked, opacity = opac).compute()
-    np_arr_3d = rvt.blend_func.render_images(active = np_2d, background = np_stacked, opacity = opac)  
+    np_arr_3d = rvt.blend_func.render_images(active = np_2d, background = np_stacked, opacity = opac, bkg_abs_max = np.nanmax(np_stacked), bkg_abs_min = np.nanmin(np_stacked), act_abs_max = np.nanmax(np_2d), act_abs_min = np.nanmin(np_2d))  
 
     np.testing.assert_array_equal(da_arr_3d, np_arr_3d)
