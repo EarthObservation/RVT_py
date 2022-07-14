@@ -59,11 +59,16 @@ def dask_byte_scale(data,
 
     TODO: Multiple bands."""
     _func = partial(_dask_byte_scale_wrapper, 
-                    c_min = c_min, c_max = c_max,
                     high = high, low = low,
                     no_data = no_data)
+    if c_min == None:
+        c_min = da.nanmin(data)
+    if c_max == None:
+        c_max = da.nanmax(data)
     out_scaled_image = da.map_blocks(_func, 
-                                     data, 
+                                     data,
+                                     c_min = c_min, 
+                                     c_max = c_max, 
                                      dtype = np.float32)
     return out_scaled_image
 
@@ -96,8 +101,7 @@ def dask_slope_aspect(input_dem,
     :param ve_factor: Integer or float of vertical exaggeration factor.
     :param output_units: Output units: percent, degree, radian.
     :param no_data: The value that represents no data.
-    :return: A 3D dask array of calculated `slope` and `aspect` of the `input_dem` raster.
-    FIXME: Most outter edges (set in vis.slope_aspect) not ok for both outputs."""
+    :return: A 3D dask array of calculated `slope` and `aspect` of the `input_dem` raster."""
 
     input_dem = input_dem.astype(np.float32)
     data_stacked = da.stack([input_dem, input_dem])[[0,0]]  ##magic numbers to avoid rechunking, fix when 
@@ -109,8 +113,7 @@ def dask_slope_aspect(input_dem,
                     output_units = output_units,
                     no_data = no_data)
     depth = { 0:0, 1: 1, 2: 1}
-    boundary = {0: 0, 1: 'reflect', 2: 'reflect'}         # (outter edges of) slope_out not ok
-    # boundary = {0: np.nan, 1: np.nan}                     # (outter edges of) aspect_out not ok
+    boundary = {0: 0, 1: 'reflect', 2: 'reflect'}  
     out_slp = data_volume.map_overlap(_func,
                             depth=depth,
                             boundary=boundary,
