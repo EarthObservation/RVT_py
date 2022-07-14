@@ -85,10 +85,10 @@ def byte_scale(data,
         if no_data is not None:  # change no data to np.nan
             data[data == no_data] = np.nan
 
-        if c_min is None:
-            c_min = np.nanmin(data)
-        if c_max is None:
-            c_max = np.nanmax(data)
+        # if c_min is None:
+        #     c_min = np.nanmin(data)
+        # if c_max is None:
+        #     c_max = np.nanmax(data)
 
         c_scale = c_max - c_min
         if c_scale < 0:
