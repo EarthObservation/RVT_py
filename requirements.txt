@@ -1,0 +1,53 @@
+CacheControl==0.12.11
+cachy==0.3.0
+certifi==2022.6.15
+charset-normalizer==2.0.12
+cleo==0.8.1
+clikit==0.6.2
+crashtest==0.3.1
+cycler @ file:///home/conda/feedstock_root/build_artifacts/cycler_1635519461629/work
+distlib==0.3.4
+filelock==3.7.1
+fonttools @ file:///D:/bld/fonttools_1657249503498/work
+GDAL==3.4.2
+html5lib==1.1
+idna==3.3
+importlib-metadata==4.11.4
+keyring==23.6.0
+kiwisolver @ file:///D:/bld/kiwisolver_1657953200729/work
+lockfile==0.12.2
+matplotlib @ file:///D:/bld/matplotlib-suite_1651609646819/work
+msgpack==1.0.4
+munkres==1.1.4
+numpy @ file:///D:/bld/numpy_1657483989399/work
+packaging==20.9
+pastel==0.2.1
+pexpect==4.8.0
+Pillow @ file:///D:/bld/pillow_1657007292472/work
+pkginfo==1.8.3
+platformdirs==2.5.2
+poetry==1.1.13
+poetry-core==1.0.8
+ptyprocess==0.7.0
+pylev==1.4.0
+pyparsing==3.0.9
+PyQt5==5.12.3
+PyQt5_sip==4.19.18
+PyQtChart==5.12
+PyQtWebEngine==5.12.1
+python-dateutil @ file:///home/conda/feedstock_root/build_artifacts/python-dateutil_1626286286081/work
+pywin32-ctypes==0.2.0
+requests==2.28.0
+requests-toolbelt==0.9.1
+rvt-py==2.1.0
+scipy @ file:///C:/bld/scipy_1653074066186/work
+shellingham==1.4.0
+six==1.16.0
+tomlkit==0.11.0
+tornado @ file:///D:/bld/tornado_1656937934674/work
+unicodedata2 @ file:///D:/bld/unicodedata2_1649112114189/work
+urllib3==1.26.9
+virtualenv==20.14.1
+webencodings==0.5.1
+wincertstore==0.2
+zipp==3.8.0
