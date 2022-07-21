@@ -35,16 +35,17 @@ def get_artifical_img(src_path):
     return dask_2d, numpy_2d
 
 
-@pytest.mark.parametrize("norm", ["Value", "Percent", None])
+@pytest.mark.parametrize("vis", ["Sky-View Factor", "Slope", None])
+@pytest.mark.parametrize("norm", ["Value", "Percent"])
 @pytest.mark.parametrize("minn, maxn", [ (0.2, 0.7), (0, 1), (63, 98)])
-def test_normalize_eq(norm, minn, maxn):
+def test_normalize_eq(vis, norm, minn, maxn):
     da_stck, np_stck = get_source_img(input_dem_path)
     da_stacked = copy.deepcopy(da_stck)
     np_stacked = copy.deepcopy(np_stck)
    
-    da_arr_3d = rvt.blend_func_dask.dask_normalize_image(image = da_stacked, visualization= "Sky-View Factor", min_norm= minn, 
+    da_arr_3d = rvt.blend_func_dask.dask_normalize_image(image = da_stacked, visualization= vis, min_norm= minn, 
                                             max_norm = maxn, normalization = norm).compute()
-    np_arr_3d = rvt.blend_func.normalize_image(image = np_stacked, visualization= "Sky-View Factor", min_norm= minn, 
+    np_arr_3d = rvt.blend_func.normalize_image(image = np_stacked, visualization= vis, min_norm= minn, 
                                             max_norm = maxn, normalization = norm)
 
     np.testing.assert_array_equal(da_arr_3d, np_arr_3d)
