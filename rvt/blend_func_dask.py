@@ -31,11 +31,8 @@ from functools import partial
 from typing import Union, Dict, List, Any, Tuple, Optional
 from nptyping import NDArray
 
-# def get_da_min(image:da.Array) -> Union[int, float]:
-#     return da.nanmin(image)
-
-# def get_da_max(image:da.Array) -> Union[int, float]:
-#     return da.nanmax(image)
+def get_da_min_max(image:da.Array)-> Tuple[Union[int, float]]:
+    return da.nanmin(image), da.nanmax(image)
 
 def _gray_scale_to_color_ramp_wrapper(np_chunk: NDArray[np.float32],
                                       colormap: str,
@@ -114,10 +111,8 @@ def dask_render_images(active:da.Array,
                        opacity) -> da.Array:
     active = active.astype(np.float32)
     background = background.astype(np.float32)
-    bkg_abs_max = da.nanmax(background)  ##TODO: If multiple layers, this has to be calculated per layer
-    bkg_abs_min = da.nanmin(background)
-    act_abs_max = da.nanmax(active)
-    act_abs_min = da.nanmin(active)
+    bkg_abs_min, bkg_abs_max = get_da_min_max(background)  ##TODO: If multiple layers, this has to be calculated per layer
+    act_abs_min, act_abs_max = get_da_min_max(active)
     _func = partial(_render_images_wrapper,
                     opacity = opacity)
     out_rendered_image = da.map_blocks(_func, 
@@ -175,7 +170,7 @@ def dask_normalize_lin(image: da.Array,
                                        dtype = np.float32)
     return out_norm_lin_image
 
-
+#FIXME: Possible issue in lin_cutoff_calc_from_perc funtion (destribution calcualtion):dask array does not support nanpercentile.
 def _normalize_perc_wrapper(np_chunk: NDArray[np.float32], 
                             minimum: Union[int, float],
                             maximum: Union[int, float]) -> NDArray[np.float32]:
