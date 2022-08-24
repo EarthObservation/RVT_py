@@ -135,7 +135,7 @@ def advanced_normalization(image, minimum, maximum, normalization):
         equ_image = image
     elif normalization.lower() == "value":
         equ_image = normalize_lin(image=image, minimum=minimum, maximum=maximum)
-    elif normalization.lower() == "perc":
+    elif normalization.lower() == "percent":
         equ_image = normalize_perc(image=image, minimum=minimum, maximum=maximum)
     return equ_image
 
@@ -361,7 +361,9 @@ def scale_within_0_and_1(numeric_value, abs_max, abs_min):
 
     scaled = (numeric_value - norm_min_value) / (norm_max_value - norm_min_value)
 
+    #FIXME: da.nanmin (complete array!)
     if np.nanmin(scaled) > -0.01:
+        #print("scale_within_0_to_1: np.nanmin called")
         scaled[(0 > scaled) & (scaled > -0.01)] = 0
 
     return scaled
@@ -378,7 +380,9 @@ def scale_strict_0_to_1(numeric_value, abs_max, abs_min):
 
     scaled = (numeric_value - min_value) / (max_value - min_value)
 
+    #FIXME: da.nanmin (complete array!)
     if np.nanmin(scaled) > -0.01:
+        #print("scale_strict_0_to_1: np.nanmin called")
         scaled[(0 > scaled) & (scaled > -0.01)] = 0
 
     return scaled
@@ -400,23 +404,21 @@ def apply_opacity(active, background, opacity):
 
 
 def normalize_image(visualization, image, min_norm, max_norm, normalization):
-    if visualization is None:
+    if visualization is None: 
         return None
-    if normalization == "percent":
-        normalization = "perc"
 
-    #FIXME: advanced_normalization works correct only for normalization = "value" (normalize_lin)
     norm_image = advanced_normalization(image=image, minimum=min_norm, maximum=max_norm, normalization=normalization)
 
     # make sure it scales 0 to 1
-    if np.nanmax(norm_image) > 1:   #TODO: get correct max value of complete image, caluclated as a result of advanced_normalization function above. Now max per chunk and may lead to wrong results when normalization = None.
-        raise Exception("Not implemented for np.nanmax(np_chunk) > 1")
+    abs_max = np.nanmax(norm_image)
+    abs_min = np.nanmin(norm_image)
+    if abs_max > 1: 
         if visualization.lower() == "multiple directions hillshade" or visualization == "mhs":
-            norm_image = scale_0_to_1(norm_image)
+            norm_image = scale_0_to_1(numeric_value=norm_image, abs_max=abs_max, abs_min=abs_min)
         else:
-            norm_image = scale_0_to_1(norm_image)
+            norm_image = scale_0_to_1(numeric_value=norm_image, abs_max=abs_max, abs_min=abs_min)
             warnings.warn("rvt.blend.normalize_images_on_layers: unexpected values! max > 1")
-        if np.nanmin(norm_image) < 0:
+        if abs_min < 0:
             warnings.warn("rvt.blend.normalize_images_on_layers: unexpected values! min < 0")
 
     # for slope, invert scale
