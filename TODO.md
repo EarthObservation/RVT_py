@@ -18,26 +18,32 @@ This is the markdown todo file for feature/dask branch of Github Repo [RVT_py](h
 
 * Mapping and chaining of these functions across all dask blocks is done in a same fashion as described in the third section of  [napari tutorials](https://napari.org/tutorials/processing/dask.html). Multiple cycles of visualisation -> normalization -> blending -> rendering restults in long tasks, taking one chunk "from start to finish".\*  
 
-\*With [large inputs](https://github.com/dask/dask/issues/3514) takes a long time to start calculation (Is there a more efficient way of saying "this input chunk should map to this output chunk"?)
+* Aplication of reduction functions on dask array (for example during normalization of the image). This means absolute maximum, minimum or distriburion has to be calculated on the whole dask array (not local/ on numpy chunk). The values are used in some conditional statements in functions applied on numpy chunks (mapped over dask array).
+Examples of reduction functions used are: da.nanmin, da.nanmax, da.percentile.\*  
 
 ### Todo
 
-- [ ] Restore some of the previously existing non-dask functionality (keep both options or separate module?).
-- [ ] Configure Dask-jobqueue (specification?).
-- [ ] Fix (`rvt.blend_func.blend_images`) blend mode = "Luminosity". Broken for multiband background arrays. min_c and max_c inputs to `matrix_eq_min_lt_zero` and `matrix_eq_max_gt_one` functions should be np.array. Not int or float.
-
-### In Progress
-
-- [ ] Code refactoring of `rvt.blend_func.normalize_image`.
-  - [ ] Possible issue in `lin_cutoff_calc_from_perc` funtion (destribution calcualtion). Dask array does not support nanpercentile.
-- [ ] Additional testing of i/o functionality (focus on parallel writing in chunks).
 - [ ] Dask memory issues
+  - [ ] Better memory control and HighLevelGraph task manipulation using `dask.delayed` instead of `dask.array.map_(blocks/overlap)`? In this case overlap has to be handled manually.
   - [x] Get available memory and compute / set memory (GB) per Dask worker. 
-  - [ ] Get / compute optimal chunk size. 
+  - [ ] Get / compute optimal chunk size.
+  - [ ] Compute data too large to fit in memory vs. speed up computation of the image across multiple clusters is different problem.
+  - [ ] Number of tasks in not always the same (chaining depends on number of visualization layers). Predict?
+- [ ] Input / output (specification)
+  - [ ] Is input one single raster (several TB - too big to open/visualize) or already chunked?
+  - [ ] Is output one single raster (several TB - too big to open/visualize) or already chunked?
+- [ ] Multidimensional (3D) rasters
+  - [ ] Fix (`rvt.blend_func.blend_images`) blend mode = "Luminosity". Broken for multiband background arrays. min_c and max_c inputs to `matrix_eq_min_lt_zero` and `matrix_eq_max_gt_one` functions should be np.array. Not int or float.
+  - [ ] Fix reduction functions (da.nanmax, da.nanmin,..) for multiband inputs.
+  - [ ] Modify mapped functions for multiband inputs.
+- [ ] Test dask distribution (da.percentile) calcualted in `lin_cutoff_calc_from_perc` on very large inputs.
+- [ ] Fix `rvt.vis.sky_illumination`(np.max -> da.max).
 
 
 ### Done ✓
 
+- [x] Code refactoring of `rvt.blend_func.normalize_image`.
+  - [x] Possible issue in `lin_cutoff_calc_from_perc` function (distribution calcualtion). Dask array does not support nanpercentile.
 - [x] Wrap exising vis functions and map over dask array with some overlap. 
 - [x] Wrap exising blend_func functions and map over dask array. 
 - [x] Read (lazy load) raster in chunks.
@@ -69,8 +75,6 @@ Additionally, try improving [graph serialization](https://docs.dask.org/en/lates
 4. ~~possible leak on Local Cluster, revert to dask version [2022.01.1](https://github.com/dask/distributed/issues/5960).❌~~
 - Raster datasets are usually stored in blocks (tiles). It is better to  make dask chunks **N * original tile dimensions** to avoid bringing up more data than is needed each time the data is accesed. If `chunks = True` when loading data with `rioxarray.open_rasterio ` automatic chunkig is done in a way that takes into account default tiling and **N** is determined in a way that each chunk size is 128MiB (_Dask default, better performance and higher success/failed to finish ratio was recorded with smaller chunk size, but it depends on the hardware and data size...scalability?_). Set chunk size `dask.config.set({"array.chunk-size": limit})`. 
 Graphs below were generated as results of computations with dask distributed, running Local Cluster on a machine with total of 32 GB RAM (`psutil.virtual_memory().total = 32 GB`) and 16 cores (`sum(client.ncores().values()) = 16`). Aprox. 64 MiB equals chunk of size (4096, 4096) = 32 * (128, 128).
-Computation times for visualization `sky_view_factor`. No significant speedup from 8 cores to 16 cores. (Can't take advantage of all cores on a computer, because there is not enough RAM to run more tasks in parallel?). The times include writing resulting file to disk, but that doesn't seem to be the bottelneck. Linear increase in computation time with number of directions. 
-Timewise (according to dask dashboard profile), for example in VAT_general combination computation, `sky_view_factor` comptuation takes 90 % (svf and openess) of total time (`slope`, `hillshade` take 2 % of total time each; `blend`, `render`, `normalize`, etc.  each take aprox. equal fractions of the rest of the total computation time).
 
 
 ![Sky view factor, two workers](./docs/bmarks/svf_dir_times_2w.png) 
@@ -81,19 +85,8 @@ All `dask` resuslts in comparison with pure `numpy` calculation. This is cca. 2 
 Sky view factor results for calcualtion on 30 GB raster that doesn't fit in RAM,
 ![Sky view factor, all results on large raster.](./docs/bmarks/svf_dir_times_l.png) 
 
-Regarding optimal chunk size and worker vs. thread per worker ratio.
-![Comparision for chunk_size 8MiB, 16Mib, 32Mib, 64MiB, 128MiB, 256MiB, 512MiB. Calculation VAT_Combined - combined, float32. Save tif to disk, n_svf_dir = 1!](./docs/bmarks/csize_wt_ratio.png)
 
-- Tricky to determine. It may seem from the plot above that the optimal chunk size is somewhere between 32 MiB and 64 MiB. However, results differ if file is larger (e.g. 30 GB) and/or task of taking single chunk "from start to finish" is longer (e.g. calculating single visualization vs. calcaulating combinations with multiple layers). In a particular case, for a 30 GB file and _general combination_ (from `dask_VAT_combined.py`, with modification to `sky_view_factor: nr_dir = 1`.) cluster kept crashing for different chunk sizes and worker/thread settings due to memory allocation error.
-[Problems](https://github.com/dask/distributed/issues/2602) mainly if chunks are bigger and/or number of workers is higher. 
-Following plots are for different number of workers, different number of threads and chunk sizes (All markers ploted below 1000 s are crashes). See possible memory issues above. Apply some sort of queue to limit chunks or tasks being processed at the same time, for smoother processing/without pausing (and crashing) workers so much? Why is there such a difference in processing 2 GB vs 30 GB file with same chunksizes and worker/threads ratios?
-
-![Comparision for 1 worker, different chunksizes and number of threads. Calculation VAT_general, float32. Save tif to disk, n_svf_dir = 1!](./docs/bmarks/1w_large_vatgeneral.png)
-
-![Comparision for 2 workers, different chunksizes and number of threads. Calculation VAT_general, float32. Save tif to disk, n_svf_dir = 1!](./docs/bmarks/2w_large_vatgeneral.png)
-
-![Comparision for 4 workers, different chunksizes and number of threads. Calculation VAT_general, float32. Save tif to disk, n_svf_dir = 1!](./docs/bmarks/4w_large_vatgeneral.png)
-- ~~If overlap depth is greater than any chunk along a particular axis, then the array is rechunked -> Strange behavior, may result in error at blending step.~~
+- Tricky to determine. It may seem from the plot above that the optimal chunk size is somewhere between 32 MiB and 64 MiB. However, results differ if file is larger (e.g. 30 GB) and/or task of taking single chunk "from start to finish" is longer (e.g. calculating single visualization vs. calcaulating combinations with multiple layers). See possible memory issues above. Apply some sort of queue to limit chunks or tasks being processed at the same time, for smoother processing/without pausing (and crashing) workers so much? Why is there such a difference in processing 2 GB vs 30 GB file with same chunksizes and worker/threads ratios?
 - Visualization `(dask)_multi_hillshade` (if saving directly from `vis.py`) results is very large (chunk depth and final) output of file size: _nr_directions * original raster file size_. Calculation in each direction is additional raster band.
 - Metadata and the file naming convention when reading _.tif_ raster with `rioxarray.open_rasterio`. Understanding how the data is structured (e.g. assumes dims[1:] are named 'x' and 'y'. Name(s) of the bands (not always the same)? Indexing position always true (e.g. `dims[0]= 'band'`, `dims[1] = 'y'`, `dims[2] = 'x'`)?
 - How are [no_data values](https://corteva.github.io/rioxarray/stable/getting_started/nodata_management.html) represented (no_data = data_set.rio.nodata, no_data = data_set.rio.encoded_nodata)? When saving to 8-bit `Error: Python int too large to convert to C long`. Temporary exclude copying attributes from orignal to saved dataset. Fix later. [Issue](https://github.com/corteva/rioxarray/issues/113).
@@ -102,10 +95,10 @@ Following plots are for different number of workers, different number of threads
   - `RuntimeWarning: overflow encountered in long_scalars maxsize = math.ceil(nbytes / (other_numel * itemsize))`
   - `RuntimeWarning: overflow encountered in square tan_slope = np.sqrt(dzdx ** 2 + dzdy ** 2)`
 - [Scaling](https://www.jennakwon.page/2021/03/benchmarks-dask-distributed-vs-ray-for.html). [Adaptivity](https://github.com/dask/distributed/issues/4471). 
-- LocalCluster vs. for wxample PBSCluster. When running on HPC better adaptive dynamic scaling of workers? [Dask jobqueue](https://jobqueue.dask.org/en/latest/) can adapt the cluster size dynamically based on current load. Helps to scale up the cluster when necessary but scale it down and save resources when not actively computing. 
+- LocalCluster vs. for example PBSCluster. When running on HPC better adaptive dynamic scaling of workers? [Dask jobqueue](https://jobqueue.dask.org/en/latest/) can adapt the cluster size dynamically based on current load. Helps to scale up the cluster when necessary but scale it down and save resources when not actively computing. 
 - [Benchmarks](https://matthewrocklin.com/blog/work/2017/07/03/scaling).
-- When reading/ writing very large arrays to .tif  sometimes error (random, hard to reproduce): `RasterioIOError: file used by other process` followed by `distributed.worker - WARNING - Compute Failed`. Current workaround to avoid computation failure is to catch the exception in `rasterio.__init__.py", line 230, in open`, wait for 5 s and try to acquire the lock again. Change the lines 230 - 232 to (first try without this and see if error comes up, it is not ideal to make changes in  rasterio module; `rasterio-1.2.10`). Also `to_zarr` works fine, so look more into this, when final desired output is defined (format, chunks saved separately,..wait for specification of what final output should be):
-~~Adding `windowed = True` argument when writing to tif (`xr.rio.to_raster(...)`) seems to resolve this issue (but is has not been thoroughly tested).~~
+- When reading/ writing very large arrays to .tif  sometimes error (random, hard to reproduce): `RasterioIOError: file used by other process` followed by `distributed.worker - WARNING - Compute Failed`. Current workaround (BAD!) to avoid computation failure is to catch the exception in `rasterio.__init__.py", line 230, in open`, wait for 5 s and try to acquire the lock again. Change the lines 230 - 232 to (first try without this and see if error comes up, it is not ideal to make changes in  rasterio module; `rasterio-1.2.10`). Also `to_zarr` works fine, so look more into this, when final desired output is defined (format, chunks saved separately,..wait for specification of what final output should be):
+
 ```diff
 - s = get_writer_for_path(path, driver=driver)(
 -  path, mode, driver=driver, sharing=sharing, **kwargs
