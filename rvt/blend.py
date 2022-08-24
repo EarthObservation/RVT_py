@@ -1323,9 +1323,9 @@ def e3mstp(dem, resolution, default: rvt.default.DefaultValues = rvt.default.Def
                                    minimum=0,
                                    maximum=1, blend_mode="soft_light", opacity=70,
                                    image=crim_red_arr)
-    blend_combination.create_layer(vis_method="mstp", normalization="value",
-                                   minimum=0,
-                                   maximum=255, blend_mode="normal", opacity=100,
+    blend_combination.create_layer(vis_method="mstp",
+                                   normalization="value", minimum=0, maximum=1,
+                                   blend_mode="normal", opacity=100,
                                    image=mstp_arr)
     e3mstp_out = blend_combination.render_all_images()
     return e3mstp_out
