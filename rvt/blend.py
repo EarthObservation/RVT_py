@@ -547,7 +547,9 @@ class BlenderCombination:
                         norm_image = normalize_image(visualization, image, min_norm, max_norm, normalization)
                 elif self.layers[i_img].vis.lower() == "multi-scale topographic position":
                     if save_visualizations:
-                        default.save_mstp(dem_path=self.dem_path, custom_dir=save_render_directory)
+                        default.save_mstp(
+                            dem_path=self.dem_path, custom_dir=save_render_directory, save_float=True, save_8bit=False
+                        )
                         image_path = default.get_mstp_path(self.dem_path)
                         norm_image = normalize_image(visualization, rvt.default.get_raster_arr(image_path)["array"],
                                                      min_norm, max_norm, normalization)
