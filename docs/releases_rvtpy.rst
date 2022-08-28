@@ -6,7 +6,7 @@ Python package release history
 UNRELEASED
 ----------
 *   Added 1 pixel edge padding before the calculation of hillshade and slope, to avoid no data edge in the final results.
-
+*   Added float option for MSTP visualization.
 
 2.1.0
 -----

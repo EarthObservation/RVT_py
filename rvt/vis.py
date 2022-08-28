@@ -1411,6 +1411,7 @@ def max_elevation_deviation(dem, minimum_radius, maximum_radius, step):
     dem_i_nr_pixels[idx_nan_dem_pad] = 0
     dem_i_nr_pixels = integral_image(dem_i_nr_pixels, np.int)
 
+    # This outputs float64, which is by design. Change final array to float32 at the end of the function (at return)
     dem_i1 = integral_image(dem_pad)
     dem_i2 = integral_image(dem_pad ** 2)
 
@@ -1420,7 +1421,7 @@ def max_elevation_deviation(dem, minimum_radius, maximum_radius, step):
               maximum_radius:-(maximum_radius + 1)]
         if kernel_radius == minimum_radius:
             dev_max_out = dev
-            rad_max_out = np.zeros_like(dev) + kernel_radius
+            rad_max_out = np.zeros_like(dev, dtype=np.float32) + kernel_radius
         else:
             rad_max_out = np.where(np.abs(dev_max_out) >= np.abs(dev), rad_max_out, kernel_radius)
             dev_max_out = np.where(np.abs(dev_max_out) >= np.abs(dev), dev_max_out, dev)
@@ -1430,7 +1431,7 @@ def max_elevation_deviation(dem, minimum_radius, maximum_radius, step):
     dev_max_out[idx_nan_dem] = np.nan
     rad_max_out[idx_nan_dem] = np.nan
 
-    return dev_max_out
+    return dev_max_out.astype(np.float32)
 
 
 def mstp(dem,
@@ -1489,19 +1490,19 @@ def mstp(dem,
                                         step=broad_scale[2])
 
     cutoff = lightness
-    red = np.floor(512 / (1 + np.exp(-cutoff * np.abs(broad_DEV)))) - 256  # broad
-    green = np.floor(512 / (1 + np.exp(-cutoff * np.abs(meso_DEV)))) - 256  # meso
-    blue = np.floor(512 / (1 + np.exp(-cutoff * np.abs(local_DEV)))) - 256  # local
+    red = 1 - np.exp(-cutoff * np.abs(broad_DEV))  # broad
+    green = 1 - np.exp(-cutoff * np.abs(meso_DEV))  # meso
+    blue = 1 - np.exp(-cutoff * np.abs(local_DEV))  # local
 
     red[red < 0] = 0
     green[green < 0] = 0
     blue[blue < 0] = 0
 
-    red[red > 255] = 255
-    green[green > 255] = 255
-    blue[blue > 255] = 255
+    red[red > 1] = 1
+    green[green > 1] = 1
+    blue[blue > 1] = 1
 
-    return np.asarray([red, green, blue])  # RGB 24-bit (3 x 8bit)
+    return np.asarray([red, green, blue])  # RGB float32 (3 x 32bit)
 
 
 def fill_where_nan(dem, method="idw"):

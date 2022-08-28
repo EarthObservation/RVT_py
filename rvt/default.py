@@ -294,6 +294,7 @@ class DefaultValues:
         self.sim_save_float = 1
         self.ld_save_float = 1
         self.msrm_save_float = 1
+        self.mstp_save_float = 1
         # save 8bit
         self.slp_save_8bit = 0
         self.hs_save_8bit = 0
@@ -304,6 +305,7 @@ class DefaultValues:
         self.sim_save_8bit = 0
         self.ld_save_8bit = 0
         self.msrm_save_8bit = 0
+        self.mstp_save_8bit = 0
         # 8-bit bytescale parameters
         self.slp_bytscl = ("value", 0.00, 51.00)
         self.hs_bytscl = ("value", 0.00, 1.00)
@@ -316,6 +318,7 @@ class DefaultValues:
         self.sim_bytscl = ("percent", 0.25, 0.00)
         self.ld_bytscl = ("value", 0.50, 1.80)
         self.msrm_bytscl = ("value", -2.50, 2.50)
+        self.mstp_bytscl = ("value", 0.00, 1.00)
         # tile
         self.tile_size_limit = 10000 * 10000  # if arr size > tile_size limit, it uses tile module
         self.tile_size = (4000, 4000)  # size of single tile when using tile module (x_size, y_size)
@@ -549,7 +552,15 @@ class DefaultValues:
                                                     " calculate maximum mean deviation from elevation."
                                                     " All have to be integers!"},
                 "mstp_lightness": {"value": self.mstp_lightness,
-                                   "description": "Lightness factor to adjust MSTP visibility."}
+                                   "description": "Lightness factor to adjust MSTP visibility."},
+                "mstp_save_float": {"value": self.mstp_save_float,
+                                  "description": "If 1 it saves float raster, if 0 it doesn't."},
+                "mstp_save_8bit": {"value": self.mstp_save_8bit,
+                                 "description": "If 1 it saves 8bit raster, if 0 it doesn't."},
+                "mstp_bytscl": {"mode": self.mstp_bytscl[0], "min": self.mstp_bytscl[1], "max": self.mstp_bytscl[2],
+                              "description": "Linear stretch and byte scale (0-255) for 8bit raster. "
+                                             "Mode can be 'value' or 'percent' (cut-off units). "
+                                             "Values min and max define stretch borders (in mode units)."}
             }
 
         }}
@@ -772,6 +783,11 @@ class DefaultValues:
                                      int(default_data["Multi-scale topographic position"]["mstp_broad_scale"]["max"]),
                                      int(default_data["Multi-scale topographic position"]["mstp_broad_scale"]["step"]))
             self.mstp_lightness = float(default_data["Multi-scale topographic position"]["mstp_lightness"]["value"])
+            self.mstp_save_float = int(default_data["Multi-scale topographic position"]["mstp_save_float"]["value"])
+            self.mstp_save_8bit = int(default_data["Multi-scale topographic position"]["mstp_save_8bit"]["value"])
+            self.mstp_bytscl = (str(default_data["Multi-scale topographic position"]["mstp_bytscl"]["mode"]),
+                              float(default_data["Multi-scale topographic position"]["mstp_bytscl"]["min"]),
+                              float(default_data["Multi-scale topographic position"]["mstp_bytscl"]["max"]))
             dat.close()
 
     def get_shadow_file_name(self, dem_path):
@@ -977,15 +993,26 @@ class DefaultValues:
         dem_path) and adds dem directory (dem_path) to it. If bit8 it returns 8bit file path."""
         return os.path.normpath(os.path.join(os.path.dirname(dem_path), self.get_msrm_file_name(dem_path, bit8)))
 
-    def get_mstp_file_name(self, dem_path):
+    def get_mstp_file_name(self, dem_path, bit8=False):
         """Returns Multi-scale topographic position name, dem name (from dem_path) with added mstp parameters.
         If bit8 it returns 8bit file name."""
         dem_name = os.path.basename(dem_path).split(".")[0]  # base name without extension
-        return "{}_MSTP_{}_{}_{}_L{}.tif".format(dem_name, self.mstp_local_scale[1], self.mstp_meso_scale[1],
-                                                 self.mstp_broad_scale[1], self.mstp_lightness)
 
-    def get_mstp_path(self, dem_path):
-        return os.path.normpath(os.path.join(os.path.dirname(dem_path), self.get_mstp_file_name(dem_path)))
+        mstp_file_name = "{}_MSTP_{}_{}_{}_L{}.tif".format(
+            dem_name,
+            self.mstp_local_scale[1],
+            self.mstp_meso_scale[1],
+            self.mstp_broad_scale[1],
+            self.mstp_lightness
+        )
+
+        if bit8:
+            mstp_file_name = mstp_file_name.replace(".tif", "_8bit.tif")
+
+        return mstp_file_name
+
+    def get_mstp_path(self, dem_path, bit8=False):
+        return os.path.normpath(os.path.join(os.path.dirname(dem_path), self.get_mstp_file_name(dem_path, bit8)))
 
     def get_visualization_file_name(self,
                                     rvt_visualization: RVTVisualization,
@@ -1162,7 +1189,16 @@ class DefaultValues:
                                                       normalization=self.msrm_bytscl[0])
             return rvt.vis.byte_scale(data=norm_arr, no_data=np.nan, c_min=0, c_max=1)
         elif visualization == RVTVisualization.MULTI_SCALE_TOPOGRAPHIC_POSITION:
-            return float_arr
+            # This might not be necessary, as all mstp data should already be between 0 and 1
+            norm_arr = rvt.blend_func.normalize_image(
+                visualization="mstp",
+                image=float_arr,
+                min_norm=self.mstp_bytscl[1],
+                max_norm=self.mstp_bytscl[2],
+                normalization=self.mstp_bytscl[0]
+            )
+
+            return rvt.vis.byte_scale(data=norm_arr, no_data=np.nan, c_min=0, c_max=1)
         else:
             raise Exception("rvt.default.DefaultValues.float_to_8bit: Wrong visualization (visualization) parameter!")
 
@@ -2025,19 +2061,42 @@ class DefaultValues:
                                 broad_scale=self.mstp_broad_scale, lightness=self.mstp_lightness, no_data=no_data)
         return mstp_arr
 
-    def save_mstp(self, dem_path, custom_dir=None):
+    def save_mstp(self, dem_path, custom_dir=None, save_float=None, save_8bit=None):
         """Calculates and saves Multi-scale topographic position from dem (dem_path) with default parameters.
         If custom_dir is None it saves in dem directory else in custom_dir. If path to file already exists we can
         overwrite file (overwrite=1) or not (overwrite=0)."""
+
+        # if save_float is None it takes boolean from default (self)
+        if save_float is None:
+            save_float = self.mstp_save_float
+        # if save_8bit is None it takes boolean from default (self)
+        if save_8bit is None:
+            save_8bit = self.mstp_save_8bit
+
+        if not save_float and not save_8bit:
+            raise Exception("rvt.default.DefaultValues.save_mstp: Both save_float and save_8bit are False,"
+                            " at least one of them has to be True!")
+
         if not os.path.isfile(dem_path):
-            raise Exception("rvt.default.DefaultValues.save_msrm: dem_path doesn't exist!")
+            raise Exception("rvt.default.DefaultValues.save_mstp: dem_path doesn't exist!")
+
         if custom_dir is None:
             mstp_path = self.get_mstp_path(dem_path)
+            mstp_8bit_path = self.get_mstp_path(dem_path, bit8=True)
         else:
             mstp_path = os.path.join(custom_dir, self.get_mstp_file_name(dem_path))
+            mstp_8bit_path = os.path.join(custom_dir, self.get_mstp_file_name(dem_path, bit8=True))
 
-        if os.path.isfile(mstp_path) and not self.overwrite:
-            return 0
+        # if file already exists and overwrite=0
+        if save_float and save_8bit:
+            if os.path.isfile(mstp_8bit_path) and os.path.isfile(mstp_path) and not self.overwrite:
+                return 0
+        elif save_float and not save_8bit:
+            if os.path.isfile(mstp_path) and not self.overwrite:
+                return 0
+        elif not save_float and not save_8bit:
+            if os.path.isfile(mstp_8bit_path) and not self.overwrite:
+                return 0
 
         dem_size = get_raster_size(raster_path=dem_path)
         if dem_size[0] * dem_size[1] > self.tile_size_limit:  # tile by tile calculation
@@ -2048,8 +2107,8 @@ class DefaultValues:
                 rvt_default=self,
                 dem_path=Path(dem_path),
                 output_dir_path=Path(custom_dir),
-                save_float=False,
-                save_8bit=True
+                save_float=save_float,
+                save_8bit=save_8bit
             )
             return 1
         else:  # singleprocess
@@ -2057,9 +2116,35 @@ class DefaultValues:
             dem_arr = dict_arr_res["array"]
             no_data = dict_arr_res["no_data"]
 
-            mstp_arr = self.get_mstp(dem_arr=dem_arr, no_data=no_data).astype('float32')
-            save_raster(src_raster_path=dem_path, out_raster_path=mstp_path, out_raster_arr=mstp_arr,
-                        e_type=1)
+            mstp_arr = self.get_mstp(dem_arr=dem_arr, no_data=no_data)
+
+            if save_float:
+                if os.path.isfile(mstp_path) and not self.overwrite:  # file exists and overwrite=0
+                    pass
+                else:
+                    save_raster(
+                        src_raster_path=dem_path,
+                        out_raster_path=mstp_path,
+                        out_raster_arr=mstp_arr,
+                        no_data=np.nan,
+                        e_type=6
+                    )
+            if save_8bit:
+                if os.path.isfile(mstp_8bit_path) and not self.overwrite:  # file exists and overwrite=0
+                    pass
+                else:
+                    slope_8bit_arr = self.float_to_8bit(
+                        float_arr=mstp_arr,
+                        visualization=RVTVisualization.MULTI_SCALE_TOPOGRAPHIC_POSITION
+                    )
+                    save_raster(
+                        src_raster_path=dem_path,
+                        out_raster_path=mstp_8bit_path,
+                        out_raster_arr=slope_8bit_arr,
+                        no_data=np.nan,
+                        e_type=1
+                    )
+
             return 1
 
     def save_visualizations(self, dem_path, custom_dir=None):

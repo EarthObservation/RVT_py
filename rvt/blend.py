@@ -547,7 +547,9 @@ class BlenderCombination:
                         norm_image = normalize_image(visualization, image, min_norm, max_norm, normalization)
                 elif self.layers[i_img].vis.lower() == "multi-scale topographic position":
                     if save_visualizations:
-                        default.save_mstp(dem_path=self.dem_path, custom_dir=save_render_directory)
+                        default.save_mstp(
+                            dem_path=self.dem_path, custom_dir=save_render_directory, save_float=True, save_8bit=False
+                        )
                         image_path = default.get_mstp_path(self.dem_path)
                         norm_image = normalize_image(visualization, rvt.default.get_raster_arr(image_path)["array"],
                                                      min_norm, max_norm, normalization)
@@ -1323,9 +1325,9 @@ def e3mstp(dem, resolution, default: rvt.default.DefaultValues = rvt.default.Def
                                    minimum=0,
                                    maximum=1, blend_mode="soft_light", opacity=70,
                                    image=crim_red_arr)
-    blend_combination.create_layer(vis_method="mstp", normalization="value",
-                                   minimum=0,
-                                   maximum=255, blend_mode="normal", opacity=100,
+    blend_combination.create_layer(vis_method="mstp",
+                                   normalization="value", minimum=0, maximum=1,
+                                   blend_mode="normal", opacity=100,
                                    image=mstp_arr)
     e3mstp_out = blend_combination.render_all_images()
     return e3mstp_out
