@@ -318,7 +318,7 @@ class DefaultValues:
         self.sim_bytscl = ("percent", 0.25, 0.00)
         self.ld_bytscl = ("value", 0.50, 1.80)
         self.msrm_bytscl = ("value", -2.50, 2.50)
-        self.mstp_bytscl = ("value", 0, 1)
+        self.mstp_bytscl = ("value", 0.00, 1.00)
         # tile
         self.tile_size_limit = 10000 * 10000  # if arr size > tile_size limit, it uses tile module
         self.tile_size = (4000, 4000)  # size of single tile when using tile module (x_size, y_size)
@@ -552,7 +552,15 @@ class DefaultValues:
                                                     " calculate maximum mean deviation from elevation."
                                                     " All have to be integers!"},
                 "mstp_lightness": {"value": self.mstp_lightness,
-                                   "description": "Lightness factor to adjust MSTP visibility."}
+                                   "description": "Lightness factor to adjust MSTP visibility."},
+                "mstp_save_float": {"value": self.mstp_save_float,
+                                  "description": "If 1 it saves float raster, if 0 it doesn't."},
+                "mstp_save_8bit": {"value": self.mstp_save_8bit,
+                                 "description": "If 1 it saves 8bit raster, if 0 it doesn't."},
+                "mstp_bytscl": {"mode": self.mstp_bytscl[0], "min": self.mstp_bytscl[1], "max": self.mstp_bytscl[2],
+                              "description": "Linear stretch and byte scale (0-255) for 8bit raster. "
+                                             "Mode can be 'value' or 'percent' (cut-off units). "
+                                             "Values min and max define stretch borders (in mode units)."}
             }
 
         }}
@@ -775,6 +783,11 @@ class DefaultValues:
                                      int(default_data["Multi-scale topographic position"]["mstp_broad_scale"]["max"]),
                                      int(default_data["Multi-scale topographic position"]["mstp_broad_scale"]["step"]))
             self.mstp_lightness = float(default_data["Multi-scale topographic position"]["mstp_lightness"]["value"])
+            self.mstp_save_float = int(default_data["Multi-scale topographic position"]["mstp_save_float"]["value"])
+            self.mstp_save_8bit = int(default_data["Multi-scale topographic position"]["mstp_save_8bit"]["value"])
+            self.mstp_bytscl = (str(default_data["Multi-scale topographic position"]["mstp_bytscl"]["mode"]),
+                              float(default_data["Multi-scale topographic position"]["mstp_bytscl"]["min"]),
+                              float(default_data["Multi-scale topographic position"]["mstp_bytscl"]["max"]))
             dat.close()
 
     def get_shadow_file_name(self, dem_path):

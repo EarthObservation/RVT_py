@@ -342,6 +342,20 @@
             "mstp_lightness": {
                 "value": 1.2,
                 "description": "Lightness factor to adjust MSTP visibility."
+            },
+            "mstp_save_float": {
+                "value": 1,
+                "description": "If 1 it saves float raster, if 0 it doesn't."
+            },
+            "mstp_save_8bit": {
+                "value": 0,
+                "description": "If 1 it saves 8bit raster, if 0 it doesn't."
+            },
+            "mstp_bytscl": {
+                "mode": "value",
+                "min": 0.0,
+                "max": 1.0,
+                "description": "Linear stretch and byte scale (0-255) for 8bit raster. Mode can be 'value' or 'percent' (cut-off units). Values min and max define stretch borders (in mode units)."
             }
         }
     }
