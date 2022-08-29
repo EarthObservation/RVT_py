@@ -3,6 +3,10 @@
 QGIS plugin release history
 ===========================
 
+v0.9.3
+------
+*   Added MSTP float and 8bit option.
+
 v0.9.2
 ------
 *   Try to install scipy if it doesn't exist.
