@@ -1045,7 +1045,7 @@ class DefaultValues:
         elif rvt_visualization == rvt.default.RVTVisualization.MULTI_SCALE_RELIEF_MODEL:
             return self.get_msrm_file_name(dem_path=dem_path, bit8=path_8bit)
         elif rvt_visualization == rvt.default.RVTVisualization.MULTI_SCALE_TOPOGRAPHIC_POSITION:
-            return self.get_mstp_file_name(dem_path=dem_path)
+            return self.get_mstp_file_name(dem_path=dem_path, bit8=path_8bit)
 
     def get_visualization_path(
             self,
@@ -1080,7 +1080,7 @@ class DefaultValues:
         elif rvt_visualization == rvt.default.RVTVisualization.MULTI_SCALE_RELIEF_MODEL:
             return output_dir_path / Path(self.get_msrm_file_name(dem_path=dem_path, bit8=path_8bit))
         elif rvt_visualization == rvt.default.RVTVisualization.MULTI_SCALE_TOPOGRAPHIC_POSITION:
-            return output_dir_path / Path(self.get_mstp_file_name(dem_path=dem_path))
+            return output_dir_path / Path(self.get_mstp_file_name(dem_path=dem_path, bit8=path_8bit))
 
     def float_to_8bit(
             self,
@@ -2133,14 +2133,14 @@ class DefaultValues:
                 if os.path.isfile(mstp_8bit_path) and not self.overwrite:  # file exists and overwrite=0
                     pass
                 else:
-                    slope_8bit_arr = self.float_to_8bit(
+                    mstp_8bit_arr = self.float_to_8bit(
                         float_arr=mstp_arr,
                         visualization=RVTVisualization.MULTI_SCALE_TOPOGRAPHIC_POSITION
                     )
                     save_raster(
                         src_raster_path=dem_path,
                         out_raster_path=mstp_8bit_path,
-                        out_raster_arr=slope_8bit_arr,
+                        out_raster_arr=mstp_8bit_arr,
                         no_data=np.nan,
                         e_type=1
                     )
