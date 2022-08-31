@@ -34,25 +34,6 @@ from nptyping import NDArray
 def get_da_min_max(image:da.Array)-> Tuple[Union[int, float]]:
     return da.nanmin(image), da.nanmax(image)
 
-def get_da_distribution(image:da.Array, minimum:Union[int, float], maximum:Union[int, float]) -> NDArray[np.float32]:
-    image_valid = image[~da.isnan(image)].compute_chunk_sizes()
-    distribution = da.percentile(a=image_valid, q=np.array([minimum, 100 - maximum])) 
-    #min_lin, max_lin = distribution.compute()
-    return distribution
-
-def dask_lin_cutoff_calc_from_perc(image:da.Array, minimum:Union[float, int], maximum:Union[float, int]) -> Dict[str, Union[int, float]]:
-    if minimum < 0 or maximum < 0 or minimum > 100 or maximum > 100:
-        raise Exception("rvt.blend_funct.lin_cutoff_calc_from_perc: minimum, maximum are percent and have to be in "
-                        "range 0-100!")
-    if minimum + maximum > 100:
-        raise Exception("rvt.blend_funct.lin_cutoff_calc_from_perc: if minimum + maximum > 100% then there are no"
-                        " values left! You can't cutoff whole image!")
-    min_lin, max_lin = get_da_distribution(image, minimum, maximum).compute() #ok?
-    if min_lin == max_lin:
-        min_lin, max_lin = get_da_min_max(image)
-    return min_lin, max_lin
-    # return {"min_lin": min_lin, "max_lin": max_lin}
-
 def _gray_scale_to_color_ramp_wrapper(np_chunk: NDArray[np.float32],
                                       colormap: str,
                                       min_colormap_cut: float,
@@ -163,6 +144,20 @@ def dask_normalize_lin(image: da.Array,
                                        dtype = np.float32)
     return out_norm_lin_image
 
+def get_da_distribution(image:da.Array, minimum:Union[int, float], maximum:Union[int, float]) -> NDArray[np.float32]:
+    image_valid = image[~da.isnan(image)]#.compute_chunk_sizes()
+    distribution = da.percentile(a=image_valid, q=np.array([minimum, 100 - maximum])) 
+    return distribution
+
+
+def _lin_cutoff_calc_check_min_max(image, minimum, maximum):
+    if minimum < 0 or maximum < 0 or minimum > 100 or maximum > 100:
+        raise Exception("rvt.blend_funct.lin_cutoff_calc_from_perc: minimum, maximum are percent and have to be in "
+                        "range 0-100!")
+    if minimum + maximum > 100:
+        raise Exception("rvt.blend_funct.lin_cutoff_calc_from_perc: if minimum + maximum > 100% then there are no"
+                        " values left! You can't cutoff whole image!")
+    return image
 
 def _normalize_perc_wrapper(np_chunk: NDArray[np.float32], 
                             minimum: Union[int, float],
@@ -174,12 +169,14 @@ def dask_normalize_perc(image: da.Array,
                        minimum, 
                        maximum) -> da.Array:
     image.astype(np.float32)
-    min_lin, max_lin = dask_lin_cutoff_calc_from_perc(image = image, minimum = minimum, maximum = maximum)
-    _func = partial(_normalize_perc_wrapper,
-                    minimum = min_lin, 
-                    maximum = max_lin)
-    out_norm_perc_image = da.map_blocks(_func, 
+    image = _lin_cutoff_calc_check_min_max(image = image, minimum=minimum, maximum=maximum)
+    min_lin, max_lin = get_da_distribution(image=image, minimum = minimum, maximum = maximum)
+    if min_lin == max_lin:
+        min_lin, max_lin = get_da_min_max(image)
+    out_norm_perc_image = da.map_blocks(_normalize_perc_wrapper, 
                                        image, 
+                                       minimum = min_lin, 
+                                       maximum = max_lin,
                                        dtype = np.float32)
     return out_norm_perc_image
 
@@ -194,10 +191,12 @@ def dask_advanced_normalization(image:da.Array,
     else:
         if normalization.lower() == 'value':
             out_normalize = dask_normalize_lin(image = image,
-                    minimum= min_norm, maximum = max_norm) 
-        elif normalization.lower() == 'percent':
-            #min_lin, max_lin = dask_lin_cutoff_calc_from_perc(image = image, minimum = min_norm, maximum = max_norm)
-            out_normalize = dask_normalize_perc(image = image, minimum = min_norm, maximum = max_norm) 
+                                                minimum = min_norm,
+                                                maximum = max_norm) 
+        elif normalization.lower() == 'perc':
+            out_normalize = dask_normalize_perc(image = image,
+                                                minimum = min_norm, 
+                                                maximum = max_norm) 
     return out_normalize
 
 
@@ -214,45 +213,41 @@ def dask_normalize_image(image:da.Array,
         return out_none
     else:
         norm_image =  dask_advanced_normalization(image=image,
-                            min_norm=min_norm,
-                            max_norm=max_norm,
-                            normalization=normalization)
-        abs_min, abs_max = get_da_min_max(norm_image)
-        if abs_max > 1: 
-            if visualization.lower() == "multiple directions hillshade" or visualization == "mhs":
-                out_norm_image = dask_scale_0_to_1(image=norm_image, abs_max=abs_max, abs_min=abs_min)
-            else:
-                out_norm_image = dask_scale_0_to_1(image=norm_image, abs_max=abs_max, abs_min=abs_min)
-                warnings.warn("rvt.blend.normalize_images_on_layers: unexpected values! max > 1")
-            if abs_min < 0:
-                warnings.warn("rvt.blend.normalize_images_on_layers: unexpected values! min < 0")
+                                                  min_norm=min_norm,
+                                                  max_norm=max_norm,
+                                                  normalization=normalization)
+
+        abs_min_img, abs_max_img = get_da_min_max(norm_image)  
+        _func = partial(_check_min_max_normalized, 
+                        visualization=visualization)             
+        chkd_norm_image= da.map_blocks(_func, 
+                                      norm_image, 
+                                      abs_max_img=abs_max_img, 
+                                      abs_min_img=abs_min_img, 
+                                      dtype = np.float32)
 
         if visualization.lower() == "slope gradient" or visualization.lower() == "openness - negative" or \
                 visualization == "slp" or visualization == "neg_opns":
             def _func_invert(np_chunk):
                 return 1 - np_chunk
             out_norm_image = da.map_blocks(_func_invert,
-                                            norm_image,
-                                            meta=np.array((), dtype=np.float32))
+                                            chkd_norm_image,
+                                            meta=np.array((), dtype=np.float32))                                      
+            return out_norm_image
         else:
-            out_norm_image=norm_image
-    return out_norm_image
+            return chkd_norm_image
 
 
-def _scale_0_to_1_wrapper(np_chunk: NDArray[np.float32], 
-                          abs_max: Union[int, float],
-                          abs_min: Union[int, float]) -> NDArray[np.float32]:
-    scaled_image = rvt.blend_func.scale_0_to_1(numeric_value= np_chunk, abs_max=abs_max, abs_min=abs_min)
-    return scaled_image
-
-def dask_scale_0_to_1(image:da.Array,
-                      abs_max,
-                      abs_min) -> da.Array:
-    image = image.astype(np.float32)
-    _func = partial(_scale_0_to_1_wrapper, 
-                    abs_max = abs_max, 
-                    abs_min=abs_min)
-    out_scaled = da.map_blocks(_func, 
-                               image,
-                               meta=np.array((), dtype=np.float32))
-    return out_scaled
+def _check_min_max_normalized(norm_image:da.Array, visualization:str, abs_max_img, abs_min_img) -> da.Array:
+    if abs_max_img > 1: 
+        if visualization.lower() == "multiple directions hillshade" or visualization == "mhs":
+            new_norm_image =  rvt.blend_func.scale_0_to_1(numeric_value=norm_image, abs_max=abs_max_img, abs_min=abs_min_img)
+        else:
+            new_norm_image =  rvt.blend_func.scale_0_to_1(numeric_value= norm_image, abs_max=abs_max_img, abs_min=abs_min_img)
+            warnings.warn("rvt.blend.normalize_images_on_layers: unexpected values! max > 1")
+        if abs_min_img < 0:
+            warnings.warn("rvt.blend.normalize_images_on_layers: unexpected values! min < 0")
+            new_norm_image= norm_image
+        return new_norm_image
+    else:
+        return norm_image
