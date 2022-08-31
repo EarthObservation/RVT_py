@@ -35,8 +35,8 @@ def get_artifical_img(src_path):
     return dask_2d, numpy_2d
 
 
-@pytest.mark.parametrize("vis", ["Sky-View Factor", "Slope gradient", None])
-@pytest.mark.parametrize("norm", ["Value", "Percent", None])
+@pytest.mark.parametrize("vis", ["Sky-View Factor", "Slope gradient", "mhs",None])
+@pytest.mark.parametrize("norm", ["Value", "Perc", None])
 @pytest.mark.parametrize("minn, maxn", [ (0.2, 0.7), (0, 1), (63, 98)])
 def test_normalize_eq(vis, norm, minn, maxn):
     da_stck, np_stck = get_source_img(input_dem_path)
@@ -67,7 +67,7 @@ def test_blend_eq(blend, minc, maxc):
 
     np.testing.assert_array_equal(da_arr_3d, np_arr_3d)
 
-@pytest.mark.parametrize("opac", [25, 75, 0, 100, -5])
+@pytest.mark.parametrize("opac", [25, 75, 0, 100, -5, 0.5])
 def test_render_eq(opac):
     da_stck, np_stck = get_source_img(input_dem_path)
     da_2dim, np_2dim = get_artifical_img(input_dem_path)
