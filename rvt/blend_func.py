@@ -135,7 +135,7 @@ def advanced_normalization(image, minimum, maximum, normalization):
         equ_image = image
     elif normalization.lower() == "value":
         equ_image = normalize_lin(image=image, minimum=minimum, maximum=maximum)
-    elif normalization.lower() == "percent":
+    elif normalization.lower() == "perc":
         equ_image = normalize_perc(image=image, minimum=minimum, maximum=maximum)
     return equ_image
 
@@ -317,9 +317,9 @@ def blend_images(blend_mode, active, background, min_c=None, max_c=None):
 
 def render_images(active, background, opacity, bkg_abs_max, bkg_abs_min, act_abs_max, act_abs_min):
     if act_abs_min < 0 or act_abs_max > 1:
-        active = scale_0_to_1(active, act_abs_max, act_abs_min)
+        active = scale_0_to_1(numeric_value= active, abs_max= act_abs_max, abs_min= act_abs_min)
     if bkg_abs_min < 0 or bkg_abs_max > 1:
-        background = scale_0_to_1(background, bkg_abs_max, bkg_abs_min)
+        background = scale_0_to_1(numeric_value= background, abs_max= bkg_abs_max, abs_min= bkg_abs_min)
 
     a_rgb = len(active.shape) == 3
     b_rgb = len(background.shape) == 3
@@ -327,17 +327,17 @@ def render_images(active, background, opacity, bkg_abs_max, bkg_abs_min, act_abs
     if a_rgb and b_rgb:
         render_image = np.zeros(background.shape)
         for i in range(3):
-            render_image[i, :, :] = apply_opacity(active[i, :, :], background[i, :, :], opacity)
+            render_image[i, :, :] = apply_opacity(active= active[i, :, :], background= background[i, :, :],opacity= opacity)
     if a_rgb and not b_rgb:
         render_image = np.zeros(active.shape)
         for i in range(3):
-            render_image[i, :, :] = apply_opacity(active[i, :, :], background, opacity)
+            render_image[i, :, :] = apply_opacity(active= active[i, :, :], background= background, opacity= opacity)
     if not a_rgb and b_rgb:
         render_image = np.zeros(background.shape)
         for i in range(3):
-            render_image[i, :, :] = apply_opacity(active, background[i, :, :], opacity)
+            render_image[i, :, :] = apply_opacity(active= active, background= background[i, :, :], opacity= opacity)
     if not a_rgb and not b_rgb:
-        render_image = apply_opacity(active, background, opacity)
+        render_image = apply_opacity(active= active, background= background, opacity= opacity)
     return render_image
 
 
@@ -363,7 +363,7 @@ def scale_within_0_and_1(numeric_value, abs_max, abs_min):
 
     #FIXME: da.nanmin (complete array!)
     if np.nanmin(scaled) > -0.01:
-        #print("scale_within_0_to_1: np.nanmin called")
+        warnings.warn("rvt.blend_func: scale_within_0_to_1: np.nanmin called on chunk")
         scaled[(0 > scaled) & (scaled > -0.01)] = 0
 
     return scaled
@@ -382,7 +382,7 @@ def scale_strict_0_to_1(numeric_value, abs_max, abs_min):
 
     #FIXME: da.nanmin (complete array!)
     if np.nanmin(scaled) > -0.01:
-        #print("scale_strict_0_to_1: np.nanmin called")
+        warnings.warn("rvt.blend_func: scale_within_0_to_1: np.nanmin called on chunk")
         scaled[(0 > scaled) & (scaled > -0.01)] = 0
 
     return scaled
