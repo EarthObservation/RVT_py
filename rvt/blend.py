@@ -582,7 +582,7 @@ class BlenderCombination:
                 top = blend_images(blend_mode, active, background)
                 rendered_image = render_images(top, background, opacity)
 
-                if np.nanmin(rendered_image) < 0 or np.nanmax(rendered_image > 1):
+                if np.nanmin(rendered_image) < 0 or np.nanmax(rendered_image) > 1:
                     warnings.warn("rvt.blend.BlenderCombination.render_all_images: Rendered image scale distorted")
         if save_render_path is not None:  # if paths presented it saves image
             if save_float:
