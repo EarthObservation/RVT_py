@@ -3,6 +3,10 @@
 QGIS plugin release history
 ===========================
 
+v0.9.4
+------
+*   Fixed paths to processing functions.
+
 v0.9.3
 ------
 *   Added MSTP float and 8bit option.
