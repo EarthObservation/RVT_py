@@ -353,8 +353,10 @@ class BlenderCombination:
                 "you have to set save_float or save_8bit to True!")
         if save_render_path is not None:
             save_render_directory = os.path.abspath(os.path.dirname(save_render_path))
-            save_render_8bit_path = r"{}\{}_8bit.tif".format(save_render_directory,
-                                                             os.path.splitext(os.path.basename(save_render_path))[0])
+            save_render_8bit_path = os.path.join(
+                save_render_directory,
+                "{}_8bit.tif".format(os.path.splitext(os.path.basename(save_render_path))[0])
+            )
         else:
             save_render_directory = None
 
