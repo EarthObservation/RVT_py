@@ -788,6 +788,8 @@ def local_dominance(dem,
         dem[dem == no_data] = np.nan
 
     dem = dem.astype(np.float32)
+    # add max_rad pixel edge padding
+    pad_width = max_rad
     dem = dem * ve_factor
 
     # create a vector with possible distances
@@ -817,6 +819,9 @@ def local_dominance(dem,
                                                          dem_moved[idx_lower[0], idx_lower[1]]) / \
                                                         distances[i_s] * dist_factr[i_s]
     local_dom_out = local_dom_out / norma
+
+    # Remove padding
+    local_dom_out = local_dom_out[pad_width:-pad_width, pad_width:-pad_width]
 
     return local_dom_out
 
