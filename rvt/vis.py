@@ -790,6 +790,7 @@ def local_dominance(dem,
     dem = dem.astype(np.float32)
     # add max_rad pixel edge padding
     pad_width = max_rad
+    dem = np.pad(array=dem, pad_width=pad_width, mode="edge")
     dem = dem * ve_factor
 
     # create a vector with possible distances
