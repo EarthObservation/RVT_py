@@ -3,5 +3,5 @@ Generate RVT.bib BibTeX
 References are maintained in a Citavi database
 Update and check for duplicates
 Export RVT Simple
-    Modified BibTeX
-    Do not export abstract, ulr access date
+    Modified BibTeX -> BibTeX Simple
+    Do not export abstract, file
