@@ -1,4 +1,4 @@
-# Relief Visualization Toolbox in Python
+# Relief Visualization Toolbox Python library
 
 ![](./docs/figures/RVT_head.png)
 
