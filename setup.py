@@ -8,7 +8,7 @@ setuptools.setup(
     version="2.1.0",
     author="ZRC SAZU and University of Ljubljana (UL FGG)",
     author_email="ziga.kokalj@zrc-sazu.si",
-    description="Relief Visualization Toolbox python library. "
+    description="Relief Visualization Toolbox Python library. "
                 "It helps scientist visualize raster elevation model datasets. ",
     long_description=long_description,
     long_description_content_type="text/markdown",
