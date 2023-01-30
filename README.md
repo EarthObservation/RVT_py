@@ -79,9 +79,7 @@ We recommend using Python 3.6 or higher and a Conda environment (this works best
 Documentation of the package and its use is available at [Relief Visualization Toolbox in Python documentation](https://rvt-py.readthedocs.io/).
 
 ## Contributing
-Pull requests are welcome. For major changes, please open an issue first to discuss what you would like to change.
-
-Please report any bugs and suggestions for improvements.
+Pull requests are welcome. For major changes, please open an issue first to discuss what you would like to change. Please report any bugs and suggestions for improvements.
 
 ## Acknowledgment
 Development of RVT Python scripts was part financed by the Slovenian Research Agency core funding No. P2-0406, and by research project No. J6-9395.
@@ -90,7 +88,8 @@ Development of RVT Python scripts was part financed by the Slovenian Research Ag
 This project is licensed under the terms of the [Apache License](LICENSE).
 
 ## About
-RVT Python library by Žiga Kokalj, Žiga Maroh, Krištof Oštir, Klemen Zakšek and Nejc Čož, 2022
+RVT Python library by Žiga Kokalj, Žiga Maroh, Krištof Oštir, Klemen Zakšek and Nejc Čož, 2022.
+
 It is developed in collaboration between ZRC SAZU and University of Ljubljana. 
 
 
