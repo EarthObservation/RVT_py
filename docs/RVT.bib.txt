@@ -3,5 +3,7 @@ Generate RVT.bib BibTeX
 References are maintained in a Citavi database
 Update and check for duplicates
 Export RVT Simple
+    Export only papers
+    The references in current selection
     Modified BibTeX -> BibTeX Simple
     Do not export abstract, file
