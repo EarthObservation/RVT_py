@@ -523,7 +523,15 @@ def sky_view_factor_compute(height_arr,
                             a_min_weight=0.4,
                             ):
     """
-    Calculates horizon based visualizations: Sky-view factor, Anisotopic SVF and Openess.
+    Calculates horizon based visualizations: Sky-view factor, Anisotropic SVF and Openness.
+
+    SVF processing is using search radius, that looks at values beyond the edge of an array. Consider using a buffered
+    array as an input, with the buffer size equal to the radius_max.
+    To prevent erosion of the edge, function applies mirrored padding in all four directions, however, this means that
+    edge values are "averaged over half of the hemisphere". Similarly, the edges of the dataset (i.e. areas with NaN
+    values), will be considered as fully open (SFV angle 0, Openness angle -90).
+
+    Input array should use np.nan as nodata value.
 
     Parameters
     ----------
@@ -559,8 +567,9 @@ def sky_view_factor_compute(height_arr,
         opns_out, openness : 2D numpy array (numpy.ndarray) openness (elevation angle of horizon).
     """
 
-    # pad the array for the radius_max on all 4 sides
     height = np.pad(height_arr, radius_max, mode='symmetric')
+    # Pad the array for the radius_max on all 4 sides
+    height = np.pad(height_arr, radius_max, mode='reflect')
 
     # compute the vector of movement and corresponding distances
     move = horizon_shift_vector(num_directions=num_directions, radius_pixels=radius_max, min_radius=radius_min)
@@ -596,17 +605,24 @@ def sky_view_factor_compute(height_arr,
             shift_indx = move[direction]["shift"][i_rad]
             # estimate the slope
             _ = (np.roll(height, shift_indx, axis=(0, 1)) - height) / radius
-            # compare to the previus max slope and keep the larges
-            max_slope = np.maximum(max_slope, _)
+            # Compare to the previous max slope and keep the largest values (element wise). Use np.fmax to prevent NaN
+            # values contaminating the edge of the image (if one of the elements is NaN, pick non-NaN element)
+            max_slope = np.fmax(max_slope, _)
 
-        # convert to angle in radians and compute directional output
         _ = np.arctan(max_slope)
+        # Convert to angle in radians and compute directional output
+        max_slope = np.arctan(max_slope)
+
+        # Sum max angle for all directions
         if compute_svf:
-            svf_out = svf_out + (1 - np.sin(np.maximum(_, 0)))
+            # For SVF minimum possible angle is 0 (hemisphere), use np.fmax() to change NaNs to 0
+            svf_out = svf_out + (1 - np.sin(np.fmax(max_slope, 0)))
         if compute_asvf:
-            asvf_out = asvf_out + (1 - np.sin(np.maximum(_, 0))) * weight[i_dir]
+            # For SVF minimum possible angle is 0 (hemisphere), use np.fmax() to change NaNs to 0
+            asvf_out = asvf_out + (1 - np.sin(np.fmax(max_slope, 0))) * weight[i_dir]
         if compute_opns:
-            opns_out = opns_out + _
+            # For Openness taking the entire sphere
+            opns_out = opns_out + max_slope
 
     # cut to original extent and 
     # average the directional output over all directions
