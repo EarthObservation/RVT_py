@@ -521,7 +521,6 @@ def sky_view_factor_compute(height_arr,
                             a_main_direction=315.,
                             a_poly_level=4,
                             a_min_weight=0.4,
-                            no_data=None
                             ):
     """
     Calculates horizon based visualizations: Sky-view factor, Anisotopic SVF and Openess.
@@ -550,8 +549,6 @@ def sky_view_factor_compute(height_arr,
         Weight to consider anisotropy:
                  0 - low anisotropy, 
                  1 - high  anisotropy (no illumination from the direction opposite the main direction)
-    no_data : int or float
-        Value that represents no_data, all pixels with this value are changed to np.nan .
 
     Returns
     -------
@@ -561,9 +558,6 @@ def sky_view_factor_compute(height_arr,
         asvf_out, anisotropic skyview factor : 2D numpy array (numpy.ndarray) of anisotropic skyview factor;
         opns_out, openness : 2D numpy array (numpy.ndarray) openness (elevation angle of horizon).
     """
-    # change no_data to np.nan
-    if no_data is not None:
-        height_arr[height_arr == no_data] = np.nan
 
     # pad the array for the radius_max on all 4 sides
     height = np.pad(height_arr, radius_max, mode='symmetric')
@@ -710,6 +704,12 @@ def sky_view_factor(dem,
     # selected with svf_noise (0-3)
     sc_svf_r_min = [0., 10., 20., 40.]
 
+    # Before doing anything to the array, make sure all NODATA values are set to np.nan
+    if no_data is not None and ~np.isnan(no_data):
+        dem[dem == no_data] = np.nan
+    # Save NaN mask (processing may change NaNs to arbitrary values)
+    nan_mask = np.isnan(dem)
+
     # Vertical exaggeration
     dem = dem * ve_factor
     # Pixel size (adjust elevation to correctly calculate the vertical elevation angle, calculation thinks 1px == 1m)
@@ -735,6 +735,10 @@ def sky_view_factor(dem,
         a_poly_level=poly_level,
         a_min_weight=min_weight
     )
+
+    # Apply NaN mask to outputs
+    for item in dict_svf_asvf_opns.values():
+        item[nan_mask] = np.nan
 
     return dict_svf_asvf_opns
 
