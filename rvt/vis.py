@@ -520,7 +520,7 @@ def sky_view_factor_compute(height_arr,
                             compute_asvf=False,
                             a_main_direction=315.,
                             a_poly_level=4,
-                            a_min_weight=0.4,
+                            a_min_weight=0.4
                             ):
     """
     Calculates horizon based visualizations: Sky-view factor, Anisotropic SVF and Openness.
@@ -553,7 +553,7 @@ def sky_view_factor_compute(height_arr,
         Main direction of anisotropy.
     a_poly_level : int
         Level of polynomial that determines the anisotropy.
-    a_min_weight : int
+    a_min_weight : float
         Weight to consider anisotropy:
                  0 - low anisotropy, 
                  1 - high  anisotropy (no illumination from the direction opposite the main direction)
@@ -567,11 +567,10 @@ def sky_view_factor_compute(height_arr,
         opns_out, openness : 2D numpy array (numpy.ndarray) openness (elevation angle of horizon).
     """
 
-    height = np.pad(height_arr, radius_max, mode='symmetric')
     # Pad the array for the radius_max on all 4 sides
     height = np.pad(height_arr, radius_max, mode='reflect')
 
-    # compute the vector of movement and corresponding distances
+    # Compute the vector of movement and corresponding distances
     move = horizon_shift_vector(num_directions=num_directions, radius_pixels=radius_max, min_radius=radius_min)
 
     # Initiate the output for SVF
@@ -597,22 +596,22 @@ def sky_view_factor_compute(height_arr,
     else:
         opns_out = None
 
-        # search for horizon in each direction...
+    # Search for horizon in each direction...
     for i_dir, direction in enumerate(move):
-        # reset maximum at each iteration (direction)
+        # Reset maximum at each iteration (i.e. at the start of new direction),
+        # smallest possible elevation angle is -1000 rad (i.e. -90 deg)
         max_slope = np.zeros(height.shape, dtype=np.float32) - 1000
 
-        # ... and to the search radius
+        # ... and for each search radius
         for i_rad, radius in enumerate(move[direction]["distance"]):
-            # get shift index from move dictionary
+            # Get shift index from move dictionary
             shift_indx = move[direction]["shift"][i_rad]
-            # estimate the slope
+            # Estimate the slope
             _ = (np.roll(height, shift_indx, axis=(0, 1)) - height) / radius
             # Compare to the previous max slope and keep the largest values (element wise). Use np.fmax to prevent NaN
             # values contaminating the edge of the image (if one of the elements is NaN, pick non-NaN element)
             max_slope = np.fmax(max_slope, _)
 
-        _ = np.arctan(max_slope)
         # Convert to angle in radians and compute directional output
         max_slope = np.arctan(max_slope)
 
@@ -627,8 +626,7 @@ def sky_view_factor_compute(height_arr,
             # For Openness taking the entire sphere
             opns_out = opns_out + max_slope
 
-    # cut to original extent and 
-    # average the directional output over all directions
+    # Cut to original extent and average the directional output over all directions
     if compute_svf:
         svf_out = svf_out[radius_max:-radius_max, radius_max:-radius_max] / num_directions
     if compute_asvf:
@@ -636,7 +634,7 @@ def sky_view_factor_compute(height_arr,
     if compute_opns:
         opns_out = np.rad2deg(0.5 * np.pi - (opns_out[radius_max:-radius_max, radius_max:-radius_max] / num_directions))
 
-    # return results within dict
+    # Return results within dict
     dict_svf_asvf_opns = {"svf": svf_out, "asvf": asvf_out, "opns": opns_out}
     dict_svf_asvf_opns = {k: v for k, v in dict_svf_asvf_opns.items() if v is not None}  # filter out none
 
