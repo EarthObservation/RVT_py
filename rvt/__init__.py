@@ -10,6 +10,7 @@ Credits:
     Klemen Čotar
     Maja Somrak
     Žiga Maroh
+    Nejc Čož
 
 Copyright:
     2010-2020 Research Centre of the Slovenian Academy of Sciences and Arts
