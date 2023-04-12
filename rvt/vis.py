@@ -667,18 +667,12 @@ def sky_view_factor(dem,
     asvf_level : int
         Level of anisotropy, 1-low, 2-high.
     asvf_dir : int or float
-        Dirction of anisotropy.
+        Direction of anisotropy.
     ve_factor : int or float
         Vertical exaggeration factor.
     no_data : int or float
-        Value that represents no_data, all pixels with this value are changed to np.nan .
-    
-    Constants
-    ---------
-        sc_asvf_min : level of polynomial that determines the anisotropy, selected with in_asvf_level
-        sc_asvf_pol : level of polynomial that determines the anisotropy, selected with in_asvf_level
-        sc_svf_r_min : the portion (percent) of the maximal search radius to ignore in horizon estimation;
-        for each noise level, selected with in_svf_noise
+        Value that represents no_data, all pixels with this value are changed to np.nan. Use this parameter when nodata
+        is not np.nan.
 
     Returns
     -------
@@ -688,55 +682,59 @@ def sky_view_factor(dem,
         asvf_out, anisotropic skyview factor : 2D numpy array (numpy.ndarray) of anisotropic skyview factor;
         opns_out, openness : 2D numpy array (numpy.ndarray) openness (elevation angle of horizon).
     """
+
+    # Checks for input parameters
     if dem.ndim != 2:
         raise Exception("rvt.visualization.sky_view_factor: dem has to be 2D np.array!")
     if not (10000 >= ve_factor >= -10000):
         raise Exception("rvt.visualization.sky_view_factor: ve_factor must be between -10000 and 10000!")
     if svf_noise != 0 and svf_noise != 1 and svf_noise != 2 and svf_noise != 3:
-        raise Exception("rvt.visualization.sky_view_factor: svf_noise must be one of the following values (0-don't remove, 1-low,"
-                        " 2-med, 3-high)!")
+        raise Exception("rvt.visualization.sky_view_factor: svf_noise must be one of the following"
+                        "values (0-don't remove, 1-low, 2-med, 3-high)!")
     if asvf_level != 1 and asvf_level != 2:
-        raise Exception("rvt.visualization.sky_view_factor: asvf_leve must be one of the following values (1-low, 2-high)!")
+        raise Exception("rvt.visualization.sky_view_factor: asvf_leve must be one of the following"
+                        "values (1-low, 2-high)!")
     if not compute_svf and not compute_asvf and not compute_opns:
         raise Exception("rvt.visualization.sky_view_factor: All computes are false!")
     if resolution < 0:
         raise Exception("rvt.visualization.sky_view_factor: resolution must be a positive number!")
 
-    # TODO: proper check of input data: DEM 2D nummeric array, resolution, max_radius....
-
+    # Make sure array has the correct dtype!
     dem = dem.astype(np.float32)
-    dem = dem * ve_factor
 
     # CONSTANTS
-    # level of polynomial that determines the anisotropy, selected with in_asvf_level (1 - low, 2 - high)
+    # Level of polynomial that determines the anisotropy, selected with asvf_level (1 - low, 2 - high)
     sc_asvf_pol = [4, 8]
     sc_asvf_min = [0.4, 0.1]
-    # the portion (percent) of the maximal search radius to ignore in horizon estimation; for each noise level,
-    # selected with in_svf_noise (0-3)
+    # The portion (percent) of the maximal search radius to ignore in horizon estimation; for each noise level,
+    # selected with svf_noise (0-3)
     sc_svf_r_min = [0., 10., 20., 40.]
 
-    # pixel size
+    # Vertical exaggeration
+    dem = dem * ve_factor
+    # Pixel size (adjust elevation to correctly calculate the vertical elevation angle, calculation thinks 1px == 1m)
     dem = dem / resolution
 
-    # minimal search radious depends on the noise level, it has to be an integer not smaller than 1
+    # Minimal search radius depends on the noise level, it has to be an integer not smaller than 1
     svf_r_min = max(np.round(svf_r_max * sc_svf_r_min[svf_noise] * 0.01, decimals=0), 1)
 
-    # set anisotropy parameters
+    # Set anisotropy parameters
     poly_level = sc_asvf_pol[asvf_level - 1]
     min_weight = sc_asvf_min[asvf_level - 1]
 
-    dict_svf_asvf_opns = sky_view_factor_compute(height_arr=dem,
-                                                 radius_max=svf_r_max,
-                                                 radius_min=svf_r_min,
-                                                 num_directions=svf_n_dir,
-                                                 compute_svf=compute_svf,
-                                                 compute_opns=compute_opns,
-                                                 compute_asvf=compute_asvf,
-                                                 a_main_direction=asvf_dir,
-                                                 a_poly_level=poly_level,
-                                                 a_min_weight=min_weight,
-                                                 no_data=no_data
-                                                 )
+    # Main routine for SVF processing
+    dict_svf_asvf_opns = sky_view_factor_compute(
+        height_arr=dem,
+        radius_max=svf_r_max,
+        radius_min=svf_r_min,
+        num_directions=svf_n_dir,
+        compute_svf=compute_svf,
+        compute_opns=compute_opns,
+        compute_asvf=compute_asvf,
+        a_main_direction=asvf_dir,
+        a_poly_level=poly_level,
+        a_min_weight=min_weight
+    )
 
     return dict_svf_asvf_opns
 
