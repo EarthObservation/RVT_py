@@ -574,23 +574,26 @@ def sky_view_factor_compute(height_arr,
     # compute the vector of movement and corresponding distances
     move = horizon_shift_vector(num_directions=num_directions, radius_pixels=radius_max, min_radius=radius_min)
 
-    # init the output for usual SVF
+    # Initiate the output for SVF
     if compute_svf:
-        svf_out = np.zeros(height.shape, dtype=np.float32)
+        svf_out = height * 0
     else:
         svf_out = None
-    # init the output for azimuth dependent SVF
+
+    # Initiate the output for azimuth dependent SVF
     if compute_asvf:
-        asvf_out = np.zeros(height.shape, dtype=np.float32)
+        asvf_out = height * 0
         w_m = a_min_weight
         w_a = np.deg2rad(a_main_direction)
         weight = np.arange(num_directions) * (2 * np.pi / num_directions)
         weight = (1 - w_m) * (np.cos((weight - w_a) / 2)) ** a_poly_level + w_m
     else:
         asvf_out = None
-    # init the output for Openess
+        weight = None
+
+    # Initiate the output for Openness
     if compute_opns:
-        opns_out = np.zeros(height.shape, dtype=np.float32)
+        opns_out = height * 0
     else:
         opns_out = None
 
