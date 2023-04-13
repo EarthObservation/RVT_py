@@ -417,10 +417,10 @@ def mean_filter(dem, kernel_radius):
                          np.roll(dem_i_nr_pixels, (-radius_cell - 1, -radius_cell - 1), axis=(0, 1)) -
                          np.roll(dem_i_nr_pixels, (-radius_cell - 1, radius_cell), axis=(0, 1)) -
                          np.roll(dem_i_nr_pixels, (radius_cell, -radius_cell - 1), axis=(0, 1)))
-    mean_out = np.roll(dem_i1, (radius_cell, radius_cell), axis=(0, 1)) + \
-               np.roll(dem_i1, (-radius_cell - 1, -radius_cell - 1), axis=(0, 1)) - \
-               np.roll(dem_i1, (-radius_cell - 1, radius_cell), axis=(0, 1)) - \
-               np.roll(dem_i1, (radius_cell, -radius_cell - 1), axis=(0, 1))
+    mean_out = (np.roll(dem_i1, (radius_cell, radius_cell), axis=(0, 1)) +
+                np.roll(dem_i1, (-radius_cell - 1, -radius_cell - 1), axis=(0, 1)) -
+                np.roll(dem_i1, (-radius_cell - 1, radius_cell), axis=(0, 1)) -
+                np.roll(dem_i1, (radius_cell, -radius_cell - 1), axis=(0, 1)))
     mean_out = mean_out / kernel_nr_pix_arr
     mean_out = mean_out.astype(np.float32)
     mean_out = mean_out[radius_cell:-(radius_cell + 1), radius_cell:-(radius_cell + 1)]  # remove padding
@@ -1323,7 +1323,7 @@ def msrm(dem,
     dem = dem.astype(np.float32)
     dem = dem * ve_factor
 
-    if feature_min < resolution:  # feature min can't be smaller than resolution
+    if feature_min < resolution:  # feature_min can't be smaller than resolution
         feature_min = resolution
 
     scaling_factor = int(scaling_factor)  # has to be integer
@@ -1356,18 +1356,31 @@ def integral_image(dem, data_type=np.float64):
     """
     Calculates integral image (summed-area table), where origin is left upper corner.
 
+    Parameters
+    ----------
+    dem : numpy.ndarray
+        Input digital elevation model as 2D numpy array.
+    data_type : np.__class__
+        dtype as numpy data type class (np.float64, np.int, etc.)
+
+    Returns
+    -------
+    msrm_out : numpy.ndarray
+        Cumulative sum of the elements along each axis of a 2D array.
+
     References
     ----------
     https://en.wikipedia.org/wiki/Summed-area_table
 
     Examples
     --------
-    >>> print(integral_image(np.array([[7, 4, 7, 2],
+    In: print(integral_image(np.array([[7, 4, 7, 2],
     ... [6, 9, 9, 5],
     ... [6, 6, 7, 6]])))
-    [[ 7. 11. 18. 20.]
-     [13. 26. 42. 49.]
-     [19. 38. 61. 74.]]
+
+    Out: [[ 7. 11. 18. 20.]
+          [13. 26. 42. 49.]
+          [19. 38. 61. 74.]]
     """
     dem = dem.astype(data_type)
     return dem.cumsum(axis=0).cumsum(axis=1)
@@ -1407,18 +1420,18 @@ def topographic_dev(dem, dem_i_nr_pixels, dem_i1, dem_i2, kernel_radius):
                          np.roll(dem_i_nr_pixels, (radius_cell, -radius_cell - 1), axis=(0, 1)))
 
     # sum
-    dem_mean = np.roll(dem_i1, (radius_cell, radius_cell), axis=(0, 1)) + \
-               np.roll(dem_i1, (-radius_cell - 1, -radius_cell - 1), axis=(0, 1)) - \
-               np.roll(dem_i1, (-radius_cell - 1, radius_cell), axis=(0, 1)) - \
-               np.roll(dem_i1, (radius_cell, -radius_cell - 1), axis=(0, 1))
+    dem_mean = (np.roll(dem_i1, (radius_cell, radius_cell), axis=(0, 1)) +
+                np.roll(dem_i1, (-radius_cell - 1, -radius_cell - 1), axis=(0, 1)) -
+                np.roll(dem_i1, (-radius_cell - 1, radius_cell), axis=(0, 1)) -
+                np.roll(dem_i1, (radius_cell, -radius_cell - 1), axis=(0, 1)))
     # divide with nr of pixels inside kernel
     dem_mean = dem_mean / kernel_nr_pix_arr
 
     # std
-    dem_std = np.roll(dem_i2, (radius_cell, radius_cell), axis=(0, 1)) + \
-              np.roll(dem_i2, (-radius_cell - 1, -radius_cell - 1), axis=(0, 1)) - \
-              np.roll(dem_i2, (-radius_cell - 1, radius_cell), axis=(0, 1)) - \
-              np.roll(dem_i2, (radius_cell, -radius_cell - 1), axis=(0, 1))
+    dem_std = (np.roll(dem_i2, (radius_cell, radius_cell), axis=(0, 1)) +
+               np.roll(dem_i2, (-radius_cell - 1, -radius_cell - 1), axis=(0, 1)) -
+               np.roll(dem_i2, (-radius_cell - 1, radius_cell), axis=(0, 1)) -
+               np.roll(dem_i2, (radius_cell, -radius_cell - 1), axis=(0, 1)))
     dem_std = np.sqrt(np.abs(dem_std / kernel_nr_pix_arr - dem_mean ** 2))
 
     dev_out = (np.roll(dem, (-1, -1), axis=(0, 1)) - dem_mean) / (dem_std + 1e-6)  # add 1e-6 to prevent division with 0
@@ -1525,7 +1538,8 @@ def mstp(dem,
         raise Exception("rvt.visualization.mstp: local_scale, meso_scale, broad_scale min has to be smaller than max!")
     if (local_scale[1] - local_scale[0] < local_scale[2]) or (meso_scale[1] - meso_scale[0] < meso_scale[2]) or \
             (broad_scale[1] - broad_scale[0] < broad_scale[2]):
-        raise Exception("rvt.visualization.mstp: local_scale, meso_scale, broad_scale step has to be within min and max!")
+        raise Exception("rvt.visualization.mstp: local_scale, meso_scale, broad_scale step has"
+                        " to be within min and max!")
     if not (10000 >= ve_factor >= -1000):
         raise Exception("rvt.visualization.mstp: ve_factor must be between -10000 and 10000!")
 
