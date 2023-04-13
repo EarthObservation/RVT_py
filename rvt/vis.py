@@ -158,12 +158,17 @@ def slope_aspect(dem,
     if resolution_x < 0 or resolution_y < 0:
         raise Exception("rvt.visualization.slope_aspect: resolution must be a positive number!")
 
-    # change no_data to np.nan
-    if no_data is not None:
+    # Make sure array has the correct dtype!
+    dem = dem.astype(np.float32)
+
+    # Change no_data to np.nan
+    if no_data and ~np.isnan(no_data):
         dem[dem == no_data] = np.nan
 
-    dem = dem.astype(np.float32)
-    # add 1 pixel edge padding
+    # Save NaN mask
+    nan_dem = np.isnan(dem)
+
+    # Add 1 pixel edge padding
     dem = np.pad(array=dem, pad_width=1, mode="edge")
     dem = dem * ve_factor
 
@@ -196,6 +201,10 @@ def slope_aspect(dem,
     # remove padding
     aspect_out = aspect_out[1:-1, 1:-1]
     slope_out = slope_out[1:-1, 1:-1]
+
+    # Apply NaN mask
+    slope_out[nan_dem] = np.nan
+    aspect_out[nan_dem] = np.nan
 
     return {"slope": slope_out, "aspect": aspect_out}
 
