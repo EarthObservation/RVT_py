@@ -1441,7 +1441,7 @@ def topographic_dev(dem, dem_i_nr_pixels, dem_i1, dem_i2, kernel_radius):
 
 def max_elevation_deviation(dem, minimum_radius, maximum_radius, step):
     """
-    Calculates maximum deviation from mean elevation, DEVmax (Maximum Deviation from mean elevation) for each
+    Calculates maximum deviation from mean elevation, dev_max (Maximum Deviation from mean elevation) for each
     grid cell in a digital elevation model (DEM) across a range specified spatial scales.
 
     Parameters
@@ -1544,23 +1544,24 @@ def mstp(dem,
         raise Exception("rvt.visualization.mstp: ve_factor must be between -10000 and 10000!")
 
     # change no_data to np.nan
-    if no_data is not None:
+    if no_data is not None and ~np.isnan(no_data):
         dem[dem == no_data] = np.nan
 
     dem = dem.astype(np.float32)
     dem = dem * ve_factor
 
-    local_DEV = max_elevation_deviation(dem=dem, minimum_radius=local_scale[0], maximum_radius=local_scale[1],
+    local_dev = max_elevation_deviation(dem=dem, minimum_radius=local_scale[0], maximum_radius=local_scale[1],
                                         step=local_scale[2])
-    meso_DEV = max_elevation_deviation(dem=dem, minimum_radius=meso_scale[0], maximum_radius=meso_scale[1],
+    meso_dev = max_elevation_deviation(dem=dem, minimum_radius=meso_scale[0], maximum_radius=meso_scale[1],
                                        step=meso_scale[2])
-    broad_DEV = max_elevation_deviation(dem=dem, minimum_radius=broad_scale[0], maximum_radius=broad_scale[1],
+    broad_dev = max_elevation_deviation(dem=dem, minimum_radius=broad_scale[0], maximum_radius=broad_scale[1],
                                         step=broad_scale[2])
 
     cutoff = lightness
-    red = 1 - np.exp(-cutoff * np.abs(broad_DEV))  # broad
-    green = 1 - np.exp(-cutoff * np.abs(meso_DEV))  # meso
-    blue = 1 - np.exp(-cutoff * np.abs(local_DEV))  # local
+    # RGB order - broad, meso, local
+    red = 1 - np.exp(-cutoff * np.abs(broad_dev))
+    green = 1 - np.exp(-cutoff * np.abs(meso_dev))
+    blue = 1 - np.exp(-cutoff * np.abs(local_dev))
 
     red[red < 0] = 0
     green[green < 0] = 0
