@@ -172,9 +172,9 @@ def slope_aspect(dem,
     dem = np.pad(array=dem, pad_width=1, mode="edge")
     dem = dem * ve_factor
 
-    # derivatives in X and Y direction
-    dzdx = ((np.roll(dem, 1, axis=1) - np.roll(dem, -1, axis=1)) / 2) / resolution_x
-    dzdy = ((np.roll(dem, -1, axis=0) - np.roll(dem, 1, axis=0)) / 2) / resolution_y
+    # Derivatives in X and Y direction
+    dzdx = ((roll_fill_nans(dem, 1, axis=1) - roll_fill_nans(dem, -1, axis=1)) / 2) / resolution_x
+    dzdy = ((roll_fill_nans(dem, -1, axis=0) - roll_fill_nans(dem, 1, axis=0)) / 2) / resolution_y
     tan_slope = np.sqrt(dzdx ** 2 + dzdy ** 2)
 
     # Compute slope
@@ -207,6 +207,21 @@ def slope_aspect(dem,
     aspect_out[nan_dem] = np.nan
 
     return {"slope": slope_out, "aspect": aspect_out}
+
+
+def roll_fill_nans(dem, shift, axis):
+    """
+    Uses numpy.roll() function to roll array, then checks element-wise if new array has NaN value, but there was a
+    numerical value in the source array, then use the original value instead of NaN. It is equivalent to edge padding.
+
+    https://numpy.org/doc/stable/reference/generated/numpy.roll.html#numpy.roll
+    """
+    out = np.roll(dem, shift, axis=axis)
+
+    # Fill NaNs with values from dem
+    out[np.isnan(out) != np.isnan(dem)] = dem[np.isnan(out) != np.isnan(dem)]
+
+    return out
 
 
 def hillshade(dem,
