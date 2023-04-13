@@ -197,7 +197,7 @@ def slope_aspect(dem,
     #     0
     # 270    90
     #    180
-    dzdy[dzdy == 0] = 10e-9  # important for numeric stability - where dzdy is zero, make tangens to really high value
+    dzdy[dzdy == 0] = 10e-9  # important for numeric stability - where dzdy is zero, make tangent to really high value
     aspect_out = np.arctan2(dzdx, dzdy)  # atan2 took care of the quadrants
     if output_units == "degree":
         aspect_out = np.rad2deg(aspect_out)
@@ -376,7 +376,7 @@ def multi_hillshade(dem,
         slope = dict_slp_asp["slope"]
         aspect = dict_slp_asp["aspect"]
 
-    hillshades_arr_list = []  # list of all hillshades in diffrent directions
+    hillshades_arr_list = []  # list of all hillshades in different directions
     for i_direction in range(nr_directions):
         sun_azimuth = (360 / nr_directions) * i_direction
         hillshading = hillshade(dem=dem, resolution_x=resolution_x, resolution_y=resolution_y,
@@ -512,19 +512,19 @@ def horizon_shift_vector(num_directions=16,
     angles = np.round(np.degrees(angles), decimals=1)
 
     # Generate a range of radius values in pixels.
-    # Make it finer for the selcted scaling.
+    # Make it finer for the selected scaling.
     # By adding the last constant we make sure that we do not start with
     # point (0,0).
     scale = 3.
     radii = np.arange((radius_pixels - min_radius) * scale + 1) / scale + min_radius
 
-    # For each direction compute all possible horizont point position
+    # For each direction compute all possible horizon point position
     # and round them to integers
     for i in range(num_directions):
         x_int = np.round(x[i] * radii, decimals=0)
         y_int = np.round(y[i] * radii, decimals=0)
         # consider only the minimal number of points
-        # use the trick with set and complex nuber as the input
+        # use the trick with set and complex number as the input
         coord_complex = set(x_int + 1j * y_int)
         # to sort proportional with increasing radius, 
         # set has to be converted to numpy array
@@ -855,7 +855,7 @@ def local_dominance(dem,
     x_t = (np.outer(np.cos(np.deg2rad(angles)), distances)).reshape(n_shifts)
     y_t = (np.outer(np.sin(np.deg2rad(angles)), distances)).reshape(n_shifts)
     distances = (np.outer(np.ones(n_ang), distances)).reshape(n_shifts)
-    dist_factr = 2 * distances + rad_inc
+    dist_factor = 2 * distances + rad_inc
 
     local_dom_out = dem * 0
     for i_s in range(n_shifts):
@@ -866,7 +866,7 @@ def local_dominance(dem,
             local_dom_out[idx_lower[0], idx_lower[1]] = local_dom_out[idx_lower[0], idx_lower[1]] + \
                                                         (dem[idx_lower[0], idx_lower[1]] + observer_height -
                                                          dem_moved[idx_lower[0], idx_lower[1]]) / \
-                                                        distances[i_s] * dist_factr[i_s]
+                                                        distances[i_s] * dist_factor[i_s]
     local_dom_out = local_dom_out / norma
 
     # Remove padding
@@ -893,7 +893,7 @@ def horizon_generate_coarse_dem(dem_fine,
     # The corner points must fit in the new grid.
     # This is always the case with the left most column or the upper line.
     # But you have to adjust ne number of columns to the right and number of lines below.
-    # The final number of columns/lines has to fullfil:
+    # The final number of columns/lines has to fulfill:
     #     n_coarse = pyramid_scale * n_fine + 1
     # columns
     mod_col = n_col_fine % pyramid_scale
@@ -918,15 +918,15 @@ def horizon_generate_coarse_dem(dem_fine,
     for i in np.arange(pyramid_scale) + conv_from:
         for j in np.arange(pyramid_scale) + conv_from:
             dem_convolve = np.maximum(dem_convolve, np.roll(dem_fine, (i, j), axis=(0, 1)))
-    # Divide by pyramid_scale to account for the chage of resolution
+    # Divide by pyramid_scale to account for the change of resolution
     # (important for the angle computation later on)
     dem_convolve = dem_convolve / pyramid_scale
 
-    # Consider only the selceted convoluted points according to the scale change.
+    # Consider only the selected convoluted points according to the scale change.
     # As we select slice's end point make sure to consider at least 1 point more 
     # to the right / below to really include it (Python way of considering end index).
     dem_coarse = dem_convolve[-conv_from:(n_lin_coarse * pyramid_scale + 1):pyramid_scale,
-                 -conv_from:(n_col_coarse * pyramid_scale + 1):pyramid_scale]
+                              -conv_from:(n_col_coarse * pyramid_scale + 1):pyramid_scale]
 
     # Final padding to enable searching the horizon over the edge:
     # use constant-mode set to the minimal height, so it doesn't 
@@ -955,7 +955,7 @@ def horizon_generate_pyramids(dem,
     # The first pixel that takes that this new resolution,
     # has in original distance value 12 (in coarse resolution 4):
     # 12->4, 15->5, 18->6 ... 27->9, 30->10
-    # So you start in the level 1 with tmin_pyramid_radius=4
+    # So you start in the level 1 with min_pyramid_radius=4
     # and you search from 4 to 10 distances (n_pyramid_radius=7)
     min_pyramid_radius = int(np.floor(max_pyramid_radius / pyramid_scale)) + 1
     n_pyramid_radius = max_pyramid_radius - min_pyramid_radius + 1
@@ -974,7 +974,7 @@ def horizon_generate_pyramids(dem,
 
     # Determine the number of levels and
     # the last radius to be used in the highest level.
-    while work == True:
+    while work:
         _ = max_fine_radius / pyramid_scale ** pyramid_levels
         if _ > max_pyramid_radius:
             pyramid_levels = pyramid_levels + 1
@@ -982,7 +982,7 @@ def horizon_generate_pyramids(dem,
             work = False
             last_radius = np.round(max_fine_radius / pyramid_scale ** pyramid_levels, decimals=0)
 
-    # fill out the pyramid dict with the metadata required for horizont searching.
+    # fill out the pyramid dict with the metadata required for horizon searching.
     for level in np.arange(pyramid_levels + 1):
         # the level 0 contains the other min_radius as the rest of levels
         if level == 0:
@@ -1057,7 +1057,7 @@ def sky_illumination(dem,
 
     Returns
     -------
-    sky_illum_out : numpy.ndarray
+    sky_illumination : numpy.ndarray
         2D numpy result array of Sky illumination.
     """
     # standard pyramid settings
@@ -1163,7 +1163,7 @@ def sky_illumination(dem,
                 shift_indx = move[direction]["shift"][i_rad]
                 # estimate the slope
                 _ = np.maximum((np.roll(height, shift_indx, axis=(0, 1)) - height) / radius, 0.)
-                # compare to the previus max slope and keep the larges
+                # compare to the previous max slope and keep the larges
                 max_slope = np.maximum(max_slope, _)
 
             # resample the max_slope to a lower pyramid level
@@ -1192,8 +1192,8 @@ def sky_illumination(dem,
             if shadow_horizon_only:
                 return {"shadow": shadow_out, "horizon": horizon_out}
 
-    # because of numeric stabilty check if the uniform_b is less then pi
-    uniform_out = (da) * np.cos(slope) * uniform_a + np.sin(slope) * np.minimum(uniform_b, np.pi)
+    # because of numeric stability check if the uniform_b is less then pi
+    uniform_out = da * np.cos(slope) * uniform_a + np.sin(slope) * np.minimum(uniform_b, np.pi)
     uniform_out = uniform_out[max_pyramid_radius:-max_pyramid_radius, max_pyramid_radius:-max_pyramid_radius]
 
     if compute_overcast:
@@ -1397,9 +1397,9 @@ def topographic_dev(dem, dem_i_nr_pixels, dem_i1, dem_i2, kernel_radius):
     dem : numpy.ndarray
         Input digital elevation model as 2D numpy array.
     dem_i_nr_pixels : numpy.ndarray
-        Summed area table (itegral image) of number of pixels.
+        Summed area table (integral image) of number of pixels.
     dem_i1 : numpy.ndarray
-        Summed area table (itegral image) of dem.
+        Summed area table (integral image) of dem.
     dem_i2 : numpy.ndarray
         Summed area table (integral image) of dem squared (dem**2).
     kernel_radius : int
@@ -1646,19 +1646,18 @@ def fill_where_nan(dem, method="idw"):
 
     elif method == "kd_tree" or method == "nearest_neighbour" or method == "nearest_neighbor":
         x, y = np.mgrid[0:dem_out.shape[0], 0:dem_out.shape[1]]
-        xygood = np.array((x[~mask], y[~mask])).T
-        xybad = np.array((x[mask], y[mask])).T
+        xy_good = np.array((x[~mask], y[~mask])).T
+        xy_bad = np.array((x[mask], y[mask])).T
 
         # cKD-Tree (K-D Tree) interpolation
         # https://stackoverflow.com/questions/3662361/fill-in-missing-values-with-nearest-neighbour-in-python-numpy-masked-arrays
         if method == "kd_tree":
             leaf_size = 1000
-            dem_out[mask] = dem_out[~mask][cKDTree(data=xygood, leafsize=leaf_size).query(xybad)[1]]
+            dem_out[mask] = dem_out[~mask][cKDTree(data=xy_good, leafsize=leaf_size).query(xy_bad)[1]]
 
         # Nearest neighbour interpolation
         elif method == "nearest_neighbour" or method == "nearest_neighbor":
-            dem_out[mask] = griddata(xygood, dem_out[~mask], xybad,
-                                                       method='nearest')
+            dem_out[mask] = griddata(xy_good, dem_out[~mask], xy_bad, method='nearest')
     else:
         raise Exception("rvt.visualization.fill_where_nan: Wrong method!")
 
