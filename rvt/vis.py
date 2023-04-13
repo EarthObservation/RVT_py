@@ -20,11 +20,9 @@ Copyright:
 
 # python libraries
 import numpy as np
-import scipy.interpolate
-import scipy.ndimage.filters
-import scipy.ndimage.morphology
-import scipy.spatial
-import warnings
+from scipy.interpolate import griddata, RectBivariateSpline
+from scipy.ndimage.morphology import distance_transform_edt
+from scipy.spatial import cKDTree
 
 
 def byte_scale(data,
@@ -1176,7 +1174,7 @@ def sky_illumination(dem,
                         conv_from + max_pyramid_radius * pyramid_scale - max_pyramid_radius)
                 lin_coarse = pyramid[i_level]["i_lin"] * pyramid_scale
                 col_coarse = pyramid[i_level]["i_col"] * pyramid_scale
-                interp_spline = scipy.interpolate.RectBivariateSpline(lin_coarse, col_coarse, max_slope, kx=1, ky=1)
+                interp_spline = RectBivariateSpline(lin_coarse, col_coarse, max_slope, kx=1, ky=1)
                 max_slope = interp_spline(lin_fine, col_fine)
 
         # convert to angle in radians and compute directional output
@@ -1623,7 +1621,7 @@ def fill_where_nan(dem, method="idw"):
                 dist_arr = np.ones(nan_surrounding_arr.shape)  # all ones
                 # center pixel is 0 to calc distance matrix around 0 pixel with distance_transform_edt
                 dist_arr[i_row_center, i_column_center] = 0
-                dist_arr = scipy.ndimage.morphology.distance_transform_edt(dist_arr)
+                dist_arr = distance_transform_edt(dist_arr)
                 dist_arr[dist_arr == 0] = np.nan  # can't divide with zero
                 dist_arr = 1 / dist_arr ** power
                 nan_mask = np.isnan(nan_surrounding_arr)
@@ -1640,11 +1638,11 @@ def fill_where_nan(dem, method="idw"):
         # https://stackoverflow.com/questions/3662361/fill-in-missing-values-with-nearest-neighbour-in-python-numpy-masked-arrays
         if method == "kd_tree":
             leaf_size = 1000
-            dem_out[mask] = dem_out[~mask][scipy.spatial.cKDTree(data=xygood, leafsize=leaf_size).query(xybad)[1]]
+            dem_out[mask] = dem_out[~mask][cKDTree(data=xygood, leafsize=leaf_size).query(xybad)[1]]
 
         # Nearest neighbour interpolation
         elif method == "nearest_neighbour" or method == "nearest_neighbor":
-            dem_out[mask] = scipy.interpolate.griddata(xygood, dem_out[~mask], xybad,
+            dem_out[mask] = griddata(xygood, dem_out[~mask], xybad,
                                                        method='nearest')
     else:
         raise Exception("rvt.visualization.fill_where_nan: Wrong method!")
