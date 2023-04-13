@@ -125,8 +125,12 @@ def slope_aspect(dem,
                  ):
     """
     Procedure can return terrain slope and aspect in radian units (default) or in alternative units (if specified).
-    Slope is defined as 0 for Hz plane and pi/2 for vertical plane.
-    Aspect iz defined as geographic azimuth: clockwise increasing, 0 or 2pi for the North direction.
+    Available alternative units are 'degree' and 'percent'.
+    Slope is defined as 0 for horizontal plane and pi/2 for vertical plane.
+    Aspect is defined as geographic azimuth: clockwise increasing, 0 or 2pi for the North direction.
+         0
+     270    90
+        180
     Currently applied finite difference method.
 
     Parameters
@@ -142,7 +146,8 @@ def slope_aspect(dem,
     ve_factor : int or float
         Vertical exaggeration factor.
     no_data : int or float
-        Value that represents no_data, all pixels with this value are changed to np.nan .
+        Value that represents no_data, all pixels with this value are changed to np.nan. Only has to be specified if
+        a numerical value is used for nodata (e.g. -9999).
 
     Returns
     -------
@@ -170,6 +175,8 @@ def slope_aspect(dem,
 
     # Add 1 pixel edge padding
     dem = np.pad(array=dem, pad_width=1, mode="edge")
+
+    # Vertical exaggeration
     dem = dem * ve_factor
 
     # Derivatives in X and Y direction
@@ -187,18 +194,17 @@ def slope_aspect(dem,
     else:
         raise Exception("rvt.visualization.calculate_slope: Wrong function input 'output_units'!")
 
-    # compute Aspect
+    # Compute Aspect
     # aspect identifies the down slope direction of the maximum rate of change in value from each cell to its neighbors:
     #     0
     # 270    90
     #    180
     dzdy[dzdy == 0] = 10e-9  # important for numeric stability - where dzdy is zero, make tangens to really high value
-
     aspect_out = np.arctan2(dzdx, dzdy)  # atan2 took care of the quadrants
     if output_units == "degree":
         aspect_out = np.rad2deg(aspect_out)
 
-    # remove padding
+    # Remove padding
     aspect_out = aspect_out[1:-1, 1:-1]
     slope_out = slope_out[1:-1, 1:-1]
 
