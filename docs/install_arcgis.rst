@@ -5,7 +5,7 @@ ArcGIS installation
 
 To use RVT in ArcGIS Pro, `download the ArcGIS Raster Functions repository <https://github.com/EarthObservation/rvt-arcgis-pro>`_ by selecting ``Code → Download ZIP``.
 
-Unzip the downloaded repository folder and rename it to ``rvt-arcgis-pro``, then copy the whole repository folder to: ``<ArcGIS Pro install path>/Resources/Raster/Functions/Custom``
+Unzip the downloaded repository folder and *rename* it to ``rvt-arcgis-pro``, then copy the whole repository folder to: ``<ArcGIS Pro install path>/Resources/Raster/Functions/Custom``
 
 Usually the path is: ``c:/Program Files/ArcGIS/Pro/Resources/Raster/Functions/Custom``
 
