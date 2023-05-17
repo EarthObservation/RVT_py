@@ -20,15 +20,16 @@ Copyright:
 
 # TODO: more testing, find and fix bugs if they exists
 
-# python libraries
-import numpy as np
+import datetime
+import json
+import os
 import warnings
+
+import numpy as np
+
 import rvt.default
 import rvt.vis
 from rvt.blend_func import *
-import os
-import json
-import datetime
 
 
 def create_blender_file_example(file_path=None):
@@ -239,7 +240,6 @@ class BlenderCombination:
         self.name = json_data["combination"]["name"]
         layers_data = json_data["combination"]["layers"]
         for layer in layers_data:
-            layer_name = layer["layer"]
             if layer["visualization_method"] is None:
                 continue
             if layer["visualization_method"].lower() == "none" or layer["visualization_method"].lower() == "null":
@@ -341,17 +341,20 @@ class BlenderCombination:
         image and image_path are None. Parameter no_data changes all pixels with this values to np.nan,
         if save_visualizations is Ture it is not needed."""
 
-        # check data
+        # Preform checks
         self.check_data()
 
         if save_render_path is not None and self.dem_path is None:
             raise Exception(
                 "rvt.blend.BlenderCombination.render_all_images: If you would like to save rendered image (blender), "
                 "you have to define dem_path (BlenderCombination.add_dem_path())!")
+
         if not save_float and not save_8bit and save_render_path:
             raise Exception(
                 "rvt.blend.BlenderCombination.render_all_images: If you would like to save rendered image (blender), "
                 "you have to set save_float or save_8bit to True!")
+
+        # Prepare directory for saving renders
         if save_render_path is not None:
             save_render_directory = os.path.abspath(os.path.dirname(save_render_path))
             save_render_8bit_path = os.path.join(
@@ -360,18 +363,22 @@ class BlenderCombination:
             )
         else:
             save_render_directory = None
+            save_render_8bit_path = None
 
-        # default is rvt.default.DefaultValues class
-        if default is None:  # if not defined, predefined values are used
+        # If default (rvt.default.DefaultValues class) is not defined, use predefined values
+        if default is None:
             default = rvt.default.DefaultValues()
 
-        # rendering across all layers - form last to first layer
-        rendered_image = []
+        # Rendering across all layers - form last to first layer
+        rendered_image = None
         for i_img in range(len(self.layers) - 1, -1, -1):
+
+            # Get visualization type (string)
             visualization = self.layers[i_img].vis
             if visualization is None:  # empty layer, skip
                 continue
 
+            # Get other parameters for processing this layer
             min_norm = self.layers[i_img].min
             max_norm = self.layers[i_img].max
             normalization = self.layers[i_img].normalization
@@ -382,23 +389,35 @@ class BlenderCombination:
                 raise Exception(
                     "rvt.blend.BlenderCombination.render_all_images: If you would like to save visualizations, "
                     "you have to define dem_path (BlenderCombination.add_dem_path())!")
+
             if not save_visualizations and self.dem_arr is None and self.dem_resolution is None and \
                     image_path is None and image is None:
                 raise Exception(
                     "rvt.blend.BlenderCombination.render_all_images: If you would like to compute visualizations, "
                     "you have to define dem_arr and its resolution (BlenderCombination.add_dem_arr())!")
 
-            # normalize images
-            # if image is not presented and image_path is
+            # Normalize images
             norm_image = None
             if image is None and image_path is not None:
-                norm_image = normalize_image(visualization, rvt.default.get_raster_arr(image_path)["array"], min_norm,
-                                             max_norm, normalization)
-            # if image is presented
+                # LOAD image from file if it doesn't exist (as an array) but we have image_path present
+                norm_image = normalize_image(
+                    visualization,
+                    rvt.default.get_raster_arr(image_path)["array"],
+                    min_norm,
+                    max_norm,
+                    normalization
+                )
             elif image is not None:
-                norm_image = normalize_image(visualization, image, min_norm, max_norm, normalization)
-            # they are both none
+                # if image exist (as an array)
+                norm_image = normalize_image(
+                    visualization,
+                    image,
+                    min_norm,
+                    max_norm,
+                    normalization
+                )
             else:
+                # calculate image from DEM
                 if self.layers[i_img].vis.lower() == "slope gradient":
                     if save_visualizations:
                         default.save_slope(dem_path=self.dem_path, custom_dir=save_render_directory, save_float=True,
@@ -560,6 +579,7 @@ class BlenderCombination:
                         image = default.get_mstp(dem_arr=self.dem_arr, no_data=no_data)
                         norm_image = normalize_image(visualization, image, min_norm, max_norm, normalization)
 
+            # Apply colormap
             colormap = self.layers[i_img].colormap
             min_colormap_cut = self.layers[i_img].min_colormap_cut
             max_colormap_cut = self.layers[i_img].max_colormap_cut
@@ -568,26 +588,35 @@ class BlenderCombination:
                                                       min_colormap_cut=min_colormap_cut,
                                                       max_colormap_cut=max_colormap_cut)
 
-            # if current layer has visualization applied, but there has been no rendering
-            # of images yet, than current layer will be the initial value of rendered_image
-            if rendered_image == []:
+            # Blend current layer with background layer
+            if not rendered_image:
+                # if current layer has visualization applied, but there has been no rendering
+                # of images yet, than current layer will be the initial value of rendered_image
                 rendered_image = norm_image
                 continue
             else:
                 active = norm_image
                 background = rendered_image
-                blend_mode = self.layers[i_img].blend_mode
-                opacity = self.layers[i_img].opacity
+
+                # Scale images if needed
                 if np.nanmin(active) < 0 or np.nanmax(active) > 1:
                     active = scale_0_to_1(active)
                 if np.nanmin(background) < 0 or np.nanmax(background) > 1:
                     background = scale_0_to_1(background)
+
+                # Blend background with active layer
+                blend_mode = self.layers[i_img].blend_mode
                 top = blend_images(blend_mode, active, background)
+
+                # Apply opacity
+                opacity = self.layers[i_img].opacity
                 rendered_image = render_images(top, background, opacity)
 
                 if np.nanmin(rendered_image) < 0 or np.nanmax(rendered_image) > 1:
                     warnings.warn("rvt.blend.BlenderCombination.render_all_images: Rendered image scale distorted")
-        if save_render_path is not None:  # if paths presented it saves image
+
+        # Save image to file if path is present
+        if save_render_path is not None:
             if save_float:
                 rvt.default.save_raster(src_raster_path=self.dem_path, out_raster_path=save_render_path,
                                         out_raster_arr=rendered_image)
@@ -595,6 +624,7 @@ class BlenderCombination:
                 rendered_image_8bit = rvt.vis.byte_scale(rendered_image, c_min=0, c_max=1)
                 rvt.default.save_raster(src_raster_path=self.dem_path, out_raster_path=save_render_8bit_path,
                                         out_raster_arr=rendered_image_8bit, e_type=1)
+
         return rendered_image  # returns float
 
     def create_log_file(self, dem_path, combination_name, render_path, default: rvt.default.DefaultValues,
@@ -767,7 +797,7 @@ class BlenderCombinations:
         self.combinations = []  # list of BlenderCombination
 
     def add_combination(self, combination: BlenderCombination, name=None):
-        """Adds cobmination if parameter name not None it renames combination."""
+        """Adds combination if parameter name not None it renames combination."""
         if name is not None:
             combination.name = name
         self.combinations.append(combination)
@@ -856,7 +886,7 @@ class TerrainSettings:
         self.asvf_level = None
         # positive openness
         # negative openness
-        # sky_illum
+        # sky_illumination
         self.sim_sky_mod = None
         self.sim_compute_shadow = None
         self.sim_nr_dir = None
@@ -1232,21 +1262,15 @@ def color_relief_image_map(dem, resolution, default: rvt.default.DefaultValues =
         DEM pixel size.
     default : rvt.default.DefaultValues
         Default values for visualization functions.
-    slope_norm : tuple(mode, min, max)
-        Cutoff normalization for slope.
-        Mode can be 'value' or 'percent' (cut-off units).
-        Values min and max define stretch borders (in mode units).
-    op_on_norm : tuple(mode, min, max)
-        Cutoff normalization for (openness positive - openness negative).
-        Mode can be 'value' or 'percent' (cut-off units).
-        Values min and max define stretch borders (in mode units).
     colormap : str
         Colormap form matplotlib (https://matplotlib.org/3.3.2/tutorials/colors/colormaps.html).
     min_colormap_cut : float
-        What lower part of colormap to cut. Between 0 and 1, if 0.2 it cuts off (deletes) 20% of lower colors in colormap.
+        What lower part of colormap to cut. Between 0 and 1, if 0.2 it cuts off (deletes) 20% of lower colors in
+        colormap.
         If None cut is not applied.
     max_colormap_cut : float
-        What upper part of colormap to cut. Between 0 and 1, if 0.8 it cuts off (deletes) 20% of upper colors in colormap.
+        What upper part of colormap to cut. Between 0 and 1, if 0.8 it cuts off (deletes) 20% of upper colors in
+        colormap.
         If None cut is not applied.
     no_data : int or float
         Value that represents no_data, all pixels with this value are changed to np.nan .
@@ -1270,8 +1294,13 @@ def color_relief_image_map(dem, resolution, default: rvt.default.DefaultValues =
                                                compute_svf=False, compute_asvf=False, compute_opns=True,
                                                no_data=None)["opns"]
     opns_pos_neg_arr = opns_pos_arr - opns_neg_arr
-    slope_arr = rvt.vis.slope_aspect(dem=dem, resolution_x=resolution, resolution_y=resolution, output_units="radian")[
-        "slope"]
+
+    slope_arr = rvt.vis.slope_aspect(
+        dem=dem,
+        resolution_x=resolution,
+        resolution_y=resolution,
+        output_units="radian"
+    )["slope"]
 
     blend_combination = rvt.blend.BlenderCombination()
     blend_combination.create_layer(vis_method="Openness_Pos-Neg", normalization=op_on_norm[0], minimum=op_on_norm[1],
@@ -1285,16 +1314,17 @@ def color_relief_image_map(dem, resolution, default: rvt.default.DefaultValues =
                                    min_colormap_cut=min_colormap_cut, max_colormap_cut=max_colormap_cut,
                                    image=slope_arr)
     crim_out = blend_combination.render_all_images()
+
     return crim_out
 
 
 def e3mstp(dem, resolution, default: rvt.default.DefaultValues = rvt.default.DefaultValues(), no_data=None):
     """
-    RVT enahanced version 3 Multi-scale topographic position (e3MSTP)
+    RVT enhanced version 3 Multi-scale topographic position (e3MSTP)
     Blending combination where layers are:
-    1st: Simple local relief model (SLRM), sreen, 25% opacity
+    1st: Simple local relief model (SLRM), screen, 25% opacity
     2nd: Color relief image map where cmap=Reds_r(0.5-1) (CRIM_Reds_r), soft_light, 70% opacity
-    3rd: Multi-scale topographic postion (MSTP)
+    3rd: Multi-scale topographic position (MSTP)
 
     Parameters
     ----------
@@ -1334,4 +1364,3 @@ def e3mstp(dem, resolution, default: rvt.default.DefaultValues = rvt.default.Def
                                    image=mstp_arr)
     e3mstp_out = blend_combination.render_all_images()
     return e3mstp_out
-
