@@ -459,9 +459,11 @@ def normalize_image(visualization, image, min_norm, max_norm, normalization):
             norm_image = scale_0_to_1(norm_image)
         else:
             norm_image = scale_0_to_1(norm_image)
-            warnings.warn("rvt.blend.normalize_images_on_layers: unexpected values! max > 1")
-        if np.nanmin(norm_image) < 0:
-            warnings.warn("rvt.blend.normalize_images_on_layers: unexpected values! min < 0")
+            warnings.warn("rvt.blend_func.normalize_image: unexpected values! max > 1")
+
+    if np.nanmin(norm_image) < 0:
+        norm_image = scale_0_to_1(norm_image)
+        warnings.warn("rvt.blend_func.normalize_image: unexpected values! min < 0")
 
     # For slope invert scale (high slopes will be black)
     if visualization.lower() == "slope gradient" or visualization.lower() == "openness - negative" or \
