@@ -1502,9 +1502,9 @@ def max_elevation_deviation(dem, minimum_radius, maximum_radius, step):
 
 
 def mstp(dem,
-         local_scale=(1, 5, 1),
-         meso_scale=(5, 50, 5),
-         broad_scale=(50, 500, 50),
+         local_scale=(3, 21, 2),
+         meso_scale=(23, 203, 18),
+         broad_scale=(223, 2023, 180),
          lightness=1.2,
          ve_factor=1,
          no_data=None
