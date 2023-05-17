@@ -1597,11 +1597,11 @@ def fill_where_nan(dem, method="idw"):
     dem_out = np.copy(dem)
     mask = np.isnan(dem_out)
 
-    # 1D row linear interpolation
     if method == "linear_row":
+        # 1D row linear interpolation
         dem_out[mask] = np.interp(np.flatnonzero(mask), np.flatnonzero(~mask), dem_out[~mask])
 
-    if method.split("_")[0] == "idw":
+    elif method.split("_")[0] == "idw":
         radius = 20
         power = 2
         if len(method.split("_")) == 3:
@@ -1658,6 +1658,7 @@ def fill_where_nan(dem, method="idw"):
         # Nearest neighbour interpolation
         elif method == "nearest_neighbour" or method == "nearest_neighbor":
             dem_out[mask] = griddata(xy_good, dem_out[~mask], xy_bad, method='nearest')
+
     else:
         raise Exception("rvt.visualization.fill_where_nan: Wrong method!")
 
