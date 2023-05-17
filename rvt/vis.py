@@ -1425,14 +1425,18 @@ def topographic_dev(dem, dem_i_nr_pixels, dem_i1, dem_i2, kernel_radius):
                 np.roll(dem_i1, (-radius_cell - 1, radius_cell), axis=(0, 1)) -
                 np.roll(dem_i1, (radius_cell, -radius_cell - 1), axis=(0, 1)))
     # divide with nr of pixels inside kernel
-    dem_mean = dem_mean / kernel_nr_pix_arr
+    with np.errstate(divide='ignore', invalid='ignore'):  # Suppress warning for dividing by zero
+        dem_mean = dem_mean / kernel_nr_pix_arr
 
     # std
     dem_std = (np.roll(dem_i2, (radius_cell, radius_cell), axis=(0, 1)) +
                np.roll(dem_i2, (-radius_cell - 1, -radius_cell - 1), axis=(0, 1)) -
                np.roll(dem_i2, (-radius_cell - 1, radius_cell), axis=(0, 1)) -
                np.roll(dem_i2, (radius_cell, -radius_cell - 1), axis=(0, 1)))
-    dem_std = np.sqrt(np.abs(dem_std / kernel_nr_pix_arr - dem_mean ** 2))
+
+    with np.errstate(divide='ignore', invalid='ignore'):  # Suppress warning for dividing by zero
+        dem_std = np.sqrt(np.abs(dem_std / kernel_nr_pix_arr - dem_mean ** 2))
+        # returns nan values where division by zero happens
 
     dev_out = (np.roll(dem, (-1, -1), axis=(0, 1)) - dem_mean) / (dem_std + 1e-6)  # add 1e-6 to prevent division with 0
 
