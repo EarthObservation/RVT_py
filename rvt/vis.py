@@ -409,7 +409,7 @@ def mean_filter(dem, kernel_radius):
     # kernel nr pixel integral image
     dem_i_nr_pixels = np.ones(dem_pad.shape)
     dem_i_nr_pixels[idx_nan_dem_pad] = 0
-    dem_i_nr_pixels = integral_image(dem_i_nr_pixels, np.int)
+    dem_i_nr_pixels = integral_image(dem_i_nr_pixels, np.int8)
 
     dem_i1 = integral_image(dem_pad)
 
@@ -1361,7 +1361,7 @@ def integral_image(dem, data_type=np.float64):
     dem : numpy.ndarray
         Input digital elevation model as 2D numpy array.
     data_type : np.__class__
-        dtype as numpy data type class (np.float64, np.int, etc.)
+        dtype as numpy data type class (np.float64, np.int8, etc.)
 
     Returns
     -------
@@ -1480,7 +1480,7 @@ def max_elevation_deviation(dem, minimum_radius, maximum_radius, step):
     # number of pixels for summed area table
     dem_i_nr_pixels = np.ones(dem_pad.shape)
     dem_i_nr_pixels[idx_nan_dem_pad] = 0
-    dem_i_nr_pixels = integral_image(dem_i_nr_pixels, np.int)
+    dem_i_nr_pixels = integral_image(dem_i_nr_pixels, np.int8)
 
     # This outputs float64, which is by design. Change final array to float32 at the end of the function (at return)
     dem_i1 = integral_image(dem_pad)
