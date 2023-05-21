@@ -165,7 +165,7 @@ def slope_aspect(dem,
     dem = dem.astype(np.float32)
 
     # Change no_data to np.nan
-    if no_data and ~np.isnan(no_data):
+    if no_data is not None:
         dem[dem == no_data] = np.nan
 
     # Save NaN mask
@@ -409,7 +409,7 @@ def mean_filter(dem, kernel_radius):
     # kernel nr pixel integral image
     dem_i_nr_pixels = np.ones(dem_pad.shape)
     dem_i_nr_pixels[idx_nan_dem_pad] = 0
-    dem_i_nr_pixels = integral_image(dem_i_nr_pixels, np.int8)
+    dem_i_nr_pixels = integral_image(dem_i_nr_pixels, np.int64)
 
     dem_i1 = integral_image(dem_pad)
 
@@ -604,13 +604,13 @@ def sky_view_factor_compute(height_arr,
 
     # Initiate the output for SVF
     if compute_svf:
-        svf_out = height * 0
+        svf_out = height * 0  # Multiply with 0 instead of using np.zeros to preserve nodata
     else:
         svf_out = None
 
     # Initiate the output for azimuth dependent SVF
     if compute_asvf:
-        asvf_out = height * 0
+        asvf_out = height * 0  # Multiply with 0 instead of using np.zeros to preserve nodata
         w_m = a_min_weight
         w_a = np.deg2rad(a_main_direction)
         weight = np.arange(num_directions) * (2 * np.pi / num_directions)
@@ -621,7 +621,7 @@ def sky_view_factor_compute(height_arr,
 
     # Initiate the output for Openness
     if compute_opns:
-        opns_out = height * 0
+        opns_out = height * 0  # Multiply with 0 instead of using np.zeros to preserve nodata
     else:
         opns_out = None
 
@@ -751,7 +751,7 @@ def sky_view_factor(dem,
     sc_svf_r_min = [0., 10., 20., 40.]
 
     # Before doing anything to the array, make sure all NODATA values are set to np.nan
-    if no_data is not None and ~np.isnan(no_data):
+    if no_data is not None:
         dem[dem == no_data] = np.nan
     # Save NaN mask (processing may change NaNs to arbitrary values)
     nan_mask = np.isnan(dem)
@@ -1480,7 +1480,7 @@ def max_elevation_deviation(dem, minimum_radius, maximum_radius, step):
     # number of pixels for summed area table
     dem_i_nr_pixels = np.ones(dem_pad.shape)
     dem_i_nr_pixels[idx_nan_dem_pad] = 0
-    dem_i_nr_pixels = integral_image(dem_i_nr_pixels, np.int8)
+    dem_i_nr_pixels = integral_image(dem_i_nr_pixels, np.int64)
 
     # This outputs float64, which is by design. Change final array to float32 at the end of the function (at return)
     dem_i1 = integral_image(dem_pad)
@@ -1548,7 +1548,7 @@ def mstp(dem,
         raise Exception("rvt.visualization.mstp: ve_factor must be between -10000 and 10000!")
 
     # change no_data to np.nan
-    if no_data is not None and ~np.isnan(no_data):
+    if no_data is not None:
         dem[dem == no_data] = np.nan
 
     dem = dem.astype(np.float32)

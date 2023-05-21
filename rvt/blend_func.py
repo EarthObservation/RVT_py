@@ -55,10 +55,6 @@ def gray_scale_to_color_ramp(gray_scale, colormap, min_colormap_cut=None, max_co
     rgba_out : np.array (3D: red 0-255, green 0-255, blue 0-255)
             If alpha False: np.array (4D: red 0-255, green 0-255, blue 0-255, alpha 0-255)
     """
-
-    # Create mask for NaN values (when applying colormap, nan values are changed to 0)
-    # nan_mask = np.isnan(gray_scale)
-
     cm = get_cmap(colormap)
 
     # Truncate colormap if required
@@ -78,13 +74,9 @@ def gray_scale_to_color_ramp(gray_scale, colormap, min_colormap_cut=None, max_co
     # Compute normalized RGBA
     rgba_mtpl_out = cm(gray_scale)
 
-    # Apply NaN mask
-    # rgba_mtpl_out[nan_mask] = np.nan
-
-    # TODO: poišči kdo vse kliče to funkcijo, zna biti problem če je output 8bit in imamo NaN
-    # TODO: (after a quick search it looks like output_8bit is never used)
     if output_8bit:
-        # rgba_mtpl_out[nan_mask] = 0
+        nan_mask = np.isnan(gray_scale)
+        rgba_mtpl_out[nan_mask] = 0  # Change nan to 0
         rgba_mtpl_out = np.uint8(rgba_mtpl_out * 255)  # 0-1 scale to 0-255 and change type to uint8
 
     # Move array axes to correct positions, i.e. (x, y, bands) to (bands, x, y)
@@ -164,13 +156,6 @@ def advanced_normalization(image, minimum, maximum, normalization):
         raise Exception(f"rvt.blend_func.advanced_normalization: Unknown normalization type: {normalization}")
 
     return equ_image
-
-
-def image_join_channels(r, g, b):
-    # TODO: This function is unused!
-    if r.shape != g.shape or r.shape != b.shape or g.shape != b.shape:
-        raise Exception("rvt.blend.image_join_channels: r, g, b must me same dimensions!")
-    return np.array([r, g, b])
 
 
 def lum(img):
