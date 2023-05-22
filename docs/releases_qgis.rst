@@ -3,6 +3,10 @@
 QGIS plugin release history
 ===========================
 
+v0.9.5
+------
+*   Use rvt-py v2.2.0.
+
 v0.9.4
 ------
 *   Fixed paths to processing functions.
