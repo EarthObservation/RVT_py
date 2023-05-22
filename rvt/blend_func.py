@@ -11,6 +11,7 @@ Credits:
     Klemen Čotar
     Maja Somrak
     Žiga Maroh
+    Nejc Čož
 
 Copyright:
     2010-2020 Research Centre of the Slovenian Academy of Sciences and Arts
@@ -19,12 +20,11 @@ Copyright:
 
 # TODO: more testing, find and fix bugs if they exists
 
-# python libraries
-import matplotlib as mpl
-import matplotlib.cm
-import matplotlib.colors
-import numpy as np
 import warnings
+
+import numpy as np
+from matplotlib.cm import get_cmap
+from matplotlib.colors import LinearSegmentedColormap
 
 
 def gray_scale_to_color_ramp(gray_scale, colormap, min_colormap_cut=None, max_colormap_cut=None, alpha=False,
@@ -55,32 +55,42 @@ def gray_scale_to_color_ramp(gray_scale, colormap, min_colormap_cut=None, max_co
     rgba_out : np.array (3D: red 0-255, green 0-255, blue 0-255)
             If alpha False: np.array (4D: red 0-255, green 0-255, blue 0-255, alpha 0-255)
     """
-    cm = mpl.cm.get_cmap(colormap)
+    cm = get_cmap(colormap)
+
+    # Truncate colormap if required
     if min_colormap_cut is not None or max_colormap_cut is not None:
         if min_colormap_cut is None:
             min_colormap_cut = 0.0
         if max_colormap_cut is None:
             max_colormap_cut = 1.0
         if min_colormap_cut > 1 or min_colormap_cut < 0 or max_colormap_cut > 1 or max_colormap_cut < 0:
-            raise Exception("rvt.blend_funct.gray_scale_to_color_ramp: min_colormap_cut and max_colormap_cut must be"
+            raise Exception("rvt.blend_func.gray_scale_to_color_ramp: min_colormap_cut and max_colormap_cut must be"
                             " between 0 and 1!")
         if min_colormap_cut >= max_colormap_cut:
-            raise Exception("rvt.blend_funct.gray_scale_to_color_ramp: min_colormap_cut can't be smaller than"
+            raise Exception("rvt.blend_func.gray_scale_to_color_ramp: min_colormap_cut can't be smaller than"
                             " max_colormap_cut!")
         cm = truncate_colormap(cmap=cm, minval=min_colormap_cut, maxval=max_colormap_cut)
-    rgba_mtpl_out = cm(gray_scale)  # normalized rgb
+
+    # Compute normalized RGBA
+    rgba_mtpl_out = cm(gray_scale)
+
     if output_8bit:
+        nan_mask = np.isnan(gray_scale)
+        rgba_mtpl_out[nan_mask] = 0  # Change nan to 0
         rgba_mtpl_out = np.uint8(rgba_mtpl_out * 255)  # 0-1 scale to 0-255 and change type to uint8
+
+    # Move array axes to correct positions, i.e. (x, y, bands) to (bands, x, y)
+    rgba_out = rgba_mtpl_out.transpose(2, 0, 1)
+
+    # Discard 4th band if not using Alpha
     if not alpha:
-        rgba_out = np.array([rgba_mtpl_out[:, :, 0], rgba_mtpl_out[:, :, 1], rgba_mtpl_out[:, :, 2]])
-    else:
-        rgba_out = np.array([rgba_mtpl_out[:, :, 0], rgba_mtpl_out[:, :, 1], rgba_mtpl_out[:, :, 2],
-                             rgba_mtpl_out[:, :, 3]])
+        rgba_out = rgba_out[:3, ...]
+
     return rgba_out
 
 
 def truncate_colormap(cmap, minval=0.0, maxval=1.0, n=100):
-    new_cmap = matplotlib.colors.LinearSegmentedColormap.from_list(
+    new_cmap = LinearSegmentedColormap.from_list(
         'trunc({n},{a:.2f},{b:.2f})'.format(n=cmap.name, a=minval, b=maxval),
         cmap(np.linspace(minval, maxval, n)))
     return new_cmap
@@ -102,10 +112,10 @@ def lin_cutoff_calc_from_perc(image, minimum, maximum):
     """Minimum cutoff in percent, maximum cutoff in percent (0%-100%). Returns min and max values for linear
     stretch (cut-off)."""
     if minimum < 0 or maximum < 0 or minimum > 100 or maximum > 100:
-        raise Exception("rvt.blend_funct.lin_cutoff_calc_from_perc: minimum, maximum are percent and have to be in "
+        raise Exception("rvt.blend_func.lin_cutoff_calc_from_perc: minimum, maximum are percent and have to be in "
                         "range 0-100!")
     if minimum + maximum > 100:
-        raise Exception("rvt.blend_funct.lin_cutoff_calc_from_perc: if minimum + maximum > 100% then there are no"
+        raise Exception("rvt.blend_func.lin_cutoff_calc_from_perc: if minimum + maximum > 100% then there are no"
                         " values left! You can't cutoff whole image!")
     distribution = np.nanpercentile(a=image, q=np.array([minimum, 100 - maximum]))
     min_lin = distribution[0]
@@ -124,26 +134,28 @@ def normalize_perc(image, minimum, maximum):
 
 
 def advanced_normalization(image, minimum, maximum, normalization):
-    equ_image = image
+    """Runs normalization based on the selected normalization type: value or percent."""
+
+    # Preform checks if correct values were given
     if minimum == maximum and normalization == "value":
         raise Exception("rvt.blend_func.advanced_normalization: If normalization == value, min and max cannot be the"
                         " same!")
+
     if minimum > maximum and normalization == "value":
         raise Exception("rvt.blend_func.advanced_normalization: If normalization == value, max can't be smaller"
                         " than min!")
+
+    # Select normalization type
     if normalization.lower() == "value":
         equ_image = normalize_lin(image=image, minimum=minimum, maximum=maximum)
     elif normalization.lower() == "perc":
         equ_image = normalize_perc(image=image, minimum=minimum, maximum=maximum)
     elif normalization is None:
         equ_image = image
+    else:
+        raise Exception(f"rvt.blend_func.advanced_normalization: Unknown normalization type: {normalization}")
+
     return equ_image
-
-
-def image_join_channels(r, g, b):
-    if r.shape != g.shape or r.shape != b.shape or g.shape != b.shape:
-        raise Exception("rvt.blend.image_join_channels: r, g, b must me same dimensions!")
-    return np.array([r, g, b])
 
 
 def lum(img):
@@ -158,21 +170,21 @@ def lum(img):
     return lum_img
 
 
-def matrix_eq_min_lt_zero(r, idx_min_lt_zero, lum_c, min_c):
+def matrix_eq_min_lt_zero(r: np.ndarray, idx_min_lt_zero, lum_c, min_c):
     r[idx_min_lt_zero] = lum_c[idx_min_lt_zero] + (((r[idx_min_lt_zero] - lum_c[idx_min_lt_zero]) *
                                                     lum_c[idx_min_lt_zero]) / (lum_c[idx_min_lt_zero] -
                                                                                min_c[idx_min_lt_zero]))
     return r
 
 
-def matrix_eq_max_gt_one(r, idx_max_c_gt_one, lum_c, max_c):
+def matrix_eq_max_gt_one(r: np.ndarray, idx_max_c_gt_one, lum_c, max_c):
     r[idx_max_c_gt_one] = lum_c[idx_max_c_gt_one] + (((r[idx_max_c_gt_one] - lum_c[idx_max_c_gt_one]) *
                                                       (1.0 - lum_c[idx_max_c_gt_one])) / (max_c[idx_max_c_gt_one]
                                                                                           - lum_c[idx_max_c_gt_one]))
     return r
 
 
-def channel_min(r, g, b):
+def channel_min(r: np.ndarray, g: np.ndarray, b: np.ndarray):
     min_c = r * 1.0
     idx_min = np.where(g < min_c)
     min_c[idx_min] = g[idx_min]
@@ -181,7 +193,7 @@ def channel_min(r, g, b):
     return min_c
 
 
-def channel_max(r, g, b):
+def channel_max(r: np.ndarray, g: np.ndarray, b: np.ndarray):
     max_c = r * 1.0
     idx_max = np.where(g > max_c)
     max_c[idx_max] = g[idx_max]
@@ -317,34 +329,45 @@ def blend_images(blend_mode, active, background, min_c=None, max_c=None):
 
 
 def render_images(active, background, opacity):
+
+    # Both active and background image have to be between 0 and 1, scale if not
     if np.nanmin(active) < 0 or np.nanmax(active) > 1:
         active = scale_0_to_1(active)
     if np.nanmin(background) < 0 or np.nanmax(background) > 1:
         background = scale_0_to_1(background)
 
+    # True if image has 3 bands (RGB), false if single band
     a_rgb = len(active.shape) == 3
     b_rgb = len(background.shape) == 3
-    render_image = 0
+
+    # Apply opacity
     if a_rgb and b_rgb:
+        # Both images 3 bands
         render_image = np.zeros(background.shape)
         for i in range(3):
             render_image[i, :, :] = apply_opacity(active[i, :, :], background[i, :, :], opacity)
-    if a_rgb and not b_rgb:
+    elif a_rgb and not b_rgb:
+        # Active image 3 bands
         render_image = np.zeros(active.shape)
         for i in range(3):
             render_image[i, :, :] = apply_opacity(active[i, :, :], background, opacity)
-    if not a_rgb and b_rgb:
+    elif not a_rgb and b_rgb:
+        # Background image 3 bands
         render_image = np.zeros(background.shape)
         for i in range(3):
             render_image[i, :, :] = apply_opacity(active, background[i, :, :], opacity)
-    if not a_rgb and not b_rgb:
+    else:
         render_image = apply_opacity(active, background, opacity)
+
     return render_image
 
 
 def scale_within_0_and_1(numeric_value):
     if np.nanmin(numeric_value) >= 0 and np.nanmax(numeric_value) <= 1:
         return numeric_value
+
+    # Create mask for NaN values
+    # nan_mask = np.isnan(numeric_value)
 
     numeric_value[np.isnan(numeric_value)] = np.nanmin(numeric_value)  # nan change to nanmin
 
@@ -354,7 +377,7 @@ def scale_within_0_and_1(numeric_value):
     actual_max = np.nanmax(numeric_value)
     norm_max_value = np.nanmin(np.array(1, actual_max))
 
-    # do not scale values where max is between 1 and 255 if the max-min values diffrence is at least 30 and min >0
+    # Do not scale values where max is between 1 and 255 if the max-min values difference is at least 30 and min >0
     # and numeric values are integer type
     if 255 >= actual_max > 1:
         if actual_max - actual_min > 30 and actual_min > 0:
@@ -365,6 +388,8 @@ def scale_within_0_and_1(numeric_value):
 
     if np.nanmin(scaled) > -0.01:
         scaled[(0 > scaled) & (scaled > -0.01)] = 0
+
+    # scaled[nan_mask] = np.nan
 
     return scaled
 
@@ -402,66 +427,72 @@ def apply_opacity(active, background, opacity):
 
 
 def normalize_image(visualization, image, min_norm, max_norm, normalization):
+    """Main function for normalization. Runs advanced normalization on the array and preforms special operations for
+    some visualization types (e.g. invert scale for slope, scale for mhs, etc.).
+    """
     if visualization is None:
         return None
+
     if normalization == "percent":
         normalization = "perc"
 
     norm_image = advanced_normalization(image=image, minimum=min_norm, maximum=max_norm, normalization=normalization)
 
-    # make sure it scales 0 to 1
+    # Make sure it scales 0 to 1
     if np.nanmax(norm_image) > 1:
         if visualization.lower() == "multiple directions hillshade" or visualization == "mhs":
             norm_image = scale_0_to_1(norm_image)
         else:
             norm_image = scale_0_to_1(norm_image)
-            warnings.warn("rvt.blend.normalize_images_on_layers: unexpected values! max > 1")
-        if np.nanmin(norm_image) < 0:
-            warnings.warn("rvt.blend.normalize_images_on_layers: unexpected values! min < 0")
+            warnings.warn("rvt.blend_func.normalize_image: unexpected values! max > 1")
 
-    # for slope, invert scale
-    # meaning high slopes will be black
+    if np.nanmin(norm_image) < 0:
+        norm_image = scale_0_to_1(norm_image)
+        warnings.warn("rvt.blend_func.normalize_image: unexpected values! min < 0")
+
+    # For slope invert scale (high slopes will be black)
     if visualization.lower() == "slope gradient" or visualization.lower() == "openness - negative" or \
             visualization == "slp" or visualization == "neg_opns":
         norm_image = 1 - norm_image
+
     return norm_image
 
 
-def cut_off_normalize(image, mode, min=None, max=None, bool_norm=True):
+def cut_off_normalize(image, mode, cutoff_min=None, cutoff_max=None, bool_norm=True):
     """
     One band image cut-off or normalization or both. Image is 2D np.ndarray of raster, mode is perc or value
     (min and max units), min and max are minimum value to cutoff and maximum value to cutoff.
     (e.x. percent min=2 and max=3 -> cutoff lower 2% values and higher 3% values;
      e.x. value min=10 and max=60 -> cutoff bellow 10 and above 60, image values will be 10-60)
     """
-    if min is not None and max is not None:
-        if min == max and mode == "value":
+    if cutoff_min is not None and cutoff_max is not None:
+        if cutoff_min == cutoff_max and mode == "value":
             raise Exception("rvt.blend_func.cut_off_normalize: If normalization == value, min and max cannot be the"
                             " same!")
-        if min > max and mode == "value":
+        if cutoff_min > cutoff_max and mode == "value":
             raise Exception("rvt.blend_func.cut_off_normalize: If normalization == value, max can't be smaller"
                             " than min!")
 
     cut_off_arr = image
-    if min is None and mode.lower() == "value":
-        min = np.amin(image)
-    if max is None and mode.lower() == "value":
-        max = np.amax(image)
-    if min is None and (mode.lower() == "perc" or mode.lower() == "percent"):
-        min = 0
-    if max is None and (mode.lower() == "perc" or mode.lower() == "percent"):
-        max = 0
+    if cutoff_min is None and mode.lower() == "value":
+        cutoff_min = np.amin(image)
+    if cutoff_max is None and mode.lower() == "value":
+        cutoff_max = np.amax(image)
+    if cutoff_min is None and (mode.lower() == "perc" or mode.lower() == "percent"):
+        cutoff_min = 0
+    if cutoff_max is None and (mode.lower() == "perc" or mode.lower() == "percent"):
+        cutoff_max = 0
     if bool_norm:
         if mode.lower() == "value":
-            cut_off_arr = normalize_lin(cut_off_arr, min, max)
+            cut_off_arr = normalize_lin(cut_off_arr, cutoff_min, cutoff_max)
         elif mode.lower() == "perc" or mode.lower() == "percent":
-            cut_off_arr = normalize_perc(cut_off_arr, min, max)
+            cut_off_arr = normalize_perc(cut_off_arr, cutoff_min, cutoff_max)
     else:
         if mode.lower() == "value":
-            cut_off_arr[cut_off_arr > max] = max
-            cut_off_arr[cut_off_arr < min] = min
+            cut_off_arr[cut_off_arr > cutoff_max] = cutoff_max
+            cut_off_arr[cut_off_arr < cutoff_min] = cutoff_min
         elif mode.lower() == "perc" or mode.lower() == "percent":
-            min_max_value_dict = lin_cutoff_calc_from_perc(cut_off_arr, min, max)
+            min_max_value_dict = lin_cutoff_calc_from_perc(cut_off_arr, cutoff_min, cutoff_max)
             min_value = min_max_value_dict["min_lin"]
             max_value = min_max_value_dict["max_lin"]
             cut_off_arr[cut_off_arr > max_value] = max_value

@@ -62,6 +62,7 @@ def test_multi_hillshade(input_dem_path, output_path, nr_directions=16, sun_elev
     input_dem_dataset.close()
     output_multi_hillshade_dataset.close()
 
+
 def test_slrm(input_dem_path, output_path):
     input_dem_dataset = rio.open(input_dem_path)
     input_dem_arr = input_dem_dataset.read()[0]
@@ -75,15 +76,44 @@ def test_slrm(input_dem_path, output_path):
     input_dem_dataset.close()
     output_slrm_dataset.close()
 
-def test_sky_view_factor(input_dem_path, output_svf_path, output_asvf_path, output_opns_path):
+
+def test_sky_view_factor(
+        input_dem_path,
+        output_svf_path=None,
+        output_asvf_path=None,
+        output_opns_path=None
+):
     input_dem_dataset = rio.open(input_dem_path)
     t = input_dem_dataset.transform
     x_res = t[0]
     y_res = -t[4]
     input_dem_arr = input_dem_dataset.read()[0]
+    no_data = input_dem_dataset.nodata
 
-    dict_svf_asvf_opns = rvt.vis.sky_view_factor(dem=input_dem_arr, resolution=x_res, compute_svf=True,
-                                                 compute_asvf=True, compute_opns=True)
+    if output_svf_path:
+        compute_svf = True
+    else:
+        compute_svf = False
+
+    if output_asvf_path:
+        compute_asvf = True
+    else:
+        compute_asvf = False
+
+    if output_opns_path:
+        compute_opns = True
+    else:
+        compute_opns = False
+
+    dict_svf_asvf_opns = rvt.vis.sky_view_factor(
+        dem=input_dem_arr,
+        resolution=x_res,
+        compute_svf=compute_svf,
+        compute_asvf=compute_asvf,
+        compute_opns=compute_opns,
+        no_data=no_data
+    )
+
     svf_arr = dict_svf_asvf_opns["svf"]
     svf_arr = svf_arr.astype('float32')
 

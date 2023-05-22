@@ -14,9 +14,9 @@ dem_nodata = dem_dict["no_data"]
 
 default = rvt.default.DefaultValues()
 
-default.mstp_local_scale = (1, 5, 1)
-default.mstp_meso_scale = (5, 50, 5)
-default.mstp_broad_scale = (50, 500, 50)
+default.mstp_local_scale = (3, 21, 2)
+default.mstp_meso_scale = (23, 203, 18)
+default.mstp_broad_scale = (223, 2023, 180)
 default.mstp_lightness = 1.2
 
 # Run visualization function

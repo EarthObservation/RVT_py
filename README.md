@@ -1,3 +1,7 @@
+[![PyPI](https://img.shields.io/pypi/v/RVT_py?style=flat-square)](https://pypi.org/project/rvt-py/)
+[![Anaconda-Server Badge](https://anaconda.org/zmigyyy/rvt_py/badges/version.svg)](https://anaconda.org/zmigyyy/rvt_py)
+[![Anaconda-Server Badge](https://anaconda.org/zmigyyy/rvt_py/badges/latest_release_date.svg)](https://anaconda.org/zmigyyy/rvt_py)
+
 # Relief Visualization Toolbox Python library
 
 ![](./docs/figures/RVT_head.png)
