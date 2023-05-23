@@ -5,8 +5,29 @@ Python package release history
 
 UNRELEASED
 ----------
+
+
+2.2.1
+-----
+*   Fixed bug in blending.
+
+RELEASE
+
+May 23, 2023
+
+
+2.2.0
+-----
 *   Added 1 pixel edge padding before the calculation of hillshade and slope, to avoid no data edge in the final results.
 *   Added float option for MSTP visualization.
+*   Changed default parameters of MSTP visualization.
+*   Changed nodata handling when calculating slope visualization. When calculating slope in the specific pixel if any of
+    neighbour pixels are nodata use middle value in the calculation instead.
+
+RELEASE
+
+May 22, 2023
+
 
 2.1.0
 -----
