@@ -589,7 +589,7 @@ class BlenderCombination:
                                                       max_colormap_cut=max_colormap_cut)
 
             # Blend current layer with background layer
-            if not rendered_image:
+            if rendered_image is None:
                 # if current layer has visualization applied, but there has been no rendering
                 # of images yet, than current layer will be the initial value of rendered_image
                 rendered_image = norm_image
