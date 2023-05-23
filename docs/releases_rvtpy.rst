@@ -7,6 +7,15 @@ UNRELEASED
 ----------
 
 
+2.2.1
+-----
+*   Fixed bug in blending.
+
+RELEASE
+
+May 23, 2023
+
+
 2.2.0
 -----
 *   Added 1 pixel edge padding before the calculation of hillshade and slope, to avoid no data edge in the final results.
