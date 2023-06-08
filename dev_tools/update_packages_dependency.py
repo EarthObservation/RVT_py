@@ -1,5 +1,5 @@
 """
-This module contains functions to create requirements.txt (pip) and environment.yaml (conda) from conda environment.
+Run this module to update/create requirements.txt (pip) and environment.yaml (conda) from conda environment.
 
 Anaconda system variable should be configured.
 
@@ -17,6 +17,7 @@ import os
 from pathlib import Path
 
 CONDA_ENV_NAME = "rvt39"
+
 
 def create_requirements_txt() -> None:
     # remove existing file

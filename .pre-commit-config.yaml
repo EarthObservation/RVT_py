@@ -2,27 +2,23 @@ fail_fast: true
 
 
 repos:
-  - repo: https://github.com/ambv/black
-    rev: 22.10.0
-    hooks:
-      - id: black
-        files: ^rvt/
-
   - repo: local
     hooks:
-    -   id: pylint
-        name: pylint
-        entry: pylint
-        language: system
-        types: [python]
-        require_serial: true
-        files: ^rvt/
-
-  - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: v0.971
-    hooks:
-      - id: mypy
-        verbose: true
-        entry: bash -c 'mypy "$@" || true' --
-        args: [--strict]
-        files: ^rvt/
+    - id: black
+      name: black
+      entry: python dev_tools/black_formatting.py
+      language: system
+      types: [ python ]
+      verbose: true
+    - id: pylint
+      name: pylint
+      entry: python dev_tools/pylint_check.py
+      language: system
+      types: [ python ]
+      verbose: true
+    - id: mypy
+      name: mypy
+      entry: python dev_tools/mypy_check.py
+      language: system
+      types: [ python ]
+      verbose: true
