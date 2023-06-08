@@ -1,24 +1,38 @@
+astroid @ file:///D:/bld/astroid_1666864049387/work
+bleach==6.0.0
 CacheControl==0.12.11
 cachy==0.3.0
 certifi==2022.6.15
+cffi @ file:///D:/bld/cffi_1656782930891/work
+cfgv @ file:///home/conda/feedstock_root/build_artifacts/cfgv_1629909281805/work
 charset-normalizer==2.0.12
 cleo==0.8.1
 clikit==0.6.2
+colorama @ file:///home/conda/feedstock_root/build_artifacts/colorama_1666700638685/work
 crashtest==0.3.1
 cycler @ file:///home/conda/feedstock_root/build_artifacts/cycler_1635519461629/work
+dill @ file:///home/conda/feedstock_root/build_artifacts/dill_1666603105584/work
 distlib==0.3.4
+docutils==0.20.1
 filelock==3.7.1
 fonttools @ file:///D:/bld/fonttools_1657249503498/work
 GDAL==3.4.2
 html5lib==1.1
+identify @ file:///home/conda/feedstock_root/build_artifacts/identify_1666911457395/work
 idna==3.3
 importlib-metadata==4.11.4
+isort @ file:///home/conda/feedstock_root/build_artifacts/isort_1636447814597/work
 keyring==23.6.0
 kiwisolver @ file:///D:/bld/kiwisolver_1657953200729/work
+lazy-object-proxy @ file:///D:/bld/lazy-object-proxy_1649033324076/work
 lockfile==0.12.2
+markdown-it-py==2.2.0
 matplotlib @ file:///D:/bld/matplotlib-suite_1651609646819/work
+mccabe @ file:///home/conda/feedstock_root/build_artifacts/mccabe_1643049622439/work
+mdurl==0.1.2
 msgpack==1.0.4
 munkres==1.1.4
+nodeenv @ file:///home/conda/feedstock_root/build_artifacts/nodeenv_1656187504160/work
 numpy @ file:///D:/bld/numpy_1657483989399/work
 packaging==20.9
 pastel==0.2.1
@@ -28,8 +42,12 @@ pkginfo==1.8.3
 platformdirs==2.5.2
 poetry==1.1.13
 poetry-core==1.0.8
+pre-commit @ file:///D:/bld/pre-commit_1666968382159/work
 ptyprocess==0.7.0
+pycparser @ file:///home/conda/feedstock_root/build_artifacts/pycparser_1636257122734/work
+Pygments==2.15.1
 pylev==1.4.0
+pylint @ file:///home/conda/feedstock_root/build_artifacts/pylint_1666794812910/work
 pyparsing==3.0.9
 PyQt5==5.12.3
 PyQt5_sip==4.19.18
@@ -37,17 +55,26 @@ PyQtChart==5.12
 PyQtWebEngine==5.12.1
 python-dateutil @ file:///home/conda/feedstock_root/build_artifacts/python-dateutil_1626286286081/work
 pywin32-ctypes==0.2.0
+PyYAML @ file:///D:/bld/pyyaml_1648757346451/work
+readme-renderer==37.3
 requests==2.28.0
 requests-toolbelt==0.9.1
-rvt-py==2.1.0
+rfc3986==2.0.0
+rich==13.3.5
 scipy @ file:///C:/bld/scipy_1653074066186/work
 shellingham==1.4.0
 six==1.16.0
+toml @ file:///home/conda/feedstock_root/build_artifacts/toml_1604308577558/work
+tomli @ file:///home/conda/feedstock_root/build_artifacts/tomli_1644342247877/work
 tomlkit==0.11.0
 tornado @ file:///D:/bld/tornado_1656937934674/work
+twine==4.0.2
+typing_extensions @ file:///home/conda/feedstock_root/build_artifacts/typing_extensions_1665144421445/work
+ukkonen @ file:///D:/bld/ukkonen_1649407175315/work
 unicodedata2 @ file:///D:/bld/unicodedata2_1649112114189/work
 urllib3==1.26.9
 virtualenv==20.14.1
 webencodings==0.5.1
 wincertstore==0.2
+wrapt @ file:///D:/bld/wrapt_1651495581086/work
 zipp==3.8.0
