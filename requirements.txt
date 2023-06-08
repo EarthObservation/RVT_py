@@ -1,4 +1,5 @@
 astroid @ file:///D:/bld/astroid_1666864049387/work
+black @ file:///D:/bld/black-recipe_1666900197891/work
 bleach==6.0.0
 CacheControl==0.12.11
 cachy==0.3.0
@@ -7,6 +8,7 @@ cffi @ file:///D:/bld/cffi_1656782930891/work
 cfgv @ file:///home/conda/feedstock_root/build_artifacts/cfgv_1629909281805/work
 charset-normalizer==2.0.12
 cleo==0.8.1
+click @ file:///D:/bld/click_1666798499870/work
 clikit==0.6.2
 colorama @ file:///home/conda/feedstock_root/build_artifacts/colorama_1666700638685/work
 crashtest==0.3.1
@@ -32,10 +34,13 @@ mccabe @ file:///home/conda/feedstock_root/build_artifacts/mccabe_1643049622439/
 mdurl==0.1.2
 msgpack==1.0.4
 munkres==1.1.4
+mypy @ file:///D:/bld/mypy_1659135425720/work
+mypy-extensions @ file:///D:/bld/mypy_extensions_1666795091581/work
 nodeenv @ file:///home/conda/feedstock_root/build_artifacts/nodeenv_1656187504160/work
 numpy @ file:///D:/bld/numpy_1657483989399/work
 packaging==20.9
 pastel==0.2.1
+pathspec @ file:///home/conda/feedstock_root/build_artifacts/pathspec_1668325009666/work
 pexpect==4.8.0
 Pillow @ file:///D:/bld/pillow_1657007292472/work
 pkginfo==1.8.3
@@ -43,6 +48,7 @@ platformdirs==2.5.2
 poetry==1.1.13
 poetry-core==1.0.8
 pre-commit @ file:///D:/bld/pre-commit_1666968382159/work
+psutil @ file:///D:/bld/psutil_1653089392436/work
 ptyprocess==0.7.0
 pycparser @ file:///home/conda/feedstock_root/build_artifacts/pycparser_1636257122734/work
 Pygments==2.15.1
