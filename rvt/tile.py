@@ -25,19 +25,25 @@ import rvt.default
 
 
 def _create_blank_raster(
-        in_data_set: gdal.Dataset,
-        out_raster_path: Path,
-        nr_bands: int = 1,
-        no_data: float = np.nan,
-        e_type: int = 6,
+    in_data_set: gdal.Dataset,
+    out_raster_path: Path,
+    nr_bands: int = 1,
+    no_data: float = np.nan,
+    e_type: int = 6,
 ):
     """Takes input data set and creates new raster. It copies input data set size, projection and geo info."""
     gtiff_driver = gdal.GetDriverByName("GTiff")
     band = in_data_set.GetRasterBand(1)
     x_size = band.XSize  # number of columns
     y_size = band.YSize  # number of rows
-    out_ds = gtiff_driver.Create(out_raster_path.as_posix(), xsize=x_size, ysize=y_size, bands=nr_bands, eType=e_type,
-                                 options=["BIGTIFF=IF_NEEDED"])
+    out_ds = gtiff_driver.Create(
+        out_raster_path.as_posix(),
+        xsize=x_size,
+        ysize=y_size,
+        bands=nr_bands,
+        eType=e_type,
+        options=["BIGTIFF=IF_NEEDED"],
+    )
     out_ds.SetProjection(in_data_set.GetProjection())
     out_ds.SetGeoTransform(in_data_set.GetGeoTransform())
     out_ds.GetRasterBand(1).SetNoDataValue(no_data)
@@ -46,16 +52,16 @@ def _create_blank_raster(
 
 
 def save_visualization_tile_by_tile(
-        visualization_function: Callable,
-        function_parameters: Optional[Dict[str, Optional[Any]]],
-        dem_path: Path,
-        overlap: int,
-        tile_size_x: int,
-        tile_size_y: int,
-        out_raster_path: Path,
-        out_raster_nr_of_bands: int = 1,
-        out_raster_e_type: int = 6,
-        out_visualization_dict_key: Optional[str] = None,
+    visualization_function: Callable,
+    function_parameters: Optional[Dict[str, Optional[Any]]],
+    dem_path: Path,
+    overlap: int,
+    tile_size_x: int,
+    tile_size_y: int,
+    out_raster_path: Path,
+    out_raster_nr_of_bands: int = 1,
+    out_raster_e_type: int = 6,
+    out_visualization_dict_key: Optional[str] = None,
 ) -> None:
     """
     Some DEMs are too large to load them into memory. This function reads dem raster tile by tile,
@@ -100,10 +106,14 @@ def save_visualization_tile_by_tile(
     out : None
     """
     if not dem_path.exists():
-        Exception("rvt.tile.save_visualization_tile_by_tile: Input dem path does not exist!")
+        Exception(
+            "rvt.tile.save_visualization_tile_by_tile: Input dem path does not exist!"
+        )
     if tile_size_x < 50 or tile_size_y < 50:
-        Exception("rvt.tile.save_visualization_tile_by_tile: Tile size too small (tile_size_x, tile_size_y),"
-                  " it needs to be bigger than 50 pixels!")
+        Exception(
+            "rvt.tile.save_visualization_tile_by_tile: Tile size too small (tile_size_x, tile_size_y),"
+            " it needs to be bigger than 50 pixels!"
+        )
 
     dem_ds = gdal.Open(dem_path.as_posix())
     gt = dem_ds.GetGeoTransform()
@@ -128,8 +138,12 @@ def save_visualization_tile_by_tile(
         if function_parameters["no_data"] is None:
             function_parameters["no_data"] = no_data
 
-    _create_blank_raster(in_data_set=dem_ds, out_raster_path=out_raster_path, nr_bands=out_raster_nr_of_bands,
-                         e_type=out_raster_e_type)
+    _create_blank_raster(
+        in_data_set=dem_ds,
+        out_raster_path=out_raster_path,
+        nr_bands=out_raster_nr_of_bands,
+        e_type=out_raster_e_type,
+    )
 
     for y in range(0, y_size, tile_size_y):
         if y + tile_size_y < y_size:  # if rows overlap
@@ -174,9 +188,13 @@ def save_visualization_tile_by_tile(
             cols_off = cols + left_offset + right_offset
             rows_off = rows + top_offset + bottom_offset
 
-            tile_array = np.array(dem_ds.GetRasterBand(1).ReadAsArray(x_off, y_off, cols_off, rows_off))
+            tile_array = np.array(
+                dem_ds.GetRasterBand(1).ReadAsArray(x_off, y_off, cols_off, rows_off)
+            )
             if function_parameters is not None:
-                visualization_array = visualization_function(dem=tile_array, **function_parameters)
+                visualization_array = visualization_function(
+                    dem=tile_array, **function_parameters
+                )
             else:
                 visualization_array = visualization_function(dem=tile_array)
 
@@ -188,20 +206,34 @@ def save_visualization_tile_by_tile(
                 if right_offset == 0 and bottom_offset == 0:
                     visualization_array = visualization_array[top_offset:, left_offset:]
                 elif right_offset == 0:
-                    visualization_array = visualization_array[top_offset:-bottom_offset, left_offset:]
+                    visualization_array = visualization_array[
+                        top_offset:-bottom_offset, left_offset:
+                    ]
                 elif bottom_offset == 0:
-                    visualization_array = visualization_array[top_offset:, left_offset:-right_offset]
+                    visualization_array = visualization_array[
+                        top_offset:, left_offset:-right_offset
+                    ]
                 else:
-                    visualization_array = visualization_array[top_offset:-bottom_offset, left_offset:-right_offset]
+                    visualization_array = visualization_array[
+                        top_offset:-bottom_offset, left_offset:-right_offset
+                    ]
             else:
                 if right_offset == 0 and bottom_offset == 0:
-                    visualization_array = visualization_array[:, top_offset:, left_offset:]
+                    visualization_array = visualization_array[
+                        :, top_offset:, left_offset:
+                    ]
                 elif right_offset == 0:
-                    visualization_array = visualization_array[:, top_offset:-bottom_offset, left_offset:]
+                    visualization_array = visualization_array[
+                        :, top_offset:-bottom_offset, left_offset:
+                    ]
                 elif bottom_offset == 0:
-                    visualization_array = visualization_array[:, top_offset:, left_offset:-right_offset]
+                    visualization_array = visualization_array[
+                        :, top_offset:, left_offset:-right_offset
+                    ]
                 else:
-                    visualization_array = visualization_array[:, top_offset:-bottom_offset, left_offset:-right_offset]
+                    visualization_array = visualization_array[
+                        :, top_offset:-bottom_offset, left_offset:-right_offset
+                    ]
 
             # write tile
             out_ds = gdal.Open(out_raster_path.as_posix(), gdal.GA_Update)
@@ -211,28 +243,30 @@ def save_visualization_tile_by_tile(
             else:  # multiple bands
                 for i_band in range(out_raster_nr_of_bands):
                     band = i_band + 1
-                    out_ds.GetRasterBand(band).WriteArray(visualization_array[i_band], x, y)
+                    out_ds.GetRasterBand(band).WriteArray(
+                        visualization_array[i_band], x, y
+                    )
                     out_ds.FlushCache()
             out_ds = None
     dem_ds = None
 
 
 def _create_rvt_visualization_blank_raster(
-        rvt_visualization: "rvt.default.RVTVisualization",
-        rvt_default: "rvt.default.DefaultValues",
-        dem_path: Path,
-        output_dir_path: Path,
-        dem_ds: gdal.Dataset,
-        save_float: bool,
-        save_8bit: bool
+    rvt_visualization: "rvt.default.RVTVisualization",
+    rvt_default: "rvt.default.DefaultValues",
+    dem_path: Path,
+    output_dir_path: Path,
+    dem_ds: gdal.Dataset,
+    save_float: bool,
+    save_8bit: bool,
 ) -> None:
-    """"Create blank raster or rasters for rvt_visualization to later store visualization in it tile by tile."""
+    """ "Create blank raster or rasters for rvt_visualization to later store visualization in it tile by tile."""
     if save_float:
         out_float_path = rvt_default.get_visualization_path(
             rvt_visualization=rvt_visualization,
             dem_path=dem_path,
             output_dir_path=output_dir_path,
-            path_8bit=False
+            path_8bit=False,
         )
         nr_bands = 1
         if rvt_visualization == rvt.default.RVTVisualization.MULTI_HILLSHADE:
@@ -241,27 +275,33 @@ def _create_rvt_visualization_blank_raster(
             in_data_set=dem_ds,
             out_raster_path=out_float_path,
             nr_bands=nr_bands,
-            e_type=6)
+            e_type=6,
+        )
     if save_8bit:
         out_8bit_path = rvt_default.get_visualization_path(
             rvt_visualization=rvt_visualization,
             dem_path=dem_path,
             output_dir_path=output_dir_path,
-            path_8bit=True
+            path_8bit=True,
         )
         nr_bands = 1
-        if rvt_visualization == rvt.default.RVTVisualization.MULTI_HILLSHADE or \
-                rvt_visualization == rvt.default.RVTVisualization.MULTI_SCALE_TOPOGRAPHIC_POSITION:
+        if (
+            rvt_visualization == rvt.default.RVTVisualization.MULTI_HILLSHADE
+            or rvt_visualization
+            == rvt.default.RVTVisualization.MULTI_SCALE_TOPOGRAPHIC_POSITION
+        ):
             nr_bands = 3
         _create_blank_raster(
             in_data_set=dem_ds,
             out_raster_path=out_8bit_path,
             nr_bands=nr_bands,
-            e_type=1)
+            e_type=1,
+        )
 
 
 def _get_rvt_visualization_overlap(
-        rvt_visualization: "rvt.default.RVTVisualization", rvt_default: "rvt.default.DefaultValues"
+    rvt_visualization: "rvt.default.RVTVisualization",
+    rvt_default: "rvt.default.DefaultValues",
 ) -> int:
     if rvt_visualization == rvt.default.RVTVisualization.SLOPE:
         return 1
@@ -287,17 +327,20 @@ def _get_rvt_visualization_overlap(
         return int(rvt_default.ld_max_rad)
     elif rvt_visualization == rvt.default.RVTVisualization.MULTI_SCALE_RELIEF_MODEL:
         return int(rvt_default.msrm_feature_max)
-    elif rvt_visualization == rvt.default.RVTVisualization.MULTI_SCALE_TOPOGRAPHIC_POSITION:
+    elif (
+        rvt_visualization
+        == rvt.default.RVTVisualization.MULTI_SCALE_TOPOGRAPHIC_POSITION
+    ):
         return int(rvt_default.mstp_broad_scale[1])
 
 
 def save_rvt_visualization_tile_by_tile(
-        rvt_visualization: "rvt.default.RVTVisualization",
-        rvt_default: "rvt.default.DefaultValues",
-        dem_path: Path,
-        output_dir_path: Optional[Path] = None,
-        save_float: bool = True,
-        save_8bit: bool = False
+    rvt_visualization: "rvt.default.RVTVisualization",
+    rvt_default: "rvt.default.DefaultValues",
+    dem_path: Path,
+    output_dir_path: Optional[Path] = None,
+    save_float: bool = True,
+    save_8bit: bool = False,
 ) -> None:
     """
     Some DEMs are too large to load them into memory. This function reads dem raster tile by tile,
@@ -324,16 +367,22 @@ def save_rvt_visualization_tile_by_tile(
     out : None
     """
     if not save_float and not save_8bit:
-        Exception("rvt.tile.save_visualization_tile_by_tile: At least one of save_float or save_8bit must be true!")
+        Exception(
+            "rvt.tile.save_visualization_tile_by_tile: At least one of save_float or save_8bit must be true!"
+        )
     if not dem_path.exists():
-        Exception("rvt.tile.save_visualization_tile_by_tile: Input dem path does not exist!")
+        Exception(
+            "rvt.tile.save_visualization_tile_by_tile: Input dem path does not exist!"
+        )
 
     tile_size_x = rvt_default.tile_size[0]
     tile_size_y = rvt_default.tile_size[1]
 
     if tile_size_x < 50 or tile_size_y < 50:
-        Exception("rvt.tile.save_visualization_tile_by_tile: Tile size too small (tile_size_x, tile_size_y),"
-                  " it needs to be bigger than 50 pixels!")
+        Exception(
+            "rvt.tile.save_visualization_tile_by_tile: Tile size too small (tile_size_x, tile_size_y),"
+            " it needs to be bigger than 50 pixels!"
+        )
 
     if output_dir_path is None:
         output_dir_path = dem_path.parent
@@ -354,10 +403,12 @@ def save_rvt_visualization_tile_by_tile(
         output_dir_path=output_dir_path,
         dem_ds=dem_ds,
         save_float=save_float,
-        save_8bit=save_8bit
+        save_8bit=save_8bit,
     )
 
-    overlap = _get_rvt_visualization_overlap(rvt_visualization=rvt_visualization, rvt_default=rvt_default)
+    overlap = _get_rvt_visualization_overlap(
+        rvt_visualization=rvt_visualization, rvt_default=rvt_default
+    )
 
     for y in range(0, y_size, tile_size_y):
         if y + tile_size_y < y_size:  # if rows overlap
@@ -402,66 +453,94 @@ def save_rvt_visualization_tile_by_tile(
             cols_off = cols + left_offset + right_offset
             rows_off = rows + top_offset + bottom_offset
 
-            tile_array = np.array(dem_ds.GetRasterBand(1).ReadAsArray(x_off, y_off, cols_off, rows_off))
+            tile_array = np.array(
+                dem_ds.GetRasterBand(1).ReadAsArray(x_off, y_off, cols_off, rows_off)
+            )
 
-            visualization_float_arr, visualization_8bit_arr = rvt_default.calculate_visualization(
+            (
+                visualization_float_arr,
+                visualization_8bit_arr,
+            ) = rvt_default.calculate_visualization(
                 visualization=rvt_visualization,
                 dem=tile_array,
                 resolution_x=x_res,
                 resolution_y=y_res,
                 no_data=no_data,
                 save_float=save_float,
-                save_8bit=save_8bit
+                save_8bit=save_8bit,
             )
 
             # remove offset from visualization block
             if save_float:
                 if visualization_float_arr.ndim == 2:
                     if right_offset == 0 and bottom_offset == 0:
-                        visualization_float_arr = visualization_float_arr[top_offset:, left_offset:]
+                        visualization_float_arr = visualization_float_arr[
+                            top_offset:, left_offset:
+                        ]
                     elif right_offset == 0:
-                        visualization_float_arr = visualization_float_arr[top_offset:-bottom_offset, left_offset:]
+                        visualization_float_arr = visualization_float_arr[
+                            top_offset:-bottom_offset, left_offset:
+                        ]
                     elif bottom_offset == 0:
-                        visualization_float_arr = visualization_float_arr[top_offset:, left_offset:-right_offset]
+                        visualization_float_arr = visualization_float_arr[
+                            top_offset:, left_offset:-right_offset
+                        ]
                     else:
                         visualization_float_arr = visualization_float_arr[
-                                                  top_offset:-bottom_offset, left_offset:-right_offset
-                                                  ]
+                            top_offset:-bottom_offset, left_offset:-right_offset
+                        ]
                 else:
                     if right_offset == 0 and bottom_offset == 0:
-                        visualization_float_arr = visualization_float_arr[:, top_offset:, left_offset:]
+                        visualization_float_arr = visualization_float_arr[
+                            :, top_offset:, left_offset:
+                        ]
                     elif right_offset == 0:
-                        visualization_float_arr = visualization_float_arr[:, top_offset:-bottom_offset, left_offset:]
+                        visualization_float_arr = visualization_float_arr[
+                            :, top_offset:-bottom_offset, left_offset:
+                        ]
                     elif bottom_offset == 0:
-                        visualization_float_arr = visualization_float_arr[:, top_offset:, left_offset:-right_offset]
+                        visualization_float_arr = visualization_float_arr[
+                            :, top_offset:, left_offset:-right_offset
+                        ]
                     else:
                         visualization_float_arr = visualization_float_arr[
-                                                 :, top_offset:-bottom_offset, left_offset:-right_offset
-                                                 ]
+                            :, top_offset:-bottom_offset, left_offset:-right_offset
+                        ]
             if save_8bit:
                 if visualization_8bit_arr.ndim == 2:
                     if right_offset == 0 and bottom_offset == 0:
-                        visualization_8bit_arr = visualization_8bit_arr[top_offset:, left_offset:]
+                        visualization_8bit_arr = visualization_8bit_arr[
+                            top_offset:, left_offset:
+                        ]
                     elif right_offset == 0:
-                        visualization_8bit_arr = visualization_8bit_arr[top_offset:-bottom_offset, left_offset:]
+                        visualization_8bit_arr = visualization_8bit_arr[
+                            top_offset:-bottom_offset, left_offset:
+                        ]
                     elif bottom_offset == 0:
-                        visualization_8bit_arr = visualization_8bit_arr[top_offset:, left_offset:-right_offset]
+                        visualization_8bit_arr = visualization_8bit_arr[
+                            top_offset:, left_offset:-right_offset
+                        ]
                     else:
                         visualization_8bit_arr = visualization_8bit_arr[
-                                                  top_offset:-bottom_offset, left_offset:-right_offset
-                                                  ]
+                            top_offset:-bottom_offset, left_offset:-right_offset
+                        ]
                 else:
                     if right_offset == 0 and bottom_offset == 0:
-                        visualization_8bit_arr = visualization_8bit_arr[:, top_offset:, left_offset:]
+                        visualization_8bit_arr = visualization_8bit_arr[
+                            :, top_offset:, left_offset:
+                        ]
                     elif right_offset == 0:
-                        visualization_8bit_arr = visualization_8bit_arr[:, top_offset:-bottom_offset, left_offset:]
+                        visualization_8bit_arr = visualization_8bit_arr[
+                            :, top_offset:-bottom_offset, left_offset:
+                        ]
                     elif bottom_offset == 0:
-                        visualization_8bit_arr = visualization_8bit_arr[:, top_offset:, left_offset:-right_offset]
+                        visualization_8bit_arr = visualization_8bit_arr[
+                            :, top_offset:, left_offset:-right_offset
+                        ]
                     else:
                         visualization_8bit_arr = visualization_8bit_arr[
-                                                 :, top_offset:-bottom_offset, left_offset:-right_offset
-                                                 ]
-
+                            :, top_offset:-bottom_offset, left_offset:-right_offset
+                        ]
 
             # write tile
             if save_float:
@@ -469,16 +548,22 @@ def save_rvt_visualization_tile_by_tile(
                     rvt_visualization=rvt_visualization,
                     dem_path=dem_path,
                     output_dir_path=output_dir_path,
-                    path_8bit=False
+                    path_8bit=False,
                 )
-                out_ds_float = gdal.Open(out_visualization_float_path.as_posix(), gdal.GA_Update)
+                out_ds_float = gdal.Open(
+                    out_visualization_float_path.as_posix(), gdal.GA_Update
+                )
                 if visualization_float_arr.ndim == 2:
-                    out_ds_float.GetRasterBand(1).WriteArray(visualization_float_arr, x, y)
+                    out_ds_float.GetRasterBand(1).WriteArray(
+                        visualization_float_arr, x, y
+                    )
                     out_ds_float.FlushCache()
                 else:
                     for i_band in range(visualization_float_arr.shape[0]):
                         band = i_band + 1
-                        out_ds_float.GetRasterBand(band).WriteArray(visualization_float_arr[i_band], x, y)
+                        out_ds_float.GetRasterBand(band).WriteArray(
+                            visualization_float_arr[i_band], x, y
+                        )
                         out_ds_float.FlushCache()
                 out_ds_float = None
             if save_8bit:  # multiple bands
@@ -486,16 +571,22 @@ def save_rvt_visualization_tile_by_tile(
                     rvt_visualization=rvt_visualization,
                     dem_path=dem_path,
                     output_dir_path=output_dir_path,
-                    path_8bit=True
+                    path_8bit=True,
                 )
-                out_ds_8bit = gdal.Open(out_visualization_8bit_path.as_posix(), gdal.GA_Update)
+                out_ds_8bit = gdal.Open(
+                    out_visualization_8bit_path.as_posix(), gdal.GA_Update
+                )
                 if visualization_8bit_arr.ndim == 2:
-                    out_ds_8bit.GetRasterBand(1).WriteArray(visualization_8bit_arr, x, y)
+                    out_ds_8bit.GetRasterBand(1).WriteArray(
+                        visualization_8bit_arr, x, y
+                    )
                     out_ds_8bit.FlushCache()
                 else:
                     for i_band in range(visualization_8bit_arr.shape[0]):
                         band = i_band + 1
-                        out_ds_8bit.GetRasterBand(band).WriteArray(visualization_8bit_arr[i_band], x, y)
+                        out_ds_8bit.GetRasterBand(band).WriteArray(
+                            visualization_8bit_arr[i_band], x, y
+                        )
                         out_ds_8bit.FlushCache()
                 out_ds_8bit = None
 

@@ -27,8 +27,14 @@ from matplotlib.cm import get_cmap
 from matplotlib.colors import LinearSegmentedColormap
 
 
-def gray_scale_to_color_ramp(gray_scale, colormap, min_colormap_cut=None, max_colormap_cut=None, alpha=False,
-                             output_8bit=True):
+def gray_scale_to_color_ramp(
+    gray_scale,
+    colormap,
+    min_colormap_cut=None,
+    max_colormap_cut=None,
+    alpha=False,
+    output_8bit=True,
+):
     """
     Turns normalized gray scale np.array to rgba (np.array of 4 np.arrays r, g, b, a).
 
@@ -63,13 +69,24 @@ def gray_scale_to_color_ramp(gray_scale, colormap, min_colormap_cut=None, max_co
             min_colormap_cut = 0.0
         if max_colormap_cut is None:
             max_colormap_cut = 1.0
-        if min_colormap_cut > 1 or min_colormap_cut < 0 or max_colormap_cut > 1 or max_colormap_cut < 0:
-            raise Exception("rvt.blend_func.gray_scale_to_color_ramp: min_colormap_cut and max_colormap_cut must be"
-                            " between 0 and 1!")
+        if (
+            min_colormap_cut > 1
+            or min_colormap_cut < 0
+            or max_colormap_cut > 1
+            or max_colormap_cut < 0
+        ):
+            raise Exception(
+                "rvt.blend_func.gray_scale_to_color_ramp: min_colormap_cut and max_colormap_cut must be"
+                " between 0 and 1!"
+            )
         if min_colormap_cut >= max_colormap_cut:
-            raise Exception("rvt.blend_func.gray_scale_to_color_ramp: min_colormap_cut can't be smaller than"
-                            " max_colormap_cut!")
-        cm = truncate_colormap(cmap=cm, minval=min_colormap_cut, maxval=max_colormap_cut)
+            raise Exception(
+                "rvt.blend_func.gray_scale_to_color_ramp: min_colormap_cut can't be smaller than"
+                " max_colormap_cut!"
+            )
+        cm = truncate_colormap(
+            cmap=cm, minval=min_colormap_cut, maxval=max_colormap_cut
+        )
 
     # Compute normalized RGBA
     rgba_mtpl_out = cm(gray_scale)
@@ -77,7 +94,9 @@ def gray_scale_to_color_ramp(gray_scale, colormap, min_colormap_cut=None, max_co
     if output_8bit:
         nan_mask = np.isnan(gray_scale)
         rgba_mtpl_out[nan_mask] = 0  # Change nan to 0
-        rgba_mtpl_out = np.uint8(rgba_mtpl_out * 255)  # 0-1 scale to 0-255 and change type to uint8
+        rgba_mtpl_out = np.uint8(
+            rgba_mtpl_out * 255
+        )  # 0-1 scale to 0-255 and change type to uint8
 
     # Move array axes to correct positions, i.e. (x, y, bands) to (bands, x, y)
     rgba_out = rgba_mtpl_out.transpose(2, 0, 1)
@@ -91,8 +110,9 @@ def gray_scale_to_color_ramp(gray_scale, colormap, min_colormap_cut=None, max_co
 
 def truncate_colormap(cmap, minval=0.0, maxval=1.0, n=100):
     new_cmap = LinearSegmentedColormap.from_list(
-        'trunc({n},{a:.2f},{b:.2f})'.format(n=cmap.name, a=minval, b=maxval),
-        cmap(np.linspace(minval, maxval, n)))
+        "trunc({n},{a:.2f},{b:.2f})".format(n=cmap.name, a=minval, b=maxval),
+        cmap(np.linspace(minval, maxval, n)),
+    )
     return new_cmap
 
 
@@ -112,11 +132,15 @@ def lin_cutoff_calc_from_perc(image, minimum, maximum):
     """Minimum cutoff in percent, maximum cutoff in percent (0%-100%). Returns min and max values for linear
     stretch (cut-off)."""
     if minimum < 0 or maximum < 0 or minimum > 100 or maximum > 100:
-        raise Exception("rvt.blend_func.lin_cutoff_calc_from_perc: minimum, maximum are percent and have to be in "
-                        "range 0-100!")
+        raise Exception(
+            "rvt.blend_func.lin_cutoff_calc_from_perc: minimum, maximum are percent and have to be in "
+            "range 0-100!"
+        )
     if minimum + maximum > 100:
-        raise Exception("rvt.blend_func.lin_cutoff_calc_from_perc: if minimum + maximum > 100% then there are no"
-                        " values left! You can't cutoff whole image!")
+        raise Exception(
+            "rvt.blend_func.lin_cutoff_calc_from_perc: if minimum + maximum > 100% then there are no"
+            " values left! You can't cutoff whole image!"
+        )
     distribution = np.nanpercentile(a=image, q=np.array([minimum, 100 - maximum]))
     min_lin = distribution[0]
     max_lin = distribution[1]
@@ -138,12 +162,16 @@ def advanced_normalization(image, minimum, maximum, normalization):
 
     # Preform checks if correct values were given
     if minimum == maximum and normalization == "value":
-        raise Exception("rvt.blend_func.advanced_normalization: If normalization == value, min and max cannot be the"
-                        " same!")
+        raise Exception(
+            "rvt.blend_func.advanced_normalization: If normalization == value, min and max cannot be the"
+            " same!"
+        )
 
     if minimum > maximum and normalization == "value":
-        raise Exception("rvt.blend_func.advanced_normalization: If normalization == value, max can't be smaller"
-                        " than min!")
+        raise Exception(
+            "rvt.blend_func.advanced_normalization: If normalization == value, max can't be smaller"
+            " than min!"
+        )
 
     # Select normalization type
     if normalization.lower() == "value":
@@ -153,7 +181,9 @@ def advanced_normalization(image, minimum, maximum, normalization):
     elif normalization is None:
         equ_image = image
     else:
-        raise Exception(f"rvt.blend_func.advanced_normalization: Unknown normalization type: {normalization}")
+        raise Exception(
+            f"rvt.blend_func.advanced_normalization: Unknown normalization type: {normalization}"
+        )
 
     return equ_image
 
@@ -171,16 +201,21 @@ def lum(img):
 
 
 def matrix_eq_min_lt_zero(r: np.ndarray, idx_min_lt_zero, lum_c, min_c):
-    r[idx_min_lt_zero] = lum_c[idx_min_lt_zero] + (((r[idx_min_lt_zero] - lum_c[idx_min_lt_zero]) *
-                                                    lum_c[idx_min_lt_zero]) / (lum_c[idx_min_lt_zero] -
-                                                                               min_c[idx_min_lt_zero]))
+    r[idx_min_lt_zero] = lum_c[idx_min_lt_zero] + (
+        ((r[idx_min_lt_zero] - lum_c[idx_min_lt_zero]) * lum_c[idx_min_lt_zero])
+        / (lum_c[idx_min_lt_zero] - min_c[idx_min_lt_zero])
+    )
     return r
 
 
 def matrix_eq_max_gt_one(r: np.ndarray, idx_max_c_gt_one, lum_c, max_c):
-    r[idx_max_c_gt_one] = lum_c[idx_max_c_gt_one] + (((r[idx_max_c_gt_one] - lum_c[idx_max_c_gt_one]) *
-                                                      (1.0 - lum_c[idx_max_c_gt_one])) / (max_c[idx_max_c_gt_one]
-                                                                                          - lum_c[idx_max_c_gt_one]))
+    r[idx_max_c_gt_one] = lum_c[idx_max_c_gt_one] + (
+        (
+            (r[idx_max_c_gt_one] - lum_c[idx_max_c_gt_one])
+            * (1.0 - lum_c[idx_max_c_gt_one])
+        )
+        / (max_c[idx_max_c_gt_one] - lum_c[idx_max_c_gt_one])
+    )
     return r
 
 
@@ -245,8 +280,8 @@ def blend_multiply(active, background):
 def blend_overlay(active, background):
     idx1 = np.where(background > 0.5)
     idx2 = np.where(background <= 0.5)
-    background[idx1] = (1 - (1 - 2 * (background[idx1] - 0.5)) * (1 - active[idx1]))
-    background[idx2] = ((2 * background[idx2]) * active[idx2])
+    background[idx1] = 1 - (1 - 2 * (background[idx1] - 0.5)) * (1 - active[idx1])
+    background[idx2] = (2 * background[idx2]) * active[idx2]
     return background
 
 
@@ -257,9 +292,12 @@ def blend_soft_light(active, background):
     # background[idx2] = background[idx2] * (active[idx2]+0.5)
     idx1 = np.where(active < 0.5)
     idx2 = np.where(active >= 0.5)
-    background[idx1] = 2 * background[idx1] * active[idx1] + background[idx1] ** 2 * (1.0 - 2 * active[idx1])
-    background[idx2] = 2 * background[idx2] * (1.0 - active[idx2]) + np.sqrt(background[idx2]) * (
-                2 * active[idx2] - 1.0)
+    background[idx1] = 2 * background[idx1] * active[idx1] + background[idx1] ** 2 * (
+        1.0 - 2 * active[idx1]
+    )
+    background[idx2] = 2 * background[idx2] * (1.0 - active[idx2]) + np.sqrt(
+        background[idx2]
+    ) * (2 * active[idx2] - 1.0)
     return background
 
 
@@ -303,15 +341,21 @@ def blend_multi_dim_images(blend_mode, active, background):
     if a_rgb and b_rgb:
         blended_image = np.zeros(background.shape)
         for i in range(3):
-            blended_image[i, :, :] = equation_blend(blend_mode, active[i, :, :], background[i, :, :])
+            blended_image[i, :, :] = equation_blend(
+                blend_mode, active[i, :, :], background[i, :, :]
+            )
     if a_rgb and not b_rgb:
         blended_image = np.zeros(active.shape)
         for i in range(3):
-            blended_image[i, :, :] = equation_blend(blend_mode, active[i, :, :], background)
+            blended_image[i, :, :] = equation_blend(
+                blend_mode, active[i, :, :], background
+            )
     if not a_rgb and b_rgb:
         blended_image = np.zeros(background.shape)
         for i in range(3):
-            blended_image[i, :, :] = equation_blend(blend_mode, active, background[i, :, :])
+            blended_image[i, :, :] = equation_blend(
+                blend_mode, active, background[i, :, :]
+            )
     if not a_rgb and not b_rgb:
         blended_image = equation_blend(blend_mode, active, background)
 
@@ -319,8 +363,12 @@ def blend_multi_dim_images(blend_mode, active, background):
 
 
 def blend_images(blend_mode, active, background, min_c=None, max_c=None):
-    if blend_mode.lower() == "multiply" or blend_mode.lower() == "overlay" or blend_mode.lower() == "screen" \
-            or blend_mode.lower() == "soft_light":
+    if (
+        blend_mode.lower() == "multiply"
+        or blend_mode.lower() == "overlay"
+        or blend_mode.lower() == "screen"
+        or blend_mode.lower() == "soft_light"
+    ):
         return blend_multi_dim_images(blend_mode, active, background)
     elif blend_mode.lower() == "luminosity":
         return blend_luminosity(active, background, min_c, max_c)
@@ -345,7 +393,9 @@ def render_images(active, background, opacity):
         # Both images 3 bands
         render_image = np.zeros(background.shape)
         for i in range(3):
-            render_image[i, :, :] = apply_opacity(active[i, :, :], background[i, :, :], opacity)
+            render_image[i, :, :] = apply_opacity(
+                active[i, :, :], background[i, :, :], opacity
+            )
     elif a_rgb and not b_rgb:
         # Active image 3 bands
         render_image = np.zeros(active.shape)
@@ -369,7 +419,9 @@ def scale_within_0_and_1(numeric_value):
     # Create mask for NaN values
     # nan_mask = np.isnan(numeric_value)
 
-    numeric_value[np.isnan(numeric_value)] = np.nanmin(numeric_value)  # nan change to nanmin
+    numeric_value[np.isnan(numeric_value)] = np.nanmin(
+        numeric_value
+    )  # nan change to nanmin
 
     actual_min = np.nanmin(numeric_value)
     norm_min_value = np.nanmax(np.array(0, actual_min))
@@ -436,11 +488,16 @@ def normalize_image(visualization, image, min_norm, max_norm, normalization):
     if normalization == "percent":
         normalization = "perc"
 
-    norm_image = advanced_normalization(image=image, minimum=min_norm, maximum=max_norm, normalization=normalization)
+    norm_image = advanced_normalization(
+        image=image, minimum=min_norm, maximum=max_norm, normalization=normalization
+    )
 
     # Make sure it scales 0 to 1
     if np.nanmax(norm_image) > 1:
-        if visualization.lower() == "multiple directions hillshade" or visualization == "mhs":
+        if (
+            visualization.lower() == "multiple directions hillshade"
+            or visualization == "mhs"
+        ):
             norm_image = scale_0_to_1(norm_image)
         else:
             norm_image = scale_0_to_1(norm_image)
@@ -451,8 +508,12 @@ def normalize_image(visualization, image, min_norm, max_norm, normalization):
         warnings.warn("rvt.blend_func.normalize_image: unexpected values! min < 0")
 
     # For slope invert scale (high slopes will be black)
-    if visualization.lower() == "slope gradient" or visualization.lower() == "openness - negative" or \
-            visualization == "slp" or visualization == "neg_opns":
+    if (
+        visualization.lower() == "slope gradient"
+        or visualization.lower() == "openness - negative"
+        or visualization == "slp"
+        or visualization == "neg_opns"
+    ):
         norm_image = 1 - norm_image
 
     return norm_image
@@ -467,11 +528,15 @@ def cut_off_normalize(image, mode, cutoff_min=None, cutoff_max=None, bool_norm=T
     """
     if cutoff_min is not None and cutoff_max is not None:
         if cutoff_min == cutoff_max and mode == "value":
-            raise Exception("rvt.blend_func.cut_off_normalize: If normalization == value, min and max cannot be the"
-                            " same!")
+            raise Exception(
+                "rvt.blend_func.cut_off_normalize: If normalization == value, min and max cannot be the"
+                " same!"
+            )
         if cutoff_min > cutoff_max and mode == "value":
-            raise Exception("rvt.blend_func.cut_off_normalize: If normalization == value, max can't be smaller"
-                            " than min!")
+            raise Exception(
+                "rvt.blend_func.cut_off_normalize: If normalization == value, max can't be smaller"
+                " than min!"
+            )
 
     cut_off_arr = image
     if cutoff_min is None and mode.lower() == "value":
@@ -492,7 +557,9 @@ def cut_off_normalize(image, mode, cutoff_min=None, cutoff_max=None, bool_norm=T
             cut_off_arr[cut_off_arr > cutoff_max] = cutoff_max
             cut_off_arr[cut_off_arr < cutoff_min] = cutoff_min
         elif mode.lower() == "perc" or mode.lower() == "percent":
-            min_max_value_dict = lin_cutoff_calc_from_perc(cut_off_arr, cutoff_min, cutoff_max)
+            min_max_value_dict = lin_cutoff_calc_from_perc(
+                cut_off_arr, cutoff_min, cutoff_max
+            )
             min_value = min_max_value_dict["min_lin"]
             max_value = min_max_value_dict["max_lin"]
             cut_off_arr[cut_off_arr > max_value] = max_value
