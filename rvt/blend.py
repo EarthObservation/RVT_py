@@ -308,20 +308,10 @@ class BlenderCombination:
         layers_info = []
         for layer in self.layers:
             layers_info.append(
-                "layer {}, visualization = {}, normalization = {}, min = {}, max = {}, blend_mode = {},"
-                " opacity = {}, colormap = {},"
-                " min_colormap_cut = {}, max_colormap_cut".format(
-                    layer_nr,
-                    layer.vis,
-                    layer.normalization,
-                    layer.min,
-                    layer.max,
-                    layer.blend_mode,
-                    layer.opacity,
-                    layer.colormap,
-                    layer.min_colormap_cut,
-                    layer.max_colormap_cut,
-                )
+                f"layer {layer_nr}, visualization = {layer.vis}, normalization = {layer.normalization},"
+                f" min = {layer.min}, max = {layer.max}, blend_mode = {layer.blend_mode}, opacity = {layer.opacity},"
+                f" colormap = {layer.colormap}, min_colormap_cut = {layer.min_colormap_cut},"
+                f" max_colormap_cut = {layer.max_colormap_cut}"
             )
             layer_nr += 1
         return layers_info

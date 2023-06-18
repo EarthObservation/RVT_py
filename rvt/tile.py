@@ -125,18 +125,19 @@ def save_visualization_tile_by_tile(
     y_size = band.YSize  # number of rows
 
     # set resolution and no_data function_parameters if needed (are set to None) from dem
-    if "resolution" in function_parameters:
-        if function_parameters["resolution"] is None:
-            function_parameters["resolution"] = x_res
-    if "resolution_x" in function_parameters:
-        if function_parameters["resolution_x"] is None:
-            function_parameters["resolution_x"] = x_res
-    if "resolution_y" in function_parameters:
-        if function_parameters["resolution_y"] is None:
-            function_parameters["resolution_y"] = y_res
-    if "no_data" in function_parameters:
-        if function_parameters["no_data"] is None:
-            function_parameters["no_data"] = no_data
+    if function_parameters is not None:
+        if "resolution" in function_parameters:
+            if function_parameters["resolution"] is None:
+                function_parameters["resolution"] = x_res
+        if "resolution_x" in function_parameters:
+            if function_parameters["resolution_x"] is None:
+                function_parameters["resolution_x"] = x_res
+        if "resolution_y" in function_parameters:
+            if function_parameters["resolution_y"] is None:
+                function_parameters["resolution_y"] = y_res
+        if "no_data" in function_parameters:
+            if function_parameters["no_data"] is None:
+                function_parameters["no_data"] = no_data
 
     _create_blank_raster(
         in_data_set=dem_ds,
@@ -332,6 +333,8 @@ def _get_rvt_visualization_overlap(
         == rvt.default.RVTVisualization.MULTI_SCALE_TOPOGRAPHIC_POSITION
     ):
         return int(rvt_default.mstp_broad_scale[1])
+    else:
+        raise ValueError(f"Overlap is not defined for {rvt_visualization.name}.")
 
 
 def save_rvt_visualization_tile_by_tile(
@@ -471,7 +474,7 @@ def save_rvt_visualization_tile_by_tile(
             )
 
             # remove offset from visualization block
-            if save_float:
+            if visualization_float_arr is not None and save_float:
                 if visualization_float_arr.ndim == 2:
                     if right_offset == 0 and bottom_offset == 0:
                         visualization_float_arr = visualization_float_arr[
@@ -506,7 +509,7 @@ def save_rvt_visualization_tile_by_tile(
                         visualization_float_arr = visualization_float_arr[
                             :, top_offset:-bottom_offset, left_offset:-right_offset
                         ]
-            if save_8bit:
+            if visualization_8bit_arr is not None and save_8bit:
                 if visualization_8bit_arr.ndim == 2:
                     if right_offset == 0 and bottom_offset == 0:
                         visualization_8bit_arr = visualization_8bit_arr[
@@ -543,7 +546,7 @@ def save_rvt_visualization_tile_by_tile(
                         ]
 
             # write tile
-            if save_float:
+            if visualization_float_arr is not None and save_float:
                 out_visualization_float_path = rvt_default.get_visualization_path(
                     rvt_visualization=rvt_visualization,
                     dem_path=dem_path,
@@ -566,7 +569,7 @@ def save_rvt_visualization_tile_by_tile(
                         )
                         out_ds_float.FlushCache()
                 out_ds_float = None
-            if save_8bit:  # multiple bands
+            if visualization_8bit_arr is not None and save_8bit:  # multiple bands
                 out_visualization_8bit_path = rvt_default.get_visualization_path(
                     rvt_visualization=rvt_visualization,
                     dem_path=dem_path,

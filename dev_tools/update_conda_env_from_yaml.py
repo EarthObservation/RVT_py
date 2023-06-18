@@ -8,6 +8,7 @@ Anaconda system variable should be configured.
 import os
 from dev_tools import CONDA_ENV_YAML_PATH, CONDA_ENV_NAME
 
+
 def update_conda_environment_from_yaml() -> None:
     if not CONDA_ENV_YAML_PATH.exists():
         raise FileNotFoundError(f"File {CONDA_ENV_YAML_PATH} doesn't exist, something went wrong!")

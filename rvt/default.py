@@ -31,6 +31,7 @@ import rvt.tile
 import os
 from osgeo import gdal
 import numpy as np
+import numpy.typing as npt
 import json
 import datetime
 import time
@@ -1546,6 +1547,10 @@ class DefaultValues:
             == rvt.default.RVTVisualization.MULTI_SCALE_TOPOGRAPHIC_POSITION
         ):
             return self.get_mstp_file_name(dem_path=dem_path, bit8=path_8bit)
+        else:
+            raise ValueError(
+                f"Can't return visualization file name for {rvt_visualization.name}!"
+            )
 
     def get_visualization_path(
         self,
@@ -1613,10 +1618,14 @@ class DefaultValues:
             return output_dir_path / Path(
                 self.get_mstp_file_name(dem_path=dem_path, bit8=path_8bit)
             )
+        else:
+            raise ValueError(
+                f"Can't return visualization path for {rvt_visualization.name}!"
+            )
 
     def float_to_8bit(
         self,
-        float_arr: np.array,
+        float_arr: npt.NDArray,
         visualization: RVTVisualization,
         x_res: float = None,
         y_res: float = None,
@@ -3196,13 +3205,15 @@ class DefaultValues:
     def calculate_visualization(
         self,
         visualization: RVTVisualization,
-        dem: np.array,
+        dem: npt.NDArray,
         resolution_x: float,
         resolution_y: float,
         no_data: Optional[float] = None,
         save_float: bool = True,
         save_8bit: bool = False,
-    ) -> Optional[Tuple[np.array, np.array]]:  # tuple[vis_float_arr, vis_8bit_arr]
+    ) -> Tuple[
+        Optional[npt.NDArray], Optional[npt.NDArray]
+    ]:  # tuple[vis_float_arr, vis_8bit_arr]
         vis_arr = None
         vis_float_arr = None
         vis_8bit_arr = None
