@@ -1421,7 +1421,12 @@ def sky_illumination(
 
 
 def shadow_horizon(
-    dem: npt.NDArray[Any], resolution: float, shadow_az: float=315, shadow_el: float=35, ve_factor: float=1, no_data: Optional[float]=None
+    dem: npt.NDArray[Any],
+    resolution: float,
+    shadow_az: float = 315,
+    shadow_el: float = 35,
+    ve_factor: float = 1,
+    no_data: Optional[float] = None,
 ) -> Dict[str, npt.NDArray[Any]]:
     """
     Compute shadow and horizon.
@@ -1465,7 +1470,7 @@ def shadow_horizon(
             "rvt.visualization.shadow_horizon: resolution must be a positive number!"
         )
 
-    return sky_illumination(
+    return sky_illumination(  # type: ignore
         dem=dem,
         resolution=resolution,
         compute_shadow=True,
@@ -1478,8 +1483,14 @@ def shadow_horizon(
 
 
 def msrm(
-    dem, resolution, feature_min, feature_max, scaling_factor, ve_factor=1, no_data=None
-):
+    dem: npt.NDArray[Any],
+    resolution: float,
+    feature_min: float,
+    feature_max: float,
+    scaling_factor: int,
+    ve_factor: float = 1,
+    no_data: Optional[float] = None,
+) -> npt.NDArray[Any]:
     """
     Compute Multi-scale relief model (MSRM).
 
@@ -1540,7 +1551,7 @@ def msrm(
     nr_relief_models = (
         0  # number of additions (substitutions of 2 consecutive surfaces)
     )
-    last_lpf_surface = 0
+    last_lpf_surface: Union[int, npt.NDArray[Any]] = 0
 
     # generation of filtered surfaces (lpf_surface)
     for ndx in range(i, n + 1, 1):
@@ -1559,7 +1570,9 @@ def msrm(
     return msrm_out
 
 
-def integral_image(dem, data_type=np.float64):
+def integral_image(
+    dem: npt.NDArray[Any], data_type: npt.DTypeLike = np.float64
+) -> npt.NDArray[Any]:
     """
     Calculates integral image (summed-area table), where origin is left upper corner.
 
@@ -1593,7 +1606,13 @@ def integral_image(dem, data_type=np.float64):
     return dem.cumsum(axis=0).cumsum(axis=1)
 
 
-def topographic_dev(dem, dem_i_nr_pixels, dem_i1, dem_i2, kernel_radius):
+def topographic_dev(
+    dem: npt.NDArray[Any],
+    dem_i_nr_pixels: npt.NDArray[Any],
+    dem_i1: npt.NDArray[Any],
+    dem_i2: npt.NDArray[Any],
+    kernel_radius: int,
+) -> npt.NDArray[Any]:
     """
     Calculates topographic DEV - Deviation from mean elevation. DEV(D) = (z0 - zmD) / sD.
     Where D is radius of kernel, z0 is center pixel value, zmD is mean of all kernel values,
@@ -1662,7 +1681,9 @@ def topographic_dev(dem, dem_i_nr_pixels, dem_i1, dem_i2, kernel_radius):
     return dev_out
 
 
-def max_elevation_deviation(dem, minimum_radius, maximum_radius, step):
+def max_elevation_deviation(
+    dem: npt.NDArray[Any], minimum_radius: int, maximum_radius: int, step: int
+) -> npt.NDArray[Any]:
     """
     Calculates maximum deviation from mean elevation, dev_max (Maximum Deviation from mean elevation) for each
     grid cell in a digital elevation model (DEM) across a range specified spatial scales.
@@ -1728,14 +1749,14 @@ def max_elevation_deviation(dem, minimum_radius, maximum_radius, step):
 
 
 def mstp(
-    dem,
-    local_scale=(3, 21, 2),
-    meso_scale=(23, 203, 18),
-    broad_scale=(223, 2023, 180),
-    lightness=1.2,
-    ve_factor=1,
-    no_data=None,
-):
+    dem: npt.NDArray[Any],
+    local_scale: Tuple[int, int, int] = (3, 21, 2),
+    meso_scale: Tuple[int, int, int] = (23, 203, 18),
+    broad_scale: Tuple[int, int, int] = (223, 2023, 180),
+    lightness: float = 1.2,
+    ve_factor: float = 1,
+    no_data: Optional[float] = None,
+) -> npt.NDArray[Any]:
     """
     Compute Multi-scale topographic position (MSTP).
 
@@ -1826,7 +1847,7 @@ def mstp(
     return np.asarray([red, green, blue])  # RGB float32 (3 x 32bit)
 
 
-def fill_where_nan(dem, method="idw"):
+def fill_where_nan(dem: npt.NDArray[Any], method: str = "idw") -> npt.NDArray[Any]:
     """
     Replaces np.nan values, with interpolation (extrapolation).
 
@@ -1857,7 +1878,7 @@ def fill_where_nan(dem, method="idw"):
 
     elif method.split("_")[0] == "idw":
         radius = 20
-        power = 2
+        power: float = 2
         if len(method.split("_")) == 3:
             radius = int(method.split("_")[1])
             power = float(method.split("_")[2])

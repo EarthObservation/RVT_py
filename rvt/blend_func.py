@@ -21,20 +21,22 @@ Copyright:
 # TODO: more testing, find and fix bugs if they exists
 
 import warnings
+from typing import Any, Optional
 
 import numpy as np
+import numpy.typing as npt
 from matplotlib.cm import get_cmap
 from matplotlib.colors import LinearSegmentedColormap
 
 
 def gray_scale_to_color_ramp(
-    gray_scale,
-    colormap,
-    min_colormap_cut=None,
-    max_colormap_cut=None,
-    alpha=False,
-    output_8bit=True,
-):
+    gray_scale: npt.NDArray[Any],
+    colormap: str,
+    min_colormap_cut: Optional[float] = None,
+    max_colormap_cut: Optional[float] = None,
+    alpha: bool = False,
+    output_8bit: bool = True,
+) -> npt.NDArray[Any]:
     """
     Turns normalized gray scale np.array to rgba (np.array of 4 np.arrays r, g, b, a).
 
