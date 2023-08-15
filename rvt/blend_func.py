@@ -103,7 +103,7 @@ def gray_scale_to_color_ramp(
     # Move array axes to correct positions, i.e. (x, y, bands) to (bands, x, y)
     rgba_out = rgba_mtpl_out.transpose(2, 0, 1)
 
-    # Discard 4th band if not using Alpha
+    # Discard 4th band_number if not using Alpha
     if not alpha:
         rgba_out = rgba_out[:3, ...]
 
@@ -448,7 +448,7 @@ def render_images(
     if np.nanmin(background) < 0 or np.nanmax(background) > 1:
         background = scale_0_to_1(background)
 
-    # True if image has 3 bands (RGB), false if single band
+    # True if image has 3 bands (RGB), false if single band_number
     a_rgb = len(active.shape) == 3
     b_rgb = len(background.shape) == 3
 
@@ -545,18 +545,15 @@ def apply_opacity(
 
 
 def normalize_image(
-    visualization: Optional[str],
+    visualization: str,
     image: npt.NDArray[Any],
     min_norm: float,
     max_norm: float,
     normalization: str,
-) -> Optional[npt.NDArray[Any]]:
+) -> npt.NDArray[Any]:
     """Main function for normalization. Runs advanced normalization on the array and preforms special operations for
     some visualization types (e.g. invert scale for slope, scale for mhs, etc.).
     """
-    if visualization is None:
-        return None
-
     if normalization == "percent":
         normalization = "perc"
 
@@ -599,7 +596,7 @@ def cut_off_normalize(
     bool_norm: bool = True,
 ) -> npt.NDArray[Any]:
     """
-    One band image cut-off or normalization or both. Image is 2D np.ndarray of raster, mode is perc or value
+    One band_number image cut-off or normalization or both. Image is 2D np.ndarray of raster, mode is perc or value
     (min and max units), min and max are minimum value to cutoff and maximum value to cutoff.
     (e.x. percent min=2 and max=3 -> cutoff lower 2% values and higher 3% values;
      e.x. value min=10 and max=60 -> cutoff bellow 10 and above 60, image values will be 10-60)

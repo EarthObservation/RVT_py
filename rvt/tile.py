@@ -239,7 +239,7 @@ def save_visualization_tile_by_tile(
 
             # write tile
             out_ds = gdal.Open(out_raster_path.as_posix(), gdal.GA_Update)
-            if out_raster_nr_of_bands == 1:  # one band
+            if out_raster_nr_of_bands == 1:  # one band_number
                 out_ds.GetRasterBand(1).WriteArray(visualization_array, x, y)
                 out_ds.FlushCache()
             else:  # multiple bands

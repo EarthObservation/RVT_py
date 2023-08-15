@@ -22,7 +22,7 @@ Copyright:
 import warnings
 from enum import Enum
 from pathlib import Path
-from typing import Optional, Tuple
+from typing import Optional, Tuple, Any, Dict
 
 import rvt.vis
 import rvt.blend_func
@@ -1173,7 +1173,7 @@ class DefaultValues:
             )
             dat.close()
 
-    def get_shadow_file_name(self, dem_path: str) -> str:
+    def get_shadow_file_name(self, dem_path: Path) -> str:
         """Returns shadow name, with added hillshade parameters (hs_sun_azi == shadow azimuth,
         hs_sun_el == shadow_elevation)."""
         dem_name = os.path.basename(dem_path).split(".")[
@@ -1181,14 +1181,14 @@ class DefaultValues:
         ]  # base name without extension
         return "{}_shadow_A{}_H{}.tif".format(dem_name, self.hs_sun_azi, self.hs_sun_el)
 
-    def get_shadow_path(self, dem_path: str) -> str:
+    def get_shadow_path(self, dem_path: Path) -> str:
         """Returns path to Shadow. Generates shadow name (uses default attributes and dem name from dem_path) and
         adds dem directory (dem_path) to it."""
         return os.path.normpath(
             os.path.join(os.path.dirname(dem_path), self.get_shadow_file_name(dem_path))
         )
 
-    def get_hillshade_file_name(self, dem_path: str, bit8: bool = False) -> str:
+    def get_hillshade_file_name(self, dem_path: Path, bit8: bool = False) -> str:
         """Returns Hillshade name, dem name (from dem_path) with added hillshade parameters.
         If bit8 it returns 8bit file name."""
         dem_name = os.path.basename(dem_path).split(".")[
@@ -1201,7 +1201,7 @@ class DefaultValues:
         else:
             return "{}_HS_A{}_H{}.tif".format(dem_name, self.hs_sun_azi, self.hs_sun_el)
 
-    def get_hillshade_path(self, dem_path: str, bit8: bool = False) -> str:
+    def get_hillshade_path(self, dem_path: Path, bit8: bool = False) -> str:
         """Returns path to Hillshade. Generates hillshade name (uses default attributes and dem name from dem_path) and
         adds dem directory (dem_path) to it. If bit8 it returns 8bit file path."""
         return os.path.normpath(
@@ -1210,7 +1210,7 @@ class DefaultValues:
             )
         )
 
-    def get_slope_file_name(self, dem_path: str, bit8: bool = False) -> str:
+    def get_slope_file_name(self, dem_path: Path, bit8: bool = False) -> str:
         """Returns Slope name, dem name (from dem_path) with added slope parameters.
         If bit8 it returns 8bit file name."""
         dem_name = os.path.basename(dem_path).split(".")[
@@ -1221,7 +1221,7 @@ class DefaultValues:
         else:
             return "{}_SLOPE.tif".format(dem_name)
 
-    def get_slope_path(self, dem_path: str, bit8: bool = False) -> str:
+    def get_slope_path(self, dem_path: Path, bit8: bool = False) -> str:
         """Returns path to slope. Generates slope name and adds dem directory (dem_path) to it.
         If bit8 it returns 8bit file path."""
         return os.path.normpath(
@@ -1230,7 +1230,7 @@ class DefaultValues:
             )
         )
 
-    def get_multi_hillshade_file_name(self, dem_path: str, bit8: bool = False) -> str:
+    def get_multi_hillshade_file_name(self, dem_path: Path, bit8: bool = False) -> str:
         """Returns Multiple directions hillshade name, dem name (from dem_path) with added
         multi hillshade parameters. If bit8 it returns 8bit file name."""
         dem_name = os.path.basename(dem_path).split(".")[
@@ -1245,7 +1245,7 @@ class DefaultValues:
                 dem_name, self.mhs_nr_dir, self.mhs_sun_el
             )
 
-    def get_multi_hillshade_path(self, dem_path: str, bit8: bool = False) -> str:
+    def get_multi_hillshade_path(self, dem_path: Path, bit8: bool = False) -> str:
         """Returns path to Multiple directions hillshade. Generates multi hillshade name (uses default attributes and
         dem name from dem_path) and adds dem directory (dem_path) to it. If bit8 it returns 8bit file path."""
         return os.path.normpath(
@@ -1255,7 +1255,7 @@ class DefaultValues:
             )
         )
 
-    def get_slrm_file_name(self, dem_path: str, bit8: bool = False) -> str:
+    def get_slrm_file_name(self, dem_path: Path, bit8: bool = False) -> str:
         """Returns Simple local relief model name, dem name (from dem_path) with added slrm parameters.
         If bit8 it returns 8bit file name."""
         dem_name = os.path.basename(dem_path).split(".")[
@@ -1266,7 +1266,7 @@ class DefaultValues:
         else:
             return "{}_SLRM_R{}.tif".format(dem_name, self.slrm_rad_cell)
 
-    def get_slrm_path(self, dem_path: str, bit8: bool = False) -> str:
+    def get_slrm_path(self, dem_path: Path, bit8: bool = False) -> str:
         """Returns path to Simple local relief model. Generates slrm name (uses default attributes and dem name from
         dem_path) and adds dem directory (dem_path) to it. If bit8 it returns 8bit file path."""
         return os.path.normpath(
@@ -1275,7 +1275,7 @@ class DefaultValues:
             )
         )
 
-    def get_svf_file_name(self, dem_path: str, bit8: bool = False) -> str:
+    def get_svf_file_name(self, dem_path: Path, bit8: bool = False) -> str:
         """Returns Sky-view factor name, dem name (from dem_path) with added svf parameters.
         If bit8 it returns 8bit file name."""
         dem_name = os.path.basename(dem_path).split(".")[
@@ -1292,7 +1292,7 @@ class DefaultValues:
             out_name += "_8bit"
         return out_name + ".tif"
 
-    def get_svf_path(self, dem_path: str, bit8: bool = False) -> str:
+    def get_svf_path(self, dem_path: Path, bit8: bool = False) -> str:
         """Returns path to Sky-view factor. Generates svf name (uses default attributes and dem name from
         dem_path) and adds dem directory (dem_path) to it. If bit8 it returns 8bit file path."""
         return os.path.normpath(
@@ -1301,7 +1301,7 @@ class DefaultValues:
             )
         )
 
-    def get_asvf_file_name(self, dem_path: str, bit8: bool = False) -> str:
+    def get_asvf_file_name(self, dem_path: Path, bit8: bool = False) -> str:
         """Returns Anisotropic Sky-view factor name, dem name (from dem_path) with added asvf parameters.
         If bit8 it returns 8bit file name."""
         dem_name = os.path.basename(dem_path).split(".")[
@@ -1324,7 +1324,7 @@ class DefaultValues:
             out_name += "_8bit"
         return out_name + ".tif"
 
-    def get_asvf_path(self, dem_path: str, bit8: bool = False) -> str:
+    def get_asvf_path(self, dem_path: Path, bit8: bool = False) -> str:
         """Returns path to Anisotropic Sky-view factor. Generates asvf name (uses default attributes and dem name from
         dem_path) and adds dem directory (dem_path) to it. If bit8 it returns 8bit file path."""
         return os.path.normpath(
@@ -1333,7 +1333,7 @@ class DefaultValues:
             )
         )
 
-    def get_opns_file_name(self, dem_path: str, bit8: bool = False) -> str:
+    def get_opns_file_name(self, dem_path: Path, bit8: bool = False) -> str:
         """Returns Positive Openness name, dem name (from dem_path) with added pos opns parameters.
         If bit8 it returns 8bit file name."""
         dem_name = os.path.basename(dem_path).split(".")[
@@ -1352,7 +1352,7 @@ class DefaultValues:
             out_name += "_8bit"
         return out_name + ".tif"
 
-    def get_opns_path(self, dem_path: str, bit8: bool = False) -> str:
+    def get_opns_path(self, dem_path: Path, bit8: bool = False) -> str:
         """Returns path to Positive Openness. Generates pos opns name (uses default attributes and dem name from
         dem_path) and adds dem directory (dem_path) to it. If bit8 it returns 8bit file path."""
         return os.path.normpath(
@@ -1361,7 +1361,7 @@ class DefaultValues:
             )
         )
 
-    def get_neg_opns_file_name(self, dem_path: str, bit8: bool = False) -> str:
+    def get_neg_opns_file_name(self, dem_path: Path, bit8: bool = False) -> str:
         """Returns Negative Openness name, dem name (from dem_path) with added neg opns parameters.
         If bit8 it returns 8bit file name."""
         dem_name = os.path.basename(dem_path).split(".")[
@@ -1380,7 +1380,7 @@ class DefaultValues:
             out_name += "_8bit"
         return out_name + ".tif"
 
-    def get_neg_opns_path(self, dem_path: str, bit8: bool = False) -> str:
+    def get_neg_opns_path(self, dem_path: Path, bit8: bool = False) -> str:
         """Returns path to Negative Openness. Generates pos neg name (uses default attributes and dem name from
         dem_path) and adds dem directory (dem_path) to it. If bit8 it returns 8bit file path."""
         return os.path.normpath(
@@ -1389,7 +1389,7 @@ class DefaultValues:
             )
         )
 
-    def get_sky_illumination_file_name(self, dem_path: str, bit8: bool = False) -> str:
+    def get_sky_illumination_file_name(self, dem_path: Path, bit8: bool = False) -> str:
         """Returns Sky illumination name, dem name (from dem_path) with added sim parameters.
         If bit8 it returns 8bit file name."""
         dem_name = os.path.basename(dem_path).split(".")[
@@ -1404,7 +1404,7 @@ class DefaultValues:
                 dem_name, self.sim_sky_mod, self.sim_nr_dir, self.sim_shadow_dist
             )
 
-    def get_sky_illumination_path(self, dem_path: str, bit8: bool = False) -> str:
+    def get_sky_illumination_path(self, dem_path: Path, bit8: bool = False) -> str:
         """Returns path to Sky illumination. Generates sim name (uses default attributes and dem name from
         dem_path) and adds dem directory (dem_path) to it. If bit8 it returns 8bit file path."""
         return os.path.normpath(
@@ -1414,7 +1414,7 @@ class DefaultValues:
             )
         )
 
-    def get_local_dominance_file_name(self, dem_path: str, bit8: bool = False) -> str:
+    def get_local_dominance_file_name(self, dem_path: Path, bit8: bool = False) -> str:
         """Returns Local dominance name, dem name (from dem_path) with added ld parameters.
         If bit8 it returns 8bit file name."""
         dem_name = os.path.basename(dem_path).split(".")[
@@ -1439,7 +1439,7 @@ class DefaultValues:
                 self.ld_observer_h,
             )
 
-    def get_local_dominance_path(self, dem_path: str, bit8: bool = False) -> str:
+    def get_local_dominance_path(self, dem_path: Path, bit8: bool = False) -> str:
         """Returns path to Local dominance. Generates ld name (uses default attributes and dem name from
         dem_path) and adds dem directory (dem_path) to it. If bit8 it returns 8bit file path."""
         return os.path.normpath(
@@ -1449,7 +1449,7 @@ class DefaultValues:
             )
         )
 
-    def get_msrm_file_name(self, dem_path: str, bit8: bool = False) -> str:
+    def get_msrm_file_name(self, dem_path: Path, bit8: bool = False) -> str:
         """Returns Multi-scale relief model name, dem name (from dem_path) with added msrm parameters.
         If bit8 it returns 8bit file name."""
         dem_name = os.path.basename(dem_path).split(".")[
@@ -1470,7 +1470,7 @@ class DefaultValues:
                 self.msrm_scaling_factor,
             )
 
-    def get_msrm_path(self, dem_path: str, bit8: bool = False) -> str:
+    def get_msrm_path(self, dem_path: Path, bit8: bool = False) -> str:
         """Returns path to Multi-scale relief model. Generates msrm name (uses default attributes and dem name from
         dem_path) and adds dem directory (dem_path) to it. If bit8 it returns 8bit file path."""
         return os.path.normpath(
@@ -1479,7 +1479,7 @@ class DefaultValues:
             )
         )
 
-    def get_mstp_file_name(self, dem_path, bit8=False):
+    def get_mstp_file_name(self, dem_path: Path, bit8: bool = False) -> str:
         """Returns Multi-scale topographic position name, dem name (from dem_path) with added mstp parameters.
         If bit8 it returns 8bit file name."""
         dem_name = os.path.basename(dem_path).split(".")[
@@ -1499,7 +1499,7 @@ class DefaultValues:
 
         return mstp_file_name
 
-    def get_mstp_path(self, dem_path, bit8=False):
+    def get_mstp_path(self, dem_path: Path, bit8: bool = False) -> str:
         return os.path.normpath(
             os.path.join(
                 os.path.dirname(dem_path), self.get_mstp_file_name(dem_path, bit8)
@@ -1624,14 +1624,16 @@ class DefaultValues:
 
     def float_to_8bit(
         self,
-        float_arr: npt.NDArray,
+        float_arr: npt.NDArray[Any],
         visualization: RVTVisualization,
-        x_res: float = None,
-        y_res: float = None,
+        x_res: Optional[float] = None,
+        y_res: Optional[float] = None,
         no_data: Optional[float] = None,
-    ):
-        """Converts (byte scale) float visualization to 8bit. Resolution (x_res, y_res) and no_data needed only for
-        multiple directions hillshade! Method first normalize then byte scale (0-255)."""
+    ) -> npt.NDArray[Any]:
+        """
+        Converts (byte scale) float visualization to 8bit. Resolution (x_res, y_res) and no_data needed only for
+        multiple directions hillshade! Method first normalize then byte scale (0-255).
+        """
         if visualization == RVTVisualization.HILLSHADE:
             norm_arr = rvt.blend_func.normalize_image(
                 visualization="hs",
@@ -1653,6 +1655,8 @@ class DefaultValues:
         elif visualization == RVTVisualization.SHADOW:
             return float_arr
         elif visualization == RVTVisualization.MULTI_HILLSHADE:
+            if x_res is None or y_res is None:
+                raise ValueError("Resolution (x_res, y_res) needs to be specified!")
             # Be careful when multihillshade we input dem, because we have to calculate hillshade in 3 directions
             red_band_arr = rvt.vis.hillshade(
                 dem=float_arr,
@@ -1823,7 +1827,13 @@ class DefaultValues:
                 "rvt.default.DefaultValues.float_to_8bit: Wrong visualization (visualization) parameter!"
             )
 
-    def get_slope(self, dem_arr, resolution_x, resolution_y, no_data=None):
+    def get_slope(
+        self,
+        dem_arr: npt.NDArray[Any],
+        resolution_x: float,
+        resolution_y: float,
+        no_data: Optional[float] = None,
+    ) -> npt.NDArray[Any]:
         slope_arr = rvt.vis.slope_aspect(
             dem=dem_arr,
             resolution_x=resolution_x,
@@ -1834,7 +1844,13 @@ class DefaultValues:
         )["slope"]
         return slope_arr
 
-    def save_slope(self, dem_path, custom_dir=None, save_float=None, save_8bit=None):
+    def save_slope(
+        self,
+        dem_path: Path,
+        custom_dir: Optional[Path] = None,
+        save_float: Optional[bool] = None,
+        save_8bit: Optional[bool] = None,
+    ) -> bool:
         """Calculates and saves Slope from dem (dem_path) with default parameters. If custom_dir is None it saves
         in dem directory else in custom_dir. If path to file already exists we can overwrite file (overwrite=0) or
         not (overwrite=1). If save_float is True method creates Gtiff with real values,
@@ -1842,10 +1858,10 @@ class DefaultValues:
 
         # if save_float is None it takes boolean from default (self)
         if save_float is None:
-            save_float = self.slp_save_float
+            save_float = bool(self.slp_save_float)
         # if save_8bit is None it takes boolean from default (self)
         if save_8bit is None:
-            save_8bit = self.slp_save_8bit
+            save_8bit = bool(self.slp_save_8bit)
 
         if not save_float and not save_8bit:
             raise Exception(
@@ -1873,13 +1889,13 @@ class DefaultValues:
                 and os.path.isfile(slope_path)
                 and not self.overwrite
             ):
-                return 0
+                return False
         elif save_float and not save_8bit:
             if os.path.isfile(slope_path) and not self.overwrite:
-                return 0
+                return False
         elif not save_float and not save_8bit:
             if os.path.isfile(slope_8bit_path) and not self.overwrite:
-                return 0
+                return False
 
         dem_size = get_raster_size(raster_path=dem_path)
         if dem_size[0] * dem_size[1] > self.tile_size_limit:  # tile by tile calculation
@@ -1893,7 +1909,7 @@ class DefaultValues:
                 save_float=save_float,
                 save_8bit=save_8bit,
             )
-            return 1
+            return True
         else:  # singleprocess
             dict_arr_res = get_raster_arr(raster_path=dem_path)
             dem_arr = dict_arr_res["array"]
@@ -1930,9 +1946,14 @@ class DefaultValues:
                         out_raster_arr=slope_8bit_arr,
                         e_type=1,
                     )
-            return 1
+            return True
 
-    def get_shadow(self, dem_arr, resolution, no_data=None):
+    def get_shadow(
+        self,
+        dem_arr: npt.NDArray[Any],
+        resolution: float,
+        no_data: Optional[float] = None,
+    ) -> npt.NDArray[Any]:
         shadow_arr = rvt.vis.shadow_horizon(
             dem=dem_arr,
             resolution=resolution,
@@ -1943,7 +1964,13 @@ class DefaultValues:
         )["shadow"]
         return shadow_arr
 
-    def get_hillshade(self, dem_arr, resolution_x, resolution_y, no_data=None):
+    def get_hillshade(
+        self,
+        dem_arr: npt.NDArray[Any],
+        resolution_x: float,
+        resolution_y: float,
+        no_data: Optional[float] = None,
+    ) -> npt.NDArray[Any]:
         hillshade_arr = rvt.vis.hillshade(
             dem=dem_arr,
             resolution_x=resolution_x,
@@ -1957,12 +1984,12 @@ class DefaultValues:
 
     def save_hillshade(
         self,
-        dem_path,
-        custom_dir=None,
-        save_float=None,
-        save_8bit=None,
-        save_shadow=None,
-    ):
+        dem_path: Path,
+        custom_dir: Optional[Path] = None,
+        save_float: Optional[bool] = None,
+        save_8bit: Optional[bool] = None,
+        save_shadow: Optional[bool] = None,
+    ) -> bool:
         """Calculates and saves Hillshade from dem (dem_path) with default parameters. If custom_dir is None it saves
         in dem directory else in custom_dir. If path to file already exists we can overwrite file (overwrite=1)
         or not (overwrite=0). If save_float is True method creates Gtiff with real values,
@@ -1970,13 +1997,13 @@ class DefaultValues:
 
         # if save_float is None it takes boolean from default (self)
         if save_float is None:
-            save_float = self.hs_save_float
+            save_float = bool(self.hs_save_float)
         # if save_8bit is None it takes boolean from default (self)
         if save_8bit is None:
-            save_8bit = self.hs_save_8bit
+            save_8bit = bool(self.hs_save_8bit)
         # if save_shadow is None it takes boolean from default (self)
         if save_shadow is None:
-            save_shadow = self.hs_shadow
+            save_shadow = bool(self.hs_shadow)
 
         if not save_float and not save_8bit:
             raise Exception(
@@ -2009,27 +2036,27 @@ class DefaultValues:
                 and os.path.isfile(shadow_path)
                 and not self.overwrite
             ):
-                return 0
+                return False
         elif save_float and not save_8bit and not save_shadow:
             if os.path.isfile(hillshade_path) and not self.overwrite:
-                return 0
+                return False
         elif not save_float and not save_8bit and not save_shadow:
             if os.path.isfile(hillshade_8bit_path) and not self.overwrite:
-                return 0
+                return False
         elif save_float and not save_8bit and save_shadow:
             if (
                 os.path.isfile(hillshade_path)
                 and os.path.isfile(shadow_path)
                 and not self.overwrite
             ):
-                return 0
+                return False
         elif not save_float and not save_8bit and save_shadow:
             if (
                 os.path.isfile(hillshade_8bit_path)
                 and os.path.isfile(shadow_path)
                 and not self.overwrite
             ):
-                return 0
+                return False
 
         dem_size = get_raster_size(raster_path=dem_path)
         if dem_size[0] * dem_size[1] > self.tile_size_limit:  # tile by tile
@@ -2052,7 +2079,7 @@ class DefaultValues:
                     save_float=True,
                     save_8bit=False,
                 )
-            return 1
+            return True
         else:  # singleprocess
             dict_arr_res = get_raster_arr(raster_path=dem_path)
             dem_arr = dict_arr_res["array"]
@@ -2103,9 +2130,15 @@ class DefaultValues:
                         out_raster_arr=shadow_arr,
                         no_data=np.nan,
                     )
-            return 1
+            return True
 
-    def get_multi_hillshade(self, dem_arr, resolution_x, resolution_y, no_data=None):
+    def get_multi_hillshade(
+        self,
+        dem_arr: npt.NDArray[Any],
+        resolution_x: float,
+        resolution_y: float,
+        no_data: Optional[float] = None,
+    ) -> npt.NDArray[Any]:
         multi_hillshade_arr = rvt.vis.multi_hillshade(
             dem=dem_arr,
             resolution_x=resolution_x,
@@ -2118,19 +2151,25 @@ class DefaultValues:
         return multi_hillshade_arr
 
     def save_multi_hillshade(
-        self, dem_path, custom_dir=None, save_float=None, save_8bit=None
-    ):
-        """Calculates and saves Multidirectional hillshade from dem (dem_path) with default parameters.
+        self,
+        dem_path: Path,
+        custom_dir: Optional[Path] = None,
+        save_float: Optional[bool] = None,
+        save_8bit: Optional[bool] = None,
+    ) -> bool:
+        """
+        Calculates and saves Multidirectional hillshade from dem (dem_path) with default parameters.
         If custom_dir is None it saves in dem directory else in custom_dir. If path to file already exists we can
         overwrite file (overwrite=1) or not (overwrite=0). If save_float is True method creates Gtiff with real values,
-        if save_8bit is True method creates GTiff with bytescaled values (0-255)."""
+        if save_8bit is True method creates GTiff with bytescaled values (0-255).
+        """
 
         # if save_float is None it takes boolean from default (self)
         if save_float is None:
-            save_float = self.mhs_save_float
+            save_float = bool(self.mhs_save_float)
         # if save_8bit is None it takes boolean from default (self)
         if save_8bit is None:
-            save_8bit = self.mhs_save_8bit
+            save_8bit = bool(self.mhs_save_8bit)
 
         if not save_float and not save_8bit:
             raise Exception(
@@ -2162,13 +2201,13 @@ class DefaultValues:
                 and os.path.isfile(multi_hillshade_path)
                 and not self.overwrite
             ):
-                return 0
+                return False
         elif save_float and not save_8bit:
             if os.path.isfile(multi_hillshade_path) and not self.overwrite:
-                return 0
+                return False
         elif not save_float and not save_8bit:
             if os.path.isfile(multi_hillshade_8bit_path) and not self.overwrite:
-                return 0
+                return False
 
         dem_size = get_raster_size(raster_path=dem_path)
         if dem_size[0] * dem_size[1] > self.tile_size_limit:  # tile by tile
@@ -2182,7 +2221,7 @@ class DefaultValues:
                 save_float=save_float,
                 save_8bit=save_8bit,
             )
-            return 1
+            return True
         else:  # singleprocess
             dict_arr_res = get_raster_arr(raster_path=dem_path)
             dem_arr = dict_arr_res["array"]
@@ -2226,9 +2265,11 @@ class DefaultValues:
                         out_raster_arr=multi_hillshade_8bit_arr,
                         e_type=1,
                     )
-            return 1
+            return True
 
-    def get_slrm(self, dem_arr, no_data=None):
+    def get_slrm(
+        self, dem_arr: npt.NDArray[Any], no_data: Optional[float] = None
+    ) -> npt.NDArray[Any]:
         slrm_arr = rvt.vis.slrm(
             dem=dem_arr,
             radius_cell=self.slrm_rad_cell,
@@ -2237,7 +2278,13 @@ class DefaultValues:
         )
         return slrm_arr
 
-    def save_slrm(self, dem_path, custom_dir=None, save_float=None, save_8bit=None):
+    def save_slrm(
+        self,
+        dem_path: Path,
+        custom_dir: Optional[Path] = None,
+        save_float: Optional[bool] = None,
+        save_8bit: Optional[bool] = None,
+    ) -> bool:
         """Calculates and saves Simple local relief model from dem (dem_path) with default parameters.
         If custom_dir is None it saves in dem directory else in custom_dir. If path to file already exists we can
         overwrite file (overwrite=1) or not (overwrite=0). If save_float is True method creates Gtiff with real values,
@@ -2245,10 +2292,10 @@ class DefaultValues:
 
         # if save_float is None it takes boolean from default (self)
         if save_float is None:
-            save_float = self.slrm_save_float
+            save_float = bool(self.slrm_save_float)
         # if save_8bit is None it takes boolean from default (self)
         if save_8bit is None:
-            save_8bit = self.slrm_save_8bit
+            save_8bit = bool(self.slrm_save_8bit)
 
         if not save_float and not save_8bit:
             raise Exception(
@@ -2276,13 +2323,13 @@ class DefaultValues:
                 and os.path.isfile(slrm_path)
                 and not self.overwrite
             ):
-                return 0
+                return False
         elif save_float and not save_8bit:
             if os.path.isfile(slrm_path) and not self.overwrite:
-                return 0
+                return False
         elif not save_float and not save_8bit:
             if os.path.isfile(slrm_8bit_path) and not self.overwrite:
-                return 0
+                return False
 
         dem_size = get_raster_size(raster_path=dem_path)
         if dem_size[0] * dem_size[1] > self.tile_size_limit:  # tile by tile
@@ -2296,7 +2343,7 @@ class DefaultValues:
                 save_float=save_float,
                 save_8bit=save_8bit,
             )
-            return 1
+            return True
         else:  # singleprocess
             dict_arr_res = get_raster_arr(raster_path=dem_path)
             dem_arr = dict_arr_res["array"]
@@ -2330,17 +2377,17 @@ class DefaultValues:
                         out_raster_arr=slrm_8bit_arr,
                         e_type=1,
                     )
-            return 1
+            return True
 
     def get_sky_view_factor(
         self,
-        dem_arr,
-        resolution,
-        compute_svf=True,
-        compute_asvf=False,
-        compute_opns=False,
-        no_data=None,
-    ):
+        dem_arr: npt.NDArray[Any],
+        resolution: float,
+        compute_svf: bool = True,
+        compute_asvf: bool = False,
+        compute_opns: bool = False,
+        no_data: Optional[float] = None,
+    ) -> Dict[str, npt.NDArray[Any]]:
         dict_svf_asvf_opns = rvt.vis.sky_view_factor(
             dem=dem_arr,
             resolution=resolution,
@@ -2359,14 +2406,14 @@ class DefaultValues:
 
     def save_sky_view_factor(
         self,
-        dem_path,
-        save_svf=True,
-        save_asvf=False,
-        save_opns=False,
-        custom_dir=None,
-        save_float=None,
-        save_8bit=None,
-    ):
+        dem_path: Path,
+        save_svf: bool = True,
+        save_asvf: bool = False,
+        save_opns: bool = False,
+        custom_dir: Optional[Path] = None,
+        save_float: Optional[bool] = None,
+        save_8bit: Optional[bool] = None,
+    ) -> bool:
         """Calculates and saves Sky-view factor(save_svf=True), Anisotropic Sky-view factor(save_asvf=True) and
         Positive Openness(save_opns=True) from dem (dem_path) with default parameters.
         If custom_dir is None it saves in dem directory else in custom_dir. If path to file already exists we can
@@ -2375,10 +2422,10 @@ class DefaultValues:
 
         # if save_float is None it takes boolean from default (self)
         if save_float is None:
-            save_float = self.svf_save_float
+            save_float = bool(self.svf_save_float)
         # if save_8bit is None it takes boolean from default (self)
         if save_8bit is None:
-            save_8bit = self.svf_save_8bit
+            save_8bit = bool(self.svf_save_8bit)
 
         if not save_float and not save_8bit:
             raise Exception(
@@ -2434,7 +2481,7 @@ class DefaultValues:
                 and os.path.isfile(opns_8bit_path)
                 and not self.overwrite
             ):
-                return 0
+                return False
         elif save_float and not save_8bit:
             if (
                 os.path.isfile(svf_path)
@@ -2442,7 +2489,7 @@ class DefaultValues:
                 and os.path.isfile(opns_path)
                 and not self.overwrite
             ):
-                return 0
+                return False
         elif not save_float and save_8bit:
             if (
                 os.path.isfile(svf_8bit_path)
@@ -2450,7 +2497,7 @@ class DefaultValues:
                 and os.path.isfile(opns_8bit_path)
                 and not self.overwrite
             ):
-                return 0
+                return False
 
         dem_size = get_raster_size(raster_path=dem_path)
         if dem_size[0] * dem_size[1] > self.tile_size_limit:  # tile by tile
@@ -2483,7 +2530,7 @@ class DefaultValues:
                     save_float=save_float,
                     save_8bit=save_8bit,
                 )
-            return 1
+            return True
         else:
             dict_arr_res = get_raster_arr(raster_path=dem_path)
             dem_arr = dict_arr_res["array"]
@@ -2584,9 +2631,14 @@ class DefaultValues:
                             out_raster_arr=opns_8bit_arr,
                             e_type=1,
                         )
-            return 1
+            return True
 
-    def get_neg_opns(self, dem_arr, resolution, no_data=None):
+    def get_neg_opns(
+        self,
+        dem_arr: npt.NDArray[Any],
+        resolution: float,
+        no_data: Optional[float] = None,
+    ) -> npt.NDArray[Any]:
         dem_arr = -1 * dem_arr
         dict_neg_opns = rvt.vis.sky_view_factor(
             dem=dem_arr,
@@ -2603,18 +2655,26 @@ class DefaultValues:
         neg_opns_arr = dict_neg_opns["opns"]
         return neg_opns_arr
 
-    def save_neg_opns(self, dem_path, custom_dir=None, save_float=None, save_8bit=None):
-        """Calculates and saves Negative Openness from dem (dem_path) with default parameters. If custom_dir is None
+    def save_neg_opns(
+        self,
+        dem_path: Path,
+        custom_dir: Optional[Path] = None,
+        save_float: Optional[bool] = None,
+        save_8bit: Optional[bool] = None,
+    ) -> bool:
+        """
+        Calculates and saves Negative Openness from dem (dem_path) with default parameters. If custom_dir is None
         it saves in dem directory else in custom_dir. If path to file already exists we can
         overwrite file (overwrite=1) or not (overwrite=0). If save_float is True method creates Gtiff with real values,
-        if save_8bit is True method creates GTiff with bytescaled values (0-255)."""
+        if save_8bit is True method creates GTiff with bytescaled values (0-255).
+        """
 
         # if save_float is None it takes boolean from default (self)
         if save_float is None:
-            save_float = self.neg_opns_save_float
+            save_float = bool(self.neg_opns_save_float)
         # if save_8bit is None it takes boolean from default (self)
         if save_8bit is None:
-            save_8bit = self.neg_opns_save_8bit
+            save_8bit = bool(self.neg_opns_save_8bit)
 
         if not save_float and not save_8bit:
             raise Exception(
@@ -2644,13 +2704,13 @@ class DefaultValues:
                 and os.path.isfile(neg_opns_path)
                 and not self.overwrite
             ):
-                return 0
+                return False
         elif save_float and not save_8bit:
             if os.path.isfile(neg_opns_path) and not self.overwrite:
-                return 0
+                return False
         elif not save_float and not save_8bit:
             if os.path.isfile(neg_opns_8bit_path) and not self.overwrite:
-                return 0
+                return False
 
         dem_size = get_raster_size(raster_path=dem_path)
         if dem_size[0] * dem_size[1] > self.tile_size_limit:  # tile by tile
@@ -2664,7 +2724,7 @@ class DefaultValues:
                 save_float=save_float,
                 save_8bit=save_8bit,
             )
-            return 1
+            return True
         else:  # singleprocess
             dict_arr_res = get_raster_arr(raster_path=dem_path)
             dem_arr = dict_arr_res["array"]
@@ -2703,9 +2763,14 @@ class DefaultValues:
                         out_raster_arr=neg_opns_8bit_arr,
                         e_type=1,
                     )
-            return 1
+            return True
 
-    def get_sky_illumination(self, dem_arr, resolution, no_data=None):
+    def get_sky_illumination(
+        self,
+        dem_arr: npt.NDArray[Any],
+        resolution: float,
+        no_data: Optional[float] = None,
+    ) -> npt.NDArray[Any]:
         sky_illumination_arr = rvt.vis.sky_illumination(
             dem=dem_arr,
             resolution=resolution,
@@ -2721,8 +2786,12 @@ class DefaultValues:
         return sky_illumination_arr
 
     def save_sky_illumination(
-        self, dem_path, custom_dir=None, save_float=None, save_8bit=None
-    ):
+        self,
+        dem_path: Path,
+        custom_dir: Optional[Path] = None,
+        save_float: Optional[bool] = None,
+        save_8bit: Optional[bool] = None,
+    ) -> bool:
         """Calculates and saves Sky illumination from dem (dem_path) with default parameters. If custom_dir is None
         it saves in dem directory else in custom_dir. If path to file already exists we can
         overwrite file (overwrite=1) or not (overwrite=0). If save_float is True method creates Gtiff with real values,
@@ -2730,10 +2799,10 @@ class DefaultValues:
 
         # if save_float is None it takes boolean from default (self)
         if save_float is None:
-            save_float = self.sim_save_float
+            save_float = bool(self.sim_save_float)
         # if save_8bit is None it takes boolean from default (self)
         if save_8bit is None:
-            save_8bit = self.sim_save_8bit
+            save_8bit = bool(self.sim_save_8bit)
 
         if not save_float and not save_8bit:
             raise Exception(
@@ -2765,13 +2834,13 @@ class DefaultValues:
                 and os.path.isfile(sky_illumination_path)
                 and not self.overwrite
             ):
-                return 0
+                return False
         elif save_float and not save_8bit:
             if os.path.isfile(sky_illumination_path) and not self.overwrite:
-                return 0
+                return False
         elif not save_float and not save_8bit:
             if os.path.isfile(sky_illumination_8bit_path) and not self.overwrite:
-                return 0
+                return False
 
         dem_size = get_raster_size(raster_path=dem_path)
         if dem_size[0] * dem_size[1] > self.tile_size_limit:  # tile by tile
@@ -2785,7 +2854,7 @@ class DefaultValues:
                 save_float=save_float,
                 save_8bit=save_8bit,
             )
-            return 1
+            return True
         else:  # singleprocess
             dict_arr_res = get_raster_arr(raster_path=dem_path)
             dem_arr = dict_arr_res["array"]
@@ -2824,9 +2893,11 @@ class DefaultValues:
                         out_raster_arr=sky_illumination_8bit_arr,
                         e_type=1,
                     )
-            return 1
+            return True
 
-    def get_local_dominance(self, dem_arr, no_data=None):
+    def get_local_dominance(
+        self, dem_arr: npt.NDArray[Any], no_data: Optional[float] = None
+    ) -> npt.NDArray[Any]:
         local_dominance_arr = rvt.vis.local_dominance(
             dem=dem_arr,
             min_rad=self.ld_min_rad,
@@ -2840,19 +2911,25 @@ class DefaultValues:
         return local_dominance_arr
 
     def save_local_dominance(
-        self, dem_path, custom_dir=None, save_float=None, save_8bit=None
-    ):
-        """Calculates and saves Local dominance from dem (dem_path) with default parameters. If custom_dir is None
+        self,
+        dem_path: Path,
+        custom_dir: Optional[Path] = None,
+        save_float: Optional[bool] = None,
+        save_8bit: Optional[bool] = None,
+    ) -> bool:
+        """
+        Calculates and saves Local dominance from dem (dem_path) with default parameters. If custom_dir is None
         it saves in dem directory else in custom_dir. If path to file already exists we can
         overwrite file (overwrite=1) or not (overwrite=0). If save_float is True method creates Gtiff with real values,
-        if save_8bit is True method creates GTiff with bytescaled values (0-255)."""
+        if save_8bit is True method creates GTiff with bytescaled values (0-255).
+        """
 
         # if save_float is None it takes boolean from default (self)
         if save_float is None:
-            save_float = self.ld_save_float
+            save_float = bool(self.ld_save_float)
         # if save_8bit is None it takes boolean from default (self)
         if save_8bit is None:
-            save_8bit = self.ld_save_8bit
+            save_8bit = bool(self.ld_save_8bit)
 
         if not save_float and not save_8bit:
             raise Exception(
@@ -2884,13 +2961,13 @@ class DefaultValues:
                 and os.path.isfile(local_dominance_path)
                 and not self.overwrite
             ):
-                return 0
+                return False
         elif save_float and not save_8bit:
             if os.path.isfile(local_dominance_path) and not self.overwrite:
-                return 0
+                return False
         elif not save_float and not save_8bit:
             if os.path.isfile(local_dominance_8bit_path) and not self.overwrite:
-                return 0
+                return False
 
         dem_size = get_raster_size(raster_path=dem_path)
         if dem_size[0] * dem_size[1] > self.tile_size_limit:  # tile by tile
@@ -2904,7 +2981,7 @@ class DefaultValues:
                 save_float=save_float,
                 save_8bit=save_8bit,
             )
-            return 1
+            return True
         else:  # singleprocess
             dict_arr_res = get_raster_arr(raster_path=dem_path)
             dem_arr = dict_arr_res["array"]
@@ -2940,9 +3017,14 @@ class DefaultValues:
                         out_raster_arr=local_dominance_8bit_arr,
                         e_type=1,
                     )
-            return 1
+            return True
 
-    def get_msrm(self, dem_arr, resolution, no_data=None):
+    def get_msrm(
+        self,
+        dem_arr: npt.NDArray[Any],
+        resolution: float,
+        no_data: Optional[float] = None,
+    ) -> npt.NDArray[Any]:
         msrm_arr = rvt.vis.msrm(
             dem=dem_arr,
             resolution=resolution,
@@ -2954,18 +3036,26 @@ class DefaultValues:
         )
         return msrm_arr
 
-    def save_msrm(self, dem_path, custom_dir=None, save_float=None, save_8bit=None):
-        """Calculates and saves Multi-scale relief model from dem (dem_path) with default parameters.
+    def save_msrm(
+        self,
+        dem_path: Path,
+        custom_dir: Optional[Path] = None,
+        save_float: Optional[bool] = None,
+        save_8bit: Optional[bool] = None,
+    ) -> bool:
+        """
+        Calculates and saves Multi-scale relief model from dem (dem_path) with default parameters.
         If custom_dir is None it saves in dem directory else in custom_dir. If path to file already exists we can
         overwrite file (overwrite=1) or not (overwrite=0). If save_float is True method creates Gtiff with real values,
-        if save_8bit is True method creates GTiff with bytescaled values (0-255)."""
+        if save_8bit is True method creates GTiff with bytescaled values (0-255).
+        """
 
         # if save_float is None it takes boolean from default (self)
         if save_float is None:
-            save_float = self.msrm_save_float
+            save_float = bool(self.msrm_save_float)
         # if save_8bit is None it takes boolean from default (self)
         if save_8bit is None:
-            save_8bit = self.msrm_save_8bit
+            save_8bit = bool(self.msrm_save_8bit)
 
         if not save_float and not save_8bit:
             raise Exception(
@@ -2993,13 +3083,13 @@ class DefaultValues:
                 and os.path.isfile(msrm_path)
                 and not self.overwrite
             ):
-                return 0
+                return False
         elif save_float and not save_8bit:
             if os.path.isfile(msrm_path) and not self.overwrite:
-                return 0
+                return False
         elif not save_float and not save_8bit:
             if os.path.isfile(msrm_8bit_path) and not self.overwrite:
-                return 0
+                return False
 
         dem_size = get_raster_size(raster_path=dem_path)
         if dem_size[0] * dem_size[1] > self.tile_size_limit:  # tile by tile
@@ -3013,7 +3103,7 @@ class DefaultValues:
                 save_float=save_float,
                 save_8bit=save_8bit,
             )
-            return 1
+            return True
         else:  # singleprocess
             dict_arr_res = get_raster_arr(raster_path=dem_path)
             dem_arr = dict_arr_res["array"]
@@ -3052,9 +3142,11 @@ class DefaultValues:
                         out_raster_arr=msrm_8bit_arr,
                         e_type=1,
                     )
-            return 1
+            return True
 
-    def get_mstp(self, dem_arr, no_data=None):
+    def get_mstp(
+        self, dem_arr: npt.NDArray[Any], no_data: Optional[float] = None
+    ) -> npt.NDArray[Any]:
         mstp_arr = rvt.vis.mstp(
             dem=dem_arr,
             local_scale=self.mstp_local_scale,
@@ -3065,17 +3157,23 @@ class DefaultValues:
         )
         return mstp_arr
 
-    def save_mstp(self, dem_path, custom_dir=None, save_float=None, save_8bit=None):
+    def save_mstp(
+        self,
+        dem_path: Path,
+        custom_dir: Optional[Path] = None,
+        save_float: Optional[bool] = None,
+        save_8bit: Optional[bool] = None,
+    ) -> bool:
         """Calculates and saves Multi-scale topographic position from dem (dem_path) with default parameters.
         If custom_dir is None it saves in dem directory else in custom_dir. If path to file already exists we can
         overwrite file (overwrite=1) or not (overwrite=0)."""
 
         # if save_float is None it takes boolean from default (self)
         if save_float is None:
-            save_float = self.mstp_save_float
+            save_float = bool(self.mstp_save_float)
         # if save_8bit is None it takes boolean from default (self)
         if save_8bit is None:
-            save_8bit = self.mstp_save_8bit
+            save_8bit = bool(self.mstp_save_8bit)
 
         if not save_float and not save_8bit:
             raise Exception(
@@ -3104,13 +3202,13 @@ class DefaultValues:
                 and os.path.isfile(mstp_path)
                 and not self.overwrite
             ):
-                return 0
+                return False
         elif save_float and not save_8bit:
             if os.path.isfile(mstp_path) and not self.overwrite:
-                return 0
+                return False
         elif not save_float and not save_8bit:
             if os.path.isfile(mstp_8bit_path) and not self.overwrite:
-                return 0
+                return False
 
         dem_size = get_raster_size(raster_path=dem_path)
         if dem_size[0] * dem_size[1] > self.tile_size_limit:  # tile by tile calculation
@@ -3124,7 +3222,7 @@ class DefaultValues:
                 save_float=save_float,
                 save_8bit=save_8bit,
             )
-            return 1
+            return True
         else:  # singleprocess
             dict_arr_res = get_raster_arr(raster_path=dem_path)
             dem_arr = dict_arr_res["array"]
@@ -3163,9 +3261,11 @@ class DefaultValues:
                         e_type=1,
                     )
 
-            return 1
+            return True
 
-    def save_visualizations(self, dem_path, custom_dir=None):
+    def save_visualizations(
+        self, dem_path: Path, custom_dir: Optional[Path] = None
+    ) -> None:
         """Save all visualizations where self.'visualization'_compute = True also saves float where self.'visualization'
         _save_float = True and 8bit where self.'visualization'_save_8bit = True. In the end method creates log file."""
         start_time = time.time()
@@ -3204,7 +3304,7 @@ class DefaultValues:
     def calculate_visualization(
         self,
         visualization: RVTVisualization,
-        dem: npt.NDArray,
+        dem: npt.NDArray[Any],
         resolution_x: float,
         resolution_y: float,
         no_data: Optional[float] = None,
@@ -3298,14 +3398,22 @@ class DefaultValues:
                     no_data=no_data,
                 )
             else:
+                assert vis_arr is not None
                 vis_8bit_arr = self.float_to_8bit(
                     float_arr=vis_arr, visualization=visualization
                 )
         return vis_float_arr, vis_8bit_arr
 
-    def create_log_file(self, dem_path, custom_dir=None, compute_time=None):
-        """Creates log file in custom_dir, if custom_dir=None it creates it in dem directory (dem_path).
-        Be aware, all default parameters have to be right! Parameter compute_time is in seconds."""
+    def create_log_file(
+        self,
+        dem_path: Path,
+        custom_dir: Optional[Path] = None,
+        compute_time: Optional[float] = None,
+    ) -> None:
+        """
+        Creates log file in custom_dir, if custom_dir=None it creates it in dem directory (dem_path).
+        Be aware, all default parameters have to be right! Parameter compute_time is in seconds.
+        """
         dict_arr_res = get_raster_arr(raster_path=dem_path)
         resolution = dict_arr_res["resolution"]
         arr_shape = np.array(dict_arr_res["array"]).shape
@@ -3321,7 +3429,7 @@ class DefaultValues:
             nr_bands = 1
             nr_rows = arr_shape[0]
             nr_cols = arr_shape[1]
-        dem_dir = os.path.dirname(dem_path)
+        dem_dir = Path(os.path.dirname(dem_path))
         log_dir = dem_dir
         if custom_dir is not None:
             log_dir = custom_dir
@@ -3781,7 +3889,7 @@ class DefaultValues:
         dat.close()
 
 
-def get_raster_arr(raster_path):
+def get_raster_arr(raster_path: Path) -> Dict[str, Any]:
     """
     Reads raster from raster_path and returns its array(value) and resolution.
 
@@ -3806,7 +3914,7 @@ def get_raster_arr(raster_path):
     no_data = data_set.GetRasterBand(
         1
     ).GetNoDataValue()  # we assume that all the bands have same no_data val
-    if data_set.RasterCount == 1:  # only one band
+    if data_set.RasterCount == 1:  # only one band_number
         array = np.array(data_set.GetRasterBand(1).ReadAsArray())
         data_set = None
         return {"array": array, "resolution": (x_res, y_res), "no_data": no_data}
@@ -3826,14 +3934,14 @@ def get_raster_arr(raster_path):
         }
 
 
-def get_raster_size(raster_path, band=1):
+def get_raster_size(raster_path: Path, band_number: int = 1) -> Tuple[float, float]:
     """Opens raster path and returns selected band size.
 
     Parameters
     ----------
     raster_path : str
         Path to raster.
-    band : int
+    band_number : int
         Selected band number.
 
     Returns
@@ -3841,7 +3949,7 @@ def get_raster_size(raster_path, band=1):
     tuple(x_size, y_size)
     """
     data_set = gdal.Open(raster_path)  # Open dem raster
-    band = data_set.GetRasterBand(band)
+    band = data_set.GetRasterBand(band_number)
     x_size = band.XSize  # number of columns
     y_size = band.YSize  # number of rows
     del band
@@ -3860,7 +3968,7 @@ def save_raster(
         Path to source raster.
     out_raster_path : str
         Path to new file, where to save raster (GTiff).
-    out_raster_arr : np.array (2D - one band, 3D - multiple bands)
+    out_raster_arr : np.array (2D - one band_number, 3D - multiple bands)
         Array with raster data.
     no_data : float
         Value that represents no data pixels.
@@ -3869,7 +3977,7 @@ def save_raster(
     """
     src_data_set = gdal.Open(src_raster_path)
     gtiff_driver = gdal.GetDriverByName("GTiff")
-    if len(out_raster_arr.shape) == 2:  # 2D array, one band
+    if len(out_raster_arr.shape) == 2:  # 2D array, one band_number
         out_data_set = gtiff_driver.Create(
             out_raster_path,
             xsize=out_raster_arr.shape[1],

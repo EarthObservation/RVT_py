@@ -115,7 +115,7 @@ def byte_scale(
         byte_data = np.cast[np.uint8](byte_data) + np.cast[np.uint8](low)
         byte_data_bands.append(byte_data)
 
-    if is_2d_arr:  # if only one band
+    if is_2d_arr:  # if only one band_number
         return byte_data_bands[0]
     else:  # multiple bands
         return np.array(byte_data_bands)
