@@ -18,8 +18,9 @@ Copyright:
     2016-2022 University of Ljubljana, Faculty of Civil and Geodetic Engineering
 """
 from pathlib import Path
-from typing import Callable, Dict, Any, Optional, Union, Tuple
+from typing import Callable, Dict, Any, Optional
 import numpy as np
+import numpy.typing as npt
 from osgeo import gdal
 import rvt.default
 
@@ -30,7 +31,7 @@ def _create_blank_raster(
     nr_bands: int = 1,
     no_data: float = np.nan,
     e_type: int = 6,
-):
+) -> None:
     """Takes input data set and creates new raster. It copies input data set size, projection and geo info."""
     gtiff_driver = gdal.GetDriverByName("GTiff")
     band = in_data_set.GetRasterBand(1)

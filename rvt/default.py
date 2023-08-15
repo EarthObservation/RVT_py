@@ -19,7 +19,6 @@ Copyright:
     2010-2022 Research Centre of the Slovenian Academy of Sciences and Arts
     2016-2022 University of Ljubljana, Faculty of Civil and Geodetic Engineering
 """
-
 import warnings
 from enum import Enum
 from pathlib import Path
@@ -229,9 +228,9 @@ class DefaultValues:
         Size of single tile when saving tile by tile.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.overwrite = 0  # (0=False, 1=True)
-        self.ve_factor = 1
+        self.ve_factor = 1.0
         # slope gradient
         self.slp_compute = 0
         self.slp_output_units = "degree"
@@ -277,8 +276,8 @@ class DefaultValues:
         self.ld_observer_h = 1.7
         # multi-scale relief model
         self.msrm_compute = 0
-        self.msrm_feature_min = 0
-        self.msrm_feature_max = 20
+        self.msrm_feature_min = 0.0
+        self.msrm_feature_max = 20.0
         self.msrm_scaling_factor = 2
         # multi-scale topographic position
         self.mstp_compute = 0
@@ -330,7 +329,7 @@ class DefaultValues:
             4000,
         )  # size of single tile when using tile module (x_size, y_size)
 
-    def save_default_to_file(self, file_path=None):
+    def save_default_to_file(self, file_path: Optional[str] = None) -> None:
         """Saves default attributes into .json file."""
         data = {
             "default_settings": {
@@ -757,7 +756,7 @@ class DefaultValues:
         dat.write(json.dumps(data, indent=4))
         dat.close()
 
-    def read_default_from_file(self, file_path):
+    def read_default_from_file(self, file_path: str) -> None:
         """Reads default attributes from file."""
         # Example file in dir settings: default_settings.json
         extension = os.path.splitext(file_path)[1]
@@ -1174,7 +1173,7 @@ class DefaultValues:
             )
             dat.close()
 
-    def get_shadow_file_name(self, dem_path):
+    def get_shadow_file_name(self, dem_path: str) -> str:
         """Returns shadow name, with added hillshade parameters (hs_sun_azi == shadow azimuth,
         hs_sun_el == shadow_elevation)."""
         dem_name = os.path.basename(dem_path).split(".")[
@@ -1182,14 +1181,14 @@ class DefaultValues:
         ]  # base name without extension
         return "{}_shadow_A{}_H{}.tif".format(dem_name, self.hs_sun_azi, self.hs_sun_el)
 
-    def get_shadow_path(self, dem_path):
+    def get_shadow_path(self, dem_path: str) -> str:
         """Returns path to Shadow. Generates shadow name (uses default attributes and dem name from dem_path) and
         adds dem directory (dem_path) to it."""
         return os.path.normpath(
             os.path.join(os.path.dirname(dem_path), self.get_shadow_file_name(dem_path))
         )
 
-    def get_hillshade_file_name(self, dem_path, bit8=False):
+    def get_hillshade_file_name(self, dem_path: str, bit8: bool = False) -> str:
         """Returns Hillshade name, dem name (from dem_path) with added hillshade parameters.
         If bit8 it returns 8bit file name."""
         dem_name = os.path.basename(dem_path).split(".")[
@@ -1202,7 +1201,7 @@ class DefaultValues:
         else:
             return "{}_HS_A{}_H{}.tif".format(dem_name, self.hs_sun_azi, self.hs_sun_el)
 
-    def get_hillshade_path(self, dem_path, bit8=False):
+    def get_hillshade_path(self, dem_path: str, bit8: bool = False) -> str:
         """Returns path to Hillshade. Generates hillshade name (uses default attributes and dem name from dem_path) and
         adds dem directory (dem_path) to it. If bit8 it returns 8bit file path."""
         return os.path.normpath(
@@ -1211,7 +1210,7 @@ class DefaultValues:
             )
         )
 
-    def get_slope_file_name(self, dem_path, bit8=False):
+    def get_slope_file_name(self, dem_path: str, bit8: bool = False) -> str:
         """Returns Slope name, dem name (from dem_path) with added slope parameters.
         If bit8 it returns 8bit file name."""
         dem_name = os.path.basename(dem_path).split(".")[
@@ -1222,7 +1221,7 @@ class DefaultValues:
         else:
             return "{}_SLOPE.tif".format(dem_name)
 
-    def get_slope_path(self, dem_path, bit8=False):
+    def get_slope_path(self, dem_path: str, bit8: bool = False) -> str:
         """Returns path to slope. Generates slope name and adds dem directory (dem_path) to it.
         If bit8 it returns 8bit file path."""
         return os.path.normpath(
@@ -1231,7 +1230,7 @@ class DefaultValues:
             )
         )
 
-    def get_multi_hillshade_file_name(self, dem_path, bit8=False):
+    def get_multi_hillshade_file_name(self, dem_path: str, bit8: bool = False) -> str:
         """Returns Multiple directions hillshade name, dem name (from dem_path) with added
         multi hillshade parameters. If bit8 it returns 8bit file name."""
         dem_name = os.path.basename(dem_path).split(".")[
@@ -1246,7 +1245,7 @@ class DefaultValues:
                 dem_name, self.mhs_nr_dir, self.mhs_sun_el
             )
 
-    def get_multi_hillshade_path(self, dem_path, bit8=False):
+    def get_multi_hillshade_path(self, dem_path: str, bit8: bool = False) -> str:
         """Returns path to Multiple directions hillshade. Generates multi hillshade name (uses default attributes and
         dem name from dem_path) and adds dem directory (dem_path) to it. If bit8 it returns 8bit file path."""
         return os.path.normpath(
@@ -1256,7 +1255,7 @@ class DefaultValues:
             )
         )
 
-    def get_slrm_file_name(self, dem_path, bit8=False):
+    def get_slrm_file_name(self, dem_path: str, bit8: bool = False) -> str:
         """Returns Simple local relief model name, dem name (from dem_path) with added slrm parameters.
         If bit8 it returns 8bit file name."""
         dem_name = os.path.basename(dem_path).split(".")[
@@ -1267,7 +1266,7 @@ class DefaultValues:
         else:
             return "{}_SLRM_R{}.tif".format(dem_name, self.slrm_rad_cell)
 
-    def get_slrm_path(self, dem_path, bit8=False):
+    def get_slrm_path(self, dem_path: str, bit8: bool = False) -> str:
         """Returns path to Simple local relief model. Generates slrm name (uses default attributes and dem name from
         dem_path) and adds dem directory (dem_path) to it. If bit8 it returns 8bit file path."""
         return os.path.normpath(
@@ -1276,7 +1275,7 @@ class DefaultValues:
             )
         )
 
-    def get_svf_file_name(self, dem_path, bit8=False):
+    def get_svf_file_name(self, dem_path: str, bit8: bool = False) -> str:
         """Returns Sky-view factor name, dem name (from dem_path) with added svf parameters.
         If bit8 it returns 8bit file name."""
         dem_name = os.path.basename(dem_path).split(".")[
@@ -1293,7 +1292,7 @@ class DefaultValues:
             out_name += "_8bit"
         return out_name + ".tif"
 
-    def get_svf_path(self, dem_path, bit8=False):
+    def get_svf_path(self, dem_path: str, bit8: bool = False) -> str:
         """Returns path to Sky-view factor. Generates svf name (uses default attributes and dem name from
         dem_path) and adds dem directory (dem_path) to it. If bit8 it returns 8bit file path."""
         return os.path.normpath(
@@ -1302,7 +1301,7 @@ class DefaultValues:
             )
         )
 
-    def get_asvf_file_name(self, dem_path, bit8=False):
+    def get_asvf_file_name(self, dem_path: str, bit8: bool = False) -> str:
         """Returns Anisotropic Sky-view factor name, dem name (from dem_path) with added asvf parameters.
         If bit8 it returns 8bit file name."""
         dem_name = os.path.basename(dem_path).split(".")[
@@ -1325,7 +1324,7 @@ class DefaultValues:
             out_name += "_8bit"
         return out_name + ".tif"
 
-    def get_asvf_path(self, dem_path, bit8=False):
+    def get_asvf_path(self, dem_path: str, bit8: bool = False) -> str:
         """Returns path to Anisotropic Sky-view factor. Generates asvf name (uses default attributes and dem name from
         dem_path) and adds dem directory (dem_path) to it. If bit8 it returns 8bit file path."""
         return os.path.normpath(
@@ -1334,7 +1333,7 @@ class DefaultValues:
             )
         )
 
-    def get_opns_file_name(self, dem_path, bit8=False):
+    def get_opns_file_name(self, dem_path: str, bit8: bool = False) -> str:
         """Returns Positive Openness name, dem name (from dem_path) with added pos opns parameters.
         If bit8 it returns 8bit file name."""
         dem_name = os.path.basename(dem_path).split(".")[
@@ -1353,7 +1352,7 @@ class DefaultValues:
             out_name += "_8bit"
         return out_name + ".tif"
 
-    def get_opns_path(self, dem_path, bit8=False):
+    def get_opns_path(self, dem_path: str, bit8: bool = False) -> str:
         """Returns path to Positive Openness. Generates pos opns name (uses default attributes and dem name from
         dem_path) and adds dem directory (dem_path) to it. If bit8 it returns 8bit file path."""
         return os.path.normpath(
@@ -1362,7 +1361,7 @@ class DefaultValues:
             )
         )
 
-    def get_neg_opns_file_name(self, dem_path, bit8=False):
+    def get_neg_opns_file_name(self, dem_path: str, bit8: bool = False) -> str:
         """Returns Negative Openness name, dem name (from dem_path) with added neg opns parameters.
         If bit8 it returns 8bit file name."""
         dem_name = os.path.basename(dem_path).split(".")[
@@ -1381,7 +1380,7 @@ class DefaultValues:
             out_name += "_8bit"
         return out_name + ".tif"
 
-    def get_neg_opns_path(self, dem_path, bit8=False):
+    def get_neg_opns_path(self, dem_path: str, bit8: bool = False) -> str:
         """Returns path to Negative Openness. Generates pos neg name (uses default attributes and dem name from
         dem_path) and adds dem directory (dem_path) to it. If bit8 it returns 8bit file path."""
         return os.path.normpath(
@@ -1390,7 +1389,7 @@ class DefaultValues:
             )
         )
 
-    def get_sky_illumination_file_name(self, dem_path, bit8=False):
+    def get_sky_illumination_file_name(self, dem_path: str, bit8: bool = False) -> str:
         """Returns Sky illumination name, dem name (from dem_path) with added sim parameters.
         If bit8 it returns 8bit file name."""
         dem_name = os.path.basename(dem_path).split(".")[
@@ -1405,7 +1404,7 @@ class DefaultValues:
                 dem_name, self.sim_sky_mod, self.sim_nr_dir, self.sim_shadow_dist
             )
 
-    def get_sky_illumination_path(self, dem_path, bit8=False):
+    def get_sky_illumination_path(self, dem_path: str, bit8: bool = False) -> str:
         """Returns path to Sky illumination. Generates sim name (uses default attributes and dem name from
         dem_path) and adds dem directory (dem_path) to it. If bit8 it returns 8bit file path."""
         return os.path.normpath(
@@ -1415,7 +1414,7 @@ class DefaultValues:
             )
         )
 
-    def get_local_dominance_file_name(self, dem_path, bit8=False):
+    def get_local_dominance_file_name(self, dem_path: str, bit8: bool = False) -> str:
         """Returns Local dominance name, dem name (from dem_path) with added ld parameters.
         If bit8 it returns 8bit file name."""
         dem_name = os.path.basename(dem_path).split(".")[
@@ -1440,7 +1439,7 @@ class DefaultValues:
                 self.ld_observer_h,
             )
 
-    def get_local_dominance_path(self, dem_path, bit8=False):
+    def get_local_dominance_path(self, dem_path: str, bit8: bool = False) -> str:
         """Returns path to Local dominance. Generates ld name (uses default attributes and dem name from
         dem_path) and adds dem directory (dem_path) to it. If bit8 it returns 8bit file path."""
         return os.path.normpath(
@@ -1450,7 +1449,7 @@ class DefaultValues:
             )
         )
 
-    def get_msrm_file_name(self, dem_path, bit8=False):
+    def get_msrm_file_name(self, dem_path: str, bit8: bool = False) -> str:
         """Returns Multi-scale relief model name, dem name (from dem_path) with added msrm parameters.
         If bit8 it returns 8bit file name."""
         dem_name = os.path.basename(dem_path).split(".")[
@@ -1471,7 +1470,7 @@ class DefaultValues:
                 self.msrm_scaling_factor,
             )
 
-    def get_msrm_path(self, dem_path, bit8=False):
+    def get_msrm_path(self, dem_path: str, bit8: bool = False) -> str:
         """Returns path to Multi-scale relief model. Generates msrm name (uses default attributes and dem name from
         dem_path) and adds dem directory (dem_path) to it. If bit8 it returns 8bit file path."""
         return os.path.normpath(

@@ -21,12 +21,12 @@ Copyright:
 # TODO: more testing, find and fix bugs if they exists
 
 import warnings
-from typing import Any, Optional
+from typing import Any, Optional, Dict, Tuple
 
 import numpy as np
 import numpy.typing as npt
 from matplotlib.cm import get_cmap
-from matplotlib.colors import LinearSegmentedColormap
+from matplotlib.colors import LinearSegmentedColormap, Colormap
 
 
 def gray_scale_to_color_ramp(
@@ -110,7 +110,9 @@ def gray_scale_to_color_ramp(
     return rgba_out
 
 
-def truncate_colormap(cmap, minval=0.0, maxval=1.0, n=100):
+def truncate_colormap(
+    cmap: Colormap, minval: float = 0.0, maxval: float = 1.0, n: int = 100
+) -> LinearSegmentedColormap:
     new_cmap = LinearSegmentedColormap.from_list(
         "trunc({n},{a:.2f},{b:.2f})".format(n=cmap.name, a=minval, b=maxval),
         cmap(np.linspace(minval, maxval, n)),
@@ -118,7 +120,9 @@ def truncate_colormap(cmap, minval=0.0, maxval=1.0, n=100):
     return new_cmap
 
 
-def normalize_lin(image, minimum, maximum):
+def normalize_lin(
+    image: npt.NDArray[Any], minimum: float, maximum: float
+) -> npt.NDArray[Any]:
     # linear cut off
     image[image > maximum] = maximum
     image[image < minimum] = minimum
@@ -127,12 +131,16 @@ def normalize_lin(image, minimum, maximum):
     image = (image - minimum) / (maximum - minimum)
     image[image > 1] = 1
     image[image < 0] = 0
-    return np.float32(image)
+    return image.astype(np.float32)
 
 
-def lin_cutoff_calc_from_perc(image, minimum, maximum):
-    """Minimum cutoff in percent, maximum cutoff in percent (0%-100%). Returns min and max values for linear
-    stretch (cut-off)."""
+def lin_cutoff_calc_from_perc(
+    image: npt.NDArray[Any], minimum: float, maximum: float
+) -> Dict[str, float]:
+    """
+    Minimum cutoff in percent, maximum cutoff in percent (0%-100%). Returns min and max values for linear
+    stretch (cut-off).
+    """
     if minimum < 0 or maximum < 0 or minimum > 100 or maximum > 100:
         raise Exception(
             "rvt.blend_func.lin_cutoff_calc_from_perc: minimum, maximum are percent and have to be in "
@@ -152,14 +160,18 @@ def lin_cutoff_calc_from_perc(image, minimum, maximum):
     return {"min_lin": min_lin, "max_lin": max_lin}
 
 
-def normalize_perc(image, minimum, maximum):
+def normalize_perc(
+    image: npt.NDArray[Any], minimum: float, maximum: float
+) -> npt.NDArray[Any]:
     min_max_lin_dict = lin_cutoff_calc_from_perc(image, minimum, maximum)
     min_lin = min_max_lin_dict["min_lin"]
     max_lin = min_max_lin_dict["max_lin"]
     return normalize_lin(image, min_lin, max_lin)
 
 
-def advanced_normalization(image, minimum, maximum, normalization):
+def advanced_normalization(
+    image: npt.NDArray[Any], minimum: float, maximum: float, normalization: str
+) -> npt.NDArray[Any]:
     """Runs normalization based on the selected normalization type: value or percent."""
 
     # Preform checks if correct values were given
@@ -190,19 +202,24 @@ def advanced_normalization(image, minimum, maximum, normalization):
     return equ_image
 
 
-def lum(img):
+def lum(img: npt.NDArray[Any]) -> npt.NDArray[Any]:
     if len(img.shape) == 3:
         r = img[0]
         g = img[1]
         b = img[2]
-        lum_img = np.float32((0.3 * r) + (0.59 * g) + (0.11 * b))
+        lum_img = ((0.3 * r) + (0.59 * g) + (0.11 * b)).astype(np.float32)
     else:
-        lum_img = img
+        lum_img = img  # type: ignore
 
-    return lum_img
+    return lum_img  # type: ignore
 
 
-def matrix_eq_min_lt_zero(r: np.ndarray, idx_min_lt_zero, lum_c, min_c):
+def matrix_eq_min_lt_zero(
+    r: npt.NDArray[Any],
+    idx_min_lt_zero: Tuple[npt.NDArray[np.signedinteger], ...],
+    lum_c: npt.NDArray[Any],
+    min_c: npt.NDArray[Any],
+) -> npt.NDArray[Any]:
     r[idx_min_lt_zero] = lum_c[idx_min_lt_zero] + (
         ((r[idx_min_lt_zero] - lum_c[idx_min_lt_zero]) * lum_c[idx_min_lt_zero])
         / (lum_c[idx_min_lt_zero] - min_c[idx_min_lt_zero])
@@ -210,7 +227,12 @@ def matrix_eq_min_lt_zero(r: np.ndarray, idx_min_lt_zero, lum_c, min_c):
     return r
 
 
-def matrix_eq_max_gt_one(r: np.ndarray, idx_max_c_gt_one, lum_c, max_c):
+def matrix_eq_max_gt_one(
+    r: npt.NDArray[Any],
+    idx_max_c_gt_one: Tuple[npt.NDArray[np.signedinteger], ...],
+    lum_c: npt.NDArray[Any],
+    max_c: npt.NDArray[Any],
+) -> npt.NDArray[Any]:
     r[idx_max_c_gt_one] = lum_c[idx_max_c_gt_one] + (
         (
             (r[idx_max_c_gt_one] - lum_c[idx_max_c_gt_one])
@@ -221,7 +243,9 @@ def matrix_eq_max_gt_one(r: np.ndarray, idx_max_c_gt_one, lum_c, max_c):
     return r
 
 
-def channel_min(r: np.ndarray, g: np.ndarray, b: np.ndarray):
+def channel_min(
+    r: npt.NDArray[Any], g: npt.NDArray[Any], b: npt.NDArray[Any]
+) -> npt.NDArray[Any]:
     min_c = r * 1.0
     idx_min = np.where(g < min_c)
     min_c[idx_min] = g[idx_min]
@@ -230,7 +254,9 @@ def channel_min(r: np.ndarray, g: np.ndarray, b: np.ndarray):
     return min_c
 
 
-def channel_max(r: np.ndarray, g: np.ndarray, b: np.ndarray):
+def channel_max(
+    r: npt.NDArray[Any], g: npt.NDArray[Any], b: npt.NDArray[Any]
+) -> npt.NDArray[Any]:
     max_c = r * 1.0
     idx_max = np.where(g > max_c)
     max_c[idx_max] = g[idx_max]
@@ -239,15 +265,20 @@ def channel_max(r: np.ndarray, g: np.ndarray, b: np.ndarray):
     return max_c
 
 
-def clip_color(c, min_c=None, max_c=None):
+def clip_color(
+    c: npt.NDArray[Any],
+    min_c: Optional[npt.NDArray[Any]] = None,
+    max_c: Optional[npt.NDArray[Any]] = None,
+) -> npt.NDArray[Any]:
     lum_c = lum(c)
 
-    r = np.float32(c[0])
-    g = np.float32(c[1])
-    b = np.float32(c[2])
+    r = c[0].astype(np.float32)
+    g = c[1].astype(np.float32)
+    b = c[2].astype(np.float32)
 
-    if min_c is None and max_c is None:
+    if min_c is None:
         min_c = channel_min(r, g, b)
+    if max_c is None:
         max_c = channel_max(r, g, b)
 
     idx_min_lt_zero = np.where(min_c < 0)
@@ -267,19 +298,27 @@ def clip_color(c, min_c=None, max_c=None):
     return c_out
 
 
-def blend_normal(active, background):
+def blend_normal(
+    active: npt.NDArray[Any], background: npt.NDArray[Any]
+) -> npt.NDArray[Any]:
     return active
 
 
-def blend_screen(active, background):
+def blend_screen(
+    active: npt.NDArray[Any], background: npt.NDArray[Any]
+) -> npt.NDArray[Any]:
     return 1 - (1 - active) * (1 - background)
 
 
-def blend_multiply(active, background):
+def blend_multiply(
+    active: npt.NDArray[Any], background: npt.NDArray[Any]
+) -> npt.NDArray[Any]:
     return active * background
 
 
-def blend_overlay(active, background):
+def blend_overlay(
+    active: npt.NDArray[Any], background: npt.NDArray[Any]
+) -> npt.NDArray[Any]:
     idx1 = np.where(background > 0.5)
     idx2 = np.where(background <= 0.5)
     background[idx1] = 1 - (1 - 2 * (background[idx1] - 0.5)) * (1 - active[idx1])
@@ -287,7 +326,9 @@ def blend_overlay(active, background):
     return background
 
 
-def blend_soft_light(active, background):
+def blend_soft_light(
+    active: npt.NDArray[Any], background: npt.NDArray[Any]
+) -> npt.NDArray[Any]:
     # idx1 = np.where(active > 0.5)
     # idx2 = np.where(active <= 0.5)
     # background[idx1] = 1 - (1-background[idx1]) * (1-(active[idx1]-0.5))
@@ -303,7 +344,12 @@ def blend_soft_light(active, background):
     return background
 
 
-def blend_luminosity(active, background, min_c=None, max_c=None):
+def blend_luminosity(
+    active: npt.NDArray[Any],
+    background: npt.NDArray[Any],
+    min_c: Optional[npt.NDArray[Any]] = None,
+    max_c: Optional[npt.NDArray[Any]] = None,
+) -> npt.NDArray[Any]:
     lum_active = lum(active)
     lum_background = lum(background)
     luminosity = lum_active - lum_background
@@ -325,7 +371,9 @@ def blend_luminosity(active, background, min_c=None, max_c=None):
     return clipped_image
 
 
-def equation_blend(blend_mode, active, background):
+def equation_blend(
+    blend_mode: str, active: npt.NDArray[Any], background: npt.NDArray[Any]
+) -> npt.NDArray[Any]:
     if blend_mode.lower() == "screen":
         return blend_screen(active, background)
     elif blend_mode.lower() == "multiply":
@@ -334,9 +382,13 @@ def equation_blend(blend_mode, active, background):
         return blend_overlay(active, background)
     elif blend_mode.lower() == "soft_light":
         return blend_soft_light(active, background)
+    else:
+        raise ValueError(f"Invalid blend mode, {blend_mode=}!")
 
 
-def blend_multi_dim_images(blend_mode, active, background):
+def blend_multi_dim_images(
+    blend_mode: str, active: npt.NDArray[Any], background: npt.NDArray[Any]
+) -> npt.NDArray[Any]:
     a_rgb = len(active.shape) == 3  # bool, is active rgb
     b_rgb = len(background.shape) == 3  # bool, is background rgb
     blended_image = None
@@ -361,10 +413,18 @@ def blend_multi_dim_images(blend_mode, active, background):
     if not a_rgb and not b_rgb:
         blended_image = equation_blend(blend_mode, active, background)
 
+    assert blended_image is not None
+
     return blended_image
 
 
-def blend_images(blend_mode, active, background, min_c=None, max_c=None):
+def blend_images(
+    blend_mode: str,
+    active: npt.NDArray[Any],
+    background: npt.NDArray[Any],
+    min_c: Optional[npt.NDArray[Any]] = None,
+    max_c: Optional[npt.NDArray[Any]] = None,
+) -> npt.NDArray[Any]:
     if (
         blend_mode.lower() == "multiply"
         or blend_mode.lower() == "overlay"
@@ -378,7 +438,9 @@ def blend_images(blend_mode, active, background, min_c=None, max_c=None):
         return blend_normal(active, background)
 
 
-def render_images(active, background, opacity):
+def render_images(
+    active: npt.NDArray[Any], background: npt.NDArray[Any], opacity: float
+) -> npt.NDArray[Any]:
 
     # Both active and background image have to be between 0 and 1, scale if not
     if np.nanmin(active) < 0 or np.nanmax(active) > 1:
@@ -414,7 +476,7 @@ def render_images(active, background, opacity):
     return render_image
 
 
-def scale_within_0_and_1(numeric_value):
+def scale_within_0_and_1(numeric_value: npt.NDArray[Any]) -> npt.NDArray[Any]:
     if np.nanmin(numeric_value) >= 0 and np.nanmax(numeric_value) <= 1:
         return numeric_value
 
@@ -448,7 +510,7 @@ def scale_within_0_and_1(numeric_value):
     return scaled
 
 
-def scale_strict_0_to_1(numeric_value):
+def scale_strict_0_to_1(numeric_value: npt.NDArray[Any]) -> npt.NDArray[Any]:
     if np.nanmin(numeric_value) == 0 and np.nanmax(numeric_value) == 1:
         return numeric_value
 
@@ -465,7 +527,7 @@ def scale_strict_0_to_1(numeric_value):
     return scaled
 
 
-def scale_0_to_1(numeric_value):
+def scale_0_to_1(numeric_value: npt.NDArray[Any]) -> npt.NDArray[Any]:
     if 1 >= np.nanmax(numeric_value) > 0.9 and np.nanmin(numeric_value) == 0:
         return numeric_value
     elif np.nanmax(numeric_value) - np.nanmin(numeric_value) > 0.3:
@@ -474,13 +536,21 @@ def scale_0_to_1(numeric_value):
         return scale_strict_0_to_1(numeric_value)
 
 
-def apply_opacity(active, background, opacity):
+def apply_opacity(
+    active: npt.NDArray[Any], background: npt.NDArray[Any], opacity: float
+) -> npt.NDArray[Any]:
     if opacity > 1:
         opacity = opacity / 100
     return active * opacity + background * (1 - opacity)
 
 
-def normalize_image(visualization, image, min_norm, max_norm, normalization):
+def normalize_image(
+    visualization: Optional[str],
+    image: npt.NDArray[Any],
+    min_norm: float,
+    max_norm: float,
+    normalization: str,
+) -> Optional[npt.NDArray[Any]]:
     """Main function for normalization. Runs advanced normalization on the array and preforms special operations for
     some visualization types (e.g. invert scale for slope, scale for mhs, etc.).
     """
@@ -521,7 +591,13 @@ def normalize_image(visualization, image, min_norm, max_norm, normalization):
     return norm_image
 
 
-def cut_off_normalize(image, mode, cutoff_min=None, cutoff_max=None, bool_norm=True):
+def cut_off_normalize(
+    image: npt.NDArray[Any],
+    mode: str,
+    cutoff_min: Optional[float] = None,
+    cutoff_max: Optional[float] = None,
+    bool_norm: bool = True,
+) -> npt.NDArray[Any]:
     """
     One band image cut-off or normalization or both. Image is 2D np.ndarray of raster, mode is perc or value
     (min and max units), min and max are minimum value to cutoff and maximum value to cutoff.
@@ -549,6 +625,8 @@ def cut_off_normalize(image, mode, cutoff_min=None, cutoff_max=None, bool_norm=T
         cutoff_min = 0
     if cutoff_max is None and (mode.lower() == "perc" or mode.lower() == "percent"):
         cutoff_max = 0
+    assert cutoff_min is not None
+    assert cutoff_max is not None
     if bool_norm:
         if mode.lower() == "value":
             cut_off_arr = normalize_lin(cut_off_arr, cutoff_min, cutoff_max)
