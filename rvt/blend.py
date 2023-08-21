@@ -24,6 +24,7 @@ import datetime
 import json
 import os
 import warnings
+from pathlib import Path
 
 import numpy as np
 
@@ -32,7 +33,7 @@ import rvt.vis
 from rvt.blend_func import *
 
 
-def create_blender_file_example(file_path=None):
+def create_blender_file_example(file_path: Path = None):
     """Create blender .json file example (can be changed and read). Example is VAT - Archaeological combination"""
     data = {
         "combination": {
@@ -316,7 +317,7 @@ class BlenderCombination:
             layer_nr += 1
         return layers_info
 
-    def read_from_file(self, file_path):
+    def read_from_file(self, file_path: Path) -> None:
         """Reads class attributes from .json file."""
         # Example file (for file_path) in dir settings: blender_file_example.txt
         dat = open(file_path, "r")

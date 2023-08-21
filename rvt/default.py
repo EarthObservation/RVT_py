@@ -1181,11 +1181,15 @@ class DefaultValues:
         ]  # base name without extension
         return "{}_shadow_A{}_H{}.tif".format(dem_name, self.hs_sun_azi, self.hs_sun_el)
 
-    def get_shadow_path(self, dem_path: Path) -> str:
+    def get_shadow_path(self, dem_path: Path) -> Path:
         """Returns path to Shadow. Generates shadow name (uses default attributes and dem name from dem_path) and
         adds dem directory (dem_path) to it."""
-        return os.path.normpath(
-            os.path.join(os.path.dirname(dem_path), self.get_shadow_file_name(dem_path))
+        return Path(
+            os.path.normpath(
+                os.path.join(
+                    os.path.dirname(dem_path), self.get_shadow_file_name(dem_path)
+                )
+            )
         )
 
     def get_hillshade_file_name(self, dem_path: Path, bit8: bool = False) -> str:
@@ -1201,12 +1205,15 @@ class DefaultValues:
         else:
             return "{}_HS_A{}_H{}.tif".format(dem_name, self.hs_sun_azi, self.hs_sun_el)
 
-    def get_hillshade_path(self, dem_path: Path, bit8: bool = False) -> str:
+    def get_hillshade_path(self, dem_path: Path, bit8: bool = False) -> Path:
         """Returns path to Hillshade. Generates hillshade name (uses default attributes and dem name from dem_path) and
         adds dem directory (dem_path) to it. If bit8 it returns 8bit file path."""
-        return os.path.normpath(
-            os.path.join(
-                os.path.dirname(dem_path), self.get_hillshade_file_name(dem_path, bit8)
+        return Path(
+            os.path.normpath(
+                os.path.join(
+                    os.path.dirname(dem_path),
+                    self.get_hillshade_file_name(dem_path, bit8),
+                )
             )
         )
 
@@ -1221,12 +1228,14 @@ class DefaultValues:
         else:
             return "{}_SLOPE.tif".format(dem_name)
 
-    def get_slope_path(self, dem_path: Path, bit8: bool = False) -> str:
+    def get_slope_path(self, dem_path: Path, bit8: bool = False) -> Path:
         """Returns path to slope. Generates slope name and adds dem directory (dem_path) to it.
         If bit8 it returns 8bit file path."""
-        return os.path.normpath(
-            os.path.join(
-                os.path.dirname(dem_path), self.get_slope_file_name(dem_path, bit8)
+        return Path(
+            os.path.normpath(
+                os.path.join(
+                    os.path.dirname(dem_path), self.get_slope_file_name(dem_path, bit8)
+                )
             )
         )
 
@@ -1245,13 +1254,15 @@ class DefaultValues:
                 dem_name, self.mhs_nr_dir, self.mhs_sun_el
             )
 
-    def get_multi_hillshade_path(self, dem_path: Path, bit8: bool = False) -> str:
+    def get_multi_hillshade_path(self, dem_path: Path, bit8: bool = False) -> Path:
         """Returns path to Multiple directions hillshade. Generates multi hillshade name (uses default attributes and
         dem name from dem_path) and adds dem directory (dem_path) to it. If bit8 it returns 8bit file path."""
-        return os.path.normpath(
-            os.path.join(
-                os.path.dirname(dem_path),
-                self.get_multi_hillshade_file_name(dem_path, bit8),
+        return Path(
+            os.path.normpath(
+                os.path.join(
+                    os.path.dirname(dem_path),
+                    self.get_multi_hillshade_file_name(dem_path, bit8),
+                )
             )
         )
 
@@ -1266,12 +1277,14 @@ class DefaultValues:
         else:
             return "{}_SLRM_R{}.tif".format(dem_name, self.slrm_rad_cell)
 
-    def get_slrm_path(self, dem_path: Path, bit8: bool = False) -> str:
+    def get_slrm_path(self, dem_path: Path, bit8: bool = False) -> Path:
         """Returns path to Simple local relief model. Generates slrm name (uses default attributes and dem name from
         dem_path) and adds dem directory (dem_path) to it. If bit8 it returns 8bit file path."""
-        return os.path.normpath(
-            os.path.join(
-                os.path.dirname(dem_path), self.get_slrm_file_name(dem_path, bit8)
+        return Path(
+            os.path.normpath(
+                os.path.join(
+                    os.path.dirname(dem_path), self.get_slrm_file_name(dem_path, bit8)
+                )
             )
         )
 
@@ -1292,12 +1305,14 @@ class DefaultValues:
             out_name += "_8bit"
         return out_name + ".tif"
 
-    def get_svf_path(self, dem_path: Path, bit8: bool = False) -> str:
+    def get_svf_path(self, dem_path: Path, bit8: bool = False) -> Path:
         """Returns path to Sky-view factor. Generates svf name (uses default attributes and dem name from
         dem_path) and adds dem directory (dem_path) to it. If bit8 it returns 8bit file path."""
-        return os.path.normpath(
-            os.path.join(
-                os.path.dirname(dem_path), self.get_svf_file_name(dem_path, bit8)
+        return Path(
+            os.path.normpath(
+                os.path.join(
+                    os.path.dirname(dem_path), self.get_svf_file_name(dem_path, bit8)
+                )
             )
         )
 
@@ -1324,12 +1339,14 @@ class DefaultValues:
             out_name += "_8bit"
         return out_name + ".tif"
 
-    def get_asvf_path(self, dem_path: Path, bit8: bool = False) -> str:
+    def get_asvf_path(self, dem_path: Path, bit8: bool = False) -> Path:
         """Returns path to Anisotropic Sky-view factor. Generates asvf name (uses default attributes and dem name from
         dem_path) and adds dem directory (dem_path) to it. If bit8 it returns 8bit file path."""
-        return os.path.normpath(
-            os.path.join(
-                os.path.dirname(dem_path), self.get_asvf_file_name(dem_path, bit8)
+        return Path(
+            os.path.normpath(
+                os.path.join(
+                    os.path.dirname(dem_path), self.get_asvf_file_name(dem_path, bit8)
+                )
             )
         )
 
@@ -1352,12 +1369,14 @@ class DefaultValues:
             out_name += "_8bit"
         return out_name + ".tif"
 
-    def get_opns_path(self, dem_path: Path, bit8: bool = False) -> str:
+    def get_opns_path(self, dem_path: Path, bit8: bool = False) -> Path:
         """Returns path to Positive Openness. Generates pos opns name (uses default attributes and dem name from
         dem_path) and adds dem directory (dem_path) to it. If bit8 it returns 8bit file path."""
-        return os.path.normpath(
-            os.path.join(
-                os.path.dirname(dem_path), self.get_opns_file_name(dem_path, bit8)
+        return Path(
+            os.path.normpath(
+                os.path.join(
+                    os.path.dirname(dem_path), self.get_opns_file_name(dem_path, bit8)
+                )
             )
         )
 
@@ -1380,12 +1399,15 @@ class DefaultValues:
             out_name += "_8bit"
         return out_name + ".tif"
 
-    def get_neg_opns_path(self, dem_path: Path, bit8: bool = False) -> str:
+    def get_neg_opns_path(self, dem_path: Path, bit8: bool = False) -> Path:
         """Returns path to Negative Openness. Generates pos neg name (uses default attributes and dem name from
         dem_path) and adds dem directory (dem_path) to it. If bit8 it returns 8bit file path."""
-        return os.path.normpath(
-            os.path.join(
-                os.path.dirname(dem_path), self.get_neg_opns_file_name(dem_path, bit8)
+        return Path(
+            os.path.normpath(
+                os.path.join(
+                    os.path.dirname(dem_path),
+                    self.get_neg_opns_file_name(dem_path, bit8),
+                )
             )
         )
 
@@ -1404,13 +1426,15 @@ class DefaultValues:
                 dem_name, self.sim_sky_mod, self.sim_nr_dir, self.sim_shadow_dist
             )
 
-    def get_sky_illumination_path(self, dem_path: Path, bit8: bool = False) -> str:
+    def get_sky_illumination_path(self, dem_path: Path, bit8: bool = False) -> Path:
         """Returns path to Sky illumination. Generates sim name (uses default attributes and dem name from
         dem_path) and adds dem directory (dem_path) to it. If bit8 it returns 8bit file path."""
-        return os.path.normpath(
-            os.path.join(
-                os.path.dirname(dem_path),
-                self.get_sky_illumination_file_name(dem_path, bit8),
+        return Path(
+            os.path.normpath(
+                os.path.join(
+                    os.path.dirname(dem_path),
+                    self.get_sky_illumination_file_name(dem_path, bit8),
+                )
             )
         )
 
@@ -1439,13 +1463,15 @@ class DefaultValues:
                 self.ld_observer_h,
             )
 
-    def get_local_dominance_path(self, dem_path: Path, bit8: bool = False) -> str:
+    def get_local_dominance_path(self, dem_path: Path, bit8: bool = False) -> Path:
         """Returns path to Local dominance. Generates ld name (uses default attributes and dem name from
         dem_path) and adds dem directory (dem_path) to it. If bit8 it returns 8bit file path."""
-        return os.path.normpath(
-            os.path.join(
-                os.path.dirname(dem_path),
-                self.get_local_dominance_file_name(dem_path, bit8),
+        return Path(
+            os.path.normpath(
+                os.path.join(
+                    os.path.dirname(dem_path),
+                    self.get_local_dominance_file_name(dem_path, bit8),
+                )
             )
         )
 
@@ -1470,12 +1496,14 @@ class DefaultValues:
                 self.msrm_scaling_factor,
             )
 
-    def get_msrm_path(self, dem_path: Path, bit8: bool = False) -> str:
+    def get_msrm_path(self, dem_path: Path, bit8: bool = False) -> Path:
         """Returns path to Multi-scale relief model. Generates msrm name (uses default attributes and dem name from
         dem_path) and adds dem directory (dem_path) to it. If bit8 it returns 8bit file path."""
-        return os.path.normpath(
-            os.path.join(
-                os.path.dirname(dem_path), self.get_msrm_file_name(dem_path, bit8)
+        return Path(
+            os.path.normpath(
+                os.path.join(
+                    os.path.dirname(dem_path), self.get_msrm_file_name(dem_path, bit8)
+                )
             )
         )
 
@@ -1499,10 +1527,12 @@ class DefaultValues:
 
         return mstp_file_name
 
-    def get_mstp_path(self, dem_path: Path, bit8: bool = False) -> str:
-        return os.path.normpath(
-            os.path.join(
-                os.path.dirname(dem_path), self.get_mstp_file_name(dem_path, bit8)
+    def get_mstp_path(self, dem_path: Path, bit8: bool = False) -> Path:
+        return Path(
+            os.path.normpath(
+                os.path.join(
+                    os.path.dirname(dem_path), self.get_mstp_file_name(dem_path, bit8)
+                )
             )
         )
 
@@ -1560,63 +1590,75 @@ class DefaultValues:
     ) -> Path:
         """ "Return visualization path."""
         if rvt_visualization == rvt.default.RVTVisualization.SLOPE:
-            return output_dir_path / Path(
-                self.get_slope_file_name(dem_path=dem_path, bit8=path_8bit)
+            return output_dir_path / self.get_slope_file_name(
+                dem_path=dem_path, bit8=path_8bit
             )
+
         elif rvt_visualization == rvt.default.RVTVisualization.HILLSHADE:
-            return output_dir_path / Path(
-                self.get_hillshade_file_name(dem_path=dem_path, bit8=path_8bit)
+            return output_dir_path / self.get_hillshade_file_name(
+                dem_path=dem_path, bit8=path_8bit
             )
+
         elif rvt_visualization == rvt.default.RVTVisualization.SHADOW:
-            return output_dir_path / Path(self.get_shadow_file_name(dem_path=dem_path))
+            return output_dir_path / self.get_shadow_file_name(dem_path=dem_path)
         elif rvt_visualization == rvt.default.RVTVisualization.MULTI_HILLSHADE:
-            return output_dir_path / Path(
-                self.get_multi_hillshade_file_name(dem_path=dem_path, bit8=path_8bit)
+            return output_dir_path / self.get_multi_hillshade_file_name(
+                dem_path=dem_path, bit8=path_8bit
             )
+
         elif (
             rvt_visualization == rvt.default.RVTVisualization.SIMPLE_LOCAL_RELIEF_MODEL
         ):
-            return output_dir_path / Path(
-                self.get_slrm_file_name(dem_path=dem_path, bit8=path_8bit)
+            return output_dir_path / self.get_slrm_file_name(
+                dem_path=dem_path, bit8=path_8bit
             )
+
         elif rvt_visualization == rvt.default.RVTVisualization.SKY_VIEW_FACTOR:
-            return output_dir_path / Path(
-                self.get_svf_file_name(dem_path=dem_path, bit8=path_8bit)
+            return output_dir_path / self.get_svf_file_name(
+                dem_path=dem_path, bit8=path_8bit
             )
+
         elif (
             rvt_visualization
             == rvt.default.RVTVisualization.ANISOTROPIC_SKY_VIEW_FACTOR
         ):
-            return output_dir_path / Path(
-                self.get_asvf_file_name(dem_path=dem_path, bit8=path_8bit)
+            return output_dir_path / self.get_asvf_file_name(
+                dem_path=dem_path, bit8=path_8bit
             )
+
         elif rvt_visualization == rvt.default.RVTVisualization.POSITIVE_OPENNESS:
-            return output_dir_path / Path(
-                self.get_opns_file_name(dem_path=dem_path, bit8=path_8bit)
+            return output_dir_path / self.get_opns_file_name(
+                dem_path=dem_path, bit8=path_8bit
             )
+
         elif rvt_visualization == rvt.default.RVTVisualization.NEGATIVE_OPENNESS:
-            return output_dir_path / Path(
-                self.get_neg_opns_file_name(dem_path=dem_path, bit8=path_8bit)
+            return output_dir_path / self.get_neg_opns_file_name(
+                dem_path=dem_path, bit8=path_8bit
             )
+
         elif rvt_visualization == rvt.default.RVTVisualization.SKY_ILLUMINATION:
-            return output_dir_path / Path(
-                self.get_sky_illumination_file_name(dem_path=dem_path, bit8=path_8bit)
+            return output_dir_path / self.get_sky_illumination_file_name(
+                dem_path=dem_path, bit8=path_8bit
             )
+
         elif rvt_visualization == rvt.default.RVTVisualization.LOCAL_DOMINANCE:
-            return output_dir_path / Path(
-                self.get_local_dominance_file_name(dem_path=dem_path, bit8=path_8bit)
+            return output_dir_path / self.get_local_dominance_file_name(
+                dem_path=dem_path, bit8=path_8bit
             )
+
         elif rvt_visualization == rvt.default.RVTVisualization.MULTI_SCALE_RELIEF_MODEL:
-            return output_dir_path / Path(
-                self.get_msrm_file_name(dem_path=dem_path, bit8=path_8bit)
+            return output_dir_path / self.get_msrm_file_name(
+                dem_path=dem_path, bit8=path_8bit
             )
+
         elif (
             rvt_visualization
             == rvt.default.RVTVisualization.MULTI_SCALE_TOPOGRAPHIC_POSITION
         ):
-            return output_dir_path / Path(
-                self.get_mstp_file_name(dem_path=dem_path, bit8=path_8bit)
+            return output_dir_path / self.get_mstp_file_name(
+                dem_path=dem_path, bit8=path_8bit
             )
+
         else:
             raise ValueError(
                 f"Can't return visualization path for {rvt_visualization.name}!"
@@ -1877,10 +1919,8 @@ class DefaultValues:
             slope_path = self.get_slope_path(dem_path)
             slope_8bit_path = self.get_slope_path(dem_path, bit8=True)
         else:
-            slope_path = os.path.join(custom_dir, self.get_slope_file_name(dem_path))
-            slope_8bit_path = os.path.join(
-                custom_dir, self.get_slope_file_name(dem_path, bit8=True)
-            )
+            slope_path = custom_dir / self.get_slope_file_name(dem_path)
+            slope_8bit_path = custom_dir / self.get_slope_file_name(dem_path, bit8=True)
 
         # if file already exists and overwrite=0
         if save_float and save_8bit:
@@ -2020,13 +2060,11 @@ class DefaultValues:
             hillshade_8bit_path = self.get_hillshade_path(dem_path, bit8=True)
             shadow_path = self.get_shadow_path(dem_path)
         else:
-            hillshade_path = os.path.join(
-                custom_dir, self.get_hillshade_file_name(dem_path)
+            hillshade_path = custom_dir / self.get_hillshade_file_name(dem_path)
+            hillshade_8bit_path = custom_dir / self.get_hillshade_file_name(
+                dem_path, bit8=True
             )
-            hillshade_8bit_path = os.path.join(
-                custom_dir, self.get_hillshade_file_name(dem_path, bit8=True)
-            )
-            shadow_path = os.path.join(custom_dir, self.get_shadow_path(dem_path))
+            shadow_path = custom_dir / self.get_shadow_file_name(dem_path)
 
         # if file already exists and overwrite=0
         if save_float and save_8bit and save_shadow:
@@ -2187,11 +2225,11 @@ class DefaultValues:
                 dem_path, bit8=True
             )
         else:
-            multi_hillshade_path = os.path.join(
-                custom_dir, self.get_multi_hillshade_file_name(dem_path)
+            multi_hillshade_path = custom_dir / self.get_multi_hillshade_file_name(
+                dem_path
             )
-            multi_hillshade_8bit_path = os.path.join(
-                custom_dir, self.get_multi_hillshade_file_name(dem_path, bit8=True)
+            multi_hillshade_8bit_path = custom_dir / self.get_multi_hillshade_file_name(
+                dem_path, bit8=True
             )
 
         # if file already exists and overwrite=0
@@ -2311,10 +2349,8 @@ class DefaultValues:
             slrm_path = self.get_slrm_path(dem_path)
             slrm_8bit_path = self.get_slrm_path(dem_path, bit8=True)
         else:
-            slrm_path = os.path.join(custom_dir, self.get_slrm_file_name(dem_path))
-            slrm_8bit_path = os.path.join(
-                custom_dir, self.get_slrm_file_name(dem_path, bit8=True)
-            )
+            slrm_path = custom_dir / self.get_slrm_file_name(dem_path)
+            slrm_8bit_path = custom_dir / self.get_slrm_file_name(dem_path, bit8=True)
 
         # if file already exists and overwrite=0
         if save_float and save_8bit:
@@ -2437,12 +2473,12 @@ class DefaultValues:
                 "rvt.default.DefaultValues.save_sky_view_factor: dem_path doesn't exist!"
             )
 
-        svf_path = ""
-        asvf_path = ""
-        opns_path = ""
-        svf_8bit_path = ""
-        asvf_8bit_path = ""
-        opns_8bit_path = ""
+        svf_path = Path()
+        asvf_path = Path()
+        opns_path = Path()
+        svf_8bit_path = Path()
+        asvf_8bit_path = Path()
+        opns_8bit_path = Path()
         if custom_dir is None:
             if save_svf:
                 svf_path = self.get_svf_path(dem_path)
@@ -2455,19 +2491,17 @@ class DefaultValues:
                 opns_8bit_path = self.get_opns_path(dem_path, bit8=True)
         else:
             if save_svf:
-                svf_path = os.path.join(custom_dir, self.get_svf_file_name(dem_path))
-                svf_8bit_path = os.path.join(
-                    custom_dir, self.get_svf_file_name(dem_path, bit8=True)
-                )
+                svf_path = custom_dir / self.get_svf_file_name(dem_path)
+                svf_8bit_path = custom_dir / self.get_svf_file_name(dem_path, bit8=True)
             if save_asvf:
-                asvf_path = os.path.join(custom_dir, self.get_asvf_file_name(dem_path))
-                asvf_8bit_path = os.path.join(
-                    custom_dir, self.get_asvf_file_name(dem_path, bit8=True)
+                asvf_path = custom_dir / self.get_asvf_file_name(dem_path)
+                asvf_8bit_path = custom_dir / self.get_asvf_file_name(
+                    dem_path, bit8=True
                 )
             if save_opns:
-                opns_path = os.path.join(custom_dir, self.get_opns_file_name(dem_path))
-                opns_8bit_path = os.path.join(
-                    custom_dir, self.get_opns_file_name(dem_path, bit8=True)
+                opns_path = custom_dir / self.get_opns_file_name(dem_path)
+                opns_8bit_path = custom_dir / self.get_opns_file_name(
+                    dem_path, bit8=True
                 )
 
         # if file already exists and overwrite=0
@@ -2690,11 +2724,9 @@ class DefaultValues:
             neg_opns_path = self.get_neg_opns_path(dem_path)
             neg_opns_8bit_path = self.get_neg_opns_path(dem_path, bit8=True)
         else:
-            neg_opns_path = os.path.join(
-                custom_dir, self.get_neg_opns_file_name(dem_path)
-            )
-            neg_opns_8bit_path = os.path.join(
-                custom_dir, self.get_neg_opns_file_name(dem_path, bit8=True)
+            neg_opns_path = custom_dir / self.get_neg_opns_file_name(dem_path)
+            neg_opns_8bit_path = custom_dir / self.get_neg_opns_file_name(
+                dem_path, bit8=True
             )
 
         # if file already exists and overwrite=0
@@ -2783,7 +2815,7 @@ class DefaultValues:
             ve_factor=self.ve_factor,
             no_data=no_data,
         )
-        return sky_illumination_arr
+        return sky_illumination_arr  # type: ignore
 
     def save_sky_illumination(
         self,
@@ -2820,11 +2852,11 @@ class DefaultValues:
                 dem_path, bit8=True
             )
         else:
-            sky_illumination_path = os.path.join(
-                custom_dir, self.get_sky_illumination_file_name(dem_path)
+            sky_illumination_path = custom_dir / self.get_sky_illumination_file_name(
+                dem_path
             )
-            sky_illumination_8bit_path = os.path.join(
-                custom_dir, self.get_sky_illumination_file_name(dem_path, bit8=True)
+            sky_illumination_8bit_path = (
+                custom_dir / self.get_sky_illumination_file_name(dem_path, bit8=True)
             )
 
         # if file already exists and overwrite=0
@@ -3958,8 +3990,12 @@ def get_raster_size(raster_path: Path, band_number: int = 1) -> Tuple[float, flo
 
 
 def save_raster(
-    src_raster_path, out_raster_path, out_raster_arr: np.ndarray, no_data=None, e_type=6
-):
+    src_raster_path: Path,
+    out_raster_path: Path,
+    out_raster_arr: npt.NDArray[Any],
+    no_data: Optional[float] = None,
+    e_type: int = 6,
+) -> None:
     """Saves raster array (out_rast_arr) to out_raster_path (GTiff), using src_rast_path information.
 
     Parameters
