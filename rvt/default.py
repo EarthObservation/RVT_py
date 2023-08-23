@@ -2979,11 +2979,11 @@ class DefaultValues:
                 dem_path, bit8=True
             )
         else:
-            local_dominance_path = os.path.join(
-                custom_dir, self.get_local_dominance_file_name(dem_path)
+            local_dominance_path = custom_dir / self.get_local_dominance_file_name(
+                dem_path
             )
-            local_dominance_8bit_path = os.path.join(
-                custom_dir, self.get_local_dominance_file_name(dem_path, bit8=True)
+            local_dominance_8bit_path = custom_dir / self.get_local_dominance_file_name(
+                dem_path, bit8=True
             )
 
         # if file already exists and overwrite=0
@@ -3103,10 +3103,8 @@ class DefaultValues:
             msrm_path = self.get_msrm_path(dem_path)
             msrm_8bit_path = self.get_msrm_path(dem_path, bit8=True)
         else:
-            msrm_path = os.path.join(custom_dir, self.get_msrm_file_name(dem_path))
-            msrm_8bit_path = os.path.join(
-                custom_dir, self.get_msrm_file_name(dem_path, bit8=True)
-            )
+            msrm_path = custom_dir / self.get_msrm_file_name(dem_path)
+            msrm_8bit_path = custom_dir / self.get_msrm_file_name(dem_path, bit8=True)
 
         # if file already exists and overwrite=0
         if save_float and save_8bit:
@@ -3222,10 +3220,8 @@ class DefaultValues:
             mstp_path = self.get_mstp_path(dem_path)
             mstp_8bit_path = self.get_mstp_path(dem_path, bit8=True)
         else:
-            mstp_path = os.path.join(custom_dir, self.get_mstp_file_name(dem_path))
-            mstp_8bit_path = os.path.join(
-                custom_dir, self.get_mstp_file_name(dem_path, bit8=True)
-            )
+            mstp_path = custom_dir / self.get_mstp_file_name(dem_path)
+            mstp_8bit_path = custom_dir / self.get_mstp_file_name(dem_path, bit8=True)
 
         # if file already exists and overwrite=0
         if save_float and save_8bit:

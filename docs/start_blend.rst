@@ -179,7 +179,7 @@ Automatic blending is blending from a configuration ``JSON`` file. You can creat
     # for example default.hs_sun_el=40
 
     # read the JSON combination configuration file
-    combination_auto.read_from_file(file_path=blender_combination_path)
+    combination_auto.read_from_json_file(file_path=blender_combination_path)
 
     # needed when save_visualizations is True and save_render_path is not None
     layers_auto.add_dem_path(input_dem_path)

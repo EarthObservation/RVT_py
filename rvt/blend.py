@@ -20,11 +20,15 @@ Copyright:
 
 # TODO: more testing, find and fix bugs if they exists
 
+from __future__ import annotations
 import datetime
 import json
 import os
 import warnings
+from copy import copy
+from dataclasses import dataclass
 from pathlib import Path
+from typing import List, Union
 
 import numpy as np
 
@@ -33,7 +37,7 @@ import rvt.vis
 from rvt.blend_func import *
 
 
-def create_blender_file_example(file_path: Path = None):
+def create_blender_file_example(file_path: Path = None) -> None:
     """Create blender .json file example (can be changed and read). Example is VAT - Archaeological combination"""
     data = {
         "combination": {
@@ -80,7 +84,7 @@ def create_blender_file_example(file_path: Path = None):
         }
     }
     if file_path is None:
-        file_path = r"settings\blender_file_example.json"
+        file_path = Path(__file__) / "settings/blender_file_example.json"
         if os.path.isfile(file_path):
             pass
         else:
@@ -92,7 +96,7 @@ def create_blender_file_example(file_path: Path = None):
     dat.close()
 
 
-class BlenderLayer:
+class BlenderLayer:  # TODO: use dataclass instead
     """
     Class which define layer for blending. BlenderLayer is basic element in BlenderCombination.layers list.
 
@@ -124,19 +128,21 @@ class BlenderLayer:
         Visualization raster. Leave None if you would like for blender to compute it.
     """
 
-    def __init__(
+    def __init__(  # TODO: Remove that elements can be optional
         self,
-        vis_method=None,
-        normalization="value",
-        minimum=None,
-        maximum=None,
-        blend_mode="normal",
-        opacity=100,
-        colormap=None,
-        min_colormap_cut=None,
-        max_colormap_cut=None,
-        image=None,
-        image_path=None,
+        vis_method: Optional[str] = None,
+        normalization: Optional[str] = "value",
+        minimum: Optional[float] = None,
+        maximum: Optional[float] = None,
+        blend_mode: Optional[str] = "normal",
+        opacity: Optional[int] = 100,
+        colormap: Optional[str] = None,
+        min_colormap_cut: Optional[float] = None,
+        max_colormap_cut: Optional[float] = None,
+        image: Optional[
+            npt.NDArray[Any]
+        ] = None,  # TODO: use Union [npt.NDArray, Path] and remove image_path
+        image_path: Optional[Path] = None,
     ):
         self.vis = vis_method
         self.normalization = normalization
@@ -150,7 +156,11 @@ class BlenderLayer:
         self.image_path = image_path
         self.image = image
 
-    def check_data(self):
+    def __str__(self) -> str:
+        values_dictionary = self.__dict__
+        return ', '.join([f"{key} = {value}" for key, value in values_dictionary])
+
+    def check_data(self) -> None:  # TODO: move to post init
         """Check Attributes"""
         if self.normalization == "percent":
             self.normalization = "perc"
@@ -168,25 +178,26 @@ class BlenderLayer:
             self.image = (
                 None  # leave None if you wish for blender to compute visualization
             )
+
             self.image_path = (
                 None  # leave None if you wish for blender to compute visualization
             )
         else:
+            assert self.normalization is not None
             if not (
                 self.normalization.lower() == "value"
                 or self.normalization.lower() == "perc"
             ):
-                raise Exception(
-                    "rvt.blend.BlenderLayer.check_data: normalization value incorrect!"
+                raise ValueError(
+                    f"Normalization {self.normalization} incorrect! "
                 )
             if self.normalization.lower() == "perc" and (self.min + self.max) >= 100:
-                raise Exception(
-                    "rvt.blend.BlenderLayer.check_data: when normalization is perc, min + max has "
-                    "to smaller then 100%!"
+                raise ValueError(
+                    "When normalization is perc, min + max has to smaller then 100%!"
                 )
             if self.min > self.max and self.normalization.lower() == "value":
-                raise Exception(
-                    "rvt.blend.BlenderLayer.check_data: min bigger than max!"
+                raise ValueError(
+                    "Min bigger than max!"
                 )
             if (
                 self.blend_mode.lower() != "normal"
@@ -196,19 +207,18 @@ class BlenderLayer:
                 and self.blend_mode.lower() != "screen"
                 and self.blend_mode.lower() != "soft_light"
             ):
-                raise Exception(
-                    "rvt.blend.BlenderLayer.check_data: blend_mode incorrect!"
+                raise ValueError(
+                    "blend_mode incorrect!"
                 )
             if 0 > self.opacity > 100:
-                raise Exception(
-                    "rvt.blend.BlenderLayer.check_data: opacity incorrect [0-100]!"
+                raise ValueError(
+                    f"Opacity incorrect {self.opacity} it should be between [0-100]!"
                 )
             if self.colormap is None and (
                 self.min_colormap_cut is not None or self.max_colormap_cut is not None
             ):
-                raise Exception(
-                    "rvt.blend.BlenderLayer.check_data: colormap not defined but min_colormap_cut or "
-                    "max_colormap_cut are!"
+                raise ValueError(
+                    "Colormap not defined but min_colormap_cut or max_colormap_cut are!"
                 )
             if self.image is None and self.image_path is None:
                 if (
@@ -226,45 +236,22 @@ class BlenderLayer:
                     and self.vis.lower() != "multi-scale relief model"
                     and self.vis.lower() != "multi-scale topographic position"
                 ):
-                    raise Exception(
-                        "rvt.blend.BlenderLayer.check_data: Incorrect vis, if you don't input image or "
+                    raise ValueError(
+                        "Incorrect vis, if you don't input image or "
                         "image_path you have to input known visualization method (vis)!"
                     )
 
-
+@dataclass
 class BlenderCombination:
     """
     Class for storing layers (rasters, parameters  for blending) and rendering(blending) into blended raster.
-
-    Attributes
-    ----------
-    dem_arr : np.array (2D)
-        Array with DEM data, needed for calculating visualization functions in memory.
-    dem_path : str
-        Path to DEM, needed for calculating visualization functions and saving them.
-    name : str
-        Name of BlenderCombination combination.
-    layers : [BlenderLayer]
-        List of BlenderLayer instances which will be blended together.
     """
+    dem: Union[npt.NDArray[Any], Path]
+    dem_resolution: float
+    name: str = ""
+    layers: List[BlenderLayer] = []
 
-    def __init__(self, dem_arr=None, dem_resolution=None, dem_path=None):
-        self.dem_arr = dem_arr
-        self.dem_resolution = dem_resolution
-        self.dem_path = dem_path
-        self.name = ""
-        self.layers = []
-
-    def add_dem_arr(self, dem_arr, dem_resolution):
-        """Add or change dem_arr attribute and its resolution dem_resolution attribute."""
-        self.dem_arr = dem_arr
-        self.dem_resolution = dem_resolution
-
-    def add_dem_path(self, dem_path):
-        """Add or change dem_path attribute."""
-        self.dem_path = dem_path
-
-    def create_layer(
+    def create_layer(  # TODO: Adapt when you change layer
         self,
         vis_method=None,
         normalization="value",
@@ -295,41 +282,42 @@ class BlenderCombination:
             )
             self.layers.append(layer)
 
-    def add_layer(self, layer: BlenderLayer):
-        """Add BlenderLayer instance to layers attribute."""
+    def add_layer(self, layer: BlenderLayer) -> BlenderCombination:
+        blender_combination = copy(self)
         if layer.vis is not None:
-            self.layers.append(layer)
+            blender_combination.layers.append(layer)
+        return blender_combination
 
-    def remove_all_layers(self):
-        """Empties layers attribute."""
-        self.layers = []
+    def remove_all_layers(self) -> BlenderCombination:
+        blender_combination = copy(self)
+        blender_combination.layers = []
+        return blender_combination
 
-    def layers_info(self):
+    def get_layers_info(self) -> List[str]:
         layer_nr = 1
         layers_info = []
         for layer in self.layers:
             layers_info.append(
-                f"layer {layer_nr}, visualization = {layer.vis}, normalization = {layer.normalization},"
-                f" min = {layer.min}, max = {layer.max}, blend_mode = {layer.blend_mode}, opacity = {layer.opacity},"
-                f" colormap = {layer.colormap}, min_colormap_cut = {layer.min_colormap_cut},"
-                f" max_colormap_cut = {layer.max_colormap_cut}"
+                f"layer {layer_nr}, " + str(layer)
             )
             layer_nr += 1
         return layers_info
 
-    def read_from_file(self, file_path: Path) -> None:
+    @staticmethod
+    def read_from_json_file(file_path: Path) -> BlenderCombination:
         """Reads class attributes from .json file."""
         # Example file (for file_path) in dir settings: blender_file_example.txt
-        dat = open(file_path, "r")
-        json_data = json.load(dat)
-        self.read_from_json(json_data)
-        dat.close()
+        with open(file_path, "r") as file:
+            json_data = json.load(file)
+        return BlenderCombination.read_from_json(json_data)
 
-    def read_from_json(self, json_data):
+
+    @staticmethod
+    def read_from_json(dem: Union[Path, npt.NDArray[Any]], dem_resolution: float, layers_json_data: Dict[str, Any]) -> BlenderCombination:
         """Fill class attributes with json data."""
-        self.layers = []
-        self.name = json_data["combination"]["name"]
-        layers_data = json_data["combination"]["layers"]
+        layers = []
+        name = layers_json_data["combination"]["name"]
+        layers_data = layers_json_data["combination"]["layers"]
         for layer in layers_data:
             if layer["visualization_method"] is None:
                 continue
@@ -374,7 +362,7 @@ class BlenderCombination:
                 except:
                     max_colormap_cut = None
 
-            self.add_layer(
+            layers.append(
                 BlenderLayer(
                     vis_method=vis_method,
                     normalization=norm,
@@ -387,8 +375,9 @@ class BlenderCombination:
                     max_colormap_cut=max_colormap_cut,
                 )
             )
+        return BlenderCombination(dem=dem, dem_resolution=, name=name, layers=layers)
 
-    def save_to_file(self, file_path):
+    def save_to_json_file(self, file_path: Path) -> None:
         """Save layers (manually) to .json file. Parameters image and image_path in each layer have to be None,
         visualization has to be correct!"""
         json_data = self.to_json()
@@ -396,7 +385,7 @@ class BlenderCombination:
         dat.write(json.dumps(json_data, indent=4))
         dat.close()
 
-    def to_json(self):
+    def to_json(self) -> Dict[str, Any]:  # TODO: YOU STAYED HERE ZIM
         """Outputs class attributes as json."""
         json_data = {"combination": {"name": self.name, "layers": []}}
         i_layer = 1
@@ -1229,59 +1218,48 @@ def compare_2_combinations(
     return True
 
 
+@dataclass
 class BlenderCombinations:
-    """
-    Class for storing combinations.
+    combinations: List[BlenderCombination] = []
 
-    Attributes
-    ----------
-    combinations : [BlenderCombination]
-        List of BlenderCombination instances.
-    """
-
-    def __init__(self):
-        self.combinations = []  # list of BlenderCombination
-
-    def add_combination(self, combination: BlenderCombination, name=None):
+    def add_combination(self, combination: BlenderCombination) -> BlenderCombinations:
         """Adds combination if parameter name not None it renames combination."""
-        if name is not None:
-            combination.name = name
-        self.combinations.append(combination)
+        blender_combinations = copy(self)
+        blender_combinations.combinations.append(combination)
+        return blender_combinations
 
-    def remove_all_combinations(self):
-        """Removes all combinations from self.combinations."""
-        self.combinations = []
+    def remove_all_combinations(self) -> BlenderCombinations:
+        """Removes all combinations."""
+        blender_combinations = copy(self)
+        blender_combinations.combinations = []
+        return blender_combinations
 
-    def select_combination_by_name(self, name):
-        """Select first combination where self.combinations.BlenderCombination.name = name."""
+    def get_combination_by_name(self, name: str) -> BlenderCombination:
+        """Select first combination with defined name."""
         for combination in self.combinations:
             if combination.name == name:
                 return combination
+        raise ValueError(f"Combination with name {name} doesn't exist!")
 
-    def remove_combination_by_name(self, name):
-        """Removes all combinations where self.combinations.BlenderCombination.name = name.
-        If combinations list is empty function returns 0, else 1."""
-        new_combinations = []
-        for combination in self.combinations:
-            if combination.name != name:
-                new_combinations.append(combination)
-        self.combinations = new_combinations
-        if not new_combinations:
-            return 0
-        else:
-            return 1
+    def remove_combination_by_name(self, name) -> BlenderCombinations:
+        """Removes all combinations with defined name."""
+        blender_combinations = copy(self)
+        blender_combinations.combinations = [combination for combination in self.combinations if combination.name != name]
+        return blender_combinations
 
-    def read_from_file(self, file_path):
+    @staticmethod
+    def read_from_file(file_path: Path) -> BlenderCombinations:
         """Reads combinations from .json file."""
-        self.combinations = []
-        dat = open(file_path, "r")
-        json_data = json.load(dat)
+        blender_combinations = []
+        with open(file_path, "r") as file:
+            json_data = json.load(file)
         combinations_data = json_data["combinations"]
         for combination_data in combinations_data:
-            combination = BlenderCombination()
-            combination.read_from_json(combination_data)
-            self.combinations.append(combination)
-        dat.close()
+            blender_combination = BlenderCombination().read_from_json(combination_data)
+            blender_combinations.append(blender_combination)
+
+        return BlenderCombinations(combinations=blender_combinations)
+
 
     def save_to_file(self, file_path):
         """Saves combination to .json file."""
@@ -1311,7 +1289,7 @@ class BlenderCombinations:
 class TerrainSettings:
     """Terrain settings for GUI."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.name = None
         # slope gradient
         self.slp_output_units = None
@@ -1376,7 +1354,7 @@ class TerrainSettings:
         self.read_from_json(json_data)
         dat.close()
 
-    def read_from_json(self, json_data):
+    def read_from_json(self, json_data: Dict[str, Any]) -> None:  # TODO return TerrainSettings object
         """Reads json dict and fills self attributes."""
         self.__init__()
         terrain_data = json_data["terrain_settings"]
@@ -1680,7 +1658,7 @@ class TerrainSettings:
 
     def apply_terrain(
         self, default: rvt.default.DefaultValues, combination: BlenderCombination
-    ):
+    ) -> None:  # TODO: return TerrainSettings
         """It overwrites default (DefaultValues) and combination (BlenderCombination),
         with self values that are not None."""
         if self.slp_output_units is not None:
@@ -1807,13 +1785,13 @@ class TerrainSettings:
                 layer.max = self.mstp_stretch[1]
 
 
-class TerrainsSettings:
+class TerrainsSettings:  # TODO: Use data class
     """Multiple Terrain settings."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.terrains_settings = []
 
-    def read_from_file(self, file_path):
+    def read_from_file(self, file_path: Path) -> None:  # TODO: return TerrainSettings
         """Reads combinations from .json file."""
         dat = open(file_path, "r")
         json_data = json.load(dat)
@@ -1824,23 +1802,24 @@ class TerrainsSettings:
             self.terrains_settings.append(terrain_settings)
         dat.close()
 
-    def select_terrain_settings_by_name(self, name):
+    def select_terrain_settings_by_name(self, name: str) -> TerrainSettings:
         """Select first combination where self.combinations.BlenderCombination.name = name."""
         for terrain_setting in self.terrains_settings:
             if terrain_setting.name == name:
                 return terrain_setting
+        raise ValueError(f"There is no terrain settings with name {name}")
 
 
 # Advance blending combinations
 def color_relief_image_map(
-    dem,
-    resolution,
+    dem: npt.NDArray[Any],
+    resolution: float,
     default: rvt.default.DefaultValues = rvt.default.DefaultValues(),
-    colormap="OrRd",
-    min_colormap_cut=0,
-    max_colormap_cut=1,
-    no_data=None,
-):
+    colormap: str="OrRd",
+    min_colormap_cut: float=0,
+    max_colormap_cut: float=1,
+    no_data: Optional[float]=None,
+) -> npt.NDArray[Any]:
     """
     RVT Color relief image map (CRIM)
     Blending combination where layers are:
@@ -1940,11 +1919,11 @@ def color_relief_image_map(
 
 
 def e3mstp(
-    dem,
-    resolution,
+    dem: npt.NDArray[Any],
+    resolution: float,
     default: rvt.default.DefaultValues = rvt.default.DefaultValues(),
-    no_data=None,
-):
+    no_data: Optional[float]=None,
+) -> npt.NDArray[Any]:
     """
     RVT enhanced version 3 Multi-scale topographic position (e3MSTP)
     Blending combination where layers are:

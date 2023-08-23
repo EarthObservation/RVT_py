@@ -52,7 +52,7 @@ render_arr = layers_manual.render_all_images(save_render_path=output_blend_path)
 
 # you can save layers combination to .json file, be aware image and image_path won't be saved
 # this is a problem when vis_method is non rvt visualization(is not correct)!
-layers_manual.save_to_file(r"settings\blender_custom_layers.json")
+layers_manual.save_to_json_file(r"settings\blender_custom_layers.json")
 
 #####
 
@@ -66,7 +66,7 @@ output_blend_path = r"test_data\TM1_564_146_test_blend_automatic.tif"
 layers_auto = rvt.blend.BlenderCombination()
 default = rvt.default.DefaultValues()
 default.read_default_from_file(r"settings\default_settings.json")
-layers_auto.read_from_file(file_path=blender_file)  # build BlenderCombination from file
+layers_auto.read_from_json_file(file_path=blender_file)  # build BlenderCombination from file
 # when building_blender from file single BlenderLayer image and image_path are None
 layers_auto.add_dem_path(input_dem_path)  # needed when save_visualizations is True and save_rander_path is not None
 # render_all_images reads images simultaneously if layer (BlenderLayer) image is None and image_path is None it

@@ -60,8 +60,8 @@ def combined_VAT(input_dir_path, output_dir_path, general_opacity, vat_combinati
     vat_combination_2 = rvt.blend.BlenderCombination()  # VAT flat
 
     # read combination from JSON
-    vat_combination_1.read_from_file(vat_combination_json_path)
-    vat_combination_2.read_from_file(vat_combination_json_path)
+    vat_combination_1.read_from_json_file(vat_combination_json_path)
+    vat_combination_2.read_from_json_file(vat_combination_json_path)
 
     # create terrains settings and read it from JSON
     terrains_settings = rvt.blend.TerrainsSettings()
