@@ -1,4 +1,4 @@
-import rvt.vis
+import rvt.visualizations
 import rvt.default
 import numpy as np
 import time

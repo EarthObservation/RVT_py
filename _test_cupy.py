@@ -1,5 +1,5 @@
 import cupy as cp
-import rvt.vis
+import rvt.visualizations
 import rasterio as rio
 import time
 import numpy as np

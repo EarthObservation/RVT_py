@@ -1,7 +1,7 @@
 import rvt.default
-import rvt.blend_func
-import rvt.blend
-import rvt.vis
+import rvt.blender_functions
+import rvt.blender
+import rvt.visualizations
 import numpy as np
 
 

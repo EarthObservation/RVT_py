@@ -1,8 +1,8 @@
 # rvt.blend quick TEST
 
 import rvt.default
-import rvt.vis
-import rvt.blend
+import rvt.visualizations
+import rvt.blender
 import numpy as np
 
 # test blend combination archeological (VAT), general

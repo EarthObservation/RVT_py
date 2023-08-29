@@ -2,8 +2,8 @@
 
 import rasterio as rio
 from rasterio.enums import ColorInterp
-import rvt.vis
-import rvt.blend
+import rvt.visualizations
+import rvt.blender
 import numpy as np
 
 

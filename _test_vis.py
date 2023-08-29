@@ -3,7 +3,7 @@
 
 import time
 import rasterio as rio
-import rvt.vis
+import rvt.visualizations
 import numpy as np
 
 

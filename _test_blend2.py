@@ -1,8 +1,8 @@
 # simple blending test
 
 import rvt.default
-import rvt.vis
-import rvt.blend
+import rvt.visualizations
+import rvt.blender
 
 layers = rvt.blend.BlenderCombination()
 input_dem_path = r"test_data\TM1_564_146.tif"

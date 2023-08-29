@@ -1,6 +1,6 @@
 from pathlib import Path
 import rvt.tile
-import rvt.vis
+import rvt.visualizations
 import rvt.default
 import numpy as np
 

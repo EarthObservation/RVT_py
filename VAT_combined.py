@@ -14,8 +14,8 @@ Parameters are:
     save_VAT_general (if saves VAT general)
     save_VAT_flat (if saves VAT flat)
 """
-import rvt.vis
-import rvt.blend
+import rvt.visualizations
+import rvt.blender
 import rvt.default
 import os
 import multiprocessing as mp

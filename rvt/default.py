@@ -1,31 +1,16 @@
 """
-Relief Visualization Toolbox – Visualization Functions
-
-Contains all default values for visualisation functions, which can be changed.
-Allows computing from rvt.visualization with using defined default values and saving
-output rasters with default names (dependent on default values).
-
-Credits:
-    Žiga Kokalj (ziga.kokalj@zrc-sazu.si)
-    Krištof Oštir (kristof.ostir@fgg.uni-lj.si)
-    Klemen Zakšek
-    Peter Pehani
-    Klemen Čotar
-    Maja Somrak
-    Žiga Maroh
-    Nejc Čož
-
 Copyright:
-    2010-2022 Research Centre of the Slovenian Academy of Sciences and Arts
-    2016-2022 University of Ljubljana, Faculty of Civil and Geodetic Engineering
+    2010-2023 Research Centre of the Slovenian Academy of Sciences and Arts
+    2016-2023 University of Ljubljana, Faculty of Civil and Geodetic Engineering
 """
 import warnings
+from dataclasses import dataclass
 from enum import Enum
 from pathlib import Path
 from typing import Optional, Tuple, Any, Dict
 
-import rvt.vis
-import rvt.blend_func
+import rvt.visualizations
+import rvt.blender_functions
 import rvt.tile
 import os
 from osgeo import gdal
@@ -52,9 +37,9 @@ class RVTVisualization(Enum):
     MULTI_SCALE_TOPOGRAPHIC_POSITION = "mstp"
 
 
-class DefaultValues:
+@dataclass
+class DefaultValues:  # TODO: Rename to something better like Visualizer or VisualizationFactory or smth else
     """
-    Class which define layer for blending. BlenderLayer is basic element in BlenderCombination.layers list.
 
     Attributes
     ----------
@@ -228,106 +213,105 @@ class DefaultValues:
         Size of single tile when saving tile by tile.
     """
 
-    def __init__(self) -> None:
-        self.overwrite = 0  # (0=False, 1=True)
-        self.ve_factor = 1.0
-        # slope gradient
-        self.slp_compute = 0
-        self.slp_output_units = "degree"
-        # hillshade
-        self.hs_compute = 1
-        self.hs_sun_azi = 315
-        self.hs_sun_el = 35
-        self.hs_shadow = 0
-        # multi hillshade
-        self.mhs_compute = 0
-        self.mhs_nr_dir = 16
-        self.mhs_sun_el = 35
-        # simple local relief model
-        self.slrm_compute = 0
-        self.slrm_rad_cell = 20
-        # sky view factor
-        self.svf_compute = 0
-        self.svf_n_dir = 16
-        self.svf_r_max = 10
-        self.svf_noise = 0
-        # anisotropic sky-view factor
-        self.asvf_compute = 0
-        self.asvf_dir = 315
-        self.asvf_level = 1
-        # positive openness
-        self.pos_opns_compute = 0
-        # negative openness
-        self.neg_opns_compute = 0
-        # sky_illum
-        self.sim_compute = 0
-        self.sim_sky_mod = "overcast"
-        self.sim_compute_shadow = 0
-        self.sim_shadow_dist = 100
-        self.sim_nr_dir = 32
-        self.sim_shadow_az = 315
-        self.sim_shadow_el = 35
-        # local dominance
-        self.ld_compute = 0
-        self.ld_min_rad = 10
-        self.ld_max_rad = 20
-        self.ld_rad_inc = 1
-        self.ld_anglr_res = 15
-        self.ld_observer_h = 1.7
-        # multi-scale relief model
-        self.msrm_compute = 0
-        self.msrm_feature_min = 0.0
-        self.msrm_feature_max = 20.0
-        self.msrm_scaling_factor = 2
-        # multi-scale topographic position
-        self.mstp_compute = 0
-        self.mstp_local_scale = (3, 21, 2)
-        self.mstp_meso_scale = (23, 203, 18)
-        self.mstp_broad_scale = (223, 2023, 180)
-        self.mstp_lightness = 1.2
-        # save float
-        self.slp_save_float = 1
-        self.hs_save_float = 1
-        self.mhs_save_float = 1
-        self.slrm_save_float = 1
-        self.svf_save_float = 1
-        self.neg_opns_save_float = 1
-        self.sim_save_float = 1
-        self.ld_save_float = 1
-        self.msrm_save_float = 1
-        self.mstp_save_float = 1
-        # save 8bit
-        self.slp_save_8bit = 0
-        self.hs_save_8bit = 0
-        self.mhs_save_8bit = 0
-        self.slrm_save_8bit = 0
-        self.svf_save_8bit = 0
-        self.neg_opns_save_8bit = 0
-        self.sim_save_8bit = 0
-        self.ld_save_8bit = 0
-        self.msrm_save_8bit = 0
-        self.mstp_save_8bit = 0
-        # 8-bit bytescale parameters
-        self.slp_bytscl = ("value", 0.00, 51.00)
-        self.hs_bytscl = ("value", 0.00, 1.00)
-        self.mhs_bytscl = ("value", 0.00, 1.00)
-        self.slrm_bytscl = ("value", -2.00, 2.00)
-        self.svf_bytscl = ("value", 0.6375, 1.00)
-        self.asvf_bytscl = ("value", 0.70, 0.90)
-        self.pos_opns_bytscl = ("value", 60.00, 95.00)
-        self.neg_opns_bytscl = ("value", 60.00, 95.00)
-        self.sim_bytscl = ("percent", 0.25, 0.00)
-        self.ld_bytscl = ("value", 0.50, 1.80)
-        self.msrm_bytscl = ("value", -2.50, 2.50)
-        self.mstp_bytscl = ("value", 0.00, 1.00)
-        # tile
-        self.tile_size_limit = (
-            10000 * 10000
-        )  # if arr size > tile_size limit, it uses tile module
-        self.tile_size = (
-            4000,
-            4000,
-        )  # size of single tile when using tile module (x_size, y_size)
+    overwrite: bool = False
+    ve_factor: float = 1.0
+    # slope gradient
+    self.slp_compute = 0
+    self.slp_output_units = "degree"
+    # hillshade
+    self.hs_compute = 1
+    self.hs_sun_azi = 315
+    self.hs_sun_el = 35
+    self.hs_shadow = 0
+    # multi hillshade
+    self.mhs_compute = 0
+    self.mhs_nr_dir = 16
+    self.mhs_sun_el = 35
+    # simple local relief model
+    self.slrm_compute = 0
+    self.slrm_rad_cell = 20
+    # sky view factor
+    self.svf_compute = 0
+    self.svf_n_dir = 16
+    self.svf_r_max = 10
+    self.svf_noise = 0
+    # anisotropic sky-view factor
+    self.asvf_compute = 0
+    self.asvf_dir = 315
+    self.asvf_level = 1
+    # positive openness
+    self.pos_opns_compute = 0
+    # negative openness
+    self.neg_opns_compute = 0
+    # sky_illum
+    self.sim_compute = 0
+    self.sim_sky_mod = "overcast"
+    self.sim_compute_shadow = 0
+    self.sim_shadow_dist = 100
+    self.sim_nr_dir = 32
+    self.sim_shadow_az = 315
+    self.sim_shadow_el = 35
+    # local dominance
+    self.ld_compute = 0
+    self.ld_min_rad = 10
+    self.ld_max_rad = 20
+    self.ld_rad_inc = 1
+    self.ld_anglr_res = 15
+    self.ld_observer_h = 1.7
+    # multi-scale relief model
+    self.msrm_compute = 0
+    self.msrm_feature_min = 0.0
+    self.msrm_feature_max = 20.0
+    self.msrm_scaling_factor = 2
+    # multi-scale topographic position
+    self.mstp_compute = 0
+    self.mstp_local_scale = (3, 21, 2)
+    self.mstp_meso_scale = (23, 203, 18)
+    self.mstp_broad_scale = (223, 2023, 180)
+    self.mstp_lightness = 1.2
+    # save float
+    self.slp_save_float = 1
+    self.hs_save_float = 1
+    self.mhs_save_float = 1
+    self.slrm_save_float = 1
+    self.svf_save_float = 1
+    self.neg_opns_save_float = 1
+    self.sim_save_float = 1
+    self.ld_save_float = 1
+    self.msrm_save_float = 1
+    self.mstp_save_float = 1
+    # save 8bit
+    self.slp_save_8bit = 0
+    self.hs_save_8bit = 0
+    self.mhs_save_8bit = 0
+    self.slrm_save_8bit = 0
+    self.svf_save_8bit = 0
+    self.neg_opns_save_8bit = 0
+    self.sim_save_8bit = 0
+    self.ld_save_8bit = 0
+    self.msrm_save_8bit = 0
+    self.mstp_save_8bit = 0
+    # 8-bit bytescale parameters
+    self.slp_bytscl = ("value", 0.00, 51.00)
+    self.hs_bytscl = ("value", 0.00, 1.00)
+    self.mhs_bytscl = ("value", 0.00, 1.00)
+    self.slrm_bytscl = ("value", -2.00, 2.00)
+    self.svf_bytscl = ("value", 0.6375, 1.00)
+    self.asvf_bytscl = ("value", 0.70, 0.90)
+    self.pos_opns_bytscl = ("value", 60.00, 95.00)
+    self.neg_opns_bytscl = ("value", 60.00, 95.00)
+    self.sim_bytscl = ("percent", 0.25, 0.00)
+    self.ld_bytscl = ("value", 0.50, 1.80)
+    self.msrm_bytscl = ("value", -2.50, 2.50)
+    self.mstp_bytscl = ("value", 0.00, 1.00)
+    # tile
+    self.tile_size_limit = (
+        10000 * 10000
+    )  # if arr size > tile_size limit, it uses tile module
+    self.tile_size = (
+        4000,
+        4000,
+    )  # size of single tile when using tile module (x_size, y_size)
 
     def save_default_to_file(self, file_path: Optional[str] = None) -> None:
         """Saves default attributes into .json file."""

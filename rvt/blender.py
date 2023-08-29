@@ -1,43 +1,24 @@
 """
-Relief Visualization Toolbox – Visualization Functions
-
-Contains classes and methods for blending.
-
-Credits:
-    Žiga Kokalj (ziga.kokalj@zrc-sazu.si)
-    Krištof Oštir (kristof.ostir@fgg.uni-lj.si)
-    Klemen Zakšek
-    Peter Pehani
-    Klemen Čotar
-    Maja Somrak
-    Žiga Maroh
-    Nejc Čož
-
 Copyright:
-    2010-2020 Research Centre of the Slovenian Academy of Sciences and Arts
-    2016-2020 University of Ljubljana, Faculty of Civil and Geodetic Engineering
+    2010-2023 Research Centre of the Slovenian Academy of Sciences and Arts
+    2016-2023 University of Ljubljana, Faculty of Civil and Geodetic Engineering
 """
-
-# TODO: more testing, find and fix bugs if they exists
 
 from __future__ import annotations
 import datetime
 import json
 import os
-import warnings
 from copy import copy
 from dataclasses import dataclass
 from pathlib import Path
 from typing import List, Union
 
-import numpy as np
-
 import rvt.default
-import rvt.vis
-from rvt.blend_func import *
+import rvt.visualizations
+from rvt.blender_functions import *
 
 
-def create_blender_file_example(file_path: Path = None) -> None:
+def create_blender_file_example(file_path: Path) -> None:
     """Create blender .json file example (can be changed and read). Example is VAT - Archaeological combination"""
     data = {
         "combination": {
@@ -83,209 +64,105 @@ def create_blender_file_example(file_path: Path = None) -> None:
             ],
         }
     }
-    if file_path is None:
-        file_path = Path(__file__) / "settings/blender_file_example.json"
-        if os.path.isfile(file_path):
-            pass
-        else:
-            if not os.path.exists(os.path.dirname(file_path)):
-                os.makedirs(os.path.dirname(file_path))
 
-    dat = open(file_path, "w")
-    dat.write(json.dumps(data, indent=4))
-    dat.close()
+    with open(file_path, "w") as file:
+        file.write(json.dumps(data, indent=4))
 
 
-class BlenderLayer:  # TODO: use dataclass instead
+@dataclass
+class BlenderLayer:
     """
-    Class which define layer for blending. BlenderLayer is basic element in BlenderCombination.layers list.
-
-    Attributes
-    ----------
-    vis : str
-        Visualization method.
-    normalization : str
-        Normalization type, could be "Value" or "Percent".
-    min : float
-        Normalization minimum.
-    max : float
-        Normalization maximum.
-    opacity : integer
-        Image (visualization) opacity.
-    colormap : str
-        Colormap form matplotlib (https://matplotlib.org/3.3.2/tutorials/colors/colormaps.html).
-    min_colormap_cut : float
-        What lower part of colormap to cut to select part of colormap.
-        Valid values are between 0 and 1, if 0.2 it cuts off (deletes) 20% of lower colors in colormap.
-        If None cut is not applied.
-    max_colormap_cut : float
-        What upper part of colormap to cut to select part of colormap.
-        Valid values are between 0 and 1, if 0.8 it cuts off (deletes) 20% of upper colors in colormap.
-        If None cut is not applied.
-    image_path : str
-        Path to DEM. Doesn't matter if image is not None. Leave None if you would like for blender to compute it.
-    image : numpy.array (2D)
-        Visualization raster. Leave None if you would like for blender to compute it.
+    Class which define layer for blending.
     """
 
-    def __init__(  # TODO: Remove that elements can be optional
-        self,
-        vis_method: Optional[str] = None,
-        normalization: Optional[str] = "value",
-        minimum: Optional[float] = None,
-        maximum: Optional[float] = None,
-        blend_mode: Optional[str] = "normal",
-        opacity: Optional[int] = 100,
-        colormap: Optional[str] = None,
-        min_colormap_cut: Optional[float] = None,
-        max_colormap_cut: Optional[float] = None,
-        image: Optional[
-            npt.NDArray[Any]
-        ] = None,  # TODO: use Union [npt.NDArray, Path] and remove image_path
-        image_path: Optional[Path] = None,
-    ):
-        self.vis = vis_method
-        self.normalization = normalization
-        self.min = minimum
-        self.max = maximum
-        self.blend_mode = blend_mode
-        self.opacity = opacity
-        self.colormap = colormap
-        self.min_colormap_cut = min_colormap_cut
-        self.max_colormap_cut = max_colormap_cut
-        self.image_path = image_path
-        self.image = image
+    visualization_method: str  # TODO: Use enum
+    normalization: str  # TODO: Use enum, create normalization dataclass
+    minimum: float  # TODO: Make part of normalization dataclass
+    maximum: float  # TODO: Make part of normalization dataclass
+    blend_mode: str  # TODO: Use enum
+    opacity: float
+    """Image (visualization) opacity."""
+    colormap: Optional[str]  # TODO: Use enum, create dataclass
+    """Colormap form matplotlib (https://matplotlib.org/3.3.2/tutorials/colors/colormaps.html)."""
+    min_colormap_cut: Optional[float]  # TODO: Make part of dataclass
+    """
+    What lower part of colormap to cut to select part of colormap.
+    Valid values are between 0 and 1, if 0.2 it cuts off (deletes) 20% of lower colors in colormap.
+    If None cut is not applied.
+    """
+    max_colormap_cut: Optional[float]  # TODO: Make part of dataclass
+    """
+    What upper part of colormap to cut to select part of colormap.
+    Valid values are between 0 and 1, if 0.8 it cuts off (deletes) 20% of upper colors in colormap.
+    If None cut is not applied.
+    """
+    image: Optional[Union[Path, npt.NDArray[Any]]]
+    """
+    Visualization raster.
+    """
+
+    def __post_init__(self) -> None:
+        """After init of class instance validate attributes."""
+        self.validate_attributes()
 
     def __str__(self) -> str:
         values_dictionary = self.__dict__
-        return ', '.join([f"{key} = {value}" for key, value in values_dictionary])
+        return ", ".join(
+            [f"{key} = {value}" for key, value in values_dictionary.items()]
+        )
 
-    def check_data(self) -> None:  # TODO: move to post init
+    def validate_attributes(self) -> None:
         """Check Attributes"""
-        if self.normalization == "percent":
+        if self.normalization == "percent":  # TODO: Remove when enum
             self.normalization = "perc"
-        if self.vis is None:  # if visualization is None everything is None
-            self.normalization = None
-            self.min = None
-            self.max = None
-            self.blend_mode = None
-            self.opacity = None
-            self.colormap = (
-                None  # leave None if you don't want to apply colormap to grayscale
+
+        if not (  # TODO: Remove when enum
+            self.normalization.lower() == "value"
+            or self.normalization.lower() == "perc"
+        ):
+            raise ValueError(f"Normalization {self.normalization} incorrect! ")
+        if (
+            self.normalization.lower() == "perc"
+            and (self.minimum + self.maximum) >= 100
+        ):
+            raise ValueError(
+                "When normalization is perc, minimum + maximum has to smaller then 100%!"
             )
-            self.min_colormap_cut = None  # if None it equals to 0
-            self.max_colormap_cut = None  # if None it equals to 1
-            self.image = (
-                None  # leave None if you wish for blender to compute visualization
+        if self.minimum > self.maximum and self.normalization.lower() == "value":
+            raise ValueError("Minimum bigger than maximum!")
+        if (  # TODO: Remove when enum
+            self.blend_mode.lower() != "normal"
+            and self.blend_mode.lower() != "multiply"
+            and self.blend_mode.lower() != "overlay"
+            and self.blend_mode.lower() != "luminosity"
+            and self.blend_mode.lower() != "screen"
+            and self.blend_mode.lower() != "soft_light"
+        ):
+            raise ValueError("blend_mode incorrect!")
+        if 0 > self.opacity > 100:
+            raise ValueError(
+                f"Opacity incorrect {self.opacity} it should be between [0-100]!"
+            )
+        if self.colormap is None and (
+            self.min_colormap_cut is not None or self.max_colormap_cut is not None
+        ):
+            raise ValueError(
+                "Colormap not defined but min_colormap_cut or max_colormap_cut are!"
             )
 
-            self.image_path = (
-                None  # leave None if you wish for blender to compute visualization
-            )
-        else:
-            assert self.normalization is not None
-            if not (
-                self.normalization.lower() == "value"
-                or self.normalization.lower() == "perc"
-            ):
-                raise ValueError(
-                    f"Normalization {self.normalization} incorrect! "
-                )
-            if self.normalization.lower() == "perc" and (self.min + self.max) >= 100:
-                raise ValueError(
-                    "When normalization is perc, min + max has to smaller then 100%!"
-                )
-            if self.min > self.max and self.normalization.lower() == "value":
-                raise ValueError(
-                    "Min bigger than max!"
-                )
-            if (
-                self.blend_mode.lower() != "normal"
-                and self.blend_mode.lower() != "multiply"
-                and self.blend_mode.lower() != "overlay"
-                and self.blend_mode.lower() != "luminosity"
-                and self.blend_mode.lower() != "screen"
-                and self.blend_mode.lower() != "soft_light"
-            ):
-                raise ValueError(
-                    "blend_mode incorrect!"
-                )
-            if 0 > self.opacity > 100:
-                raise ValueError(
-                    f"Opacity incorrect {self.opacity} it should be between [0-100]!"
-                )
-            if self.colormap is None and (
-                self.min_colormap_cut is not None or self.max_colormap_cut is not None
-            ):
-                raise ValueError(
-                    "Colormap not defined but min_colormap_cut or max_colormap_cut are!"
-                )
-            if self.image is None and self.image_path is None:
-                if (
-                    self.vis.lower() != "slope gradient"
-                    and self.vis.lower() != "hillshade"
-                    and self.vis.lower() != "shadow"
-                    and self.vis.lower() != "multiple directions hillshade"
-                    and self.vis.lower() != "simple local relief model"
-                    and self.vis.lower() != "sky-view factor"
-                    and self.vis.lower() != "anisotropic sky-view factor"
-                    and self.vis.lower() != "openness - positive"
-                    and self.vis.lower() != "openness - negative"
-                    and self.vis.lower() != "sky illumination"
-                    and self.vis.lower() != "local dominance"
-                    and self.vis.lower() != "multi-scale relief model"
-                    and self.vis.lower() != "multi-scale topographic position"
-                ):
-                    raise ValueError(
-                        "Incorrect vis, if you don't input image or "
-                        "image_path you have to input known visualization method (vis)!"
-                    )
 
 @dataclass
 class BlenderCombination:
     """
-    Class for storing layers (rasters, parameters  for blending) and rendering(blending) into blended raster.
+    Class for storing layers (rasters, parameters for blending) and rendering (blending) into blended raster.
     """
-    dem: Union[npt.NDArray[Any], Path]
-    dem_resolution: float
-    name: str = ""
-    layers: List[BlenderLayer] = []
 
-    def create_layer(  # TODO: Adapt when you change layer
-        self,
-        vis_method=None,
-        normalization="value",
-        minimum=None,
-        maximum=None,
-        blend_mode="normal",
-        opacity=100,
-        colormap=None,
-        min_colormap_cut=None,
-        max_colormap_cut=None,
-        image=None,
-        image_path=None,
-    ):
-        """Create BlenderLayer and adds it to layers attribute."""
-        if vis_method is not None:
-            layer = BlenderLayer(
-                vis_method=vis_method,
-                normalization=normalization,
-                minimum=minimum,
-                maximum=maximum,
-                blend_mode=blend_mode,
-                opacity=opacity,
-                colormap=colormap,
-                min_colormap_cut=min_colormap_cut,
-                max_colormap_cut=max_colormap_cut,
-                image=image,
-                image_path=image_path,
-            )
-            self.layers.append(layer)
+    name: str
+    layers: List[BlenderLayer]
 
     def add_layer(self, layer: BlenderLayer) -> BlenderCombination:
         blender_combination = copy(self)
-        if layer.vis is not None:
-            blender_combination.layers.append(layer)
+        blender_combination.layers.append(layer)
         return blender_combination
 
     def remove_all_layers(self) -> BlenderCombination:
@@ -297,23 +174,29 @@ class BlenderCombination:
         layer_nr = 1
         layers_info = []
         for layer in self.layers:
-            layers_info.append(
-                f"layer {layer_nr}, " + str(layer)
-            )
+            layers_info.append(f"layer {layer_nr}, " + str(layer))
             layer_nr += 1
         return layers_info
 
     @staticmethod
-    def read_from_json_file(file_path: Path) -> BlenderCombination:
+    def read_from_json_file(
+        dem: Union[Path, npt.NDArray[Any]],
+        dem_resolution: float,
+        layers_file_path: Path,
+    ) -> BlenderCombination:
         """Reads class attributes from .json file."""
-        # Example file (for file_path) in dir settings: blender_file_example.txt
-        with open(file_path, "r") as file:
+        with open(layers_file_path, "r") as file:
             json_data = json.load(file)
-        return BlenderCombination.read_from_json(json_data)
-
+        return BlenderCombination.read_from_json(
+            dem=dem, dem_resolution=dem_resolution, layers_json_data=json_data
+        )
 
     @staticmethod
-    def read_from_json(dem: Union[Path, npt.NDArray[Any]], dem_resolution: float, layers_json_data: Dict[str, Any]) -> BlenderCombination:
+    def read_from_json(
+        dem: Union[Path, npt.NDArray[Any]],
+        dem_resolution: float,
+        layers_json_data: Dict[str, Any],
+    ) -> BlenderCombination:
         """Fill class attributes with json data."""
         layers = []
         name = layers_json_data["combination"]["name"]
@@ -327,7 +210,7 @@ class BlenderCombination:
             ):
                 continue
             else:
-                vis_method = str(layer["visualization_method"])
+                visualization_method = str(layer["visualization_method"])
             norm = str(layer["norm"])
             norm_min = float(layer["min"])
             norm_max = float(layer["max"])
@@ -364,7 +247,7 @@ class BlenderCombination:
 
             layers.append(
                 BlenderLayer(
-                    vis_method=vis_method,
+                    visualization_method=visualization_method,
                     normalization=norm,
                     minimum=norm_min,
                     maximum=norm_max,
@@ -375,18 +258,18 @@ class BlenderCombination:
                     max_colormap_cut=max_colormap_cut,
                 )
             )
-        return BlenderCombination(dem=dem, dem_resolution=, name=name, layers=layers)
+        return BlenderCombination(name=name, layers=layers)
 
     def save_to_json_file(self, file_path: Path) -> None:
-        """Save layers (manually) to .json file. Parameters image and image_path in each layer have to be None,
-        visualization has to be correct!"""
+        """
+        Save layers (manually) to .json file. Parameters image and image_path in each layer have to be None,
+        visualization has to be correct!
+        """
         json_data = self.to_json()
-        dat = open(file_path, "w")
-        dat.write(json.dumps(json_data, indent=4))
-        dat.close()
+        with open(file_path, "w") as file:
+            file.write(json.dumps(json_data, indent=4))
 
-    def to_json(self) -> Dict[str, Any]:  # TODO: YOU STAYED HERE ZIM
-        """Outputs class attributes as json."""
+    def to_json(self) -> Dict[str, Dict[str, Any]]:
         json_data = {"combination": {"name": self.name, "layers": []}}
         i_layer = 1
         for layer in self.layers:
@@ -394,10 +277,10 @@ class BlenderCombination:
                 json_data["combination"]["layers"].append(
                     {
                         "layer": str(i_layer),
-                        "visualization_method": layer.vis,
+                        "visualization_method": layer.visualization_method,
                         "norm": layer.normalization,
-                        "min": layer.min,
-                        "max": layer.max,
+                        "min": layer.minimum,
+                        "max": layer.maximum,
                         "blend_mode": layer.blend_mode,
                         "opacity": layer.opacity,
                     }
@@ -407,10 +290,10 @@ class BlenderCombination:
                     json_data["combination"]["layers"].append(
                         {
                             "layer": str(i_layer),
-                            "visualization_method": layer.vis,
+                            "visualization_method": layer.visualization_method,
                             "norm": layer.normalization,
-                            "min": layer.min,
-                            "max": layer.max,
+                            "min": layer.minimum,
+                            "max": layer.maximum,
                             "blend_mode": layer.blend_mode,
                             "opacity": layer.opacity,
                             "colormap": layer.colormap,
@@ -423,10 +306,10 @@ class BlenderCombination:
                     json_data["combination"]["layers"].append(
                         {
                             "layer": str(i_layer),
-                            "visualization_method": layer.vis,
+                            "visualization_method": layer.visualization_method,
                             "norm": layer.normalization,
-                            "min": layer.min,
-                            "max": layer.max,
+                            "min": layer.minimum,
+                            "max": layer.maximum,
                             "blend_mode": layer.blend_mode,
                             "opacity": layer.opacity,
                             "colormap": layer.colormap,
@@ -440,10 +323,10 @@ class BlenderCombination:
                     json_data["combination"]["layers"].append(
                         {
                             "layer": str(i_layer),
-                            "visualization_method": layer.vis,
+                            "visualization_method": layer.visualization_method,
                             "norm": layer.normalization,
-                            "min": layer.min,
-                            "max": layer.max,
+                            "min": layer.minimum,
+                            "max": layer.maximum,
                             "blend_mode": layer.blend_mode,
                             "opacity": layer.opacity,
                             "colormap": layer.colormap,
@@ -457,10 +340,10 @@ class BlenderCombination:
                     json_data["combination"]["layers"].append(
                         {
                             "layer": str(i_layer),
-                            "visualization_method": layer.vis,
+                            "visualization_method": layer.visualization_method,
                             "norm": layer.normalization,
-                            "min": layer.min,
-                            "max": layer.max,
+                            "min": layer.minimum,
+                            "max": layer.maximum,
                             "blend_mode": layer.blend_mode,
                             "opacity": layer.opacity,
                             "colormap": layer.colormap,
@@ -471,11 +354,19 @@ class BlenderCombination:
             i_layer += 1
         return json_data
 
-    def check_data(self):
+    def validate_layers(self) -> None:
         for layer in self.layers:
-            layer.check_data()
+            layer.validate_attributes()
+            if layer.image is None:
+                raise ValueError("Layer image needs to be specified!")
 
-    def render_all_images(
+    def calculate_missing_images(
+        self, dem: Union[npt.NDArray[Any], Path], dem_resolution: float
+    ) -> None:
+        pass
+        # TODO: fill layers where image is None
+
+    def render_all_images(  # TODO: refactor
         self,
         default=None,
         save_visualizations=False,
@@ -484,17 +375,19 @@ class BlenderCombination:
         save_8bit=False,
         no_data=None,
     ):
-        """Render all layers and returns blended image. If specific layer (BlenderLayer) in layers has image
+        """
+        Render all layers and returns blended image. If specific layer (BlenderLayer) in layers has image
         (is not None), method uses this image, if image is None and layer has image_path method reads image from
         path. If both image and image_path are None method calculates visualization. If save_visualization is True
         method needs dem_path and saves each visualization (if it doesn't exists) in directory of dem_path,
         else (save_visualization=False) method needs dem_arr, dem_resolution and calculates each visualization
         simultaneously (in memory). Be careful save_visualisation applies only if specific BlenderLayer
         image and image_path are None. Parameter no_data changes all pixels with this values to np.nan,
-        if save_visualizations is Ture it is not needed."""
+        if save_visualizations is Ture it is not needed.
+        """
 
         # Preform checks
-        self.check_data()
+        self.validate_layers()
 
         if save_render_path is not None and self.dem_path is None:
             raise Exception(
@@ -1191,7 +1084,7 @@ class BlenderCombination:
         dat.close()
 
 
-def compare_2_combinations(
+def _compare_2_combinations(
     combination1: BlenderCombination, combination2: BlenderCombination
 ):
     if len(combination1.layers) != len(combination2.layers):
@@ -1220,7 +1113,7 @@ def compare_2_combinations(
 
 @dataclass
 class BlenderCombinations:
-    combinations: List[BlenderCombination] = []
+    combinations: List[BlenderCombination]
 
     def add_combination(self, combination: BlenderCombination) -> BlenderCombinations:
         """Adds combination if parameter name not None it renames combination."""
@@ -1241,10 +1134,12 @@ class BlenderCombinations:
                 return combination
         raise ValueError(f"Combination with name {name} doesn't exist!")
 
-    def remove_combination_by_name(self, name) -> BlenderCombinations:
+    def remove_combination_by_name(self, name: str) -> BlenderCombinations:
         """Removes all combinations with defined name."""
         blender_combinations = copy(self)
-        blender_combinations.combinations = [combination for combination in self.combinations if combination.name != name]
+        blender_combinations.combinations = [
+            combination for combination in self.combinations if combination.name != name
+        ]
         return blender_combinations
 
     @staticmethod
@@ -1260,247 +1155,251 @@ class BlenderCombinations:
 
         return BlenderCombinations(combinations=blender_combinations)
 
-
-    def save_to_file(self, file_path):
+    def save_to_file(self, file_path: Path) -> None:
         """Saves combination to .json file."""
         json_data = {"combinations": []}
         for combination in self.combinations:
             json_data["combinations"].append(combination.to_json())
-        dat = open(file_path, "w")
-        dat.write(json.dumps(json_data, indent=4))
-        dat.close()
+        with open(file_path, "w") as file:
+            file.write(json.dumps(json_data, indent=4))
 
-    def combination_in_combinations(self, input_combination: BlenderCombination):
-        """If input_combination (BlenderCombination) has same attributes as one of the combinations (self), method
-        returns name of the combination (from combinations). If there is no equal one it returns None."""
+    def get_combination_name_if_combination_already_present(
+        self, input_combination: BlenderCombination
+    ) -> Optional[str]:
+        """
+        If input_combination (BlenderCombination) has same attributes as one of the combinations (self), method
+        returns name of the combination (from combinations). If there is no equal one it returns None.
+        """
         for combination in self.combinations:
-            if compare_2_combinations(input_combination, combination):
+            if _compare_2_combinations(input_combination, combination):
                 return combination.name
         return None
 
-    def combinations_names(self):
+    def combinations_names(self) -> List[str]:
         """Returns list of combinations names."""
-        names_list = []
-        for combination in self.combinations:
-            names_list.append(combination.name)
-        return names_list
+        return [combination.name for combination in self.combinations]
 
 
+@dataclass
 class TerrainSettings:
-    """Terrain settings for GUI."""
+    name: Optional[str] = None
+    # slope gradient
+    slp_output_units: Optional[str] = None
+    # hillshade
+    hs_sun_azi: Optional[int] = None
+    hs_sun_el: Optional[int] = None
+    # multi hillshade
+    mhs_nr_dir: Optional[int] = None
+    mhs_sun_el: Optional[float] = None
+    # simple local relief model
+    slrm_rad_cell: Optional[int] = None
+    # sky view factor
+    svf_n_dir: Optional[int] = None
+    svf_r_max: Optional[int] = None
+    svf_noise: Optional[int] = None
+    # anisotropic sky-view factor
+    asvf_dir: Optional[int] = None
+    asvf_level: Optional[int] = None
+    # positive openness
+    # negative openness
+    # sky_illumination
+    sim_sky_mod: Optional[str] = None
+    sim_compute_shadow: Optional[bool] = None
+    sim_nr_dir: Optional[int] = None
+    sim_shadow_dist: Optional[int] = None
+    sim_shadow_az: Optional[int] = None
+    sim_shadow_el: Optional[int] = None
+    # local dominance
+    ld_min_rad: Optional[int] = None
+    ld_max_rad: Optional[int] = None
+    ld_rad_inc: Optional[int] = None
+    ld_anglr_res: Optional[int] = None
+    ld_observer_h: Optional[float] = None
+    # multi-scale relief model
+    msrm_feature_min: Optional[float] = None
+    msrm_feature_max: Optional[float] = None
+    msrm_scaling_factor: Optional[int] = None
+    # multi-scale topographic position
+    mstp_local_scale: Optional[int] = None
+    mstp_meso_scale: Optional[int] = None
+    mstp_broad_scale: Optional[int] = None
+    mstp_lightness: Optional[float] = None
 
-    def __init__(self) -> None:
-        self.name = None
-        # slope gradient
-        self.slp_output_units = None
-        # hillshade
-        self.hs_sun_azi = None
-        self.hs_sun_el = None
-        # multi hillshade
-        self.mhs_nr_dir = None
-        self.mhs_sun_el = None
-        # simple local relief model
-        self.slrm_rad_cell = None
-        # sky view factor
-        self.svf_n_dir = None
-        self.svf_r_max = None
-        self.svf_noise = None
-        # anisotropic sky-view factor
-        self.asvf_dir = None
-        self.asvf_level = None
-        # positive openness
-        # negative openness
-        # sky_illumination
-        self.sim_sky_mod = None
-        self.sim_compute_shadow = None
-        self.sim_nr_dir = None
-        self.sim_shadow_dist = None
-        self.sim_shadow_az = None
-        self.sim_shadow_el = None
-        # local dominance
-        self.ld_min_rad = None
-        self.ld_max_rad = None
-        self.ld_rad_inc = None
-        self.ld_anglr_res = None
-        self.ld_observer_h = None
-        # multi-scale relief model
-        self.msrm_feature_min = None
-        self.msrm_feature_max = None
-        self.msrm_scaling_factor = None
-        # multi-scale topographic position
-        self.mstp_local_scale = None
-        self.mstp_meso_scale = None
-        self.mstp_broad_scale = None
-        self.mstp_lightness = None
+    # linear histogram stretches tuple(min, max)
+    hs_stretch: Optional[Tuple[float, float]] = None
+    mhs_stretch: Optional[Tuple[float, float]] = None
+    slp_stretch: Optional[Tuple[float, float]] = None
+    slrm_stretch: Optional[Tuple[float, float]] = None
+    svf_stretch: Optional[Tuple[float, float]] = None
+    asvf_stretch: Optional[Tuple[float, float]] = None
+    pos_opns_stretch: Optional[Tuple[float, float]] = None
+    neg_opns_stretch: Optional[Tuple[float, float]] = None
+    sim_stretch: Optional[Tuple[float, float]] = None
+    ld_stretch: Optional[Tuple[float, float]] = None
+    msrm_stretch: Optional[Tuple[float, float]] = None
+    mstp_stretch: Optional[Tuple[float, float]] = None
 
-        # linear histogram stretches tuple(min, max)
-        self.hs_stretch = None
-        self.mhs_stretch = None
-        self.slp_stretch = None
-        self.slrm_stretch = None
-        self.svf_stretch = None
-        self.asvf_stretch = None
-        self.pos_opns_stretch = None
-        self.neg_opns_stretch = None
-        self.sim_stretch = None
-        self.ld_stretch = None
-        self.msrm_stretch = None
-        self.mstp_stretch = None
+    @staticmethod
+    def read_from_file(file_path: Path) -> TerrainSettings:
+        with open(file_path, "r") as file:
+            return TerrainSettings.read_from_json(json.load(file))
 
-    def read_from_file(self, file_path):
-        """Reads combinations from .json file."""
-        dat = open(file_path, "r")
-        json_data = json.load(dat)
-        self.read_from_json(json_data)
-        dat.close()
-
-    def read_from_json(self, json_data: Dict[str, Any]) -> None:  # TODO return TerrainSettings object
-        """Reads json dict and fills self attributes."""
-        self.__init__()
+    @staticmethod
+    def read_from_json(json_data: Dict[str, Any]) -> TerrainSettings:
         terrain_data = json_data["terrain_settings"]
-        self.name = terrain_data["name"]
+        terrain_setting = TerrainSettings(name=terrain_data["name"])
         try:
-            self.slp_output_units = str(
+            terrain_setting.slp_output_units = str(
                 terrain_data["Slope gradient"]["slp_output_units"]["value"]
             )
         except KeyError:
             pass
         try:
-            self.hs_sun_azi = int(terrain_data["Hillshade"]["hs_sun_azi"]["value"])
+            terrain_setting.hs_sun_azi = int(
+                terrain_data["Hillshade"]["hs_sun_azi"]["value"]
+            )
         except KeyError:
             pass
         try:
-            self.hs_sun_el = int(terrain_data["Hillshade"]["hs_sun_el"]["value"])
+            terrain_setting.hs_sun_el = int(
+                terrain_data["Hillshade"]["hs_sun_el"]["value"]
+            )
         except KeyError:
             pass
         try:
-            self.mhs_nr_dir = int(
+            terrain_setting.mhs_nr_dir = int(
                 terrain_data["Multiple directions hillshade"]["mhs_nr_dir"]["value"]
             )
         except KeyError:
             pass
         try:
-            self.mhs_sun_el = int(
+            terrain_setting.mhs_sun_el = int(
                 terrain_data["Multiple directions hillshade"]["mhs_sun_el"]["value"]
             )
         except KeyError:
             pass
         try:
-            self.slrm_rad_cell = int(
+            terrain_setting.slrm_rad_cell = int(
                 terrain_data["Simple local relief model"]["slrm_rad_cell"]["value"]
             )
         except KeyError:
             pass
         try:
-            self.svf_n_dir = int(terrain_data["Sky-View Factor"]["svf_n_dir"]["value"])
+            terrain_setting.svf_n_dir = int(
+                terrain_data["Sky-View Factor"]["svf_n_dir"]["value"]
+            )
         except KeyError:
             pass
         try:
-            self.svf_r_max = int(terrain_data["Sky-View Factor"]["svf_r_max"]["value"])
+            terrain_setting.svf_r_max = int(
+                terrain_data["Sky-View Factor"]["svf_r_max"]["value"]
+            )
         except KeyError:
             pass
         try:
-            self.svf_noise = int(terrain_data["Sky-View Factor"]["svf_noise"]["value"])
+            terrain_setting.svf_noise = int(
+                terrain_data["Sky-View Factor"]["svf_noise"]["value"]
+            )
         except KeyError:
             pass
         try:
-            self.asvf_dir = int(
+            terrain_setting.asvf_dir = int(
                 terrain_data["Anisotropic Sky-View Factor"]["asvf_dir"]["value"]
             )
         except KeyError:
             pass
         try:
-            self.asvf_level = int(
+            terrain_setting.asvf_level = int(
                 terrain_data["Anisotropic Sky-View Factor"]["asvf_level"]["value"]
             )
         except KeyError:
             pass
         try:
-            self.sim_sky_mod = str(
+            terrain_setting.sim_sky_mod = str(
                 terrain_data["Sky illumination"]["sim_sky_mod"]["value"]
             )
         except KeyError:
             pass
         try:
-            self.sim_compute_shadow = int(
+            terrain_setting.sim_compute_shadow = int(
                 terrain_data["Sky illumination"]["sim_compute_shadow"]["value"]
             )
         except KeyError:
             pass
         try:
-            self.sim_nr_dir = int(
+            terrain_setting.sim_nr_dir = int(
                 terrain_data["Sky illumination"]["sim_nr_dir"]["value"]
             )
         except KeyError:
             pass
         try:
-            self.sim_shadow_dist = int(
+            terrain_setting.sim_shadow_dist = int(
                 terrain_data["Sky illumination"]["sim_shadow_dist"]["value"]
             )
         except KeyError:
             pass
         try:
-            self.sim_shadow_az = int(
+            terrain_setting.sim_shadow_az = int(
                 terrain_data["Sky illumination"]["sim_shadow_az"]["value"]
             )
         except KeyError:
             pass
         try:
-            self.sim_shadow_el = int(
+            terrain_setting.sim_shadow_el = int(
                 terrain_data["Sky illumination"]["sim_shadow_el"]["value"]
             )
         except KeyError:
             pass
         try:
-            self.ld_min_rad = int(
+            terrain_setting.ld_min_rad = int(
                 terrain_data["Local dominance"]["ld_min_rad"]["value"]
             )
         except KeyError:
             pass
         try:
-            self.ld_max_rad = int(
+            terrain_setting.ld_max_rad = int(
                 terrain_data["Local dominance"]["ld_max_rad"]["value"]
             )
         except KeyError:
             pass
         try:
-            self.ld_rad_inc = int(
+            terrain_setting.ld_rad_inc = int(
                 terrain_data["Local dominance"]["ld_rad_inc"]["value"]
             )
         except KeyError:
             pass
         try:
-            self.ld_anglr_res = int(
+            terrain_setting.ld_anglr_res = int(
                 terrain_data["Local dominance"]["ld_anglr_res"]["value"]
             )
         except KeyError:
             pass
         try:
-            self.ld_observer_h = float(
+            terrain_setting.ld_observer_h = float(
                 terrain_data["Local dominance"]["ld_observer_h"]["value"]
             )
         except KeyError:
             pass
         try:
-            self.msrm_feature_min = float(
+            terrain_setting.msrm_feature_min = float(
                 terrain_data["Multi-scale relief model"]["msrm_feature_min"]["value"]
             )
         except KeyError:
             pass
         try:
-            self.msrm_feature_max = float(
+            terrain_setting.msrm_feature_max = float(
                 terrain_data["Multi-scale relief model"]["msrm_feature_max"]["value"]
             )
         except KeyError:
             pass
         try:
-            self.msrm_scaling_factor = int(
+            terrain_setting.msrm_scaling_factor = int(
                 terrain_data["Multi-scale relief model"]["msrm_scaling_factor"]["value"]
             )
         except KeyError:
             pass
         try:
-            self.mstp_local_scale = (
+            terrain_setting.mstp_local_scale = (
                 int(
                     terrain_data["Multi-scale topographic position"][
                         "mstp_local_scale"
@@ -1520,7 +1419,7 @@ class TerrainSettings:
         except KeyError:
             pass
         try:
-            self.mstp_meso_scale = (
+            terrain_setting.mstp_meso_scale = (
                 int(
                     terrain_data["Multi-scale topographic position"]["mstp_meso_scale"][
                         "min"
@@ -1540,7 +1439,7 @@ class TerrainSettings:
         except KeyError:
             pass
         try:
-            self.mstp_broad_scale = (
+            terrain_setting.mstp_broad_scale = (
                 int(
                     terrain_data["Multi-scale topographic position"][
                         "mstp_broad_scale"
@@ -1560,7 +1459,7 @@ class TerrainSettings:
         except KeyError:
             pass
         try:
-            self.mstp_lightness = float(
+            terrain_setting.mstp_lightness = float(
                 terrain_data["Multi-scale topographic position"]["mstp_lightness"][
                     "value"
                 ]
@@ -1568,84 +1467,84 @@ class TerrainSettings:
         except KeyError:
             pass
         try:
-            self.slp_stretch = (
+            terrain_setting.slp_stretch = (
                 float(terrain_data["Slope gradient"]["stretch"]["min"]),
                 float(terrain_data["Slope gradient"]["stretch"]["max"]),
             )
         except KeyError:
             pass
         try:
-            self.hs_stretch = (
+            terrain_setting.hs_stretch = (
                 float(terrain_data["Hillshade"]["stretch"]["min"]),
                 float(terrain_data["Hillshade"]["stretch"]["max"]),
             )
         except KeyError:
             pass
         try:
-            self.mhs_stretch = (
+            terrain_setting.mhs_stretch = (
                 float(terrain_data["Multiple directions hillshade"]["stretch"]["min"]),
                 float(terrain_data["Multiple directions hillshade"]["stretch"]["max"]),
             )
         except KeyError:
             pass
         try:
-            self.slrm_stretch = (
+            terrain_setting.slrm_stretch = (
                 float(terrain_data["Simple local relief model"]["stretch"]["min"]),
                 float(terrain_data["Simple local relief model"]["stretch"]["max"]),
             )
         except KeyError:
             pass
         try:
-            self.svf_stretch = (
+            terrain_setting.svf_stretch = (
                 float(terrain_data["Sky-View Factor"]["stretch"]["min"]),
                 float(terrain_data["Sky-View Factor"]["stretch"]["max"]),
             )
         except KeyError:
             pass
         try:
-            self.asvf_stretch = (
+            terrain_setting.asvf_stretch = (
                 float(terrain_data["Anisotropic Sky-View Factor"]["stretch"]["min"]),
                 float(terrain_data["Anisotropic Sky-View Factor"]["stretch"]["max"]),
             )
         except KeyError:
             pass
         try:
-            self.pos_opns_stretch = (
+            terrain_setting.pos_opns_stretch = (
                 float(terrain_data["Openness - Positive"]["stretch"]["min"]),
                 float(terrain_data["Openness - Positive"]["stretch"]["max"]),
             )
         except KeyError:
             pass
         try:
-            self.neg_opns_stretch = (
+            terrain_setting.neg_opns_stretch = (
                 float(terrain_data["Openness - Negative"]["stretch"]["min"]),
                 float(terrain_data["Openness - Negative"]["stretch"]["max"]),
             )
         except KeyError:
             pass
         try:
-            self.neg_opns_stretch = (
+            terrain_setting.neg_opns_stretch = (
                 float(terrain_data["Sky illumination"]["stretch"]["min"]),
                 float(terrain_data["Sky illumination"]["stretch"]["max"]),
             )
         except KeyError:
             pass
         try:
-            self.neg_opns_stretch = (
+            terrain_setting.neg_opns_stretch = (
                 float(terrain_data["Local dominance"]["stretch"]["min"]),
                 float(terrain_data["Local dominance"]["stretch"]["max"]),
             )
         except KeyError:
             pass
         try:
-            self.msrm_stretch = (
+            terrain_setting.msrm_stretch = (
                 float(terrain_data["Multi-scale relief model"]["stretch"]["min"]),
                 float(terrain_data["Multi-scale relief model"]["stretch"]["max"]),
             )
         except KeyError:
             pass
         try:
-            self.mstp_stretch = (
+            terrain_setting.mstp_stretch = (
                 float(
                     terrain_data["Multi-scale topographic position"]["stretch"]["min"]
                 ),
@@ -1655,6 +1554,8 @@ class TerrainSettings:
             )
         except KeyError:
             pass
+
+        return terrain_setting
 
     def apply_terrain(
         self, default: rvt.default.DefaultValues, combination: BlenderCombination
@@ -1722,85 +1623,97 @@ class TerrainSettings:
 
         # linear histogram stretches, combination values overwrite
         for layer in combination.layers:
-            if layer.vis.lower() == "slope gradient" and self.slp_stretch is not None:
-                layer.min = self.slp_stretch[0]
-                layer.max = self.slp_stretch[1]
-            elif layer.vis.lower() == "hillshade" and self.hs_stretch is not None:
+            if (
+                layer.visualization_method.lower() == "slope gradient"
+                and self.slp_stretch is not None
+            ):
+                layer.minimum = self.slp_stretch[0]
+                layer.maximum = self.slp_stretch[1]
+            elif (
+                layer.visualization_method.lower() == "hillshade"
+                and self.hs_stretch is not None
+            ):
                 layer.min = self.hs_stretch[0]
                 layer.max = self.hs_stretch[1]
             elif (
-                layer.vis.lower() == "multiple directions hillshade"
+                layer.visualization_method.lower() == "multiple directions hillshade"
                 and self.mhs_stretch is not None
             ):
-                layer.min = self.mhs_stretch[0]
-                layer.max = self.mhs_stretch[1]
+                layer.minimum = self.mhs_stretch[0]
+                layer.maximum = self.mhs_stretch[1]
             elif (
-                layer.vis.lower() == "simple local relief model"
+                layer.visualization_method.lower() == "simple local relief model"
                 and self.slrm_stretch is not None
             ):
-                layer.min = self.slrm_stretch[0]
-                layer.max = self.slrm_stretch[1]
+                layer.minimum = self.slrm_stretch[0]
+                layer.maximum = self.slrm_stretch[1]
             elif (
-                layer.vis.lower() == "sky-view factor" and self.svf_stretch is not None
+                layer.visualization_method.lower() == "sky-view factor"
+                and self.svf_stretch is not None
             ):
-                layer.min = self.svf_stretch[0]
-                layer.max = self.svf_stretch[1]
+                layer.minimum = self.svf_stretch[0]
+                layer.maximum = self.svf_stretch[1]
             elif (
-                layer.vis.lower() == "anisotropic sky-view factor"
+                layer.visualization_method.lower() == "anisotropic sky-view factor"
                 and self.asvf_stretch is not None
             ):
-                layer.min = self.asvf_stretch[0]
-                layer.max = self.asvf_stretch[1]
+                layer.minimum = self.asvf_stretch[0]
+                layer.maximum = self.asvf_stretch[1]
             elif (
-                layer.vis.lower() == "openness - positive"
+                layer.visualization_method.lower() == "openness - positive"
                 and self.pos_opns_stretch is not None
             ):
-                layer.min = self.pos_opns_stretch[0]
-                layer.max = self.pos_opns_stretch[1]
+                layer.minimum = self.pos_opns_stretch[0]
+                layer.maximum = self.pos_opns_stretch[1]
             elif (
-                layer.vis.lower() == "openness - negative"
+                layer.visualization_method.lower() == "openness - negative"
                 and self.neg_opns_stretch is not None
             ):
-                layer.min = self.neg_opns_stretch[0]
-                layer.max = self.neg_opns_stretch[1]
+                layer.minimum = self.neg_opns_stretch[0]
+                layer.maximum = self.neg_opns_stretch[1]
             elif (
-                layer.vis.lower() == "sky illumination" and self.sim_stretch is not None
+                layer.visualization_method.lower() == "sky illumination"
+                and self.sim_stretch is not None
             ):
-                layer.min = self.sim_stretch[0]
-                layer.max = self.sim_stretch[1]
-            elif layer.vis.lower() == "local dominance" and self.ld_stretch is not None:
-                layer.min = self.ld_stretch[0]
-                layer.max = self.ld_stretch[1]
+                layer.minimum = self.sim_stretch[0]
+                layer.maximum = self.sim_stretch[1]
             elif (
-                layer.vis.lower() == "multi-scale relief model"
+                layer.visualization_method.lower() == "local dominance"
+                and self.ld_stretch is not None
+            ):
+                layer.minimum = self.ld_stretch[0]
+                layer.maximum = self.ld_stretch[1]
+            elif (
+                layer.visualization_method.lower() == "multi-scale relief model"
                 and self.msrm_stretch is not None
             ):
-                layer.min = self.msrm_stretch[0]
+                layer.minimum = self.msrm_stretch[0]
                 layer.max = self.msrm_stretch[1]
             elif (
-                layer.vis.lower() == "multi-scale topographic position"
+                layer.visualization_method.lower() == "multi-scale topographic position"
                 and self.mstp_stretch is not None
             ):
-                layer.min = self.mstp_stretch[0]
-                layer.max = self.mstp_stretch[1]
+                layer.minimum = self.mstp_stretch[0]
+                layer.maximum = self.mstp_stretch[1]
 
 
-class TerrainsSettings:  # TODO: Use data class
-    """Multiple Terrain settings."""
+@dataclass
+class TerrainsSettings:
+    terrains_settings: List[TerrainSettings]
 
-    def __init__(self) -> None:
-        self.terrains_settings = []
-
-    def read_from_file(self, file_path: Path) -> None:  # TODO: return TerrainSettings
+    @staticmethod
+    def read_from_file(file_path: Path) -> TerrainsSettings:
         """Reads combinations from .json file."""
-        dat = open(file_path, "r")
-        json_data = json.load(dat)
+        with open(file_path, "r") as file:
+            json_data = json.load(file)
         terrains_settings_json = json_data["terrains_settings"]
-        for terrain_json in terrains_settings_json:
-            terrain_settings = TerrainSettings()
-            terrain_settings.read_from_json(terrain_json)
-            self.terrains_settings.append(terrain_settings)
-        dat.close()
+
+        return TerrainsSettings(
+            terrains_settings=[
+                TerrainSettings().read_from_json(terrain_json)
+                for terrain_json in terrains_settings_json
+            ]
+        )
 
     def select_terrain_settings_by_name(self, name: str) -> TerrainSettings:
         """Select first combination where self.combinations.BlenderCombination.name = name."""
@@ -1815,10 +1728,10 @@ def color_relief_image_map(
     dem: npt.NDArray[Any],
     resolution: float,
     default: rvt.default.DefaultValues = rvt.default.DefaultValues(),
-    colormap: str="OrRd",
-    min_colormap_cut: float=0,
-    max_colormap_cut: float=1,
-    no_data: Optional[float]=None,
+    colormap: str = "OrRd",
+    min_colormap_cut: float = 0,
+    max_colormap_cut: float = 1,
+    no_data: Optional[float] = None,
 ) -> npt.NDArray[Any]:
     """
     RVT Color relief image map (CRIM)
@@ -1882,7 +1795,7 @@ def color_relief_image_map(
         dem=dem, resolution_x=resolution, resolution_y=resolution, output_units="radian"
     )["slope"]
 
-    blend_combination = rvt.blend.BlenderCombination()
+    blend_combination = rvt.blender.BlenderCombination()
     blend_combination.create_layer(
         vis_method="Openness_Pos-Neg",
         normalization=op_on_norm[0],
@@ -1922,7 +1835,7 @@ def e3mstp(
     dem: npt.NDArray[Any],
     resolution: float,
     default: rvt.default.DefaultValues = rvt.default.DefaultValues(),
-    no_data: Optional[float]=None,
+    no_data: Optional[float] = None,
 ) -> npt.NDArray[Any]:
     """
     RVT enhanced version 3 Multi-scale topographic position (e3MSTP)
@@ -1960,7 +1873,7 @@ def e3mstp(
     )
     mstp_arr = default.get_mstp(dem_arr=dem)
 
-    blend_combination = rvt.blend.BlenderCombination()
+    blend_combination = rvt.blender.BlenderCombination()
     blend_combination.create_layer(
         vis_method="slrm",
         normalization="value",

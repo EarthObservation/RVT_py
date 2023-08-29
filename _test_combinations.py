@@ -1,4 +1,4 @@
-import rvt.blend
+import rvt.blender
 
 # read blender combinations from file
 blender_combinations = rvt.blend.BlenderCombinations()
