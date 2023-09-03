@@ -4,10 +4,11 @@ Copyright:
     2016-2023 University of Ljubljana, Faculty of Civil and Geodetic Engineering
 """
 import warnings
+from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from enum import Enum
 from pathlib import Path
-from typing import Optional, Tuple, Any, Dict
+from typing import Optional, Tuple, Any, Dict, Union
 
 import rvt.visualizations
 import rvt.blender_functions
@@ -25,7 +26,7 @@ class RVTVisualization(Enum):
     SLOPE = "slp"
     HILLSHADE = "hs"
     SHADOW = "shd"
-    MULTI_HILLSHADE = "mhs"
+    MULTIPLE_DIRECTIONS_HILLSHADE = "mhs"
     SIMPLE_LOCAL_RELIEF_MODEL = "slrm"
     SKY_VIEW_FACTOR = "svf"
     ANISOTROPIC_SKY_VIEW_FACTOR = "asvf"
@@ -35,6 +36,67 @@ class RVTVisualization(Enum):
     LOCAL_DOMINANCE = "ld"
     MULTI_SCALE_RELIEF_MODEL = "msrm"
     MULTI_SCALE_TOPOGRAPHIC_POSITION = "mstp"
+
+
+class Visualization(ABC):
+    @property
+    @abstractmethod
+    def name(self):
+        pass
+
+    @property
+    @abstractmethod
+    def abbreviation(self):
+        pass
+
+    @abstractmethod
+    def compute_visualization(
+        self,
+        dem: npt.NDArray[Any],
+        dem_resolution: float,
+        dem_nodata: float,
+        vertical_exaggeration_factor: float,
+    ) -> npt.NDArray[Any]:
+        pass
+
+    def save_visualization(
+        self,
+        dem_path: Path,
+        output_visualization_path,
+        output_visualization: npt.NDArray,
+    ) -> None:
+        pass  # TODO: implement
+
+
+@dataclass
+class Slope(Visualization):
+    output_units: rvt.visualizations.SlopeOutputUnit = (
+        rvt.visualizations.SlopeOutputUnit.DEGREE
+    )
+
+    @property
+    def name(self):
+        return "Slope"
+
+    @property
+    def abbreviation(self):
+        return "slp"
+
+    def compute_visualization(
+        self,
+        dem: Union[Path, npt.NDArray[Any]],
+        dem_resolution: float,
+        dem_nodata: float,
+        vertical_exaggeration_factor: float,
+    ) -> npt.NDArray[Any]:
+        return rvt.visualizations.slope_aspect(
+            dem=dem,
+            resolution_x=dem_resolution,
+            resolution_y=dem_resolution,
+            output_units=self.output_units,
+            ve_factor=vertical_exaggeration_factor,
+            no_data=dem_nodata,
+        ).slope
 
 
 @dataclass
@@ -1530,7 +1592,10 @@ class DefaultValues:  # TODO: Rename to something better like Visualizer or Visu
             return self.get_hillshade_file_name(dem_path=dem_path, bit8=path_8bit)
         elif rvt_visualization == rvt.default.RVTVisualization.SHADOW:
             return self.get_shadow_file_name(dem_path=dem_path)
-        elif rvt_visualization == rvt.default.RVTVisualization.MULTI_HILLSHADE:
+        elif (
+            rvt_visualization
+            == rvt.default.RVTVisualization.MULTIPLE_DIRECTIONS_HILLSHADE
+        ):
             return self.get_multi_hillshade_file_name(dem_path=dem_path, bit8=path_8bit)
         elif (
             rvt_visualization == rvt.default.RVTVisualization.SIMPLE_LOCAL_RELIEF_MODEL
@@ -1585,7 +1650,10 @@ class DefaultValues:  # TODO: Rename to something better like Visualizer or Visu
 
         elif rvt_visualization == rvt.default.RVTVisualization.SHADOW:
             return output_dir_path / self.get_shadow_file_name(dem_path=dem_path)
-        elif rvt_visualization == rvt.default.RVTVisualization.MULTI_HILLSHADE:
+        elif (
+            rvt_visualization
+            == rvt.default.RVTVisualization.MULTIPLE_DIRECTIONS_HILLSHADE
+        ):
             return output_dir_path / self.get_multi_hillshade_file_name(
                 dem_path=dem_path, bit8=path_8bit
             )
@@ -1680,7 +1748,7 @@ class DefaultValues:  # TODO: Rename to something better like Visualizer or Visu
             return rvt.vis.byte_scale(data=norm_arr, no_data=np.nan, c_min=0, c_max=1)
         elif visualization == RVTVisualization.SHADOW:
             return float_arr
-        elif visualization == RVTVisualization.MULTI_HILLSHADE:
+        elif visualization == RVTVisualization.MULTIPLE_DIRECTIONS_HILLSHADE:
             if x_res is None or y_res is None:
                 raise ValueError("Resolution (x_res, y_res) needs to be specified!")
             # Be careful when multihillshade we input dem, because we have to calculate hillshade in 3 directions
@@ -2236,7 +2304,7 @@ class DefaultValues:  # TODO: Rename to something better like Visualizer or Visu
             if custom_dir is None:
                 custom_dir = Path(dem_path).parent
             rvt.tile.save_rvt_visualization_tile_by_tile(
-                rvt_visualization=RVTVisualization.MULTI_HILLSHADE,
+                rvt_visualization=RVTVisualization.MULTIPLE_DIRECTIONS_HILLSHADE,
                 rvt_default=self,
                 dem_path=Path(dem_path),
                 output_dir_path=Path(custom_dir),
@@ -2276,7 +2344,7 @@ class DefaultValues:  # TODO: Rename to something better like Visualizer or Visu
                 else:
                     multi_hillshade_8bit_arr = self.float_to_8bit(
                         float_arr=dem_arr,
-                        visualization=RVTVisualization.MULTI_HILLSHADE,
+                        visualization=RVTVisualization.MULTIPLE_DIRECTIONS_HILLSHADE,
                         x_res=x_res,
                         y_res=y_res,
                         no_data=no_data,
@@ -3346,7 +3414,7 @@ class DefaultValues:  # TODO: Rename to something better like Visualizer or Visu
                 resolution_y=resolution_y,
                 no_data=no_data,
             )
-        elif visualization == RVTVisualization.MULTI_HILLSHADE:
+        elif visualization == RVTVisualization.MULTIPLE_DIRECTIONS_HILLSHADE:
             vis_arr = self.get_multi_hillshade(
                 dem_arr=dem,
                 resolution_x=resolution_x,
@@ -3401,7 +3469,7 @@ class DefaultValues:  # TODO: Rename to something better like Visualizer or Visu
         if save_float:
             vis_float_arr = vis_arr
         if save_8bit:
-            if visualization == RVTVisualization.MULTI_HILLSHADE:
+            if visualization == RVTVisualization.MULTIPLE_DIRECTIONS_HILLSHADE:
                 vis_8bit_arr = self.float_to_8bit(
                     float_arr=dem,
                     visualization=visualization,

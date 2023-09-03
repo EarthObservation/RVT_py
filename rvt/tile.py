@@ -257,7 +257,10 @@ def _create_rvt_visualization_blank_raster(
             path_8bit=False,
         )
         nr_bands = 1
-        if rvt_visualization == rvt.default.RVTVisualization.MULTI_HILLSHADE:
+        if (
+            rvt_visualization
+            == rvt.default.RVTVisualization.MULTIPLE_DIRECTIONS_HILLSHADE
+        ):
             nr_bands = rvt_default.mhs_nr_dir
         _create_blank_raster(
             in_data_set=dem_ds,
@@ -274,7 +277,8 @@ def _create_rvt_visualization_blank_raster(
         )
         nr_bands = 1
         if (
-            rvt_visualization == rvt.default.RVTVisualization.MULTI_HILLSHADE
+            rvt_visualization
+            == rvt.default.RVTVisualization.MULTIPLE_DIRECTIONS_HILLSHADE
             or rvt_visualization
             == rvt.default.RVTVisualization.MULTI_SCALE_TOPOGRAPHIC_POSITION
         ):
@@ -297,7 +301,9 @@ def _get_rvt_visualization_overlap(
         return 1
     elif rvt_visualization == rvt.default.RVTVisualization.SHADOW:
         return 1
-    elif rvt_visualization == rvt.default.RVTVisualization.MULTI_HILLSHADE:
+    elif (
+        rvt_visualization == rvt.default.RVTVisualization.MULTIPLE_DIRECTIONS_HILLSHADE
+    ):
         return 1
     elif rvt_visualization == rvt.default.RVTVisualization.SIMPLE_LOCAL_RELIEF_MODEL:
         return int(rvt_default.slrm_rad_cell)

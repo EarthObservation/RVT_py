@@ -3,9 +3,10 @@ Copyright:
     2010-2023 Research Centre of the Slovenian Academy of Sciences and Arts
     2016-2023 University of Ljubljana, Faculty of Civil and Geodetic Engineering
 """
-from typing import Dict, Optional, Tuple, Union, Iterable, List, Any
 
-# python libraries
+from enum import Enum
+from typing import Dict, Optional, Tuple, Union, List, Any, NamedTuple
+
 import numpy as np
 import numpy.typing as npt
 from scipy.interpolate import griddata, RectBivariateSpline
@@ -107,14 +108,25 @@ def byte_scale(
         return np.array(byte_data_bands)
 
 
+class SlopeAspectResult(NamedTuple):
+    slope: npt.NDArray[Any]
+    aspect: npt.NDArray[Any]
+
+
+class SlopeOutputUnit(Enum):
+    PERCENT = "percent"
+    DEGREE = "degree"
+    RADIAN = "radian"
+
+
 def slope_aspect(
     dem: npt.NDArray[Any],
     resolution_x: float = 1,
     resolution_y: float = 1,
-    output_units: str = "radian",
+    output_units: SlopeOutputUnit = SlopeOutputUnit.RADIAN,
     ve_factor: float = 1,
     no_data: Optional[float] = None,
-) -> Dict[str, npt.NDArray[Any]]:
+) -> SlopeAspectResult:
     """
     Procedure can return terrain slope and aspect in radian units (default) or in alternative units (if specified).
     Available alternative units are 'degree' and 'percent'.
@@ -140,13 +152,6 @@ def slope_aspect(
     no_data : int or float
         Value that represents no_data, all pixels with this value are changed to np.nan. Only has to be specified if
         a numerical value is used for nodata (e.g. -9999).
-
-    Returns
-    -------
-    dict_out: dict
-        Returns {"slope": slope_out, "aspect": aspect_out};
-        slope_out, slope gradient : 2D numpy array (numpy.ndarray) of slope;
-        aspect_out, aspect : 2D numpy array (numpy.ndarray) of aspect.
     """
     if dem.ndim != 2:
         raise Exception("rvt.visualization.slope_aspect: dem has to be 2D np.array!")
@@ -185,11 +190,11 @@ def slope_aspect(
     tan_slope = np.sqrt(dzdx**2 + dzdy**2)
 
     # Compute slope
-    if output_units == "percent":
+    if output_units == SlopeOutputUnit.PERCENT:
         slope_out = tan_slope * 100
-    elif output_units == "degree":
+    elif output_units == SlopeOutputUnit.DEGREE:
         slope_out = np.rad2deg(np.arctan(tan_slope))
-    elif output_units == "radian":
+    elif output_units == SlopeOutputUnit.RADIAN:
         slope_out = np.arctan(tan_slope)
     else:
         raise Exception(
@@ -205,7 +210,7 @@ def slope_aspect(
         dzdy == 0
     ] = 10e-9  # important for numeric stability - where dzdy is zero, make tangent to really high value
     aspect_out = np.arctan2(dzdx, dzdy)  # atan2 took care of the quadrants
-    if output_units == "degree":
+    if output_units == SlopeOutputUnit.DEGREE:
         aspect_out = np.rad2deg(aspect_out)
 
     # Remove padding
@@ -216,7 +221,7 @@ def slope_aspect(
     slope_out[nan_dem] = np.nan
     aspect_out[nan_dem] = np.nan
 
-    return {"slope": slope_out, "aspect": aspect_out}
+    return SlopeAspectResult(slope=slope_out, aspect=aspect_out)
 
 
 def roll_fill_nans(dem: npt.NDArray[Any], shift: int, axis: int) -> npt.NDArray[Any]:

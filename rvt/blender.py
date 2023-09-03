@@ -178,23 +178,19 @@ class BlenderCombination:
             layer_nr += 1
         return layers_info
 
-    @staticmethod
+    @classmethod
     def read_from_json_file(
-        dem: Union[Path, npt.NDArray[Any]],
-        dem_resolution: float,
+        cls,
         layers_file_path: Path,
     ) -> BlenderCombination:
         """Reads class attributes from .json file."""
         with open(layers_file_path, "r") as file:
             json_data = json.load(file)
-        return BlenderCombination.read_from_json(
-            dem=dem, dem_resolution=dem_resolution, layers_json_data=json_data
-        )
+        return cls.read_from_json(layers_json_data=json_data)
 
-    @staticmethod
+    @classmethod
     def read_from_json(
-        dem: Union[Path, npt.NDArray[Any]],
-        dem_resolution: float,
+        cls,
         layers_json_data: Dict[str, Any],
     ) -> BlenderCombination:
         """Fill class attributes with json data."""
@@ -258,7 +254,7 @@ class BlenderCombination:
                     max_colormap_cut=max_colormap_cut,
                 )
             )
-        return BlenderCombination(name=name, layers=layers)
+        return cls(name=name, layers=layers)
 
     def save_to_json_file(self, file_path: Path) -> None:
         """
@@ -1142,15 +1138,15 @@ class BlenderCombinations:
         ]
         return blender_combinations
 
-    @staticmethod
-    def read_from_file(file_path: Path) -> BlenderCombinations:
+    @classmethod
+    def read_from_file(cls, file_path: Path) -> BlenderCombinations:
         """Reads combinations from .json file."""
         blender_combinations = []
         with open(file_path, "r") as file:
             json_data = json.load(file)
         combinations_data = json_data["combinations"]
         for combination_data in combinations_data:
-            blender_combination = BlenderCombination().read_from_json(combination_data)
+            blender_combination = BlenderCombination.read_from_json(combination_data)
             blender_combinations.append(blender_combination)
 
         return BlenderCombinations(combinations=blender_combinations)
@@ -1239,15 +1235,15 @@ class TerrainSettings:
     msrm_stretch: Optional[Tuple[float, float]] = None
     mstp_stretch: Optional[Tuple[float, float]] = None
 
-    @staticmethod
-    def read_from_file(file_path: Path) -> TerrainSettings:
+    @classmethod
+    def read_from_file(cls, file_path: Path) -> TerrainSettings:
         with open(file_path, "r") as file:
-            return TerrainSettings.read_from_json(json.load(file))
+            return cls.read_from_json(json.load(file))
 
-    @staticmethod
-    def read_from_json(json_data: Dict[str, Any]) -> TerrainSettings:
+    @classmethod
+    def read_from_json(cls, json_data: Dict[str, Any]) -> TerrainSettings:
         terrain_data = json_data["terrain_settings"]
-        terrain_setting = TerrainSettings(name=terrain_data["name"])
+        terrain_setting = cls(name=terrain_data["name"])
         try:
             terrain_setting.slp_output_units = str(
                 terrain_data["Slope gradient"]["slp_output_units"]["value"]
@@ -1701,14 +1697,14 @@ class TerrainSettings:
 class TerrainsSettings:
     terrains_settings: List[TerrainSettings]
 
-    @staticmethod
-    def read_from_file(file_path: Path) -> TerrainsSettings:
+    @classmethod
+    def read_from_file(cls, file_path: Path) -> TerrainsSettings:
         """Reads combinations from .json file."""
         with open(file_path, "r") as file:
             json_data = json.load(file)
         terrains_settings_json = json_data["terrains_settings"]
 
-        return TerrainsSettings(
+        return cls(
             terrains_settings=[
                 TerrainSettings().read_from_json(terrain_json)
                 for terrain_json in terrains_settings_json
