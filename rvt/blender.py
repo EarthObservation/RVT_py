@@ -959,7 +959,11 @@ class BlenderCombination:
 
         dat.write("# Selected visualization parameters\n")
         dat.write("\tOverwrite: {}\n".format(default.overwrite))
-        dat.write("\tVertical exaggeration factor: {}\n".format(default.ve_factor))
+        dat.write(
+            "\tVertical exaggeration factor: {}\n".format(
+                default.vertical_exaggeration_factor
+            )
+        )
         dat.write("\n")
 
         dat.write("# Combination:\n\n")
@@ -989,23 +993,23 @@ class BlenderCombination:
             elif layer.vis.lower() == "simple local relief model":
                 dat.write("\tslrm_rad_cell=\t\t{}\n".format(default.slrm_rad_cell))
             elif layer.vis.lower() == "sky-view factor":
-                dat.write("\tsvf_n_dir=\t\t{}\n".format(default.svf_n_dir))
+                dat.write("\tnumber_of_directions=\t\t{}\n".format(default.svf_n_dir))
                 dat.write("\tsvf_noise=\t\t{}\n".format(default.svf_noise))
-                dat.write("\tsvf_r_max=\t\t{}\n".format(default.svf_r_max))
+                dat.write("\tmaximum_search_radius=\t\t{}\n".format(default.svf_r_max))
             elif layer.vis.lower() == "anisotropic sky-view factor":
-                dat.write("\tsvf_n_dir=\t\t{}\n".format(default.svf_n_dir))
+                dat.write("\tnumber_of_directions=\t\t{}\n".format(default.svf_n_dir))
                 dat.write("\tsvf_noise=\t\t{}\n".format(default.svf_noise))
-                dat.write("\tsvf_r_max=\t\t{}\n".format(default.svf_r_max))
-                dat.write("\tasvf_level=\t\t{}\n".format(default.asvf_level))
-                dat.write("\tasvf_dir=\t\t{}\n".format(default.asvf_dir))
+                dat.write("\tmaximum_search_radius=\t\t{}\n".format(default.svf_r_max))
+                dat.write("\tanisotropy_level=\t\t{}\n".format(default.asvf_level))
+                dat.write("\tdirection_of_anisotropy=\t\t{}\n".format(default.asvf_dir))
             elif layer.vis.lower() == "openness - positive":
-                dat.write("\tsvf_n_dir=\t\t{}\n".format(default.svf_n_dir))
+                dat.write("\tnumber_of_directions=\t\t{}\n".format(default.svf_n_dir))
                 dat.write("\tsvf_noise=\t\t{}\n".format(default.svf_noise))
-                dat.write("\tsvf_r_max=\t\t{}\n".format(default.svf_r_max))
+                dat.write("\tmaximum_search_radius=\t\t{}\n".format(default.svf_r_max))
             elif layer.vis.lower() == "openness - negative":
-                dat.write("\tsvf_n_dir=\t\t{}\n".format(default.svf_n_dir))
+                dat.write("\tnumber_of_directions=\t\t{}\n".format(default.svf_n_dir))
                 dat.write("\tsvf_noise=\t\t{}\n".format(default.svf_noise))
-                dat.write("\tsvf_r_max=\t\t{}\n".format(default.svf_r_max))
+                dat.write("\tmaximum_search_radius=\t\t{}\n".format(default.svf_r_max))
             elif layer.vis.lower() == "sky illumination":
                 dat.write("\tsim_sky_mod=\t\t{}\n".format(default.sim_sky_mod))
                 dat.write(
@@ -1282,13 +1286,13 @@ class TerrainSettings:
             pass
         try:
             terrain_setting.svf_n_dir = int(
-                terrain_data["Sky-View Factor"]["svf_n_dir"]["value"]
+                terrain_data["Sky-View Factor"]["number_of_directions"]["value"]
             )
         except KeyError:
             pass
         try:
             terrain_setting.svf_r_max = int(
-                terrain_data["Sky-View Factor"]["svf_r_max"]["value"]
+                terrain_data["Sky-View Factor"]["maximum_search_radius"]["value"]
             )
         except KeyError:
             pass
@@ -1300,13 +1304,15 @@ class TerrainSettings:
             pass
         try:
             terrain_setting.asvf_dir = int(
-                terrain_data["Anisotropic Sky-View Factor"]["asvf_dir"]["value"]
+                terrain_data["Anisotropic Sky-View Factor"]["direction_of_anisotropy"][
+                    "value"
+                ]
             )
         except KeyError:
             pass
         try:
             terrain_setting.asvf_level = int(
-                terrain_data["Anisotropic Sky-View Factor"]["asvf_level"]["value"]
+                terrain_data["Anisotropic Sky-View Factor"]["anisotropy_level"]["value"]
             )
         except KeyError:
             pass
@@ -1871,7 +1877,7 @@ def e3mstp(
 
     blend_combination = rvt.blender.BlenderCombination()
     blend_combination.create_layer(
-        vis_method="slrm",
+        vis_method="simple_local_relief_model",
         normalization="value",
         minimum=-0.5,
         maximum=0.5,

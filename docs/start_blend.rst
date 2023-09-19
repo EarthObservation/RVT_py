@@ -36,7 +36,7 @@ Let's say we have already calculated the simple local relief model (slrm_arr), s
     # this creates a BlenderLayer instance and adds it to BlenderCombination.layers
 
     # 1st layer
-    # add slrm layer with 2% perc cuttoff on both sides, multiply blend mode and 25% opacity
+    # add simple_local_relief_model layer with 2% perc cuttoff on both sides, multiply blend mode and 25% opacity
     combination_manual.create_layer(
         vis_method="Simple local relief model", 
         normalization="perc", 
@@ -102,15 +102,15 @@ The example below uses all three methods:
     # create the BlenderCombination() class instance which will hold the layers (visualizations)
     combination_manual = rvt.blend.BlenderCombination()
 
-    # we will let blender compute the slrm visualization. so, we need to create 
-    # rvt.default.DefaultValues() and change the parameters for slrm. we will later 
+    # we will let blender compute the simple_local_relief_model visualization. so, we need to create
+    # rvt.default.DefaultValues() and change the parameters for simple_local_relief_model. we will later
     # add default to the combination_manual.render_all_images() method
     default = rvt.default.DefaultValues()
     default.slrm_rad_cell = 15
 
     # 1st layer
-    # add slrm layer with 2% perc cuttoff on both sides, multiply blend mode and 25% opacity
-    # image and image_path parameters both not provided, so slrm is calculated automatically
+    # add simple_local_relief_model layer with 2% perc cuttoff on both sides, multiply blend mode and 25% opacity
+    # image and image_path parameters both not provided, so simple_local_relief_model is calculated automatically
     combination_manual.create_layer(
         vis_method="Simple local relief model",
         normalization="perc", 
@@ -146,10 +146,10 @@ The example below uses all three methods:
         image=hillshade_arr
         )
 
-    # we have to add dem array and resolution so that slrm can be computed
+    # we have to add dem array and resolution so that simple_local_relief_model can be computed
     combination_manual.add_dem_arr(dem_arr=input_dem_arr, dem_resolution=resolution)
 
-    # blend them all together and add default where slrm parameters are defined
+    # blend them all together and add default where simple_local_relief_model parameters are defined
     render_arr = combination_manual.render_all_images(default=default)
 
 ----

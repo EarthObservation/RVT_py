@@ -124,7 +124,7 @@ def slope_aspect(
     resolution_x: float = 1,
     resolution_y: float = 1,
     output_units: SlopeOutputUnit = SlopeOutputUnit.RADIAN,
-    ve_factor: float = 1,
+    vertical_exaggeration_factor: float = 1,
     no_data: Optional[float] = None,
 ) -> SlopeAspectResult:
     """
@@ -147,7 +147,7 @@ def slope_aspect(
         DEM resolution in Y direction.
     output_units : str
         Output units, you can choose between: percent, degree, radian. Default value is radian.
-    ve_factor : int or float
+    vertical_exaggeration_factor : int or float
         Vertical exaggeration factor.
     no_data : int or float
         Value that represents no_data, all pixels with this value are changed to np.nan. Only has to be specified if
@@ -155,9 +155,9 @@ def slope_aspect(
     """
     if dem.ndim != 2:
         raise Exception("rvt.visualization.slope_aspect: dem has to be 2D np.array!")
-    if not (10000 >= ve_factor >= -10000):
+    if not (10000 >= vertical_exaggeration_factor >= -10000):
         raise Exception(
-            "rvt.visualization.slope_aspect: ve_factor must be between -10000 and 10000!"
+            "rvt.visualization.slope_aspect: vertical_exaggeration_factor must be between -10000 and 10000!"
         )
     if resolution_x < 0 or resolution_y < 0:
         raise Exception(
@@ -178,7 +178,7 @@ def slope_aspect(
     dem = np.pad(array=dem, pad_width=1, mode="edge")
 
     # Vertical exaggeration
-    dem = dem * ve_factor
+    dem = dem * vertical_exaggeration_factor
 
     # Derivatives in X and Y direction
     dzdx = (
@@ -247,7 +247,7 @@ def hillshade(
     sun_elevation: float = 35,
     slope: Optional[npt.NDArray[Any]] = None,
     aspect: Optional[npt.NDArray[Any]] = None,
-    ve_factor: float = 1,
+    vertical_exaggeration_factor: float = 1,
     no_data: Optional[float] = None,
 ) -> npt.NDArray[Any]:
     """
@@ -269,7 +269,7 @@ def hillshade(
         Slope arr in radians if you don't input it, it is calculated.
     aspect : numpy.ndarray
         Aspect arr in radians if you don't input it, it is calculated.
-    ve_factor : int or float
+    vertical_exaggeration_factor : int or float
         Vertical exaggeration factor.
     no_data : int or float
         Value that represents no_data, all pixels with this value are changed to np.nan.
@@ -281,9 +281,9 @@ def hillshade(
     """
     if dem.ndim != 2:
         raise Exception("rvt.visualization.hillshade: dem has to be 2D np.array!")
-    if not (10000 >= ve_factor >= -10000):
+    if not (10000 >= vertical_exaggeration_factor >= -10000):
         raise Exception(
-            "rvt.visualization.hillshade: ve_factor must be between -10000 and 10000!"
+            "rvt.visualization.hillshade: vertical_exaggeration_factor must be between -10000 and 10000!"
         )
     if sun_azimuth > 360 or sun_elevation > 90 or sun_azimuth < 0 or sun_elevation < 0:
         raise Exception(
@@ -301,7 +301,7 @@ def hillshade(
     dem = dem.astype(np.float32)
     # add 1 pixel edge padding
     dem = np.pad(array=dem, pad_width=1, mode="edge")
-    dem = dem * ve_factor
+    dem = dem * vertical_exaggeration_factor
 
     # Convert solar position (degrees) to radians
     sun_azimuth_rad = np.deg2rad(sun_azimuth)
@@ -339,11 +339,11 @@ def multi_hillshade(
     dem: npt.NDArray[Any],
     resolution_x: float,
     resolution_y: float,
-    nr_directions: int = 16,
+    number_of_directions: int = 16,
     sun_elevation: float = 35,
     slope: Optional[npt.NDArray[Any]] = None,
     aspect: Optional[npt.NDArray[Any]] = None,
-    ve_factor: float = 1,
+    vertical_exaggeration_factor: float = 1,
     no_data: Optional[float] = None,
 ) -> npt.NDArray[Any]:
     """
@@ -357,7 +357,7 @@ def multi_hillshade(
         DEM resolution in X direction.
     resolution_y : int
         DEM resolution in Y direction.
-    nr_directions : int
+    number_of_directions : int
         Number of solar azimuth angles (clockwise from North).
     sun_elevation : int or float
         Solar vertical angle (above the horizon) in degrees.
@@ -365,7 +365,7 @@ def multi_hillshade(
         Slope in radians if you don't input it, it is calculated.
     aspect : numpy.ndarray
         Aspect in radians if you don't input it, it is calculated.
-    ve_factor : int or float
+    vertical_exaggeration_factor : int or float
         Vertical exaggeration factor.
     no_data : int or float
         Value that represents no_data, all pixels with this value are changed to np.nan .
@@ -373,7 +373,7 @@ def multi_hillshade(
     Returns
     -------
     multi_hillshade_out : numpy.ndarray
-        Result multiple direction hillshade multidimensional (nr_directions=dimensions) numpy array.
+        Result multiple direction hillshade multidimensional (number_of_directions=dimensions) numpy array.
     """
     if dem.ndim != 2:
         raise Exception("rvt.visualization.multi_hillshade: dem has to be 2D np.array!")
@@ -385,13 +385,13 @@ def multi_hillshade(
         raise Exception(
             "rvt.visualization.multi_hillshade: resolution must be a positive number!"
         )
-    if nr_directions < 1:
+    if number_of_directions < 1:
         raise Exception(
-            "rvt.visualization.multi_hillshade: nr_directions must be a positive number!"
+            "rvt.visualization.multi_hillshade: number_of_directions must be a positive number!"
         )
-    if not (10000 >= ve_factor >= -10000):
+    if not (10000 >= vertical_exaggeration_factor >= -10000):
         raise Exception(
-            "rvt.visualization.multi_hillshade: ve_factor must be between -10000 and 10000!"
+            "rvt.visualization.multi_hillshade: vertical_exaggeration_factor must be between -10000 and 10000!"
         )
 
     # change no_data to np.nan
@@ -399,7 +399,7 @@ def multi_hillshade(
         dem[dem == no_data] = np.nan
 
     dem = dem.astype(np.float32)
-    dem = dem * ve_factor
+    dem = dem * vertical_exaggeration_factor
 
     # calculates slope and aspect if they are not added
     if (
@@ -415,8 +415,8 @@ def multi_hillshade(
         aspect = dict_slp_asp["aspect"]
 
     hillshades_arr_list = []  # list of all hillshades in different directions
-    for i_direction in range(nr_directions):
-        sun_azimuth = (360 / nr_directions) * i_direction
+    for i_direction in range(number_of_directions):
+        sun_azimuth = (360 / number_of_directions) * i_direction
         hillshading = hillshade(
             dem=dem,
             resolution_x=resolution_x,
@@ -481,10 +481,10 @@ def mean_filter(dem: npt.NDArray[Any], kernel_radius: int) -> npt.NDArray[Any]:
     return mean_out
 
 
-def slrm(
+def simple_local_relief_model(
     dem: npt.NDArray[Any],
     radius_cell: int = 20,
-    ve_factor: float = 1,
+    vertical_exaggeration_factor: float = 1,
     no_data: Optional[float] = None,
 ) -> npt.NDArray[Any]:
     """
@@ -496,7 +496,7 @@ def slrm(
         Input digital elevation model as 2D numpy array.
     radius_cell : int
         Radius for trend assessment in pixels.
-    ve_factor : int or float
+    vertical_exaggeration_factor : int or float
         Vertical exaggeration factor.
     no_data : int or float
         Value that represents no_data, all pixels with this value are changed to np.nan .
@@ -507,14 +507,16 @@ def slrm(
         Simple local relief model 2D numpy array.
     """
     if dem.ndim != 2:
-        raise Exception("rvt.visualization.slrm: dem has to be 2D np.array!")
+        raise Exception(
+            "rvt.visualization.simple_local_relief_model: dem has to be 2D np.array!"
+        )
     if radius_cell < 10 or radius_cell > 50:
         raise Exception(
-            "rvt.visualization.slrm: Radius for trend assessment needs to be in interval 10-50 pixels!"
+            "rvt.visualization.simple_local_relief_model: Radius for trend assessment needs to be in interval 10-50 pixels!"
         )
-    if not (10000 >= ve_factor >= -10000):
+    if not (10000 >= vertical_exaggeration_factor >= -10000):
         raise Exception(
-            "rvt.visualization.slrm: ve_factor must be between -10000 and 10000!"
+            "rvt.visualization.simple_local_relief_model: vertical_exaggeration_factor must be between -10000 and 10000!"
         )
 
     # change no_data to np.nan
@@ -522,7 +524,7 @@ def slrm(
         dem[dem == no_data] = np.nan
 
     dem = dem.astype(np.float32)
-    dem = dem * ve_factor
+    dem = dem * vertical_exaggeration_factor
 
     # mean filter
     dem_mean_filter = mean_filter(dem=dem, kernel_radius=radius_cell)
@@ -595,7 +597,13 @@ def horizon_shift_vector(
     return shift
 
 
-def sky_view_factor_compute(
+class HorizonVisualizationResult(NamedTuple):
+    sky_view_factor: Optional[npt.NDArray[Any]]
+    anisotropic_sky_view_factor: Optional[npt.NDArray[Any]]
+    openness: Optional[npt.NDArray[Any]]
+
+
+def _compute_horizon_visualizations(
     height_arr: npt.NDArray[Any],
     radius_max: int = 10,
     radius_min: int = 1,
@@ -606,7 +614,7 @@ def sky_view_factor_compute(
     a_main_direction: float = 315.0,
     a_poly_level: int = 4,
     a_min_weight: float = 0.4,
-) -> Dict[str, npt.NDArray[Any]]:
+) -> HorizonVisualizationResult:
     """
     Calculates horizon based visualizations: Sky-view factor, Anisotropic SVF and Openness.
 
@@ -645,11 +653,7 @@ def sky_view_factor_compute(
 
     Returns
     -------
-    dict_out : dictionary
-        Return {"svf": svf_out, "asvf": asvf_out, "opns": opns_out};
-        svf_out, skyview factor : 2D numpy array (numpy.ndarray) of skyview factor;
-        asvf_out, anisotropic skyview factor : 2D numpy array (numpy.ndarray) of anisotropic skyview factor;
-        opns_out, openness : 2D numpy array (numpy.ndarray) openness (elevation angle of horizon).
+    HorizonVisualizationResult
     """
 
     # Pad the array for the radius_max on all 4 sides
@@ -745,30 +749,77 @@ def sky_view_factor_compute(
         )
 
     # Return results within dict
-    dict_svf_asvf_opns = {"svf": svf_out, "asvf": asvf_out, "opns": opns_out}
-    dict_svf_asvf_opns = {
-        k: v for k, v in dict_svf_asvf_opns.items() if v is not None
-    }  # filter out none
-
-    return dict_svf_asvf_opns  # type: ignore
+    horizon_visualization_result = HorizonVisualizationResult(
+        sky_view_factor=svf_out, anisotropic_sky_view_factor=asvf_out, openness=opns_out
+    )
+    return horizon_visualization_result
 
 
-def sky_view_factor(
+class SvfNoiseRemove(Enum):
+    NO_REMOVE = "no_remove"
+    LOW = "low"
+    MEDIUM = "medium"
+    HIGH = "high"
+
+    @property
+    def maximum_radius_ignore_percentage(self):
+        """
+        The portion (percent) of the maximal search radius to ignore in horizon estimation, for selected noise level.
+        """
+        if self == SvfNoiseRemove.NO_REMOVE:
+            return 0.0
+        elif self == SvfNoiseRemove.LOW:
+            return 10.0
+        elif self == SvfNoiseRemove.MEDIUM:
+            return 20.0
+        elif self == SvfNoiseRemove.HIGH:
+            return 40.0
+        else:
+            raise ValueError(
+                f"Percentage for selected noise level ({self.name}) is unspecified!"
+            )
+
+
+class AnisotropyLevel(Enum):
+    LOW = "low"
+    HIGH = "high"
+
+    @property
+    def polynomial_level(self):
+        """Level of polynomial that determines the anisotropy, for selected anisotropy level."""
+        if self == AnisotropyLevel.LOW:
+            return 4
+        elif self == AnisotropyLevel.HIGH:
+            return 8
+
+    @property
+    def minimal_weight(self):
+        """Minimal weight for selected anisotropy level."""
+        if self == AnisotropyLevel.LOW:
+            return 0.4
+        elif self == AnisotropyLevel.HIGH:
+            return 0.1
+
+
+def horizon_visualizations(
     dem: npt.NDArray[Any],
     resolution: float,
     compute_svf: bool = True,
     compute_opns: bool = False,
     compute_asvf: bool = False,
-    svf_n_dir: int = 16,
-    svf_r_max: int = 10,
-    svf_noise: int = 0,
-    asvf_dir: float = 315,
-    asvf_level: int = 1,
-    ve_factor: float = 1,
+    number_of_directions: int = 16,
+    maximum_search_radius: int = 10,
+    noise_remove: SvfNoiseRemove = SvfNoiseRemove.NO_REMOVE,
+    direction_of_anisotropy: float = 315,
+    anisotropy_level: AnisotropyLevel = AnisotropyLevel.LOW,
+    vertical_exaggeration_factor: float = 1,
     no_data: Optional[float] = None,
-) -> Dict[str, npt.NDArray[Any]]:
+) -> HorizonVisualizationResult:
     """
-    Prepare the data, call sky_view_factor_compute, reformat and return back 2D arrays.
+    Funtion to compute horizon visualizations:
+     - Sky View Factor
+     - Anisotropic Sky View Factor
+     - Openness
 
     Parameters
     ----------
@@ -780,19 +831,19 @@ def sky_view_factor(
         Compute OPENNESS (True) or not (False).
     resolution : float
         Pixel resolution.
-    svf_n_dir : int
+    number_of_directions : int
         Number of directions.
-    svf_r_max : int
+    maximum_search_radius : int
         Maximal search radius in pixels.
-    svf_noise : int
-        The level of noise remove (0-don't remove, 1-low, 2-med, 3-high).
+    noise_remove : SvfNoiseRemove
+        The level of noise remove.
     compute_asvf : bool
         Compute anisotropic SVF (True) or not (False).
-    asvf_level : int
+    anisotropy_level : int
         Level of anisotropy, 1-low, 2-high.
-    asvf_dir : int or float
+    direction_of_anisotropy : int or float
         Direction of anisotropy.
-    ve_factor : int or float
+    vertical_exaggeration_factor : int or float
         Vertical exaggeration factor.
     no_data : int or float
         Value that represents no_data, all pixels with this value are changed to np.nan. Use this parameter when nodata
@@ -800,47 +851,32 @@ def sky_view_factor(
 
     Returns
     -------
-    dict_out : dictionary
-        Return {"svf": svf_out, "asvf": asvf_out, "opns": opns_out};
-        svf_out, skyview factor : 2D numpy array (numpy.ndarray) of skyview factor;
-        asvf_out, anisotropic skyview factor : 2D numpy array (numpy.ndarray) of anisotropic skyview factor;
-        opns_out, openness : 2D numpy array (numpy.ndarray) openness (elevation angle of horizon).
+    HorizonVisualizationResult
     """
 
     # Checks for input parameters
     if dem.ndim != 2:
-        raise Exception("rvt.visualization.sky_view_factor: dem has to be 2D np.array!")
-    if not (10000 >= ve_factor >= -10000):
         raise Exception(
-            "rvt.visualization.sky_view_factor: ve_factor must be between -10000 and 10000!"
+            "rvt.visualization.horizon_visualizations: dem has to be 2D np.array!"
         )
-    if svf_noise != 0 and svf_noise != 1 and svf_noise != 2 and svf_noise != 3:
+    if not (10000 >= vertical_exaggeration_factor >= -10000):
         raise Exception(
-            "rvt.visualization.sky_view_factor: svf_noise must be one of the following"
-            "values (0-don't remove, 1-low, 2-med, 3-high)!"
-        )
-    if asvf_level != 1 and asvf_level != 2:
-        raise Exception(
-            "rvt.visualization.sky_view_factor: asvf_leve must be one of the following"
-            "values (1-low, 2-high)!"
+            "rvt.visualization.horizon_visualizations: vertical_exaggeration_factor must be between -10000 and 10000!"
         )
     if not compute_svf and not compute_asvf and not compute_opns:
-        raise Exception("rvt.visualization.sky_view_factor: All computes are false!")
+        raise Exception(
+            "rvt.visualization.horizon_visualizations: All computes are false!"
+        )
     if resolution < 0:
         raise Exception(
-            "rvt.visualization.sky_view_factor: resolution must be a positive number!"
+            "rvt.visualization.horizon_visualizations: resolution must be a positive number!"
         )
 
     # Make sure array has the correct dtype!
     dem = dem.astype(np.float32)
 
-    # CONSTANTS
-    # Level of polynomial that determines the anisotropy, selected with asvf_level (1 - low, 2 - high)
-    sc_asvf_pol = [4, 8]
-    sc_asvf_min = [0.4, 0.1]
-    # The portion (percent) of the maximal search radius to ignore in horizon estimation; for each noise level,
-    # selected with svf_noise (0-3)
-    sc_svf_r_min = [0.0, 10.0, 20.0, 40.0]
+    # The portion (percent) of the maximal search radius to ignore in horizon estimation
+    maximum_radius_ignore_percentage = noise_remove.maximum_radius_ignore_percentage
 
     # Before doing anything to the array, make sure all NODATA values are set to np.nan
     if no_data is not None:
@@ -849,36 +885,41 @@ def sky_view_factor(
     nan_mask = np.isnan(dem)
 
     # Vertical exaggeration
-    dem = dem * ve_factor
+    dem = dem * vertical_exaggeration_factor
     # Pixel size (adjust elevation to correctly calculate the vertical elevation angle, calculation thinks 1px == 1m)
     dem = dem / resolution
 
     # Minimal search radius depends on the noise level, it has to be an integer not smaller than 1
-    svf_r_min = max(np.round(svf_r_max * sc_svf_r_min[svf_noise] * 0.01, decimals=0), 1)
+    svf_r_min = max(
+        np.round(
+            maximum_search_radius * maximum_radius_ignore_percentage * 0.01, decimals=0
+        ),
+        1,
+    )
 
     # Set anisotropy parameters
-    poly_level = sc_asvf_pol[asvf_level - 1]
-    min_weight = sc_asvf_min[asvf_level - 1]
+    poly_level = anisotropy_level.polynomial_level
+    min_weight = anisotropy_level.minimal_weight
 
-    # Main routine for SVF processing
-    dict_svf_asvf_opns = sky_view_factor_compute(
+    horizon_visualizations_result = _compute_horizon_visualizations(
         height_arr=dem,
-        radius_max=svf_r_max,
+        radius_max=maximum_search_radius,
         radius_min=svf_r_min,
-        num_directions=svf_n_dir,
+        num_directions=number_of_directions,
         compute_svf=compute_svf,
         compute_opns=compute_opns,
         compute_asvf=compute_asvf,
-        a_main_direction=asvf_dir,
+        a_main_direction=direction_of_anisotropy,
         a_poly_level=poly_level,
         a_min_weight=min_weight,
     )
 
     # Apply NaN mask to outputs
-    for item in dict_svf_asvf_opns.values():
-        item[nan_mask] = np.nan
+    for horizon_visualization_result in horizon_visualizations_result:
+        if horizon_visualization_result is not None:
+            horizon_visualization_result[nan_mask] = np.nan
 
-    return dict_svf_asvf_opns
+    return horizon_visualizations_result
 
 
 def local_dominance(
@@ -888,7 +929,7 @@ def local_dominance(
     rad_inc: int = 1,
     angular_res: int = 15,
     observer_height: float = 1.7,
-    ve_factor: float = 1,
+    vertical_exaggeration_factor: float = 1,
     no_data: Optional[float] = None,
 ) -> npt.NDArray[Any]:
     """
@@ -909,7 +950,7 @@ def local_dominance(
         Angular step for determination of number of angular directions.
     observer_height : int or float
         Height at which we observe the terrain.
-    ve_factor : int or float
+    vertical_exaggeration_factor : int or float
         Vertical exaggeration factor.
     no_data : int or float
         Value that represents no_data, all pixels with this value are changed to np.nan .
@@ -921,9 +962,9 @@ def local_dominance(
     """
     if dem.ndim != 2:
         raise Exception("rvt.visualization.local_dominance: dem has to be 2D np.array!")
-    if not (10000 >= ve_factor >= -10000):
+    if not (10000 >= vertical_exaggeration_factor >= -10000):
         raise Exception(
-            "rvt.visualization.local_dominance: ve_factor must be between -10000 and 10000!"
+            "rvt.visualization.local_dominance: vertical_exaggeration_factor must be between -10000 and 10000!"
         )
 
     # change no_data to np.nan
@@ -934,7 +975,7 @@ def local_dominance(
     # add max_rad pixel edge padding
     pad_width = max_rad
     dem = np.pad(array=dem, pad_width=pad_width, mode="edge")
-    dem = dem * ve_factor
+    dem = dem * vertical_exaggeration_factor
 
     # create a vector with possible distances
     n_dist = int((max_rad - min_rad) / rad_inc + 1)
@@ -1151,7 +1192,7 @@ def sky_illumination(
     num_directions: int = 32,
     shadow_az: float = 315,
     shadow_el: float = 35,
-    ve_factor: float = 1,
+    vertical_exaggeration_factor: float = 1,
     no_data: Optional[float] = None,
 ) -> Union[npt.NDArray[Any], Dict[str, npt.NDArray[Any]]]:
     """
@@ -1177,7 +1218,7 @@ def sky_illumination(
         Shadow azimuth.
     shadow_el : int or float
         Shadow elevation.
-    ve_factor : int or float
+    vertical_exaggeration_factor : int or float
         Vertical exaggeration factor.
     no_data : int or float
         Value that represents no_data, all pixels with this value are changed to np.nan .
@@ -1191,9 +1232,9 @@ def sky_illumination(
     pyramid_scale = 2
     max_pyramid_radius = 20
 
-    if not (10000 >= ve_factor >= -10000):
+    if not (10000 >= vertical_exaggeration_factor >= -10000):
         raise Exception(
-            "rvt.visualization.sky_illumination: ve_factor must be between -10000 and 10000!"
+            "rvt.visualization.sky_illumination: vertical_exaggeration_factor must be between -10000 and 10000!"
         )
     if shadow_az > 360 or shadow_az < 0:
         raise Exception(
@@ -1213,7 +1254,7 @@ def sky_illumination(
         dem[dem == no_data] = np.nan
 
     dem = dem.astype(np.float32)
-    dem = dem * ve_factor
+    dem = dem * vertical_exaggeration_factor
 
     if sky_model.lower() == "overcast":
         compute_overcast = True
@@ -1416,7 +1457,7 @@ def shadow_horizon(
     resolution: float,
     shadow_az: float = 315,
     shadow_el: float = 35,
-    ve_factor: float = 1,
+    vertical_exaggeration_factor: float = 1,
     no_data: Optional[float] = None,
 ) -> Dict[str, npt.NDArray[Any]]:
     """
@@ -1432,7 +1473,7 @@ def shadow_horizon(
         Shadow azimuth.
     shadow_el : int or float
         Shadow elevation.
-    ve_factor : int or float
+    vertical_exaggeration_factor : int or float
         Vertical exaggeration factor.
     no_data : int or float
         Value that represents no_data, all pixels with this value are changed to np.nan .
@@ -1444,9 +1485,9 @@ def shadow_horizon(
         shadow : 2D binary numpy array (numpy.ndarray) of shadows;
         horizon; 2D numpy array (numpy.ndarray) of horizon.
     """
-    if not (10000 >= ve_factor >= -10000):
+    if not (10000 >= vertical_exaggeration_factor >= -10000):
         raise Exception(
-            "rvt.visualization.shadow_horizon: ve_factor must be between -10000 and 10000!"
+            "rvt.visualization.shadow_horizon: vertical_exaggeration_factor must be between -10000 and 10000!"
         )
     if shadow_az > 360 or shadow_az < 0:
         raise Exception(
@@ -1468,7 +1509,7 @@ def shadow_horizon(
         shadow_horizon_only=True,
         shadow_el=shadow_el,
         shadow_az=shadow_az,
-        ve_factor=ve_factor,
+        vertical_exaggeration_factor=vertical_exaggeration_factor,
         no_data=no_data,
     )
 
@@ -1479,7 +1520,7 @@ def msrm(
     feature_min: float,
     feature_max: float,
     scaling_factor: int,
-    ve_factor: float = 1,
+    vertical_exaggeration_factor: float = 1,
     no_data: Optional[float] = None,
 ) -> npt.NDArray[Any]:
     """
@@ -1498,7 +1539,7 @@ def msrm(
     scaling_factor: int
         Scaling factor, if larger than 1 it provides larger range of MSRM values (increase contrast and visibility),
         but could result in a loss of sensitivity for intermediate sized features.
-    ve_factor : int or float
+    vertical_exaggeration_factor : int or float
         Vertical exaggeration factor.
     no_data : int or float
         Value that represents no_data, all pixels with this value are changed to np.nan .
@@ -1508,9 +1549,9 @@ def msrm(
     msrm_out : numpy.ndarray
         2D numpy result array of Multi-scale relief model.
     """
-    if not (10000 >= ve_factor >= -10000):
+    if not (10000 >= vertical_exaggeration_factor >= -10000):
         raise Exception(
-            "rvt.visualization.msrm: ve_factor must be between -10000 and 10000!"
+            "rvt.visualization.msrm: vertical_exaggeration_factor must be between -10000 and 10000!"
         )
     if resolution < 0:
         raise Exception("rvt.visualization.msrm: resolution must be a positive number!")
@@ -1520,7 +1561,7 @@ def msrm(
         dem[dem == no_data] = np.nan
 
     dem = dem.astype(np.float32)
-    dem = dem * ve_factor
+    dem = dem * vertical_exaggeration_factor
 
     if feature_min < resolution:  # feature_min can't be smaller than resolution
         feature_min = resolution
@@ -1745,7 +1786,7 @@ def mstp(
     meso_scale: Tuple[int, int, int] = (23, 203, 18),
     broad_scale: Tuple[int, int, int] = (223, 2023, 180),
     lightness: float = 1.2,
-    ve_factor: float = 1,
+    vertical_exaggeration_factor: float = 1,
     no_data: Optional[float] = None,
 ) -> npt.NDArray[Any]:
     """
@@ -1763,7 +1804,7 @@ def mstp(
         Input broad scale minimum radius (broad_scale[0]), maximum radius (broad_scale[1]), step (broad_scale[2]).
     lightness : float
         Lightness of image.
-    ve_factor : int or float
+    vertical_exaggeration_factor : int or float
         Vertical exaggeration factor.
     no_data : int or float
         Value that represents no_data, all pixels with this value are changed to np.nan .
@@ -1790,9 +1831,9 @@ def mstp(
             "rvt.visualization.mstp: local_scale, meso_scale, broad_scale step has"
             " to be within min and max!"
         )
-    if not (10000 >= ve_factor >= -1000):
+    if not (10000 >= vertical_exaggeration_factor >= -1000):
         raise Exception(
-            "rvt.visualization.mstp: ve_factor must be between -10000 and 10000!"
+            "rvt.visualization.mstp: vertical_exaggeration_factor must be between -10000 and 10000!"
         )
 
     # change no_data to np.nan
@@ -1800,7 +1841,7 @@ def mstp(
         dem[dem == no_data] = np.nan
 
     dem = dem.astype(np.float32)
-    dem = dem * ve_factor
+    dem = dem * vertical_exaggeration_factor
 
     local_dev = max_elevation_deviation(
         dem=dem,

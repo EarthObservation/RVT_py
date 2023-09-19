@@ -5,7 +5,13 @@ import time
 import numpy as np
 
 
-def slope_aspect_gpu(dem, resolution_x, resolution_y, ve_factor=1, output_units="radian"):
+def slope_aspect_gpu(
+    dem,
+    resolution_x,
+    resolution_y,
+    vertical_exaggeration_factor=1,
+    output_units="radian",
+):
     """
     Procedure can return terrain slope and aspect in radian units (default) or in alternative units (if specified).
     Slope is defined as 0 for Hz plane and pi/2 for vertical plane.
@@ -17,7 +23,7 @@ def slope_aspect_gpu(dem, resolution_x, resolution_y, ve_factor=1, output_units=
     dem : input dem 2D cupy array
     resolution_x : dem resolution in X direction
     resolution_y : DEM resolution in Y direction
-    ve_factor : vertical exaggeration factor (must be greater than 0)
+    vertical_exaggeration_factor : vertical exaggeration factor (must be greater than 0)
     output_units : percent, degree, radians
 
     Returns
@@ -25,15 +31,17 @@ def slope_aspect_gpu(dem, resolution_x, resolution_y, ve_factor=1, output_units=
     {"slope": slope_out, "aspect": aspect_out} : dictionaries with 2D numpy arrays
     """
 
-    if ve_factor <= 0:
-        raise Exception("rvt.vis.slope_aspect: ve_factor must be a positive number!")
+    if vertical_exaggeration_factor <= 0:
+        raise Exception(
+            "rvt.vis.slope_aspect: vertical_exaggeration_factor must be a positive number!"
+        )
 
     if resolution_x < 0 or resolution_y < 0:
         raise Exception("rvt.vis.slope_aspect: resolution must be a positive number!")
 
     dem = dem.astype(np.float32)
-    if ve_factor != 1:
-        dem = dem * ve_factor
+    if vertical_exaggeration_factor != 1:
+        dem = dem * vertical_exaggeration_factor
 
     # add frame of 0 (additional row up bottom and column left right)
     dem = cp.pad(dem, pad_width=1, mode="constant", constant_values=0)
@@ -41,7 +49,7 @@ def slope_aspect_gpu(dem, resolution_x, resolution_y, ve_factor=1, output_units=
     # derivatives in X and Y direction
     dzdx = ((cp.roll(dem, 1, axis=1) - cp.roll(dem, -1, axis=1)) / 2) / resolution_x
     dzdy = ((cp.roll(dem, -1, axis=0) - cp.roll(dem, 1, axis=0)) / 2) / resolution_y
-    tan_slope = cp.sqrt(dzdx ** 2 + dzdy ** 2)
+    tan_slope = cp.sqrt(dzdx**2 + dzdy**2)
 
     # Compute slope
     if output_units == "percent":
@@ -58,7 +66,9 @@ def slope_aspect_gpu(dem, resolution_x, resolution_y, ve_factor=1, output_units=
     #     0
     # 270    90
     #    180
-    dzdy[dzdy == 0] = 10e-9  # important for numeric stability - where dzdy is zero, make tangens to really high value
+    dzdy[
+        dzdy == 0
+    ] = 10e-9  # important for numeric stability - where dzdy is zero, make tangens to really high value
 
     aspect_out = cp.arctan2(dzdx, dzdy)  # atan2 took care of the quadrants
     if output_units == "degree":
@@ -94,19 +104,29 @@ print("DEM_path: {}, shape: {}".format(input_dem_path, input_dem_arr.shape))
 # cupy
 dem_cupy = cp.array(input_dem_arr)
 start_time = time.time()
-gpu_slope = slope_aspect_gpu(dem=dem_cupy, resolution_x=x_res, resolution_y=y_res,
-                             ve_factor=1, output_units="degree")
+gpu_slope = slope_aspect_gpu(
+    dem=dem_cupy,
+    resolution_x=x_res,
+    resolution_y=y_res,
+    vertical_exaggeration_factor=1,
+    output_units="degree",
+)
 end_time = time.time()
-print("Gpu slope computing time: {}".format(end_time-start_time))
+print("Gpu slope computing time: {}".format(end_time - start_time))
 del gpu_slope
 del dem_cupy
 
 # numpy
 dem_numpy = input_dem_arr
 start_time = time.time()
-cpu_slope = rvt.vis.slope_aspect(dem=dem_numpy, resolution_x=x_res, resolution_y=y_res,
-                                 ve_factor=1, output_units="degree")
+cpu_slope = rvt.vis.slope_aspect(
+    dem=dem_numpy,
+    resolution_x=x_res,
+    resolution_y=y_res,
+    vertical_exaggeration_factor=1,
+    output_units="degree",
+)
 end_time = time.time()
-print("Cpu slope computing time: {}".format(end_time-start_time))
+print("Cpu slope computing time: {}".format(end_time - start_time))
 del cpu_slope
 del dem_numpy

@@ -27,7 +27,7 @@ class RVTVisualization(Enum):
     HILLSHADE = "hs"
     SHADOW = "shd"
     MULTIPLE_DIRECTIONS_HILLSHADE = "mhs"
-    SIMPLE_LOCAL_RELIEF_MODEL = "slrm"
+    SIMPLE_LOCAL_RELIEF_MODEL = "simple_local_relief_model"
     SKY_VIEW_FACTOR = "svf"
     ANISOTROPIC_SKY_VIEW_FACTOR = "asvf"
     POSITIVE_OPENNESS = "pos_opns"
@@ -41,12 +41,12 @@ class RVTVisualization(Enum):
 class Visualization(ABC):
     @property
     @abstractmethod
-    def name(self):
+    def rvt_visualization(self) -> RVTVisualization:
         pass
 
     @property
     @abstractmethod
-    def abbreviation(self):
+    def abbreviation(self) -> str:
         pass
 
     @abstractmethod
@@ -75,12 +75,12 @@ class Slope(Visualization):
     )
 
     @property
-    def name(self):
-        return "Slope"
+    def rvt_visualization(self):
+        return RVTVisualization.SLOPE
 
     @property
     def abbreviation(self):
-        return "slp"
+        return self.rvt_visualization.value
 
     def compute_visualization(
         self,
@@ -94,9 +94,124 @@ class Slope(Visualization):
             resolution_x=dem_resolution,
             resolution_y=dem_resolution,
             output_units=self.output_units,
-            ve_factor=vertical_exaggeration_factor,
+            vertical_exaggeration_factor=vertical_exaggeration_factor,
             no_data=dem_nodata,
         ).slope
+
+
+@dataclass
+class Hillshade(Visualization):
+    sun_azimuth: float = 315
+    sun_elevation: float = 35
+
+    @property
+    def rvt_visualization(self):
+        return RVTVisualization.HILLSHADE
+
+    @property
+    def abbreviation(self):
+        return self.rvt_visualization.value
+
+    def compute_visualization(
+        self,
+        dem: Union[Path, npt.NDArray[Any]],
+        dem_resolution: float,
+        dem_nodata: float,
+        vertical_exaggeration_factor: float,
+    ) -> npt.NDArray[Any]:
+        return rvt.visualizations.hillshade(
+            dem=dem,
+            resolution_x=dem_resolution,
+            resolution_y=dem_resolution,
+            sun_azimuth=self.sun_azimuth,
+            sun_elevation=self.sun_elevation,
+            vertical_exaggeration_factor=vertical_exaggeration_factor,
+            no_data=dem_nodata,
+        )
+
+
+@dataclass
+class MultipleDirectionsHillshade(Visualization):
+    number_of_directions: float = 16
+    sun_elevation: float = 35
+
+    @property
+    def rvt_visualization(self):
+        return RVTVisualization.MULTIPLE_DIRECTIONS_HILLSHADE
+
+    @property
+    def abbreviation(self):
+        return self.rvt_visualization.value
+
+    def compute_visualization(
+        self,
+        dem: Union[Path, npt.NDArray[Any]],
+        dem_resolution: float,
+        dem_nodata: float,
+        vertical_exaggeration_factor: float,
+    ) -> npt.NDArray[Any]:
+        return rvt.visualizations.multi_hillshade(
+            dem=dem,
+            resolution_x=dem_resolution,
+            resolution_y=dem_resolution,
+            number_of_directions=self.number_of_directions,
+            sun_elevation=self.sun_elevation,
+            vertical_exaggeration_factor=vertical_exaggeration_factor,
+            no_data=dem_nodata,
+        )
+
+
+@dataclass
+class SimpleLocalReliefModel(Visualization):
+    radius_cell: int = 20
+
+    @property
+    def rvt_visualization(self):
+        return RVTVisualization.SIMPLE_LOCAL_RELIEF_MODEL
+
+    @property
+    def abbreviation(self):
+        return self.rvt_visualization.value
+
+    def compute_visualization(
+        self,
+        dem: Union[Path, npt.NDArray[Any]],
+        dem_resolution: float,
+        dem_nodata: float,
+        vertical_exaggeration_factor: float,
+    ) -> npt.NDArray[Any]:
+        return rvt.visualizations.simple_local_relief_model(
+            dem=dem,
+            radius_cell=self.radius_cell,
+            vertical_exaggeration_factor=vertical_exaggeration_factor,
+            no_data=dem_nodata,
+        )
+
+
+@dataclass
+class SkyViewFactor(Visualization):
+    number_of_directions: int = 16
+    maximum_search_radius: int = 10
+    noise_remove: rvt.visualizations.SvfNoiseRemove = (
+        rvt.visualizations.SvfNoiseRemove.NO_REMOVE
+    )
+
+    @property
+    def rvt_visualization(self):
+        return RVTVisualization.SKY_VIEW_FACTOR
+
+    @property
+    def abbreviation(self):
+        return self.rvt_visualization.value
+
+    def compute_visualization(
+        self,
+        dem: Union[Path, npt.NDArray[Any]],
+        dem_resolution: float,
+        dem_nodata: float,
+        vertical_exaggeration_factor: float,
+    ) -> npt.NDArray[Any]:
+        pass
 
 
 @dataclass
@@ -107,7 +222,7 @@ class DefaultValues:  # TODO: Rename to something better like Visualizer or Visu
     ----------
     overwrite : bool
         When saving visualisation functions and file already exists, if 0 it doesn't compute it, if 1 it overwrites it.
-    ve_factor : float
+    vertical_exaggeration_factor : float
         For all visualization functions. Vertical exaggeration.
     slp_compute : bool
         If compute Slope. Parameter for GUIs.
@@ -276,7 +391,7 @@ class DefaultValues:  # TODO: Rename to something better like Visualizer or Visu
     """
 
     overwrite: bool = False
-    ve_factor: float = 1.0
+    vertical_exaggeration_factor: float = 1.0
     # slope gradient
     self.slp_compute = 0
     self.slp_output_units = "degree"
@@ -384,8 +499,8 @@ class DefaultValues:  # TODO: Rename to something better like Visualizer or Visu
                     "description": "When saving visualisation functions and file already exists, if 0 "
                     "it doesn't compute it, if 1 it overwrites it.",
                 },
-                "ve_factor": {
-                    "value": self.ve_factor,
+                "vertical_exaggeration_factor": {
+                    "value": self.vertical_exaggeration_factor,
                     "description": "Vertical exaggeration.",
                 },
                 "Hillshade": {
@@ -552,11 +667,11 @@ class DefaultValues:  # TODO: Rename to something better like Visualizer or Visu
                         "description": "If compute Sky-View Factor."
                         " Parameter for GUIs.",
                     },
-                    "svf_n_dir": {
+                    "number_of_directions": {
                         "value": self.svf_n_dir,
                         "description": "Number of directions.",
                     },
-                    "svf_r_max": {
+                    "maximum_search_radius": {
                         "value": self.svf_r_max,
                         "description": "Maximal search " "radious in pixels.",
                     },
@@ -588,11 +703,11 @@ class DefaultValues:  # TODO: Rename to something better like Visualizer or Visu
                         "description": "If compute Anisotropic Sky-View Factor."
                         " Parameter for GUIs.",
                     },
-                    "asvf_dir": {
+                    "direction_of_anisotropy": {
                         "value": self.asvf_dir,
                         "description": "Direction of anisotropy in degrees.",
                     },
-                    "asvf_level": {
+                    "anisotropy_level": {
                         "value": self.asvf_level,
                         "description": "Level of anisotropy [1-low, 2-high].",
                     },
@@ -823,7 +938,7 @@ class DefaultValues:  # TODO: Rename to something better like Visualizer or Visu
                     if parameter_name == "overwrite":
                         self.overwrite = int(parameter_value)
                     elif parameter_name == "exaggeration_factor":
-                        self.ve_factor = float(parameter_value)
+                        self.vertical_exaggeration_factor = float(parameter_value)
                     elif parameter_name == "slope_gradient":
                         self.slp_compute = int(parameter_value)
                     elif parameter_name == "hillshading":
@@ -842,7 +957,7 @@ class DefaultValues:  # TODO: Rename to something better like Visualizer or Visu
                         self.slrm_compute = int(parameter_value)
                     elif parameter_name == "trend_radius":
                         self.slrm_rad_cell = int(parameter_value)
-                    elif parameter_name == "sky_view_factor":
+                    elif parameter_name == "horizon_visualizations":
                         self.svf_compute = int(parameter_value)
                     elif parameter_name == "svf_directions":
                         self.svf_n_dir = int(parameter_value)
@@ -902,7 +1017,9 @@ class DefaultValues:  # TODO: Rename to something better like Visualizer or Visu
             data = json.load(dat)
             default_data = data["default_settings"]
             self.overwrite = int(default_data["overwrite"]["value"])
-            self.ve_factor = float(default_data["ve_factor"]["value"])
+            self.vertical_exaggeration_factor = float(
+                default_data["vertical_exaggeration_factor"]["value"]
+            )
             # Slope gradient
             self.slp_compute = int(
                 default_data["Slope gradient"]["slp_compute"]["value"]
@@ -1008,8 +1125,12 @@ class DefaultValues:  # TODO: Rename to something better like Visualizer or Visu
             self.svf_compute = int(
                 default_data["Sky-View Factor"]["svf_compute"]["value"]
             )
-            self.svf_n_dir = int(default_data["Sky-View Factor"]["svf_n_dir"]["value"])
-            self.svf_r_max = int(default_data["Sky-View Factor"]["svf_r_max"]["value"])
+            self.svf_n_dir = int(
+                default_data["Sky-View Factor"]["number_of_directions"]["value"]
+            )
+            self.svf_r_max = int(
+                default_data["Sky-View Factor"]["maximum_search_radius"]["value"]
+            )
             self.svf_noise = int(default_data["Sky-View Factor"]["svf_noise"]["value"])
             self.svf_save_float = int(
                 default_data["Sky-View Factor"]["svf_save_float"]["value"]
@@ -1027,10 +1148,12 @@ class DefaultValues:  # TODO: Rename to something better like Visualizer or Visu
                 default_data["Anisotropic Sky-View Factor"]["asvf_compute"]["value"]
             )
             self.asvf_dir = int(
-                default_data["Anisotropic Sky-View Factor"]["asvf_dir"]["value"]
+                default_data["Anisotropic Sky-View Factor"]["direction_of_anisotropy"][
+                    "value"
+                ]
             )
             self.asvf_level = int(
-                default_data["Anisotropic Sky-View Factor"]["asvf_level"]["value"]
+                default_data["Anisotropic Sky-View Factor"]["anisotropy_level"]["value"]
             )
             self.asvf_bytscl = (
                 str(default_data["Anisotropic Sky-View Factor"]["asvf_bytscl"]["mode"]),
@@ -1313,7 +1436,7 @@ class DefaultValues:  # TODO: Rename to something better like Visualizer or Visu
         )
 
     def get_slrm_file_name(self, dem_path: Path, bit8: bool = False) -> str:
-        """Returns Simple local relief model name, dem name (from dem_path) with added slrm parameters.
+        """Returns Simple local relief model name, dem name (from dem_path) with added simple_local_relief_model parameters.
         If bit8 it returns 8bit file name."""
         dem_name = os.path.basename(dem_path).split(".")[
             0
@@ -1324,7 +1447,7 @@ class DefaultValues:  # TODO: Rename to something better like Visualizer or Visu
             return "{}_SLRM_R{}.tif".format(dem_name, self.slrm_rad_cell)
 
     def get_slrm_path(self, dem_path: Path, bit8: bool = False) -> Path:
-        """Returns path to Simple local relief model. Generates slrm name (uses default attributes and dem name from
+        """Returns path to Simple local relief model. Generates simple_local_relief_model name (uses default attributes and dem name from
         dem_path) and adds dem directory (dem_path) to it. If bit8 it returns 8bit file path."""
         return Path(
             os.path.normpath(
@@ -1835,7 +1958,7 @@ class DefaultValues:  # TODO: Rename to something better like Visualizer or Visu
             return multi_hillshade_8bit_arr
         elif visualization == RVTVisualization.SIMPLE_LOCAL_RELIEF_MODEL:
             norm_arr = rvt.blend_func.normalize_image(
-                visualization="slrm",
+                visualization="simple_local_relief_model",
                 image=float_arr,
                 min_norm=self.slrm_bytscl[1],
                 max_norm=self.slrm_bytscl[2],
@@ -1932,7 +2055,7 @@ class DefaultValues:  # TODO: Rename to something better like Visualizer or Visu
             dem=dem_arr,
             resolution_x=resolution_x,
             resolution_y=resolution_y,
-            ve_factor=self.ve_factor,
+            vertical_exaggeration_factor=self.vertical_exaggeration_factor,
             output_units=self.slp_output_units,
             no_data=no_data,
         )["slope"]
@@ -2051,7 +2174,7 @@ class DefaultValues:  # TODO: Rename to something better like Visualizer or Visu
             resolution=resolution,
             shadow_az=self.hs_sun_azi,
             shadow_el=self.hs_sun_el,
-            ve_factor=self.ve_factor,
+            vertical_exaggeration_factor=self.vertical_exaggeration_factor,
             no_data=no_data,
         )["shadow"]
         return shadow_arr
@@ -2069,7 +2192,7 @@ class DefaultValues:  # TODO: Rename to something better like Visualizer or Visu
             resolution_y=resolution_y,
             sun_azimuth=self.hs_sun_azi,
             sun_elevation=self.hs_sun_el,
-            ve_factor=self.ve_factor,
+            vertical_exaggeration_factor=self.vertical_exaggeration_factor,
             no_data=no_data,
         )
         return hillshade_arr
@@ -2233,9 +2356,9 @@ class DefaultValues:  # TODO: Rename to something better like Visualizer or Visu
             dem=dem_arr,
             resolution_x=resolution_x,
             resolution_y=resolution_y,
-            nr_directions=self.mhs_nr_dir,
+            number_of_directions=self.mhs_nr_dir,
             sun_elevation=self.mhs_sun_el,
-            ve_factor=self.ve_factor,
+            vertical_exaggeration_factor=self.vertical_exaggeration_factor,
             no_data=no_data,
         )
         return multi_hillshade_arr
@@ -2360,10 +2483,10 @@ class DefaultValues:  # TODO: Rename to something better like Visualizer or Visu
     def get_slrm(
         self, dem_arr: npt.NDArray[Any], no_data: Optional[float] = None
     ) -> npt.NDArray[Any]:
-        slrm_arr = rvt.vis.slrm(
+        slrm_arr = rvt.vis.simple_local_relief_model(
             dem=dem_arr,
             radius_cell=self.slrm_rad_cell,
-            ve_factor=self.ve_factor,
+            vertical_exaggeration_factor=self.vertical_exaggeration_factor,
             no_data=no_data,
         )
         return slrm_arr
@@ -2476,18 +2599,18 @@ class DefaultValues:  # TODO: Rename to something better like Visualizer or Visu
         compute_opns: bool = False,
         no_data: Optional[float] = None,
     ) -> Dict[str, npt.NDArray[Any]]:
-        dict_svf_asvf_opns = rvt.vis.sky_view_factor(
+        dict_svf_asvf_opns = rvt.vis.horizon_visualizations(
             dem=dem_arr,
             resolution=resolution,
             compute_svf=compute_svf,
             compute_opns=compute_opns,
             compute_asvf=compute_asvf,
-            svf_n_dir=self.svf_n_dir,
-            svf_r_max=self.svf_r_max,
+            number_of_directions=self.svf_n_dir,
+            maximum_search_radius=self.svf_r_max,
             svf_noise=self.svf_noise,
-            asvf_dir=self.asvf_dir,
-            asvf_level=self.asvf_level,
-            ve_factor=self.ve_factor,
+            direction_of_anisotropy=self.asvf_dir,
+            anisotropy_level=self.asvf_level,
+            vertical_exaggeration_factor=self.vertical_exaggeration_factor,
             no_data=no_data,
         )
         return dict_svf_asvf_opns
@@ -2726,16 +2849,16 @@ class DefaultValues:  # TODO: Rename to something better like Visualizer or Visu
         no_data: Optional[float] = None,
     ) -> npt.NDArray[Any]:
         dem_arr = -1 * dem_arr
-        dict_neg_opns = rvt.vis.sky_view_factor(
+        dict_neg_opns = rvt.vis.horizon_visualizations(
             dem=dem_arr,
             resolution=resolution,
-            svf_n_dir=self.svf_n_dir,
-            svf_r_max=self.svf_r_max,
+            number_of_directions=self.svf_n_dir,
+            maximum_search_radius=self.svf_r_max,
             svf_noise=self.svf_noise,
             compute_svf=False,
             compute_asvf=False,
             compute_opns=True,
-            ve_factor=self.ve_factor,
+            vertical_exaggeration_factor=self.vertical_exaggeration_factor,
             no_data=no_data,
         )
         neg_opns_arr = dict_neg_opns["opns"]
@@ -2864,7 +2987,7 @@ class DefaultValues:  # TODO: Rename to something better like Visualizer or Visu
             num_directions=self.sim_nr_dir,
             shadow_az=self.sim_shadow_az,
             shadow_el=self.sim_shadow_el,
-            ve_factor=self.ve_factor,
+            vertical_exaggeration_factor=self.vertical_exaggeration_factor,
             no_data=no_data,
         )
         return sky_illumination_arr  # type: ignore
@@ -2989,7 +3112,7 @@ class DefaultValues:  # TODO: Rename to something better like Visualizer or Visu
             rad_inc=self.ld_rad_inc,
             angular_res=self.ld_anglr_res,
             observer_height=self.ld_observer_h,
-            ve_factor=self.ve_factor,
+            vertical_exaggeration_factor=self.vertical_exaggeration_factor,
             no_data=no_data,
         )
         return local_dominance_arr
@@ -3115,7 +3238,7 @@ class DefaultValues:  # TODO: Rename to something better like Visualizer or Visu
             feature_min=self.msrm_feature_min,
             feature_max=self.msrm_feature_max,
             scaling_factor=self.msrm_scaling_factor,
-            ve_factor=self.ve_factor,
+            vertical_exaggeration_factor=self.vertical_exaggeration_factor,
             no_data=no_data,
         )
         return msrm_arr
@@ -3543,7 +3666,11 @@ class DefaultValues:  # TODO: Rename to something better like Visualizer or Visu
 
         dat.write("# Selected visualization parameters\n")
         dat.write("\tOverwrite: {}\n".format(self.overwrite))
-        dat.write("\tVertical exaggeration factor: {}\n".format(self.ve_factor))
+        dat.write(
+            "\tVertical exaggeration factor: {}\n".format(
+                self.vertical_exaggeration_factor
+            )
+        )
         if nr_rows * nr_cols > self.tile_size_limit:
             dat.write("\tCalculating tile by tile: {}\n".format("ON"))
             dat.write(
@@ -3726,9 +3853,9 @@ class DefaultValues:  # TODO: Rename to something better like Visualizer or Visu
             dat.write("\n")
         if self.svf_compute:
             dat.write("\tSky-View Factor\n")
-            dat.write("\t\tsvf_n_dir=\t\t{}\n".format(self.svf_n_dir))
+            dat.write("\t\tnumber_of_directions=\t\t{}\n".format(self.svf_n_dir))
             dat.write("\t\tsvf_noise=\t\t{}\n".format(self.svf_noise))
-            dat.write("\t\tsvf_r_max=\t\t{}\n".format(self.svf_r_max))
+            dat.write("\t\tmaximum_search_radius=\t\t{}\n".format(self.svf_r_max))
             if self.svf_save_float:
                 dat.write("\t\t>> Output file:\n")
                 dat.write(
@@ -3757,11 +3884,11 @@ class DefaultValues:  # TODO: Rename to something better like Visualizer or Visu
             dat.write("\n")
         if self.asvf_compute:
             dat.write("\tAnisotropic Sky-View Factor\n")
-            dat.write("\t\tsvf_n_dir=\t\t{}\n".format(self.svf_n_dir))
+            dat.write("\t\tnumber_of_directions=\t\t{}\n".format(self.svf_n_dir))
             dat.write("\t\tsvf_noise=\t\t{}\n".format(self.svf_noise))
-            dat.write("\t\tsvf_r_max=\t\t{}\n".format(self.svf_r_max))
-            dat.write("\t\tasvf_level=\t\t{}\n".format(self.asvf_level))
-            dat.write("\t\tasvf_dir=\t\t{}\n".format(self.asvf_dir))
+            dat.write("\t\tmaximum_search_radius=\t\t{}\n".format(self.svf_r_max))
+            dat.write("\t\tanisotropy_level=\t\t{}\n".format(self.asvf_level))
+            dat.write("\t\tdirection_of_anisotropy=\t\t{}\n".format(self.asvf_dir))
             if self.svf_save_float:
                 dat.write("\t\t>> Output file:\n")
                 dat.write(
@@ -3790,9 +3917,9 @@ class DefaultValues:  # TODO: Rename to something better like Visualizer or Visu
             dat.write("\n")
         if self.pos_opns_compute:
             dat.write("\tOpenness - Positive\n")
-            dat.write("\t\tsvf_n_dir=\t\t{}\n".format(self.svf_n_dir))
+            dat.write("\t\tnumber_of_directions=\t\t{}\n".format(self.svf_n_dir))
             dat.write("\t\tsvf_noise=\t\t{}\n".format(self.svf_noise))
-            dat.write("\t\tsvf_r_max=\t\t{}\n".format(self.svf_r_max))
+            dat.write("\t\tmaximum_search_radius=\t\t{}\n".format(self.svf_r_max))
             if self.svf_save_float:
                 dat.write("\t\t>> Output file:\n")
                 dat.write(
@@ -3823,9 +3950,9 @@ class DefaultValues:  # TODO: Rename to something better like Visualizer or Visu
             dat.write("\n")
         if self.neg_opns_compute:
             dat.write("\tOpenness - Negative\n")
-            dat.write("\t\tsvf_n_dir=\t\t{}\n".format(self.svf_n_dir))
+            dat.write("\t\tnumber_of_directions=\t\t{}\n".format(self.svf_n_dir))
             dat.write("\t\tsvf_noise=\t\t{}\n".format(self.svf_noise))
-            dat.write("\t\tsvf_r_max=\t\t{}\n".format(self.svf_r_max))
+            dat.write("\t\tmaximum_search_radius=\t\t{}\n".format(self.svf_r_max))
             if self.neg_opns_save_float:
                 dat.write("\t\t>> Output file:\n")
                 dat.write(
