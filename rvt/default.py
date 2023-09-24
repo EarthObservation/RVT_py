@@ -27,7 +27,7 @@ class RVTVisualization(Enum):
     HILLSHADE = "hs"
     SHADOW = "shd"
     MULTIPLE_DIRECTIONS_HILLSHADE = "mhs"
-    SIMPLE_LOCAL_RELIEF_MODEL = "simple_local_relief_model"
+    SIMPLE_LOCAL_RELIEF_MODEL = "slrm"
     SKY_VIEW_FACTOR = "svf"
     ANISOTROPIC_SKY_VIEW_FACTOR = "asvf"
     POSITIVE_OPENNESS = "pos_opns"
@@ -45,9 +45,8 @@ class Visualization(ABC):
         pass
 
     @property
-    @abstractmethod
     def abbreviation(self) -> str:
-        pass
+        return self.rvt_visualization.value
 
     @abstractmethod
     def compute_visualization(
@@ -58,6 +57,9 @@ class Visualization(ABC):
         vertical_exaggeration_factor: float,
     ) -> npt.NDArray[Any]:
         pass
+
+    def compute_visualization_from_file(self, dem_path: Path) -> npt.NDArray[Any]:
+        pass  # TODO: implement
 
     def save_visualization(
         self,
@@ -78,13 +80,9 @@ class Slope(Visualization):
     def rvt_visualization(self):
         return RVTVisualization.SLOPE
 
-    @property
-    def abbreviation(self):
-        return self.rvt_visualization.value
-
     def compute_visualization(
         self,
-        dem: Union[Path, npt.NDArray[Any]],
+        dem: npt.NDArray[Any],
         dem_resolution: float,
         dem_nodata: float,
         vertical_exaggeration_factor: float,
@@ -108,13 +106,9 @@ class Hillshade(Visualization):
     def rvt_visualization(self):
         return RVTVisualization.HILLSHADE
 
-    @property
-    def abbreviation(self):
-        return self.rvt_visualization.value
-
     def compute_visualization(
         self,
-        dem: Union[Path, npt.NDArray[Any]],
+        dem: npt.NDArray[Any],
         dem_resolution: float,
         dem_nodata: float,
         vertical_exaggeration_factor: float,
@@ -139,13 +133,9 @@ class MultipleDirectionsHillshade(Visualization):
     def rvt_visualization(self):
         return RVTVisualization.MULTIPLE_DIRECTIONS_HILLSHADE
 
-    @property
-    def abbreviation(self):
-        return self.rvt_visualization.value
-
     def compute_visualization(
         self,
-        dem: Union[Path, npt.NDArray[Any]],
+        dem: npt.NDArray[Any],
         dem_resolution: float,
         dem_nodata: float,
         vertical_exaggeration_factor: float,
@@ -169,13 +159,9 @@ class SimpleLocalReliefModel(Visualization):
     def rvt_visualization(self):
         return RVTVisualization.SIMPLE_LOCAL_RELIEF_MODEL
 
-    @property
-    def abbreviation(self):
-        return self.rvt_visualization.value
-
     def compute_visualization(
         self,
-        dem: Union[Path, npt.NDArray[Any]],
+        dem: npt.NDArray[Any],
         dem_resolution: float,
         dem_nodata: float,
         vertical_exaggeration_factor: float,
@@ -200,18 +186,275 @@ class SkyViewFactor(Visualization):
     def rvt_visualization(self):
         return RVTVisualization.SKY_VIEW_FACTOR
 
-    @property
-    def abbreviation(self):
-        return self.rvt_visualization.value
-
     def compute_visualization(
         self,
-        dem: Union[Path, npt.NDArray[Any]],
+        dem: npt.NDArray[Any],
         dem_resolution: float,
         dem_nodata: float,
         vertical_exaggeration_factor: float,
     ) -> npt.NDArray[Any]:
-        pass
+        return rvt.visualizations.horizon_visualizations(
+            dem=dem,
+            resolution=dem_resolution,
+            compute_svf=True,
+            compute_opns=False,
+            compute_asvf=False,
+            number_of_directions=self.number_of_directions,
+            maximum_search_radius=self.maximum_search_radius,
+            noise_remove=self.noise_remove,
+            vertical_exaggeration_factor=vertical_exaggeration_factor,
+            no_data=dem_nodata,
+        ).sky_view_factor
+
+
+@dataclass
+class AnisotropicSkyViewFactor(Visualization):
+    number_of_directions: int = 16
+    maximum_search_radius: int = 10
+    noise_remove: rvt.visualizations.SvfNoiseRemove = (
+        rvt.visualizations.SvfNoiseRemove.NO_REMOVE
+    )
+    direction_of_anisotropy: float = 315
+    anisotropy_level: rvt.visualizations.AnisotropyLevel = (
+        rvt.visualizations.AnisotropyLevel.LOW
+    )
+
+    @property
+    def rvt_visualization(self):
+        return RVTVisualization.SKY_VIEW_FACTOR
+
+    def compute_visualization(
+        self,
+        dem: npt.NDArray[Any],
+        dem_resolution: float,
+        dem_nodata: float,
+        vertical_exaggeration_factor: float,
+    ) -> npt.NDArray[Any]:
+        return rvt.visualizations.horizon_visualizations(
+            dem=dem,
+            resolution=dem_resolution,
+            compute_svf=False,
+            compute_opns=False,
+            compute_asvf=True,
+            number_of_directions=self.number_of_directions,
+            maximum_search_radius=self.maximum_search_radius,
+            noise_remove=self.noise_remove,
+            direction_of_anisotropy=self.direction_of_anisotropy,
+            anisotropy_level=self.anisotropy_level,
+            vertical_exaggeration_factor=vertical_exaggeration_factor,
+            no_data=dem_nodata,
+        ).anisotropic_sky_view_factor
+
+
+class OpennessType(Enum):
+    POSITIVE = "positive"
+    NEGATIVE = "negative"
+
+
+@dataclass
+class Openness(Visualization):
+    openness_type: OpennessType = OpennessType.POSITIVE
+    number_of_directions: int = 16
+    maximum_search_radius: int = 10
+    noise_remove: rvt.visualizations.SvfNoiseRemove = (
+        rvt.visualizations.SvfNoiseRemove.NO_REMOVE
+    )
+
+    @property
+    def rvt_visualization(self):
+        if OpennessType.POSITIVE:
+            return RVTVisualization.POSITIVE_OPENNESS
+        elif OpennessType.NEGATIVE:
+            return RVTVisualization.NEGATIVE_OPENNESS
+        else:
+            raise ValueError(f"Wrong Openness type {self.openness_type}!")
+
+    def compute_visualization(
+        self,
+        dem: npt.NDArray[Any],
+        dem_resolution: float,
+        dem_nodata: float,
+        vertical_exaggeration_factor: float,
+    ) -> npt.NDArray[Any]:
+        if OpennessType.NEGATIVE:
+            dem = -1 * dem
+        return rvt.visualizations.horizon_visualizations(
+            dem=dem,
+            resolution=dem_resolution,
+            compute_svf=True,
+            compute_opns=False,
+            compute_asvf=False,
+            number_of_directions=self.number_of_directions,
+            maximum_search_radius=self.maximum_search_radius,
+            noise_remove=self.noise_remove,
+            vertical_exaggeration_factor=vertical_exaggeration_factor,
+            no_data=dem_nodata,
+        ).openness
+
+
+@dataclass
+class HorizonVisualizations:
+    number_of_directions: int = 16
+    maximum_search_radius: int = 10
+    noise_remove: rvt.visualizations.SvfNoiseRemove = (
+        rvt.visualizations.SvfNoiseRemove.NO_REMOVE
+    )
+    direction_of_anisotropy: float = 315
+    anisotropy_level: rvt.visualizations.AnisotropyLevel = (
+        rvt.visualizations.AnisotropyLevel.LOW
+    )
+
+    @property
+    def sky_view_factor(self) -> SkyViewFactor:
+        return SkyViewFactor(
+            number_of_directions=self.number_of_directions,
+            maximum_search_radius=self.maximum_search_radius,
+            noise_remove=self.noise_remove,
+        )
+
+    @property
+    def anisotropic_sky_view_factor(self) -> AnisotropicSkyViewFactor:
+        return AnisotropicSkyViewFactor(
+            number_of_directions=self.number_of_directions,
+            maximum_search_radius=self.maximum_search_radius,
+            noise_remove=self.noise_remove,
+            direction_of_anisotropy=self.direction_of_anisotropy,
+            anisotropy_level=self.anisotropy_level,
+        )
+
+    @property
+    def positive_openness(self) -> Openness:
+        return Openness(
+            openness_type=OpennessType.POSITIVE,
+            number_of_directions=self.number_of_directions,
+            maximum_search_radius=self.maximum_search_radius,
+            noise_remove=self.noise_remove,
+        )
+
+    @property
+    def negative_openness(self) -> Openness:
+        return Openness(
+            openness_type=OpennessType.NEGATIVE,
+            number_of_directions=self.number_of_directions,
+            maximum_search_radius=self.maximum_search_radius,
+            noise_remove=self.noise_remove,
+        )
+
+    def compute_horizon_visualizations(
+        self,
+        dem: npt.NDArray[Any],
+        dem_resolution: float,
+        dem_nodata: float,
+        vertical_exaggeration_factor: float,
+        compute_svf: bool,
+        compute_opns: bool,
+        compute_asvf: bool,
+    ) -> rvt.visualizations.HorizonVisualizationResult:
+        return rvt.visualizations.horizon_visualizations(
+            dem=dem,
+            resolution=dem_resolution,
+            compute_svf=compute_svf,
+            compute_opns=compute_opns,
+            compute_asvf=compute_asvf,
+            number_of_directions=self.number_of_directions,
+            maximum_search_radius=self.maximum_search_radius,
+            noise_remove=self.noise_remove,
+            vertical_exaggeration_factor=vertical_exaggeration_factor,
+            no_data=dem_nodata,
+        )
+
+
+@dataclass
+class LocalDominance(Visualization):
+    minimum_radius: int = 10
+    maximum_radius: int = 20
+    radial_distance_step: int = 1
+    angular_step: int = 15
+    observer_height: float = 1.7
+
+    @property
+    def rvt_visualization(self):
+        return RVTVisualization.LOCAL_DOMINANCE
+
+    def compute_visualization(
+        self,
+        dem: npt.NDArray[Any],
+        dem_resolution: float,
+        dem_nodata: float,
+        vertical_exaggeration_factor: float,
+    ) -> npt.NDArray[Any]:
+        return rvt.visualizations.local_dominance(
+            dem=dem,
+            minimum_radius=self.minimum_radius,
+            maximum_radius=self.maximum_radius,
+            radial_distance_step=self.radial_distance_step,
+            angular_step=self.angular_step,
+            observer_height=self.observer_height,
+            vertical_exaggeration_factor=vertical_exaggeration_factor,
+            no_data=dem_nodata,
+        )
+
+
+@dataclass
+class SkyIllumination:  # (Visualization)
+    raise NotImplemented  # TODO: Fix visualization and implement
+
+
+@dataclass
+class MultiScaleReliefModel(Visualization):
+    minimum_feature_size: float
+    maximum_feature_size: float
+    scaling_factor: int
+
+    @property
+    def rvt_visualization(self):
+        return RVTVisualization.MULTI_SCALE_RELIEF_MODEL
+
+    def compute_visualization(
+        self,
+        dem: npt.NDArray[Any],
+        dem_resolution: float,
+        dem_nodata: float,
+        vertical_exaggeration_factor: float,
+    ) -> npt.NDArray[Any]:
+        return rvt.visualizations.multi_scale_relief_model(
+            dem=dem,
+            resolution=dem_resolution,
+            minimum_feature_size=self.minimum_feature_size,
+            maximum_feature_size=self.maximum_feature_size,
+            scaling_factor=self.scaling_factor,
+            vertical_exaggeration_factor=vertical_exaggeration_factor,
+            no_data=dem_nodata,
+        )
+
+
+@dataclass
+class MultiScaleTopographicPosition(Visualization):
+    local_scale: Tuple[int, int, int] = ((3, 21, 2),)
+    meso_scale: Tuple[int, int, int] = ((23, 203, 18),)
+    broad_scale: Tuple[int, int, int] = ((223, 2023, 180),)
+    lightness: float = (1.2,)
+
+    @property
+    def rvt_visualization(self):
+        return RVTVisualization.MULTI_SCALE_TOPOGRAPHIC_POSITION
+
+    def compute_visualization(
+        self,
+        dem: npt.NDArray[Any],
+        dem_resolution: float,
+        dem_nodata: float,
+        vertical_exaggeration_factor: float,
+    ) -> npt.NDArray[Any]:
+        return rvt.visualizations.multi_scale_topographic_position(
+            dem=dem,
+            local_scale=self.local_scale,
+            meso_scale=self.meso_scale,
+            broad_scale=self.broad_scale,
+            lightness=self.lightness,
+            vertical_exaggeration_factor=vertical_exaggeration_factor,
+            no_data=dem_nodata,
+        )
 
 
 @dataclass
@@ -1645,7 +1888,7 @@ class DefaultValues:  # TODO: Rename to something better like Visualizer or Visu
         )
 
     def get_msrm_file_name(self, dem_path: Path, bit8: bool = False) -> str:
-        """Returns Multi-scale relief model name, dem name (from dem_path) with added msrm parameters.
+        """Returns Multi-scale relief model name, dem name (from dem_path) with added multi_scale_relief_model parameters.
         If bit8 it returns 8bit file name."""
         dem_name = os.path.basename(dem_path).split(".")[
             0
@@ -1666,7 +1909,7 @@ class DefaultValues:  # TODO: Rename to something better like Visualizer or Visu
             )
 
     def get_msrm_path(self, dem_path: Path, bit8: bool = False) -> Path:
-        """Returns path to Multi-scale relief model. Generates msrm name (uses default attributes and dem name from
+        """Returns path to Multi-scale relief model. Generates multi_scale_relief_model name (uses default attributes and dem name from
         dem_path) and adds dem directory (dem_path) to it. If bit8 it returns 8bit file path."""
         return Path(
             os.path.normpath(
@@ -1677,7 +1920,7 @@ class DefaultValues:  # TODO: Rename to something better like Visualizer or Visu
         )
 
     def get_mstp_file_name(self, dem_path: Path, bit8: bool = False) -> str:
-        """Returns Multi-scale topographic position name, dem name (from dem_path) with added mstp parameters.
+        """Returns Multi-scale topographic position name, dem name (from dem_path) with added multi_scale_topographic_position parameters.
         If bit8 it returns 8bit file name."""
         dem_name = os.path.basename(dem_path).split(".")[
             0
@@ -2021,7 +2264,7 @@ class DefaultValues:  # TODO: Rename to something better like Visualizer or Visu
             return rvt.vis.byte_scale(data=norm_arr, no_data=np.nan, c_min=0, c_max=1)
         elif visualization == RVTVisualization.MULTI_SCALE_RELIEF_MODEL:
             norm_arr = rvt.blend_func.normalize_image(
-                visualization="msrm",
+                visualization="multi_scale_relief_model",
                 image=float_arr,
                 min_norm=self.msrm_bytscl[1],
                 max_norm=self.msrm_bytscl[2],
@@ -2029,9 +2272,9 @@ class DefaultValues:  # TODO: Rename to something better like Visualizer or Visu
             )
             return rvt.vis.byte_scale(data=norm_arr, no_data=np.nan, c_min=0, c_max=1)
         elif visualization == RVTVisualization.MULTI_SCALE_TOPOGRAPHIC_POSITION:
-            # This might not be necessary, as all mstp data should already be between 0 and 1
+            # This might not be necessary, as all multi_scale_topographic_position data should already be between 0 and 1
             norm_arr = rvt.blend_func.normalize_image(
-                visualization="mstp",
+                visualization="multi_scale_topographic_position",
                 image=float_arr,
                 min_norm=self.mstp_bytscl[1],
                 max_norm=self.mstp_bytscl[2],
@@ -3107,10 +3350,10 @@ class DefaultValues:  # TODO: Rename to something better like Visualizer or Visu
     ) -> npt.NDArray[Any]:
         local_dominance_arr = rvt.vis.local_dominance(
             dem=dem_arr,
-            min_rad=self.ld_min_rad,
-            max_rad=self.ld_max_rad,
-            rad_inc=self.ld_rad_inc,
-            angular_res=self.ld_anglr_res,
+            minimum_radius=self.ld_min_rad,
+            maximum_radius=self.ld_max_rad,
+            radial_distance_step=self.ld_rad_inc,
+            angular_step=self.ld_anglr_res,
             observer_height=self.ld_observer_h,
             vertical_exaggeration_factor=self.vertical_exaggeration_factor,
             no_data=no_data,
@@ -3232,11 +3475,11 @@ class DefaultValues:  # TODO: Rename to something better like Visualizer or Visu
         resolution: float,
         no_data: Optional[float] = None,
     ) -> npt.NDArray[Any]:
-        msrm_arr = rvt.vis.msrm(
+        msrm_arr = rvt.vis.multi_scale_relief_model(
             dem=dem_arr,
             resolution=resolution,
-            feature_min=self.msrm_feature_min,
-            feature_max=self.msrm_feature_max,
+            minimum_feature_size=self.msrm_feature_min,
+            maximum_feature_size=self.msrm_feature_max,
             scaling_factor=self.msrm_scaling_factor,
             vertical_exaggeration_factor=self.vertical_exaggeration_factor,
             no_data=no_data,
@@ -3352,7 +3595,7 @@ class DefaultValues:  # TODO: Rename to something better like Visualizer or Visu
     def get_mstp(
         self, dem_arr: npt.NDArray[Any], no_data: Optional[float] = None
     ) -> npt.NDArray[Any]:
-        mstp_arr = rvt.vis.mstp(
+        mstp_arr = rvt.vis.multi_scale_topographic_position(
             dem=dem_arr,
             local_scale=self.mstp_local_scale,
             meso_scale=self.mstp_meso_scale,
@@ -4097,6 +4340,7 @@ class DefaultValues:  # TODO: Rename to something better like Visualizer or Visu
 
 
 def get_raster_arr(raster_path: Path) -> Dict[str, Any]:
+    # TODO: Refactor and replace with rasterio
     """
     Reads raster from raster_path and returns its array(value) and resolution.
 
@@ -4142,6 +4386,7 @@ def get_raster_arr(raster_path: Path) -> Dict[str, Any]:
 
 
 def get_raster_size(raster_path: Path, band_number: int = 1) -> Tuple[float, float]:
+    # TODO: Refactor and replace with rasterio
     """Opens raster path and returns selected band size.
 
     Parameters
@@ -4171,6 +4416,7 @@ def save_raster(
     no_data: Optional[float] = None,
     e_type: int = 6,
 ) -> None:
+    # TODO: Refactor and replace with rasterio
     """Saves raster array (out_rast_arr) to out_raster_path (GTiff), using src_rast_path information.
 
     Parameters

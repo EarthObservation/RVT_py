@@ -924,10 +924,10 @@ def horizon_visualizations(
 
 def local_dominance(
     dem: npt.NDArray[Any],
-    min_rad: int = 10,
-    max_rad: int = 20,
-    rad_inc: int = 1,
-    angular_res: int = 15,
+    minimum_radius: int = 10,
+    maximum_radius: int = 20,
+    radial_distance_step: int = 1,
+    angular_step: int = 15,
     observer_height: float = 1.7,
     vertical_exaggeration_factor: float = 1,
     no_data: Optional[float] = None,
@@ -940,13 +940,13 @@ def local_dominance(
     ----------
     dem : numpy.ndarray
         Input digital elevation model as 2D numpy array.
-    min_rad : int
+    minimum_radius : int
         Minimum radial distance (in pixels) at which the algorithm starts with visualization computation.
-    max_rad : int
+    maximum_radius : int
         Maximum radial distance (in pixels) at which the algorithm ends with visualization computation.
-    rad_inc : int
+    radial_distance_step : int
         Radial distance steps in pixels.
-    angular_res : int
+    angular_step : int
         Angular step for determination of number of angular directions.
     observer_height : int or float
         Height at which we observe the terrain.
@@ -972,26 +972,29 @@ def local_dominance(
         dem[dem == no_data] = np.nan
 
     dem = dem.astype(np.float32)
-    # add max_rad pixel edge padding
-    pad_width = max_rad
+    # add maximum_radius pixel edge padding
+    pad_width = maximum_radius
     dem = np.pad(array=dem, pad_width=pad_width, mode="edge")
     dem = dem * vertical_exaggeration_factor
 
     # create a vector with possible distances
-    n_dist = int((max_rad - min_rad) / rad_inc + 1)
-    distances = np.arange(n_dist * rad_inc, step=rad_inc) + min_rad  # type: ignore
+    n_dist = int((maximum_radius - minimum_radius) / radial_distance_step + 1)
+    distances = np.arange(n_dist * radial_distance_step, step=radial_distance_step) + minimum_radius  # type: ignore
     # create vector with possible angles
-    n_ang = int(359 / angular_res + 1)
-    angles = np.arange(n_ang * angular_res, step=angular_res)  # type: ignore
+    n_ang = int(359 / angular_step + 1)
+    angles = np.arange(n_ang * angular_step, step=angular_step)  # type: ignore
     # determine total area within radius range
-    norma = np.sum((observer_height / distances) * (2 * distances + rad_inc)) * n_ang
+    norma = (
+        np.sum((observer_height / distances) * (2 * distances + radial_distance_step))
+        * n_ang
+    )
 
     # image shifts
     n_shifts = distances.size * angles.size
     x_t = (np.outer(np.cos(np.deg2rad(angles)), distances)).reshape(n_shifts)
     y_t = (np.outer(np.sin(np.deg2rad(angles)), distances)).reshape(n_shifts)
     distances = (np.outer(np.ones(n_ang), distances)).reshape(n_shifts)
-    dist_factor = 2 * distances + rad_inc
+    dist_factor = 2 * distances + radial_distance_step
 
     local_dom_out = dem * 0
     for i_s in range(n_shifts):
@@ -1182,7 +1185,7 @@ def horizon_generate_pyramids(
     return pyramid
 
 
-def sky_illumination(
+def sky_illumination(  # TODO: Fix the visualization it outputs incorrect results
     dem: npt.NDArray[Any],
     resolution: float,
     sky_model: str = "overcast",
@@ -1514,11 +1517,11 @@ def shadow_horizon(
     )
 
 
-def msrm(
+def multi_scale_relief_model(
     dem: npt.NDArray[Any],
     resolution: float,
-    feature_min: float,
-    feature_max: float,
+    minimum_feature_size: float,
+    maximum_feature_size: float,
     scaling_factor: int,
     vertical_exaggeration_factor: float = 1,
     no_data: Optional[float] = None,
@@ -1532,9 +1535,9 @@ def msrm(
         Input digital elevation model as 2D numpy array.
     resolution : float
         DEM pixel size.
-    feature_min: float
+    minimum_feature_size: float
         Minimum size of the feature you want to detect in meters.
-    feature_max: float
+    maximum_feature_size: float
         Maximum size of the feature you want to detect in meters.
     scaling_factor: int
         Scaling factor, if larger than 1 it provides larger range of MSRM values (increase contrast and visibility),
@@ -1551,10 +1554,12 @@ def msrm(
     """
     if not (10000 >= vertical_exaggeration_factor >= -10000):
         raise Exception(
-            "rvt.visualization.msrm: vertical_exaggeration_factor must be between -10000 and 10000!"
+            "rvt.visualization.multi_scale_relief_model: vertical_exaggeration_factor must be between -10000 and 10000!"
         )
     if resolution < 0:
-        raise Exception("rvt.visualization.msrm: resolution must be a positive number!")
+        raise Exception(
+            "rvt.visualization.multi_scale_relief_model: resolution must be a positive number!"
+        )
 
     # change no_data to np.nan
     if no_data is not None:
@@ -1563,19 +1568,25 @@ def msrm(
     dem = dem.astype(np.float32)
     dem = dem * vertical_exaggeration_factor
 
-    if feature_min < resolution:  # feature_min can't be smaller than resolution
-        feature_min = resolution
+    if (
+        minimum_feature_size < resolution
+    ):  # minimum_feature_size can't be smaller than resolution
+        minimum_feature_size = resolution
 
     scaling_factor = int(scaling_factor)  # has to be integer
 
     # calculation of i and n (from article)
     i = int(
         np.floor(
-            ((feature_min - resolution) / (2 * resolution)) ** (1 / scaling_factor)
+            ((minimum_feature_size - resolution) / (2 * resolution))
+            ** (1 / scaling_factor)
         )
     )
     n = int(
-        np.ceil(((feature_max - resolution) / (2 * resolution)) ** (1 / scaling_factor))
+        np.ceil(
+            ((maximum_feature_size - resolution) / (2 * resolution))
+            ** (1 / scaling_factor)
+        )
     )
 
     # lpf = low pass filter
@@ -1780,7 +1791,7 @@ def max_elevation_deviation(
     return dev_max_out.astype(np.float32)
 
 
-def mstp(
+def multi_scale_topographic_position(
     dem: npt.NDArray[Any],
     local_scale: Tuple[int, int, int] = (3, 21, 2),
     meso_scale: Tuple[int, int, int] = (23, 203, 18),
@@ -1820,7 +1831,7 @@ def mstp(
         or broad_scale[0] > broad_scale[1]
     ):
         raise Exception(
-            "rvt.visualization.mstp: local_scale, meso_scale, broad_scale min has to be smaller than max!"
+            "rvt.visualization.multi_scale_topographic_position: local_scale, meso_scale, broad_scale min has to be smaller than max!"
         )
     if (
         (local_scale[1] - local_scale[0] < local_scale[2])
@@ -1828,12 +1839,12 @@ def mstp(
         or (broad_scale[1] - broad_scale[0] < broad_scale[2])
     ):
         raise Exception(
-            "rvt.visualization.mstp: local_scale, meso_scale, broad_scale step has"
+            "rvt.visualization.multi_scale_topographic_position: local_scale, meso_scale, broad_scale step has"
             " to be within min and max!"
         )
     if not (10000 >= vertical_exaggeration_factor >= -1000):
         raise Exception(
-            "rvt.visualization.mstp: vertical_exaggeration_factor must be between -10000 and 10000!"
+            "rvt.visualization.multi_scale_topographic_position: vertical_exaggeration_factor must be between -10000 and 10000!"
         )
 
     # change no_data to np.nan

@@ -1895,7 +1895,7 @@ def e3mstp(
         image=crim_red_arr,
     )
     blend_combination.create_layer(
-        vis_method="mstp",
+        vis_method="multi_scale_topographic_position",
         normalization="value",
         minimum=0,
         maximum=1,

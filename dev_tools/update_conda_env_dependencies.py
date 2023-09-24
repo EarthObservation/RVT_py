@@ -28,7 +28,9 @@ def create_requirements_txt() -> None:
     os.system(f"activate {CONDA_ENV_NAME} && pip freeze > {REQUIREMENTS_TXT_PATH}")
 
     if not REQUIREMENTS_TXT_PATH.exists():
-        raise FileNotFoundError(f"File {REQUIREMENTS_TXT_PATH} doesn't exist, something went wrong!")
+        raise FileNotFoundError(
+            f"File {REQUIREMENTS_TXT_PATH} doesn't exist, something went wrong!"
+        )
 
 
 def create_conda_environment_yaml() -> None:
@@ -40,9 +42,11 @@ def create_conda_environment_yaml() -> None:
     os.system(f"activate {CONDA_ENV_NAME} && conda env export > {CONDA_ENV_YAML_PATH}")
 
     if not CONDA_ENV_YAML_PATH.exists():
-        raise FileNotFoundError(f"File {CONDA_ENV_YAML_PATH} doesn't exist, something went wrong!")
+        raise FileNotFoundError(
+            f"File {CONDA_ENV_YAML_PATH} doesn't exist, something went wrong!"
+        )
 
 
-if __name__ == '__main__':
-    create_requirements_txt()
+if __name__ == "__main__":
+    # create_requirements_txt()  #  Commented out to depend only on yaml, one source of truth
     create_conda_environment_yaml()
