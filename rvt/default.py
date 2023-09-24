@@ -402,9 +402,9 @@ class SkyIllumination:  # (Visualization)
 
 @dataclass
 class MultiScaleReliefModel(Visualization):
-    minimum_feature_size: float
-    maximum_feature_size: float
-    scaling_factor: int
+    minimum_feature_size: float = 0
+    maximum_feature_size: float = 20
+    scaling_factor: int = 2
 
     @property
     def rvt_visualization(self):
@@ -467,166 +467,6 @@ class DefaultValues:  # TODO: Rename to something better like Visualizer or Visu
         When saving visualisation functions and file already exists, if 0 it doesn't compute it, if 1 it overwrites it.
     vertical_exaggeration_factor : float
         For all visualization functions. Vertical exaggeration.
-    slp_compute : bool
-        If compute Slope. Parameter for GUIs.
-    slp_output_units : str
-        Slope. Output units [radian, degree, percent].
-    hs_compute : bool
-        If compute Hillshade. Parameter for GUIs.
-    hs_sun_azi : int
-        Hillshade. Solar azimuth angle (clockwise from North) in degrees.
-    hs_sun_el : int
-        Hillshade. Solar vertical angle (above the horizon) in degrees.
-    hs_shadow : bool
-        Hillshade. If 1 (Ture) computes binary shadow raster, if 0 (False) it doesn't.
-    mhs_compute : bool
-        If compute Multi directional hillshade. Parameter for GUIs.
-    mhs_nr_dir : int
-        Multi directional hillshade. Number of solar azimuth angles (clockwise from North).
-    mhs_sun_el : int
-        Multi directional hillshade. Solar vertical angle (above the horizon) in degrees.
-    slrm_compute : bool
-        If compute Simple local relief model. Parameter for GUIs.
-    slrm_rad_cell : int
-        Simple local relief model. Radius for trend assessment in pixels.
-    svf_compute : bool
-        If compute Sky-View Factor. Parameter for GUIs.
-    svf_n_dir : int
-        Sky-View Factor (Anisotropic Sky-View Factor, Openness). Number of directions.
-    svf_r_max : int
-        Sky-View Factor (Anisotropic Sky-View Factor, Openness). Maximal search radius in pixels.
-    svf_noise : int
-        Sky-View Factor (Anisotropic Sky-View Factor, Openness). The level of noise remove [0-don't remove, 1-low, 2-med
-        , 3-high].
-    asvf_compute : bool
-        If compute Anisotropic Sky-View Factor. Parameter for GUIs.
-    asvf_dir : int
-        Anisotropic Sky-View Factor. Direction of anisotropy in degrees.
-    asvf_level : int
-        Anisotropic Sky-View Factor. Level of anisotropy [1-low, 2-high].
-    pos_opns_compute : bool
-        If compute Positive Openness. Parameter for GUIs.
-    neg_opns_compute : bool
-        If compute Negative Openness. Parameter for GUIs.
-    sim_compute : bool
-        If compute Sky illumination. Parameter for GUIs.
-    sim_sky_mod : str
-        Sky illumination. Sky model [overcast, uniform].
-    sim_compute_shadow : bool
-        Sky illumination. If 1 it computes shadows, if 0 it doesn't.
-    sim_nr_dir : int
-        Sky illumination. Number of directions.
-    sim_shadow_dist : int
-        Sky illumination. Max shadow modeling distance in pixels.
-    sim_shadow_az : int
-        Sky illumination. Shadow azimuth in degrees.
-    sim_shadow_el : int
-        Sky illumination. Shadow elevation in degrees.
-    ld_compute : bool
-        If compute Local dominance. Parameter for GUIs.
-    ld_min_rad : int
-        Local dominance. Minimum radial distance (in pixels) at which the algorithm starts with visualization
-        computation.
-    ld_max_rad : int
-        Local dominance. Maximum radial distance (in pixels) at which the algorithm ends with visualization computation.
-    ld_rad_inc : int
-        Local dominance. Radial distance steps in pixels.
-    ld_anglr_res : int
-        Local dominance. Angular step for determination of number of angular directions.
-    ld_observer_h : float
-        Local dominance. Height at which we observe the terrain.
-    msrm_compute : bool
-        If compute Multi-scale relief model. Parameter for GUIs.
-    msrm_feature_min : float
-        Minimum size of the feature you want to detect in meters.
-    msrm_feature_max : float
-        Maximum size of the feature you want to detect in meters.
-    msrm_scaling_factor : int
-        Scaling factor.
-    mstp_compute : bool
-        If compute Multi-scale topographic position (MSTP).
-    mstp_local_scale : tuple(min_radius, max_radius, step)
-        Local scale minimum radius, maximum radius and step in pixels to calculate maximum mean deviation from
-        elevation.
-        All have to be integers!
-    mstp_meso_scale : tuple(min_radius, max_radius, step)
-        Meso scale minimum radius, maximum radius and step in pixels to calculate maximum mean deviation from elevation.
-        All have to be integers!
-    mstp_broad_scale : tuple(min_radius, max_radius, step)
-        Broad scale minimum radius, maximum radius and step in pixels to calculate maximum mean deviation from
-        elevation.
-        All have to be integers!
-    mstp_lightness : float
-        Lightness of image.
-    slp_save_float : bool
-        Slope. If 1 (True) it saves float, if 0 (False) it doesn't.
-    hs_save_float : bool
-        Hillshade. If 1 (True) it saves float, if 0 (False) it doesn't.
-    mhs_save_float : bool
-        Multi hillshade. If 1 (True) it saves float, if 0 (False) it doesn't.
-    slrm_save_float : bool
-        Simplified local relief model. If 1 (True) it saves float, if 0 (False) it doesn't.
-    svf_save_float : bool
-        Sky-view factor (asvf, pos_opns). If 1 (True) it saves float, if 0 (False) it doesn't.
-    neg_opns_save_float : bool
-        Negative openness. If 1 (True) it saves float, if 0 (False) it doesn't.
-    sim_save_float : bool
-        Sky illumination. If 1 (True) it saves float, if 0 (False) it doesn't.
-    ld_save_float : bool
-        Local dominance. If 1 (True) it saves float, if 0 (False) it doesn't.
-    msrm_save_float : bool
-        Multi-scale relief model. If 1 (True) it saves float, if 0 (False) it doesn't.
-    slp_save_8bit : bool
-        Slope. If 1 (True) it saves 8bit, if 0 (False) it doesn't.
-    hs_save_8bit : bool
-        Hillshade. If 1 (True) it saves 8bit, if 0 (False) it doesn't.
-    mhs_save_8bit : bool
-        Multi hillshade. If 1 (True) it saves 8bit, if 0 (False) it doesn't.
-    slrm_save_8bit : bool
-        Simplified local relief model. If 1 (True) it saves 8bit, if 0 (False) it doesn't.
-    svf_save_8bit : bool
-        Sky-view factor (asvf, pos_opns). If 1 (True) it saves 8bit, if 0 (False) it doesn't.
-    neg_opns_save_8bit : bool
-        Negative openness. If 1 (True) it saves 8bit, if 0 (False) it doesn't.
-    sim_save_8bit : bool
-        Sky illumination. If 1 (True) it saves 8bit, if 0 (False) it doesn't.
-    ld_save_8bit : bool
-        local dominance. If 1 (True) it saves 8bit, if 0 (False) it doesn't.
-    msrm_save_8bit : bool
-        Multi-scale relief model. If 1 (True) it saves 8bit, if 0 (False) it doesn't.
-    slp_bytscl : tuple(mode, min, max)
-        Slope, bytescale (0-255) for 8bit raster. Mode can be 'value' (linear stretch) or 'percent'
-        (histogram equalization, cut-off). Values min and max define stretch/cut-off borders.
-    hs_bytscl : tuple(mode, min, max)
-        Hillshade, linear stretch, bytescale (0-255) for 8bit raster. Mode can be 'value' or 'percent'
-        (cut-off units). Values min and max define stretch borders (in mode units).
-    mhs_bytscl : tuple(mode, min, max)
-        Multi directional hillshade, linear stretch, bytescale (0-255) for 8bit raster. Mode can be 'value' or 'percent'
-        (cut-off units). Values min and max define stretch borders (in mode units).
-    slrm_bytscl : tuple(mode, min, max)
-        Simplified local relief model, linear stretch, bytescale (0-255) for 8bit raster. Mode can be 'value' or
-        'percent' (cut-off units). Values min and max define stretch borders (in mode units).
-    svf_bytscl : tuple(mode, min, max)
-        Sky-view factor, linear stretch, bytescale (0-255) for 8bit raster. Mode can be 'value' or 'percent'
-        (cut-off units). Values min and max define stretch borders (in mode units).
-    asvf_bytscl : tuple(mode, min, max)
-        Anisotropic Sky-view factor, linear stretch, bytescale (0-255) for 8bit raster. Mode can be 'value' or 'percent'
-        (cut-off units). Values min and max define stretch borders (in mode units).
-    pos_opns_bytscl : tuple(mode, min, max)
-        Positive Openness, linear stretch, bytescale (0-255) for 8bit raster. Mode can be 'value' or 'percent'
-        (cut-off units). Values min and max define stretch borders (in mode units).
-    neg_opns_bytscl : tuple(mode, min, max)
-        Negative Openness, linear stretch, bytescale (0-255) for 8bit raster. Mode can be 'value' or 'percent'
-        (cut-off units). Values min and max define stretch borders (in mode units).
-    sim_bytscl : tuple(mode, min, max)
-        Sky illumination, linear stretch, bytescale (0-255) for 8bit raster. Mode can be 'value' or 'percent'
-        (cut-off units). Values min and max define stretch borders (in mode units).
-    ld_bytscl : tuple(mode, min, max)
-        Local dominance, linear stretch, bytescale (0-255) for 8bit raster. Mode can be 'value' or 'percent'
-        (cut-off units). Values min and max define stretch borders (in mode units).
-    msrm_bytscl : tuple(mode, min, max)
-        Multi-scale relief model, linear stretch, bytescale (0-255) for 8bit raster. Mode can be 'value' or 'percent'
-        (cut-off units). Values min and max define stretch borders (in mode units).
     tile_size_limit : int
         If array size bigger than tile_size_limit it uses saving tile by tile (rvt.tile module).
     tile_size : tuple(x_size, y_size)
@@ -635,82 +475,42 @@ class DefaultValues:  # TODO: Rename to something better like Visualizer or Visu
 
     overwrite: bool = False
     vertical_exaggeration_factor: float = 1.0
-    # slope gradient
-    self.slp_compute = 0
-    self.slp_output_units = "degree"
-    # hillshade
-    self.hs_compute = 1
-    self.hs_sun_azi = 315
-    self.hs_sun_el = 35
-    self.hs_shadow = 0
-    # multi hillshade
-    self.mhs_compute = 0
-    self.mhs_nr_dir = 16
-    self.mhs_sun_el = 35
-    # simple local relief model
-    self.slrm_compute = 0
-    self.slrm_rad_cell = 20
-    # sky view factor
-    self.svf_compute = 0
-    self.svf_n_dir = 16
-    self.svf_r_max = 10
-    self.svf_noise = 0
-    # anisotropic sky-view factor
-    self.asvf_compute = 0
-    self.asvf_dir = 315
-    self.asvf_level = 1
-    # positive openness
-    self.pos_opns_compute = 0
-    # negative openness
-    self.neg_opns_compute = 0
-    # sky_illum
-    self.sim_compute = 0
-    self.sim_sky_mod = "overcast"
-    self.sim_compute_shadow = 0
-    self.sim_shadow_dist = 100
-    self.sim_nr_dir = 32
-    self.sim_shadow_az = 315
-    self.sim_shadow_el = 35
-    # local dominance
-    self.ld_compute = 0
-    self.ld_min_rad = 10
-    self.ld_max_rad = 20
-    self.ld_rad_inc = 1
-    self.ld_anglr_res = 15
-    self.ld_observer_h = 1.7
-    # multi-scale relief model
-    self.msrm_compute = 0
-    self.msrm_feature_min = 0.0
-    self.msrm_feature_max = 20.0
-    self.msrm_scaling_factor = 2
-    # multi-scale topographic position
-    self.mstp_compute = 0
-    self.mstp_local_scale = (3, 21, 2)
-    self.mstp_meso_scale = (23, 203, 18)
-    self.mstp_broad_scale = (223, 2023, 180)
-    self.mstp_lightness = 1.2
-    # save float
-    self.slp_save_float = 1
-    self.hs_save_float = 1
-    self.mhs_save_float = 1
-    self.slrm_save_float = 1
-    self.svf_save_float = 1
-    self.neg_opns_save_float = 1
-    self.sim_save_float = 1
-    self.ld_save_float = 1
-    self.msrm_save_float = 1
-    self.mstp_save_float = 1
-    # save 8bit
-    self.slp_save_8bit = 0
-    self.hs_save_8bit = 0
-    self.mhs_save_8bit = 0
-    self.slrm_save_8bit = 0
-    self.svf_save_8bit = 0
-    self.neg_opns_save_8bit = 0
-    self.sim_save_8bit = 0
-    self.ld_save_8bit = 0
-    self.msrm_save_8bit = 0
-    self.mstp_save_8bit = 0
+    save_slope_float: bool = False
+    save_slope_8bit: bool = False
+    slope: Slope = Slope()
+    save_hillshade_float: bool = True
+    save_hillshade_8bit: bool = False
+    hillshade: Hillshade = Hillshade()
+    save_multiple_directions_hillshade_float: bool = False
+    save_multiple_directions_hillshade_8bit: bool = False
+    multiple_directions_hillshade: MultipleDirectionsHillshade = (
+        MultipleDirectionsHillshade()
+    )
+    save_simple_local_relief_model_float: bool = False
+    save_simple_local_relief_model_8bit: bool = False
+    simple_local_relief_model: SimpleLocalReliefModel = SimpleLocalReliefModel()
+    save_sky_view_factor_float: bool = False
+    save_sky_view_factor_8bit: bool = False
+    save_anisotropic_sky_view_factor_float: bool = False
+    save_anisotropic_sky_view_factor_8bit: bool = False
+    save_positive_openness_float: bool = False
+    save_positive_openness_8bit: bool = False
+    save_negative_openness_float: bool = False
+    save_negative_openness_8bit: bool = False
+    horizon_visualizations: HorizonVisualizations = HorizonVisualizations()
+    save_sky_illumination_float: bool = False
+    save_sky_illumination_8bit: bool = False
+    sky_illumination: SkyIllumination = SkyIllumination()
+    save_local_dominance_float: bool = False
+    save_local_dominance_8bit: bool = False
+    local_dominance = LocalDominance()
+    save_multi_scale_relief_model_float: bool = False
+    save_multi_scale_relief_model_8bit: bool = False
+    multi_scale_relief_model = MultiScaleReliefModel()
+    save_multi_scale_topographic_position_float: bool = False
+    save_multi_scale_topographic_position_8bit: bool = False
+    multi_scale_topographic_position = MultiScaleTopographicPosition()
+
     # 8-bit bytescale parameters
     self.slp_bytscl = ("value", 0.00, 51.00)
     self.hs_bytscl = ("value", 0.00, 1.00)

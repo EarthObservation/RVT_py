@@ -12,6 +12,22 @@ import numpy as np
 import numpy.typing as npt
 from matplotlib.cm import get_cmap
 from matplotlib.colors import LinearSegmentedColormap, Colormap
+from dataclasses import dataclass
+from enum import Enum
+
+
+class NormalizationMode(Enum):
+    PERCENT = "percent"
+    VALUE = "value"
+
+
+@dataclass
+class Normalization:
+    normalization_mode: NormalizationMode
+    minimum: float
+    maximum: float
+
+    # TODO
 
 
 def gray_scale_to_color_ramp(
