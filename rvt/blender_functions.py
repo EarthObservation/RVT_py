@@ -13,12 +13,8 @@ import numpy.typing as npt
 from matplotlib.cm import get_cmap
 from matplotlib.colors import LinearSegmentedColormap, Colormap
 from dataclasses import dataclass
-from enum import Enum
 
-
-class NormalizationMode(Enum):
-    PERCENT = "percent"
-    VALUE = "value"
+from rvt.enums import RVTVisualization, NormalizationMode
 
 
 @dataclass
@@ -27,7 +23,39 @@ class Normalization:
     minimum: float
     maximum: float
 
-    # TODO
+    def __post_init__(self):
+        # Data validations
+        if (
+            self.minimum == self.maximum
+            and self.normalization_mode == NormalizationMode.VALUE
+        ):
+            raise ValueError(
+                f"If normalization mode is value, minimum ({self.minimum}) and maximum ({self.maximum}) can't be the "
+                "same!"
+            )
+
+        if (
+            self.minimum > self.maximum
+            and self.normalization_mode == NormalizationMode.VALUE
+        ):
+            raise ValueError(
+                f"If normalization mode is value, maximum ({self.maximum}) can't be smaller than "
+                f"minimum ({self.minimum})!"
+            )
+
+    def normalize_image(self, image: npt.NDArray[Any]) -> npt.NDArray[Any]:
+        """Runs normalization based on the selected normalization type: value or percent."""
+
+        # Select normalization type
+        if self.normalization_mode == NormalizationMode.VALUE:
+            return normalize_lin(
+                image=image, minimum=self.minimum, maximum=self.maximum
+            )
+        if self.normalization_mode == NormalizationMode.PERCENT:
+            equ_image = normalize_perc(
+                image=image, minimum=self.minimum, maximum=self.maximum
+            )
+        raise ValueError(f"Can't normalize for normalization mode {self}!")
 
 
 def gray_scale_to_color_ramp(
@@ -168,39 +196,6 @@ def normalize_perc(
     min_lin = min_max_lin_dict["min_lin"]
     max_lin = min_max_lin_dict["max_lin"]
     return normalize_lin(image, min_lin, max_lin)
-
-
-def advanced_normalization(
-    image: npt.NDArray[Any], minimum: float, maximum: float, normalization: str
-) -> npt.NDArray[Any]:
-    """Runs normalization based on the selected normalization type: value or percent."""
-
-    # Preform checks if correct values were given
-    if minimum == maximum and normalization == "value":
-        raise Exception(
-            "rvt.blend_func.advanced_normalization: If normalization == value, min and max cannot be the"
-            " same!"
-        )
-
-    if minimum > maximum and normalization == "value":
-        raise Exception(
-            "rvt.blend_func.advanced_normalization: If normalization == value, max can't be smaller"
-            " than min!"
-        )
-
-    # Select normalization type
-    if normalization.lower() == "value":
-        equ_image = normalize_lin(image=image, minimum=minimum, maximum=maximum)
-    elif normalization.lower() == "perc":
-        equ_image = normalize_perc(image=image, minimum=minimum, maximum=maximum)
-    elif normalization is None:
-        equ_image = image
-    else:
-        raise Exception(
-            f"rvt.blend_func.advanced_normalization: Unknown normalization type: {normalization}"
-        )
-
-    return equ_image
 
 
 def lum(img: npt.NDArray[Any]) -> npt.NDArray[Any]:
@@ -546,11 +541,9 @@ def apply_opacity(
 
 
 def normalize_image(
-    visualization: str,
+    visualization: RVTVisualization,
     image: npt.NDArray[Any],
-    min_norm: float,
-    max_norm: float,
-    normalization: str,
+    normalization: Normalization,
 ) -> npt.NDArray[Any]:
     """Main function for normalization. Runs advanced normalization on the array and preforms special operations for
     some visualization types (e.g. invert scale for slope, scale for mhs, etc.).
@@ -558,16 +551,11 @@ def normalize_image(
     if normalization == "percent":
         normalization = "perc"
 
-    norm_image = advanced_normalization(
-        image=image, minimum=min_norm, maximum=max_norm, normalization=normalization
-    )
+    norm_image = normalization.normalize_image(image=image)
 
     # Make sure it scales 0 to 1
     if np.nanmax(norm_image) > 1:
-        if (
-            visualization.lower() == "multiple directions hillshade"
-            or visualization == "mhs"
-        ):
+        if visualization == visualization.MULTIPLE_DIRECTIONS_HILLSHADE:
             norm_image = scale_0_to_1(norm_image)
         else:
             norm_image = scale_0_to_1(norm_image)
@@ -578,12 +566,7 @@ def normalize_image(
         warnings.warn("rvt.blend_func.normalize_image: unexpected values! min < 0")
 
     # For slope invert scale (high slopes will be black)
-    if (
-        visualization.lower() == "slope gradient"
-        or visualization.lower() == "openness - negative"
-        or visualization == "slp"
-        or visualization == "neg_opns"
-    ):
+    if visualization == RVTVisualization.SLOPE or visualization.NEGATIVE_OPENNESS:
         norm_image = 1 - norm_image
 
     return norm_image

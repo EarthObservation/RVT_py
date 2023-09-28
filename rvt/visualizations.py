@@ -4,7 +4,6 @@ Copyright:
     2016-2023 University of Ljubljana, Faculty of Civil and Geodetic Engineering
 """
 
-from enum import Enum
 from typing import Dict, Optional, Tuple, Union, List, Any, NamedTuple
 
 import numpy as np
@@ -12,6 +11,8 @@ import numpy.typing as npt
 from scipy.interpolate import griddata, RectBivariateSpline
 from scipy.ndimage.morphology import distance_transform_edt
 from scipy.spatial import cKDTree
+
+from rvt.enums import SlopeOutputUnit, SvfNoiseRemove, AnisotropyLevel
 
 
 def byte_scale(
@@ -111,12 +112,6 @@ def byte_scale(
 class SlopeAspectResult(NamedTuple):
     slope: npt.NDArray[Any]
     aspect: npt.NDArray[Any]
-
-
-class SlopeOutputUnit(Enum):
-    PERCENT = "percent"
-    DEGREE = "degree"
-    RADIAN = "radian"
 
 
 def slope_aspect(
@@ -753,52 +748,6 @@ def _compute_horizon_visualizations(
         sky_view_factor=svf_out, anisotropic_sky_view_factor=asvf_out, openness=opns_out
     )
     return horizon_visualization_result
-
-
-class SvfNoiseRemove(Enum):
-    NO_REMOVE = "no_remove"
-    LOW = "low"
-    MEDIUM = "medium"
-    HIGH = "high"
-
-    @property
-    def maximum_radius_ignore_percentage(self):
-        """
-        The portion (percent) of the maximal search radius to ignore in horizon estimation, for selected noise level.
-        """
-        if self == SvfNoiseRemove.NO_REMOVE:
-            return 0.0
-        elif self == SvfNoiseRemove.LOW:
-            return 10.0
-        elif self == SvfNoiseRemove.MEDIUM:
-            return 20.0
-        elif self == SvfNoiseRemove.HIGH:
-            return 40.0
-        else:
-            raise ValueError(
-                f"Percentage for selected noise level ({self.name}) is unspecified!"
-            )
-
-
-class AnisotropyLevel(Enum):
-    LOW = "low"
-    HIGH = "high"
-
-    @property
-    def polynomial_level(self):
-        """Level of polynomial that determines the anisotropy, for selected anisotropy level."""
-        if self == AnisotropyLevel.LOW:
-            return 4
-        elif self == AnisotropyLevel.HIGH:
-            return 8
-
-    @property
-    def minimal_weight(self):
-        """Minimal weight for selected anisotropy level."""
-        if self == AnisotropyLevel.LOW:
-            return 0.4
-        elif self == AnisotropyLevel.HIGH:
-            return 0.1
 
 
 def horizon_visualizations(

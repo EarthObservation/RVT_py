@@ -240,7 +240,7 @@ def save_visualization_tile_by_tile(
 
 
 def _create_rvt_visualization_blank_raster(
-    rvt_visualization: "rvt.default.RVTVisualization",
+    rvt_visualization: "import rvt.enums,
     rvt_default: "rvt.default.DefaultValues",
     dem_path: Path,
     output_dir_path: Path,
