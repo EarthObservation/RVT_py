@@ -21,7 +21,7 @@ def test_slope_aspect(
         resolution_x=x_res,
         resolution_y=y_res,
         vertical_exaggeration_factor=vertical_exaggeration_factor,
-        output_units=output_units,
+        output_unit=output_units,
     )
     slope_arr = dict_slp_asp["slope"]
     slope_arr = slope_arr.astype("float32")

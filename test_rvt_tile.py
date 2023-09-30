@@ -11,7 +11,7 @@ import numpy as np
 dem_path = Path(r"test_data\TM1_564_146.tif")
 default_values = rvt.default.DefaultValues()
 default_values.tile_size = (100, 100)
-default_values.tile_size_limit = 100 * 100
+default_values.compute_multiple_tile_limit = 100 * 100
 
 
 def test_rvt_slope_tile_by_tile() -> None:

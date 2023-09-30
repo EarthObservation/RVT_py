@@ -20,7 +20,7 @@ def test_slope_tile_by_tile() -> None:
         "resolution_x": None,
         "resolution_y": None,
         "no_data": None,
-        "output_units": output_units,
+        "output_unit": output_units,
     }
     rvt.tile.save_visualization_tile_by_tile(
         visualization_function=rvt.vis.slope_aspect,
@@ -43,7 +43,7 @@ def test_slope_tile_by_tile() -> None:
         resolution_x=dem_arr_dict["resolution"][0],
         resolution_y=dem_arr_dict["resolution"][1],
         no_data=dem_arr_dict["no_data"],
-        output_units=output_units,
+        output_unit=output_units,
     )["slope"]
     assert np.array_equal(slope_tile_by_tile_arr, slope_arr, equal_nan=True)
 

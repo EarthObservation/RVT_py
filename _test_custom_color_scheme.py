@@ -22,7 +22,7 @@ dict_slp_asp = rvt.vis.slope_aspect(
     resolution_x=x_res,
     resolution_y=y_res,
     vertical_exaggeration_factor=1,
-    output_units="degree",
+    output_unit="degree",
 )
 slope_arr = dict_slp_asp["slope"]
 slope_arr_norm = np.interp(

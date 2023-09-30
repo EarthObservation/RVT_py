@@ -53,7 +53,7 @@ slope_dict = rvt.vis.slope_aspect(
     dem=input_dem_arr,
     resolution_x=x_res,
     resolution_y=y_res,
-    output_units="degree",
+    output_unit="degree",
     vertical_exaggeration_factor=1,
 )
 slope_arr = slope_dict["slope"]

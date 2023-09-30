@@ -59,7 +59,7 @@ def slope_aspect_gpu(
     elif output_units == "radian":
         slope_out = cp.arctan(tan_slope)
     else:
-        raise Exception("rvt.vis.calculate_slope: Wrong function input 'output_units'!")
+        raise Exception("rvt.vis.calculate_slope: Wrong function input 'output_unit'!")
 
     # compute Aspect
     # aspect identifies the down slope direction of the maximum rate of change in value from each cell to its neighbors:
@@ -124,7 +124,7 @@ cpu_slope = rvt.vis.slope_aspect(
     resolution_x=x_res,
     resolution_y=y_res,
     vertical_exaggeration_factor=1,
-    output_units="degree",
+    output_unit="degree",
 )
 end_time = time.time()
 print("Cpu slope computing time: {}".format(end_time - start_time))

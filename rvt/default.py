@@ -24,6 +24,7 @@ from rvt.enums import (
     SlopeOutputUnit,
     SvfNoiseRemove,
     AnisotropyLevel,
+    NormalizationMode,
 )
 from rvt.visualizations import (
     slope_aspect,
@@ -37,25 +38,24 @@ from rvt.visualizations import (
     multi_scale_topographic_position,
 )
 
+_HORIZON_VISUALIZATIONS_DEFAULT_NUMBER_OF_DIRECTIONS: int = 16
+_HORIZON_VISUALIZATIONS_DEFAULT_MAXIMUM_SEARCH_RADIUS: int = 10
+_HORIZON_VISUALIZATIONS_DEFAULT_NOISE_REMOVE: SvfNoiseRemove = SvfNoiseRemove.NO_REMOVE
+_HORIZON_VISUALIZATIONS_DEFAULT_DIRECTION_OF_ANISOTROPY: float = 315
+_HORIZON_VISUALIZATIONS_DEFAULT_ANISOTROPY_LEVEL: AnisotropyLevel = AnisotropyLevel.LOW
 
-class ConvertTo8bit(Normalization):
+
+class To8bit(Normalization):
     pass
 
 
 class Visualization(ABC):
-    @property
-    @abstractmethod
-    def rvt_visualization(self) -> RVTVisualization:
-        pass
+    RVT_VISUALIZATION: RVTVisualization
+    to_8bit: To8bit
 
     @property
-    def abbreviation(self) -> str:
-        return self.rvt_visualization.value
-
-    @property
-    @abstractmethod
-    def convert_to_8bit(self) -> ConvertTo8bit:
-        pass
+    def ABBREVIATION(self) -> str:
+        return self.RVT_VISUALIZATION.value
 
     @abstractmethod
     def compute_visualization(
@@ -79,13 +79,20 @@ class Visualization(ABC):
         pass  # TODO: implement
 
 
-@dataclass
 class Slope(Visualization):
-    output_units: SlopeOutputUnit = SlopeOutputUnit.DEGREE
+    RVT_VISUALIZATION: RVTVisualization = RVTVisualization.SLOPE
+    _DEFAULT_TO_8BIT: To8bit = To8bit(
+        normalization_mode=NormalizationMode.VALUE, minimum=0.00, maximum=51.00
+    )
+    _DEFAULT_OUTPUT_UNIT: SlopeOutputUnit = SlopeOutputUnit.DEGREE
 
-    @property
-    def rvt_visualization(self):
-        return RVTVisualization.SLOPE
+    def __init__(
+        self,
+        output_unit: SlopeOutputUnit = _DEFAULT_OUTPUT_UNIT,
+        to_8bit: To8bit = _DEFAULT_TO_8BIT,
+    ):
+        self.output_unit = output_unit
+        self.to_8bit = to_8bit
 
     def compute_visualization(
         self,
@@ -98,16 +105,29 @@ class Slope(Visualization):
             dem=dem,
             resolution_x=dem_resolution,
             resolution_y=dem_resolution,
-            output_units=self.output_units,
+            output_unit=self.output_unit,
             vertical_exaggeration_factor=vertical_exaggeration_factor,
             no_data=dem_nodata,
         ).slope
 
 
-@dataclass
 class Hillshade(Visualization):
-    sun_azimuth: float = 315
-    sun_elevation: float = 35
+    RVT_VISUALIZATION = RVTVisualization.SLOPE
+    _DEFAULT_TO_8BIT = To8bit(
+        normalization_mode=NormalizationMode.VALUE, minimum=0.00, maximum=1.00
+    )
+    _DEFAULT_SUN_AZIMUTH = 315
+    _DEFAULT_SUN_ELEVATION = 35
+
+    def __init__(
+        self,
+        sun_azimuth: float = _DEFAULT_SUN_AZIMUTH,
+        sun_elevation: float = _DEFAULT_SUN_ELEVATION,
+        to_8bit: To8bit = _DEFAULT_TO_8BIT,
+    ):
+        self.sun_azimuth = sun_azimuth
+        self.sun_elevation = sun_elevation
+        self.to_8bit = to_8bit
 
     @property
     def rvt_visualization(self):
@@ -131,14 +151,23 @@ class Hillshade(Visualization):
         )
 
 
-@dataclass
 class MultipleDirectionsHillshade(Visualization):
-    number_of_directions: float = 16
-    sun_elevation: float = 35
+    RVT_VISUALIZATION = RVTVisualization.MULTIPLE_DIRECTIONS_HILLSHADE
+    _DEFAULT_TO_8BIT = To8bit(
+        normalization_mode=NormalizationMode.VALUE, minimum=0.00, maximum=1.00
+    )
+    _DEFAULT_NUMBER_OF_DIRECTIONS: int = 16
+    _DEFAULT_SUN_ELEVATION: float = 35
 
-    @property
-    def rvt_visualization(self):
-        return RVTVisualization.MULTIPLE_DIRECTIONS_HILLSHADE
+    def __init__(
+        self,
+        number_od_direction: int = _DEFAULT_NUMBER_OF_DIRECTIONS,
+        sun_elevation: float = _DEFAULT_SUN_ELEVATION,
+        to_8bit: To8bit = _DEFAULT_TO_8BIT,
+    ):
+        self.number_of_direction = number_od_direction
+        self.sun_elevation = sun_elevation
+        self.to_8bit = to_8bit
 
     def compute_visualization(
         self,
@@ -158,13 +187,20 @@ class MultipleDirectionsHillshade(Visualization):
         )
 
 
-@dataclass
 class SimpleLocalReliefModel(Visualization):
-    radius_cell: int = 20
+    RVT_VISUALIZATION = RVTVisualization.SIMPLE_LOCAL_RELIEF_MODEL
+    _DEFAULT_TO_8BIT = To8bit(
+        normalization_mode=NormalizationMode.VALUE, minimum=-2.00, maximum=2.00
+    )
+    _DEFAULT_RADIUS_CELL: int = 20
 
-    @property
-    def rvt_visualization(self):
-        return RVTVisualization.SIMPLE_LOCAL_RELIEF_MODEL
+    def __init__(
+        self,
+        radius_cell: int = _DEFAULT_RADIUS_CELL,
+        to_8bit: To8bit = _DEFAULT_TO_8BIT,
+    ):
+        self.radius_cell = radius_cell
+        self.to_8bit = to_8bit
 
     def compute_visualization(
         self,
@@ -181,15 +217,30 @@ class SimpleLocalReliefModel(Visualization):
         )
 
 
-@dataclass
 class SkyViewFactor(Visualization):
-    number_of_directions: int = 16
-    maximum_search_radius: int = 10
-    noise_remove: SvfNoiseRemove = SvfNoiseRemove.NO_REMOVE
+    RVT_VISUALIZATION = RVTVisualization.SKY_VIEW_FACTOR
+    _DEFAULT_TO_8BIT = To8bit(
+        normalization_mode=NormalizationMode.VALUE, minimum=0.6375, maximum=1.00
+    )
+    _DEFAULT_NUMBER_OF_DIRECTIONS: int = (
+        _HORIZON_VISUALIZATIONS_DEFAULT_NUMBER_OF_DIRECTIONS
+    )
+    _DEFAULT_MAXIMUM_SEARCH_RADIUS: int = (
+        _HORIZON_VISUALIZATIONS_DEFAULT_MAXIMUM_SEARCH_RADIUS
+    )
+    _DEFAULT_NOISE_REMOVE: SvfNoiseRemove = _HORIZON_VISUALIZATIONS_DEFAULT_NOISE_REMOVE
 
-    @property
-    def rvt_visualization(self):
-        return RVTVisualization.SKY_VIEW_FACTOR
+    def __init__(
+        self,
+        number_of_directions: int = _DEFAULT_NUMBER_OF_DIRECTIONS,
+        maximum_search_radius: int = _DEFAULT_MAXIMUM_SEARCH_RADIUS,
+        noise_remove: SvfNoiseRemove = _DEFAULT_NOISE_REMOVE,
+        to_8bit: To8bit = _DEFAULT_TO_8BIT,
+    ):
+        self.number_of_directions = number_of_directions
+        self.maximum_search_radius = maximum_search_radius
+        self.noise_remove = noise_remove
+        self.to_8bit = to_8bit
 
     def compute_visualization(
         self,
@@ -212,17 +263,40 @@ class SkyViewFactor(Visualization):
         ).sky_view_factor
 
 
-@dataclass
 class AnisotropicSkyViewFactor(Visualization):
-    number_of_directions: int = 16
-    maximum_search_radius: int = 10
-    noise_remove: SvfNoiseRemove = SvfNoiseRemove.NO_REMOVE
-    direction_of_anisotropy: float = 315
-    anisotropy_level: AnisotropyLevel = AnisotropyLevel.LOW
+    RVT_VISUALIZATION = RVTVisualization.ANISOTROPIC_SKY_VIEW_FACTOR
+    _DEFAULT_TO_8BIT: To8bit = To8bit(
+        normalization_mode=NormalizationMode.VALUE, minimum=0.70, maximum=0.90
+    )
+    _DEFAULT_NUMBER_OF_DIRECTIONS: int = (
+        _HORIZON_VISUALIZATIONS_DEFAULT_NUMBER_OF_DIRECTIONS
+    )
+    _DEFAULT_MAXIMUM_SEARCH_RADIUS: int = (
+        _HORIZON_VISUALIZATIONS_DEFAULT_MAXIMUM_SEARCH_RADIUS
+    )
+    _DEFAULT_NOISE_REMOVE: SvfNoiseRemove = _HORIZON_VISUALIZATIONS_DEFAULT_NOISE_REMOVE
+    _DEFAULT_DIRECTION_OF_ANISOTROPY: float = (
+        _HORIZON_VISUALIZATIONS_DEFAULT_DIRECTION_OF_ANISOTROPY
+    )
+    _DEFAULT_ANISOTROPY_LEVEL: AnisotropyLevel = (
+        _HORIZON_VISUALIZATIONS_DEFAULT_ANISOTROPY_LEVEL
+    )
 
-    @property
-    def rvt_visualization(self):
-        return RVTVisualization.SKY_VIEW_FACTOR
+    def __init__(
+        self,
+        number_of_directions: int = _DEFAULT_NUMBER_OF_DIRECTIONS,
+        maximum_search_radius: int = _DEFAULT_MAXIMUM_SEARCH_RADIUS,
+        noise_remove: SvfNoiseRemove = _DEFAULT_NOISE_REMOVE,
+        direction_of_anisotropy: float = _DEFAULT_DIRECTION_OF_ANISOTROPY,
+        anisotropy_level: AnisotropyLevel = _DEFAULT_ANISOTROPY_LEVEL,
+        to_8bit: To8bit = _DEFAULT_TO_8BIT,
+    ):
+        self.number_of_directions = number_of_directions
+        self.maximum_search_radius = maximum_search_radius
+        self.noise_remove = noise_remove
+        self.direction_of_anisotropy = direction_of_anisotropy
+        self.anisotropy_level = anisotropy_level
+        self.to_8bit = to_8bit
 
     def compute_visualization(
         self,
@@ -247,21 +321,50 @@ class AnisotropicSkyViewFactor(Visualization):
         ).anisotropic_sky_view_factor
 
 
-@dataclass
 class Openness(Visualization):
-    openness_type: OpennessType = OpennessType.POSITIVE
-    number_of_directions: int = 16
-    maximum_search_radius: int = 10
-    noise_remove: SvfNoiseRemove = SvfNoiseRemove.NO_REMOVE
-
     @property
-    def rvt_visualization(self):
+    def RVT_VISUALIZATION(self) -> RVTVisualization:
         if OpennessType.POSITIVE:
             return RVTVisualization.POSITIVE_OPENNESS
         elif OpennessType.NEGATIVE:
             return RVTVisualization.NEGATIVE_OPENNESS
         else:
             raise ValueError(f"Wrong Openness type {self.openness_type}!")
+
+    _DEFAULT_POSITIVE_OPENNESS_TO_8BIT = To8bit(
+        normalization_mode=NormalizationMode.VALUE, minimum=60.00, maximum=95.00
+    )
+    _DEFAULT_NEGATIVE_OPENNESS_TO_8BIT = To8bit(
+        normalization_mode=NormalizationMode.VALUE, minimum=60.00, maximum=95.00
+    )
+    _DEFAULT_OPENNESS_TYPE: OpennessType = OpennessType.POSITIVE
+    _DEFAULT_NUMBER_OF_DIRECTIONS: int = (
+        _HORIZON_VISUALIZATIONS_DEFAULT_NUMBER_OF_DIRECTIONS
+    )
+    _DEFAULT_MAXIMUM_SEARCH_RADIUS: int = (
+        _HORIZON_VISUALIZATIONS_DEFAULT_MAXIMUM_SEARCH_RADIUS
+    )
+    _DEFAULT_NOISE_REMOVE: SvfNoiseRemove = _HORIZON_VISUALIZATIONS_DEFAULT_NOISE_REMOVE
+
+    def __init__(
+        self,
+        openness_type: OpennessType = _DEFAULT_OPENNESS_TYPE,
+        number_of_directions: int = _DEFAULT_NUMBER_OF_DIRECTIONS,
+        maximum_search_radius: int = _DEFAULT_MAXIMUM_SEARCH_RADIUS,
+        noise_remove: SvfNoiseRemove = _DEFAULT_NOISE_REMOVE,
+        to_8bit: Optional[To8bit] = None,
+    ):
+        self.openness_type = (openness_type,)
+        self.number_of_directions = (number_of_directions,)
+        self.maximum_search_radius = (maximum_search_radius,)
+        self.noise_remove = (noise_remove,)
+        if to_8bit is None:
+            if openness_type == OpennessType.POSITIVE:
+                self.to_8bit = self._DEFAULT_POSITIVE_OPENNESS_TO_8BIT
+            if openness_type == OpennessType.NEGATIVE:
+                self.to_8bit = self._DEFAULT_NEGATIVE_OPENNESS_TO_8BIT
+        else:
+            self.to_8bit = to_8bit
 
     def compute_visualization(
         self,
@@ -288,11 +391,13 @@ class Openness(Visualization):
 
 @dataclass
 class HorizonVisualizations:
-    number_of_directions: int = 16
-    maximum_search_radius: int = 10
-    noise_remove: SvfNoiseRemove = SvfNoiseRemove.NO_REMOVE
-    direction_of_anisotropy: float = 315
-    anisotropy_level: AnisotropyLevel = AnisotropyLevel.LOW
+    number_of_directions: int = _HORIZON_VISUALIZATIONS_DEFAULT_NUMBER_OF_DIRECTIONS
+    maximum_search_radius: int = _HORIZON_VISUALIZATIONS_DEFAULT_MAXIMUM_SEARCH_RADIUS
+    noise_remove: SvfNoiseRemove = _HORIZON_VISUALIZATIONS_DEFAULT_NOISE_REMOVE
+    direction_of_anisotropy: float = (
+        _HORIZON_VISUALIZATIONS_DEFAULT_DIRECTION_OF_ANISOTROPY
+    )
+    anisotropy_level: AnisotropyLevel = _HORIZON_VISUALIZATIONS_DEFAULT_ANISOTROPY_LEVEL
 
     @property
     def sky_view_factor(self) -> SkyViewFactor:
@@ -354,17 +459,32 @@ class HorizonVisualizations:
         )
 
 
-@dataclass
 class LocalDominance(Visualization):
-    minimum_radius: int = 10
-    maximum_radius: int = 20
-    radial_distance_step: int = 1
-    angular_step: int = 15
-    observer_height: float = 1.7
+    RVT_VISUALIZATION = RVTVisualization.LOCAL_DOMINANCE
+    _DEFAULT_TO_8BIT = To8bit(
+        normalization_mode=NormalizationMode.VALUE, minimum=0.50, maximum=1.80
+    )
+    _DEFAULT_MINIMUM_RADIUS: int = 10
+    _DEFAULT_MAXIMUM_RADIUS: int = 20
+    _DEFAULT_RADIAL_DISTANCE_STEP: int = 1
+    _DEFAULT_ANGULAR_STEP: int = 15
+    _DEFAULT_OBSERVER_HEIGHT: float = 1.7
 
-    @property
-    def rvt_visualization(self):
-        return RVTVisualization.LOCAL_DOMINANCE
+    def __init__(
+        self,
+        minimum_radius: int = _DEFAULT_MINIMUM_RADIUS,
+        maximum_radius: int = _DEFAULT_MAXIMUM_RADIUS,
+        radial_distance_step: int = _DEFAULT_RADIAL_DISTANCE_STEP,
+        angular_step: int = _DEFAULT_ANGULAR_STEP,
+        observer_height: float = _DEFAULT_OBSERVER_HEIGHT,
+        to_8bit: To8bit = _DEFAULT_TO_8BIT,
+    ):
+        self.minimum_radius = minimum_radius
+        self.maximum_radius = maximum_radius
+        self.radial_distance_step = radial_distance_step
+        self.angular_step = angular_step
+        self.observer_height = observer_height
+        self.to_8bit = to_8bit
 
     def compute_visualization(
         self,
@@ -385,20 +505,34 @@ class LocalDominance(Visualization):
         )
 
 
-@dataclass
 class SkyIllumination:  # (Visualization)
+    RVT_VISUALIZATION = RVTVisualization.SKY_ILLUMINATION
+    _DEFAULT_TO_8BIT = To8bit(
+        normalization_mode=NormalizationMode.VALUE, minimum=0.25, maximum=0.00
+    )
     raise NotImplemented  # TODO: Fix visualization and implement
 
 
-@dataclass
 class MultiScaleReliefModel(Visualization):
-    minimum_feature_size: float = 0
-    maximum_feature_size: float = 20
-    scaling_factor: int = 2
+    RVT_VISUALIZATION = RVTVisualization.MULTI_SCALE_RELIEF_MODEL
+    _DEFAULT_TO_8BIT: To8bit = To8bit(
+        normalization_mode=NormalizationMode.VALUE, minimum=-2.50, maximum=2.50
+    )
+    _DEFAULT_MINIMUM_FEATURE_SIZE: float = 0
+    _DEFAULT_MAXIMUM_FEATURE_SIZE: float = 20
+    _DEFAULT_SCALING_FACTOR: int = 2
 
-    @property
-    def rvt_visualization(self):
-        return RVTVisualization.MULTI_SCALE_RELIEF_MODEL
+    def __init__(
+        self,
+        minimum_feature_size: float = _DEFAULT_MINIMUM_FEATURE_SIZE,
+        maximum_feature_size: float = _DEFAULT_MAXIMUM_FEATURE_SIZE,
+        scaling_factor: int = _DEFAULT_SCALING_FACTOR,
+        to_8bit: To8bit = _DEFAULT_TO_8BIT,
+    ):
+        self.minimum_feature_size = minimum_feature_size
+        self.maximum_feature_size = maximum_feature_size
+        self.scaling_factor = scaling_factor
+        self.to_8bit = to_8bit
 
     def compute_visualization(
         self,
@@ -418,16 +552,29 @@ class MultiScaleReliefModel(Visualization):
         )
 
 
-@dataclass
 class MultiScaleTopographicPosition(Visualization):
-    local_scale: Tuple[int, int, int] = ((3, 21, 2),)
-    meso_scale: Tuple[int, int, int] = ((23, 203, 18),)
-    broad_scale: Tuple[int, int, int] = ((223, 2023, 180),)
-    lightness: float = (1.2,)
+    RVT_VISUALIZATION = RVTVisualization.MULTI_SCALE_TOPOGRAPHIC_POSITION
+    _DEFAULT_TO_8BIT = To8bit(
+        normalization_mode=NormalizationMode.VALUE, minimum=0.00, maximum=1.00
+    )
+    _DEFAULT_LOCAL_SCALE: Tuple[int, int, int] = (3, 21, 2)
+    _DEFAULT_MESO_SCALE: Tuple[int, int, int] = (23, 203, 18)
+    _DEFAULT_BROAD_SCALE: Tuple[int, int, int] = (223, 2023, 180)
+    _DEFAULT_LIGHTNESS: float = 1.2
 
-    @property
-    def rvt_visualization(self):
-        return RVTVisualization.MULTI_SCALE_TOPOGRAPHIC_POSITION
+    def __init__(
+        self,
+        local_scale: Tuple[int, int, int] = _DEFAULT_LOCAL_SCALE,
+        meso_scale: Tuple[int, int, int] = _DEFAULT_MESO_SCALE,
+        broad_scale: Tuple[int, int, int] = _DEFAULT_BROAD_SCALE,
+        lightness: float = _DEFAULT_LIGHTNESS,
+        to_8bit: To8bit = _DEFAULT_TO_8BIT,
+    ):
+        self.local_scale = local_scale
+        self.meso_scale = meso_scale
+        self.broad_scale = broad_scale
+        self.lightness = lightness
+        self.to_8bit = to_8bit
 
     def compute_visualization(
         self,
@@ -449,79 +596,80 @@ class MultiScaleTopographicPosition(Visualization):
 
 @dataclass
 class DefaultValues:  # TODO: Rename to something better like Visualizer or VisualizationFactory or smth else
-    """
-
-    Attributes
-    ----------
-    overwrite : bool
-        When saving visualisation functions and file already exists, if 0 it doesn't compute it, if 1 it overwrites it.
-    vertical_exaggeration_factor : float
-        For all visualization functions. Vertical exaggeration.
-    tile_size_limit : int
-        If array size bigger than tile_size_limit it uses saving tile by tile (rvt.tile module).
-    tile_size : tuple(x_size, y_size)
-        Size of single tile when saving tile by tile.
-    """
-
     overwrite: bool = False
     vertical_exaggeration_factor: float = 1.0
+    # Slope
+    save_slope: bool = False
     save_slope_float: bool = False
     save_slope_8bit: bool = False
     slope: Slope = Slope()
+    # Hillshade
+    save_hillshade: bool = True
     save_hillshade_float: bool = True
     save_hillshade_8bit: bool = False
     hillshade: Hillshade = Hillshade()
+    # Multiple Directions Hillshade
+    save_multiple_directions_hillshade: bool = False
     save_multiple_directions_hillshade_float: bool = False
     save_multiple_directions_hillshade_8bit: bool = False
     multiple_directions_hillshade: MultipleDirectionsHillshade = (
         MultipleDirectionsHillshade()
     )
+    # Simple Local Relief Model
+    save_simple_local_relief_model: bool = False
     save_simple_local_relief_model_float: bool = False
     save_simple_local_relief_model_8bit: bool = False
     simple_local_relief_model: SimpleLocalReliefModel = SimpleLocalReliefModel()
+    # Sky-View Factor
+    save_sky_view_factor: bool = False
     save_sky_view_factor_float: bool = False
     save_sky_view_factor_8bit: bool = False
+    # Anisotropic Sky-View Factor
+    save_anisotropic_sky_view_factor: bool = False
     save_anisotropic_sky_view_factor_float: bool = False
     save_anisotropic_sky_view_factor_8bit: bool = False
+    # Positive Openness
+    save_positive_openness: bool = False
     save_positive_openness_float: bool = False
     save_positive_openness_8bit: bool = False
+    # Negative Openness
+    save_negative_openness: bool = False
     save_negative_openness_float: bool = False
     save_negative_openness_8bit: bool = False
+    # Horizon Visualizations (Sky-View Factor, Anisotropic Sky-View factor, Openness)
     horizon_visualizations: HorizonVisualizations = HorizonVisualizations()
+    # Sky Illumination
+    save_sky_illumination: bool = False
     save_sky_illumination_float: bool = False
     save_sky_illumination_8bit: bool = False
     sky_illumination: SkyIllumination = SkyIllumination()
+    # Local Dominance
+    save_local_dominance: bool = False
     save_local_dominance_float: bool = False
     save_local_dominance_8bit: bool = False
     local_dominance = LocalDominance()
+    # Multi Scale Relief Model
+    save_multi_scale_relief_model: bool = False
     save_multi_scale_relief_model_float: bool = False
     save_multi_scale_relief_model_8bit: bool = False
     multi_scale_relief_model = MultiScaleReliefModel()
+    # Multi Scale Topographic Position
+    save_multi_scale_topographic_position: bool = False
     save_multi_scale_topographic_position_float: bool = False
     save_multi_scale_topographic_position_8bit: bool = False
     multi_scale_topographic_position = MultiScaleTopographicPosition()
 
-    # 8-bit bytescale parameters
-    self.slp_bytscl = ("value", 0.00, 51.00)
-    self.hs_bytscl = ("value", 0.00, 1.00)
-    self.mhs_bytscl = ("value", 0.00, 1.00)
-    self.slrm_bytscl = ("value", -2.00, 2.00)
-    self.svf_bytscl = ("value", 0.6375, 1.00)
-    self.asvf_bytscl = ("value", 0.70, 0.90)
-    self.pos_opns_bytscl = ("value", 60.00, 95.00)
-    self.neg_opns_bytscl = ("value", 60.00, 95.00)
-    self.sim_bytscl = ("percent", 0.25, 0.00)
-    self.ld_bytscl = ("value", 0.50, 1.80)
-    self.msrm_bytscl = ("value", -2.50, 2.50)
-    self.mstp_bytscl = ("value", 0.00, 1.00)
-    # tile
-    self.tile_size_limit = (
-        10000 * 10000
-    )  # if arr size > tile_size limit, it uses tile module
-    self.tile_size = (
+    compute_multiple_tile_limit = 10000 * 10000
+    """
+    If number of pixels is bigger than defined value, visualizations are computed tile by tile.
+    This is needed because some DEMs are too big (don't fit into memory) so output visualizations need to be computed
+    part by part.
+    """
+    compute_tile_size = (
         4000,
         4000,
-    )  # size of single tile when using tile module (x_size, y_size)
+    )
+    """Define the size of single tile if `compute_multiple_tile_limit` is exceeded."""
 
     def save_default_to_file(self, file_path: Optional[str] = None) -> None:
         """Saves default attributes into .json file."""
@@ -2099,7 +2247,7 @@ class DefaultValues:  # TODO: Rename to something better like Visualizer or Visu
             resolution_x=resolution_x,
             resolution_y=resolution_y,
             vertical_exaggeration_factor=self.vertical_exaggeration_factor,
-            output_units=self.slp_output_units,
+            output_unit=self.slp_output_units,
             no_data=no_data,
         )["slope"]
         return slope_arr
@@ -2158,7 +2306,9 @@ class DefaultValues:  # TODO: Rename to something better like Visualizer or Visu
                 return False
 
         dem_size = get_raster_size(raster_path=dem_path)
-        if dem_size[0] * dem_size[1] > self.tile_size_limit:  # tile by tile calculation
+        if (
+            dem_size[0] * dem_size[1] > self.compute_multiple_tile_limit
+        ):  # tile by tile calculation
             if custom_dir is None:
                 custom_dir = Path(dem_path).parent
             rvt.tile.save_rvt_visualization_tile_by_tile(
@@ -2317,7 +2467,7 @@ class DefaultValues:  # TODO: Rename to something better like Visualizer or Visu
                 return False
 
         dem_size = get_raster_size(raster_path=dem_path)
-        if dem_size[0] * dem_size[1] > self.tile_size_limit:  # tile by tile
+        if dem_size[0] * dem_size[1] > self.compute_multiple_tile_limit:  # tile by tile
             if custom_dir is None:
                 custom_dir = Path(dem_path).parent
             rvt.tile.save_rvt_visualization_tile_by_tile(
@@ -2468,7 +2618,7 @@ class DefaultValues:  # TODO: Rename to something better like Visualizer or Visu
                 return False
 
         dem_size = get_raster_size(raster_path=dem_path)
-        if dem_size[0] * dem_size[1] > self.tile_size_limit:  # tile by tile
+        if dem_size[0] * dem_size[1] > self.compute_multiple_tile_limit:  # tile by tile
             if custom_dir is None:
                 custom_dir = Path(dem_path).parent
             rvt.tile.save_rvt_visualization_tile_by_tile(
@@ -2590,7 +2740,7 @@ class DefaultValues:  # TODO: Rename to something better like Visualizer or Visu
                 return False
 
         dem_size = get_raster_size(raster_path=dem_path)
-        if dem_size[0] * dem_size[1] > self.tile_size_limit:  # tile by tile
+        if dem_size[0] * dem_size[1] > self.compute_multiple_tile_limit:  # tile by tile
             if custom_dir is None:
                 custom_dir = Path(dem_path).parent
             rvt.tile.save_rvt_visualization_tile_by_tile(
@@ -2758,7 +2908,7 @@ class DefaultValues:  # TODO: Rename to something better like Visualizer or Visu
                 return False
 
         dem_size = get_raster_size(raster_path=dem_path)
-        if dem_size[0] * dem_size[1] > self.tile_size_limit:  # tile by tile
+        if dem_size[0] * dem_size[1] > self.compute_multiple_tile_limit:  # tile by tile
             if custom_dir is None:
                 custom_dir = Path(dem_path).parent
             if save_svf:
@@ -2969,7 +3119,7 @@ class DefaultValues:  # TODO: Rename to something better like Visualizer or Visu
                 return False
 
         dem_size = get_raster_size(raster_path=dem_path)
-        if dem_size[0] * dem_size[1] > self.tile_size_limit:  # tile by tile
+        if dem_size[0] * dem_size[1] > self.compute_multiple_tile_limit:  # tile by tile
             if custom_dir is None:
                 custom_dir = Path(dem_path).parent
             rvt.tile.save_rvt_visualization_tile_by_tile(
@@ -3099,7 +3249,7 @@ class DefaultValues:  # TODO: Rename to something better like Visualizer or Visu
                 return False
 
         dem_size = get_raster_size(raster_path=dem_path)
-        if dem_size[0] * dem_size[1] > self.tile_size_limit:  # tile by tile
+        if dem_size[0] * dem_size[1] > self.compute_multiple_tile_limit:  # tile by tile
             if custom_dir is None:
                 custom_dir = Path(dem_path).parent
             rvt.tile.save_rvt_visualization_tile_by_tile(
@@ -3226,7 +3376,7 @@ class DefaultValues:  # TODO: Rename to something better like Visualizer or Visu
                 return False
 
         dem_size = get_raster_size(raster_path=dem_path)
-        if dem_size[0] * dem_size[1] > self.tile_size_limit:  # tile by tile
+        if dem_size[0] * dem_size[1] > self.compute_multiple_tile_limit:  # tile by tile
             if custom_dir is None:
                 custom_dir = Path(dem_path).parent
             rvt.tile.save_rvt_visualization_tile_by_tile(
@@ -3348,7 +3498,7 @@ class DefaultValues:  # TODO: Rename to something better like Visualizer or Visu
                 return False
 
         dem_size = get_raster_size(raster_path=dem_path)
-        if dem_size[0] * dem_size[1] > self.tile_size_limit:  # tile by tile
+        if dem_size[0] * dem_size[1] > self.compute_multiple_tile_limit:  # tile by tile
             if custom_dir is None:
                 custom_dir = Path(dem_path).parent
             rvt.tile.save_rvt_visualization_tile_by_tile(
@@ -3467,7 +3617,9 @@ class DefaultValues:  # TODO: Rename to something better like Visualizer or Visu
                 return False
 
         dem_size = get_raster_size(raster_path=dem_path)
-        if dem_size[0] * dem_size[1] > self.tile_size_limit:  # tile by tile calculation
+        if (
+            dem_size[0] * dem_size[1] > self.compute_multiple_tile_limit
+        ):  # tile by tile calculation
             if custom_dir is None:
                 custom_dir = Path(dem_path).parent
             rvt.tile.save_rvt_visualization_tile_by_tile(
@@ -3724,7 +3876,7 @@ class DefaultValues:  # TODO: Rename to something better like Visualizer or Visu
                 self.vertical_exaggeration_factor
             )
         )
-        if nr_rows * nr_cols > self.tile_size_limit:
+        if nr_rows * nr_cols > self.compute_multiple_tile_limit:
             dat.write("\tCalculating tile by tile: {}\n".format("ON"))
             dat.write(
                 "\t\tTile block size: {}x{}\n".format(

@@ -1794,7 +1794,7 @@ def color_relief_image_map(
     opns_pos_neg_arr = opns_pos_arr - opns_neg_arr
 
     slope_arr = rvt.vis.slope_aspect(
-        dem=dem, resolution_x=resolution, resolution_y=resolution, output_units="radian"
+        dem=dem, resolution_x=resolution, resolution_y=resolution, output_unit="radian"
     )["slope"]
 
     blend_combination = rvt.blender.BlenderCombination()

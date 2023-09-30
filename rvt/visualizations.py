@@ -118,7 +118,7 @@ def slope_aspect(
     dem: npt.NDArray[Any],
     resolution_x: float = 1,
     resolution_y: float = 1,
-    output_units: SlopeOutputUnit = SlopeOutputUnit.RADIAN,
+    output_unit: SlopeOutputUnit = SlopeOutputUnit.RADIAN,
     vertical_exaggeration_factor: float = 1,
     no_data: Optional[float] = None,
 ) -> SlopeAspectResult:
@@ -140,7 +140,7 @@ def slope_aspect(
         DEM resolution in X direction.
     resolution_y : int
         DEM resolution in Y direction.
-    output_units : str
+    output_unit : str
         Output units, you can choose between: percent, degree, radian. Default value is radian.
     vertical_exaggeration_factor : int or float
         Vertical exaggeration factor.
@@ -185,15 +185,15 @@ def slope_aspect(
     tan_slope = np.sqrt(dzdx**2 + dzdy**2)
 
     # Compute slope
-    if output_units == SlopeOutputUnit.PERCENT:
+    if output_unit == SlopeOutputUnit.PERCENT:
         slope_out = tan_slope * 100
-    elif output_units == SlopeOutputUnit.DEGREE:
+    elif output_unit == SlopeOutputUnit.DEGREE:
         slope_out = np.rad2deg(np.arctan(tan_slope))
-    elif output_units == SlopeOutputUnit.RADIAN:
+    elif output_unit == SlopeOutputUnit.RADIAN:
         slope_out = np.arctan(tan_slope)
     else:
         raise Exception(
-            "rvt.visualization.calculate_slope: Wrong function input 'output_units'!"
+            "rvt.visualization.calculate_slope: Wrong function input 'output_unit'!"
         )
 
     # Compute Aspect
@@ -205,7 +205,7 @@ def slope_aspect(
         dzdy == 0
     ] = 10e-9  # important for numeric stability - where dzdy is zero, make tangent to really high value
     aspect_out = np.arctan2(dzdx, dzdy)  # atan2 took care of the quadrants
-    if output_units == SlopeOutputUnit.DEGREE:
+    if output_unit == SlopeOutputUnit.DEGREE:
         aspect_out = np.rad2deg(aspect_out)
 
     # Remove padding
@@ -312,7 +312,7 @@ def hillshade(
             dem=dem,
             resolution_x=resolution_x,
             resolution_y=resolution_y,
-            output_units="radian",
+            output_unit="radian",
         )
         slope = dict_slp_asp["slope"]
         aspect = dict_slp_asp["aspect"]
@@ -404,7 +404,7 @@ def multi_hillshade(
             dem=dem,
             resolution_x=resolution_x,
             resolution_y=resolution_y,
-            output_units="radian",
+            output_unit="radian",
         )
         slope = dict_slp_asp["slope"]
         aspect = dict_slp_asp["aspect"]
