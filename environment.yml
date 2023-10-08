@@ -10,9 +10,9 @@ dependencies:
   - brotli=1.0.9=h8ffe710_7
   - brotli-bin=1.0.9=h8ffe710_7
   - bzip2=1.0.8=h8ffe710_4
-  - ca-certificates=2022.9.24=h5b45459_0
+  - ca-certificates=2023.08.22=haa95532_0
   - cairo=1.16.0=h15b3021_1010
-  - certifi=2022.9.24=pyhd8ed1ab_0
+  - certifi=2023.7.22=py39haa95532_0
   - cffi=1.15.1=py39h0878f49_0
   - cfgv=3.3.1=pyhd8ed1ab_0
   - cfitsio=4.1.0=h5a969a9_0
@@ -22,6 +22,7 @@ dependencies:
   - cycler=0.11.0=pyhd8ed1ab_0
   - dill=0.3.6=pyhd8ed1ab_1
   - distlib=0.3.6=pyhd8ed1ab_0
+  - exceptiongroup=1.0.4=py39haa95532_0
   - expat=2.4.8=h39d44d4_0
   - filelock=3.8.0=pyhd8ed1ab_0
   - font-ttf-dejavu-sans-mono=2.37=hab24e00_0
@@ -42,6 +43,7 @@ dependencies:
   - hdf5=1.12.1=nompi_h2a0e4a3_104
   - icu=69.1=h0e60522_0
   - identify=2.5.8=pyhd8ed1ab_0
+  - iniconfig=1.1.1=pyhd3eb1b0_0
   - intel-openmp=2022.1.0=h57928b3_3787
   - isort=5.10.1=pyhd8ed1ab_0
   - jpeg=9e=h8ffe710_2
@@ -95,7 +97,7 @@ dependencies:
   - nodeenv=1.7.0=pyhd8ed1ab_0
   - numpy=1.23.1=py39h1a62c8c_0
   - openjpeg=2.4.0=hb211442_1
-  - openssl=1.1.1q=h8ffe710_0
+  - openssl=1.1.1w=h2bbff1b_0
   - packaging=21.3=pyhd8ed1ab_0
   - pathspec=0.10.2=pyhd8ed1ab_0
   - pcre=8.45=h0e60522_0
@@ -103,6 +105,7 @@ dependencies:
   - pip=22.1.2=py39haa95532_0
   - pixman=0.40.0=h8ffe710_0
   - platformdirs=2.5.2=pyhd8ed1ab_1
+  - pluggy=1.0.0=py39haa95532_1
   - poppler=22.01.0=h24fffdf_2
   - poppler-data=0.4.11=hd8ed1ab_0
   - postgresql=14.4=h1c22c4f_0
@@ -114,6 +117,7 @@ dependencies:
   - pylint=2.15.5=pyhd8ed1ab_0
   - pyparsing=3.0.9=pyhd8ed1ab_0
   - pyqt=5.12.3=py39hb0d2dfa_4
+  - pytest=7.4.0=py39haa95532_0
   - python=3.9.12=h6244533_0
   - python-dateutil=2.8.2=pyhd8ed1ab_0
   - python_abi=3.9=2_cp39

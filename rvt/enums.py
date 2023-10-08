@@ -2,21 +2,21 @@ from enum import Enum
 
 
 class RVTVisualization(Enum):
-    """Visualizations supported in RVT and their abbreviations."""
+    """Visualizations supported in RVT."""
 
-    SLOPE = "slp"
-    HILLSHADE = "hs"
-    SHADOW = "shd"
-    MULTIPLE_DIRECTIONS_HILLSHADE = "mhs"
-    SIMPLE_LOCAL_RELIEF_MODEL = "slrm"
-    SKY_VIEW_FACTOR = "svf"
-    ANISOTROPIC_SKY_VIEW_FACTOR = "asvf"
-    POSITIVE_OPENNESS = "pos_opns"
-    NEGATIVE_OPENNESS = "neg_opns"
-    SKY_ILLUMINATION = "sim"
-    LOCAL_DOMINANCE = "ld"
-    MULTI_SCALE_RELIEF_MODEL = "msrm"
-    MULTI_SCALE_TOPOGRAPHIC_POSITION = "mstp"
+    SLOPE = "slope"
+    HILLSHADE = "hillshade"
+    SHADOW = "shadow"
+    MULTIPLE_DIRECTIONS_HILLSHADE = "multiple_directions_hillshade"
+    SIMPLE_LOCAL_RELIEF_MODEL = "simple_local_relief_model"
+    SKY_VIEW_FACTOR = "sky_view_factor"
+    ANISOTROPIC_SKY_VIEW_FACTOR = "anisotropic_sky_view_factor"
+    POSITIVE_OPENNESS = "positive_openness"
+    NEGATIVE_OPENNESS = "negative_openness"
+    SKY_ILLUMINATION = "sky_illumination"
+    LOCAL_DOMINANCE = "local_dominance"
+    MULTI_SCALE_RELIEF_MODEL = "multi_scale_relief_model"
+    MULTI_SCALE_TOPOGRAPHIC_POSITION = "multi_scale_topographic_position"
 
 
 class SlopeOutputUnit(Enum):
