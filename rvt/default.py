@@ -8,7 +8,7 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from enum import Enum
 from pathlib import Path
-from typing import Optional, Tuple, Any, Dict
+from typing import Optional, Tuple, Any, Dict, Type
 
 import os
 from osgeo import gdal
@@ -48,8 +48,15 @@ _HORIZON_VISUALIZATIONS_DEFAULT_ANISOTROPY_LEVEL: AnisotropyLevel = AnisotropyLe
 
 class To8bit(Normalization):
     def to_string(self) -> str:
-        return (
-            f"{self.normalization_mode.value}, min={self.minimum}, max={self.maximum}"
+        return f"normalization_mode={self.normalization_mode.value}, min={self.minimum}, max={self.maximum}"
+
+    @classmethod
+    def from_string(cls, string: str) -> To8bit:
+        elements = string.split(",")
+        return To8bit(
+            normalization_mode=elements[0].strip().lstrip("normalization_mode="),
+            minimum=float(elements[1].strip().lstrip("min=")),
+            maximum=float(elements[1].strip().lstrip("min=")),
         )
 
 
@@ -112,7 +119,7 @@ class Slope(Visualization):
 
 
 class Hillshade(Visualization):
-    RVT_VISUALIZATION = RVTVisualization.SLOPE
+    RVT_VISUALIZATION = RVTVisualization.HILLSHADE
     _DEFAULT_TO_8BIT = To8bit(
         normalization_mode=NormalizationMode.VALUE, minimum=0.00, maximum=1.00
     )
@@ -673,7 +680,7 @@ class DefaultValues:  # TODO: Rename to something better like Visualizer or Visu
     )
     """Define the size of single tile if `compute_multiple_tile_limit` is exceeded."""
 
-    def save_to_file(self, file_path: Path) -> None:
+    def save_parameters_to_file(self, file_path: Path) -> None:
         """Save parameters to JSON file."""
         class_parameters_dict = self.__dict__
         for parameter, parameter_value in class_parameters_dict.items():
@@ -702,16 +709,59 @@ class DefaultValues:  # TODO: Rename to something better like Visualizer or Visu
             json.dump(class_parameters_dict, json_file, indent=4)
 
     @classmethod
-    def read_from_file(cls, file_path: Path) -> DefaultValues:
+    def read_parameters_from_file(cls, file_path: Path) -> DefaultValues:
         """Reads parameters from JSON file."""
+
+        def _init_visualization_class(
+            visualization_parameters_dict: Dict[str, Any],
+            visualization_type: Type[Visualization],
+        ) -> Visualization:
+            if "to_8bit" not in visualization_parameters_dict:
+                raise ValueError(
+                    "Missing `to_8bit` key in visualization_parameters_dict!"
+                )
+            for visualization_attribute_name in visualization_type.__annotations__:
+                if visualization_attribute_name in visualization_parameters_dict:
+                    visualization_attribute_type = type(
+                        getattr(visualization_type, visualization_attribute_name)
+                    )
+                    if visualization_attribute_name == "to_8bit":
+                        visualization_parameters_dict["to_8bit"] = To8bit.from_string(
+                            string=visualization_parameters_dict["to_8bit"]
+                        )
+                    else:
+                        visualization_parameters_dict[
+                            visualization_attribute_name
+                        ] = visualization_attribute_type(
+                            visualization_parameters_dict[visualization_attribute_name]
+                        )
+
+            return visualization_type(**visualization_parameters_dict)
+
         with open(file_path, "r") as json_file:
             parameters_dict = json.load(json_file)
-        # TODO: Load class values correctly
-        # for parameter_key, parameter_value in parameters_dict:
-        #     if parameter_key == "slope":
-        #
+        # Get all parameter names that represent Visualization
+        # visualization_parameter_names = [
+        #     attribute
+        #     for attribute in vars(cls)
+        #     if issubclass(getattr(cls, attribute), Visualization)
+        # ]
+        # [attr for attr in dir(MyClass) if isinstance(getattr(MyClass, attr), int)]
+        # for visualization_parameter_name in visualization_parameter_names:
+        #     if visualization_parameter_name not in parameters_dict:
+        #         continue
+        #     parameters_dict[visualization_parameter_name] = pa
 
-        # return cls(**parameters_dict)
+        for attribute_name in cls.__annotations__:
+            attribute_type = type(getattr(cls, attribute_name))
+            if issubclass(attribute_type, Visualization):
+                if attribute_name not in parameters_dict:
+                    continue
+                parameters_dict[attribute_name] = _init_visualization_class(
+                    visualization_parameters_dict=parameters_dict[attribute_name],
+                    visualization_type=attribute_type,
+                )
+        return cls(**parameters_dict)
 
 
 #  TODO: Rewrite and clean methods/functions bellow

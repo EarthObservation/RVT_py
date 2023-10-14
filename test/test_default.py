@@ -18,6 +18,8 @@ from rvt.default import DefaultValues
 def test_parameters_json(default: DefaultValues) -> None:
     with NamedTemporaryFile(suffix=".json", delete=False) as temp_file:
         temp_file_path = Path(temp_file.name)
-        default.save_to_file(file_path=temp_file_path)
-        from_file_default = DefaultValues.read_from_file(file_path=temp_file_path)
+        default.save_parameters_to_file(file_path=temp_file_path)
+        from_file_default = DefaultValues.read_parameters_from_file(
+            file_path=temp_file_path
+        )
         assert default == from_file_default
