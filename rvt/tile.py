@@ -8,7 +8,7 @@ from typing import Callable, Dict, Any, Optional
 import numpy as np
 import numpy.typing as npt
 from osgeo import gdal
-import rvt.default
+import rvt.factory
 
 
 def _create_blank_raster(
@@ -241,7 +241,9 @@ def save_visualization_tile_by_tile(
 
 def _create_rvt_visualization_blank_raster(
     rvt_visualization: "import rvt.enums,
-    rvt_default: "rvt.default.DefaultValues",
+    rvt_default: "rvt.default.RVTVisualizationFactory"
+
+,
     dem_path: Path,
     output_dir_path: Path,
     dem_ds: gdal.Dataset,
@@ -293,7 +295,7 @@ def _create_rvt_visualization_blank_raster(
 
 def _get_rvt_visualization_overlap(
     rvt_visualization: "rvt.default.RVTVisualization",
-    rvt_default: "rvt.default.DefaultValues",
+    rvt_default: "rvt.default.RVTVisualizationFactory",
 ) -> int:
     if rvt_visualization == rvt.default.RVTVisualization.SLOPE:
         return 1
@@ -332,7 +334,7 @@ def _get_rvt_visualization_overlap(
 
 def save_rvt_visualization_tile_by_tile(
     rvt_visualization: "rvt.default.RVTVisualization",
-    rvt_default: "rvt.default.DefaultValues",
+    rvt_default: "rvt.default.RVTVisualizationFactory",
     dem_path: Path,
     output_dir_path: Optional[Path] = None,
     save_float: bool = True,

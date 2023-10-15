@@ -48,7 +48,7 @@ Visualizations with rvt.default (beginner)
 
 For beginner Python users we suggest using ``rvt.default`` instead of ``rvt.vis`` to calculate and store visualizations.
 
-As well as containing functions to read and save rasters, ``rvt.default`` also contains the class ``DefaultValues()`` where we can store our visualization functions parameters. We can call the methods of this class for saving and computing visualizations with those parameters (these methods use ``rvt.vis`` for computing visualizations).
+As well as containing functions to read and save rasters, ``rvt.default`` also contains the class ``RVTVisualizationFactory()`` where we can store our visualization functions parameters. We can call the methods of this class for saving and computing visualizations with those parameters (these methods use ``rvt.vis`` for computing visualizations).
 
 **Example**
 
@@ -59,11 +59,11 @@ To calculate, get or save a hillshade using ``rvt.default``:
     #  import the module 
     import rvt.default
 
-    # create a DefaultValues() class instance
-    default = rvt.default.DefaultValues()
+    # create a RVTVisualizationFactory() class instance
+    default = rvt.default.RVTVisualizationFactory()
     
     # change hillshade parameters default values to our needs 
-    # (they are attributes of DefaultValues(), their name starts with hs_)
+    # (they are attributes of RVTVisualizationFactory(), their name starts with hs_)
     default.hs_sun_el = 45
     default.hs_sun_azi = 300
     
@@ -88,7 +88,7 @@ To calculate, get or save a hillshade using ``rvt.default``:
 Configuring visualization parameters
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Parameters of a ``DefaultValues()`` instance can be saved to a ``JSON`` configuration file which can be edited. You can then load this file back and overwrite the attribute values (or visualization functions parameters).
+Parameters of a ``RVTVisualizationFactory()`` instance can be saved to a ``JSON`` configuration file which can be edited. You can then load this file back and overwrite the attribute values (or visualization functions parameters).
 
 **Example**
 
@@ -97,8 +97,8 @@ Parameters of a ``DefaultValues()`` instance can be saved to a ``JSON`` configur
     # import the module
     import rvt.default
 
-    # create a DefaultValues() class instance
-    default = rvt.default.DefaultValues()
+    # create a RVTVisualizationFactory() class instance
+    default = rvt.default.RVTVisualizationFactory()
     
     # change this path to where you would like to save the config file
     config_json_path = r"C:/rvt_default_values.json"
@@ -106,13 +106,13 @@ Parameters of a ``DefaultValues()`` instance can be saved to a ``JSON`` configur
     # save set attributes values to a JSON configuration file
     default.save_default_to_file(file_path=config_json_path)
     
-    # overwrite the DefaultValues() instance (default) attributes values 
+    # overwrite the RVTVisualizationFactory() instance (default) attributes values
     # from the config file
     default.read_default_from_file(file_path=config_json_path)
    
-DefaultValues() class methods
+RVTVisualizationFactory() class methods
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
     
-The ``DefaultValues()`` class also contains the methods: ``get_slope()``, ``save_slope()``, ``get_multi_hillshade()``, ``save_multi_hillshade()``, ``get_slrm()``, ``save_slrm()``, ``get_sky_view_factor()``, ``save_sky_view_factor()``, ``get_neg_opns()``, ``save_neg_opns()``, ``get_local_dominance()``, ``save_local_dominance()``, ``get_sky_illumination()``, ``save_sky_illumination()``.
+The ``RVTVisualizationFactory()`` class also contains the methods: ``get_slope()``, ``save_slope()``, ``get_multi_hillshade()``, ``save_multi_hillshade()``, ``get_slrm()``, ``save_slrm()``, ``get_sky_view_factor()``, ``save_sky_view_factor()``, ``get_neg_opns()``, ``save_neg_opns()``, ``get_local_dominance()``, ``save_local_dominance()``, ``get_sky_illumination()``, ``save_sky_illumination()``.
 
-.. seealso:: Find out more about the methods and attributes of the ``DefaultValues()`` class in :ref:`rvt.default`.
+.. seealso:: Find out more about the methods and attributes of the ``RVTVisualizationFactory()`` class in :ref:`rvt.default`.

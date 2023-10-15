@@ -88,7 +88,7 @@ If you **don't** provide the **image** parameter, and the vis_method parameter i
 
 If you **don't** provide the **image** parameter, but **do** provide the **image_path** parameter (if you provide both image will be used), blender will read the visualization from image_path.
 
-If you **don't** provide the **image and image_path** parameters, you have to add an ``rvt.default.DefaultValues`` instance as a parameter to ``BlenderCombination.render_all_images()``. Blender then takes the parameters set in this class when calculating specific visualizations.
+If you **don't** provide the **image and image_path** parameters, you have to add an ``rvt.default.RVTVisualizationFactory`` instance as a parameter to ``BlenderCombination.render_all_images()``. Blender then takes the parameters set in this class when calculating specific visualizations.
 You also have to add dem array and its resolution. 
 
 The example below uses all three methods:
@@ -103,9 +103,9 @@ The example below uses all three methods:
     combination_manual = rvt.blend.BlenderCombination()
 
     # we will let blender compute the simple_local_relief_model visualization. so, we need to create
-    # rvt.default.DefaultValues() and change the parameters for simple_local_relief_model. we will later
+    # rvt.default.RVTVisualizationFactory() and change the parameters for simple_local_relief_model. we will later
     # add default to the combination_manual.render_all_images() method
-    default = rvt.default.DefaultValues()
+    default = rvt.default.RVTVisualizationFactory()
     default.slrm_rad_cell = 15
 
     # 1st layer
@@ -175,7 +175,7 @@ Automatic blending is blending from a configuration ``JSON`` file. You can creat
     rvt.blend.create_blender_file_example(file_path=blender_combination_path)
 
     # set the parameters of the visualizations you will be using
-    default = rvt.default.DefaultValues()
+    default = rvt.default.RVTVisualizationFactory()
     # for example default.hs_sun_el=40
 
     # read the JSON combination configuration file

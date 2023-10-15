@@ -16,7 +16,7 @@ Parameters are:
 """
 import rvt.visualizations
 import rvt.blender
-import rvt.default
+import rvt.factory
 import os
 import multiprocessing as mp
 
@@ -62,8 +62,8 @@ def combined_VAT(
         )
 
     # 2 default classes one for VAT general one for VAT flat
-    default_1 = rvt.default.DefaultValues()  # VAT general
-    default_2 = rvt.default.DefaultValues()  # VAT flat
+    default_1 = rvt.default.RVTVisualizationFactory()  # VAT general
+    default_2 = rvt.default.RVTVisualizationFactory()  # VAT flat
 
     # fill no_data and original no data
     default_1.fill_no_data = 0

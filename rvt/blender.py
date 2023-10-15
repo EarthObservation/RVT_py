@@ -13,7 +13,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import List, Union
 
-import rvt.default
+import rvt.factory
 import rvt.visualizations
 from rvt.blender_functions import *
 
@@ -410,9 +410,9 @@ class BlenderCombination:
             save_render_directory = None
             save_render_8bit_path = None
 
-        # If default (rvt.default.DefaultValues class) is not defined, use predefined values
+        # If default (rvt.default.RVTVisualizationFactory class) is not defined, use predefined values
         if default is None:
-            default = rvt.default.DefaultValues()
+            default = rvt.default.RVTVisualizationFactory()
 
         # Rendering across all layers - form last to first layer
         rendered_image = None
@@ -904,7 +904,7 @@ class BlenderCombination:
         dem_path,
         combination_name,
         render_path,
-        default: rvt.default.DefaultValues,
+        default: rvt.default.RVTVisualizationFactory,
         terrain_sett_name=None,
         custom_dir=None,
         computation_time=None,
@@ -1560,9 +1560,11 @@ class TerrainSettings:
         return terrain_setting
 
     def apply_terrain(
-        self, default: rvt.default.DefaultValues, combination: BlenderCombination
+        self,
+        default: rvt.default.RVTVisualizationFactory,
+        combination: BlenderCombination,
     ) -> None:  # TODO: return TerrainSettings
-        """It overwrites default (DefaultValues) and combination (BlenderCombination),
+        """It overwrites default (RVTVisualizationFactory) and combination (BlenderCombination),
         with self values that are not None."""
         if self.slp_output_units is not None:
             default.slp_output_units = self.slp_output_units
@@ -1729,7 +1731,7 @@ class TerrainsSettings:
 def color_relief_image_map(
     dem: npt.NDArray[Any],
     resolution: float,
-    default: rvt.default.DefaultValues = rvt.default.DefaultValues(),
+    default: rvt.default.RVTVisualizationFactory = rvt.default.RVTVisualizationFactory(),
     colormap: str = "OrRd",
     min_colormap_cut: float = 0,
     max_colormap_cut: float = 1,
@@ -1748,7 +1750,7 @@ def color_relief_image_map(
         Input digital elevation model as 2D numpy array.
     resolution : float
         DEM pixel size.
-    default : rvt.default.DefaultValues
+    default : rvt.factory.RVTVisualizationFactory
         Default values for visualization functions.
     colormap : str
         Colormap form matplotlib (https://matplotlib.org/3.3.2/tutorials/colors/colormaps.html).
@@ -1836,7 +1838,7 @@ def color_relief_image_map(
 def e3mstp(
     dem: npt.NDArray[Any],
     resolution: float,
-    default: rvt.default.DefaultValues = rvt.default.DefaultValues(),
+    default: rvt.default.RVTVisualizationFactory = rvt.default.RVTVisualizationFactory(),
     no_data: Optional[float] = None,
 ) -> npt.NDArray[Any]:
     """
@@ -1852,7 +1854,7 @@ def e3mstp(
         Input digital elevation model as 2D numpy array.
     resolution : float
         DEM pixel size.
-    default : rvt.default.DefaultValues
+    default : rvt.factory.RVTVisualizationFactory
         Default values for visualization functions.
     no_data : int or float
         Value that represents no_data, all pixels with this value are changed to np.nan .

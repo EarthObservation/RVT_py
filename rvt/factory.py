@@ -5,6 +5,7 @@ Copyright:
 """
 from __future__ import annotations
 from abc import ABC, abstractmethod
+from copy import copy, deepcopy
 from dataclasses import dataclass
 from enum import Enum
 from pathlib import Path
@@ -37,12 +38,13 @@ from rvt.visualizations import (
     local_dominance,
     multi_scale_relief_model,
     multi_scale_topographic_position,
+    shadow_horizon,
 )
 
 _HORIZON_VISUALIZATIONS_DEFAULT_NUMBER_OF_DIRECTIONS: int = 16
 _HORIZON_VISUALIZATIONS_DEFAULT_MAXIMUM_SEARCH_RADIUS: int = 10
 _HORIZON_VISUALIZATIONS_DEFAULT_NOISE_REMOVE: SvfNoiseRemove = SvfNoiseRemove.NO_REMOVE
-_HORIZON_VISUALIZATIONS_DEFAULT_DIRECTION_OF_ANISOTROPY: float = 315
+_HORIZON_VISUALIZATIONS_DEFAULT_DIRECTION_OF_ANISOTROPY: float = 315.0
 _HORIZON_VISUALIZATIONS_DEFAULT_ANISOTROPY_LEVEL: AnisotropyLevel = AnisotropyLevel.LOW
 
 
@@ -54,9 +56,11 @@ class To8bit(Normalization):
     def from_string(cls, string: str) -> To8bit:
         elements = string.split(",")
         return To8bit(
-            normalization_mode=elements[0].strip().lstrip("normalization_mode="),
+            normalization_mode=NormalizationMode(
+                elements[0].strip().lstrip("normalization_mode=")
+            ),
             minimum=float(elements[1].strip().lstrip("min=")),
-            maximum=float(elements[1].strip().lstrip("min=")),
+            maximum=float(elements[2].strip().lstrip("max=")),
         )
 
 
@@ -69,18 +73,33 @@ class Visualization(ABC):
         self,
         dem: npt.NDArray[Any],
         dem_resolution: float,
-        dem_nodata: float,
+        dem_nodata: Optional[float],
         vertical_exaggeration_factor: float,
     ) -> npt.NDArray[Any]:
         pass
 
-    def compute_visualization_from_file(self, dem_path: Path) -> npt.NDArray[Any]:
+    @abstractmethod
+    def get_visualization_file_name(self, dem_file_name: str, is_8bit: bool) -> str:
+        """
+        Get visualization file name with parameters from DEM file name. Function returns visualization name with
+        tif suffix.
+        """
+        pass
+
+    def get_visualization_path(
+        self, directory_path: Path, dem_file_name: str, is_8bit: bool
+    ) -> Path:
+        return directory_path / self.get_visualization_file_name(
+            dem_file_name=dem_file_name, is_8bit=is_8bit
+        )
+
+    def compute_visualization_from_dem_file(self, dem_path: Path) -> npt.NDArray[Any]:
         pass  # TODO: implement
 
     def save_visualization(
         self,
         dem_path: Path,
-        output_visualization_path,
+        output_visualization_path: Path,
         output_visualization: npt.NDArray,
     ) -> None:
         pass  # TODO: implement
@@ -101,11 +120,18 @@ class Slope(Visualization):
         self.output_unit = output_unit
         self.to_8bit = to_8bit
 
+    def get_visualization_file_name(self, dem_file_name: str, is_8bit: bool) -> str:
+        dem_file_name = dem_file_name.rstrip(".tif").rstrip(".tiff")
+        output_name = f"{dem_file_name}_SLOPE"
+        if is_8bit:
+            output_name += "_8bit"
+        return output_name + ".tif"
+
     def compute_visualization(
         self,
         dem: npt.NDArray[Any],
         dem_resolution: float,
-        dem_nodata: float,
+        dem_nodata: Optional[float],
         vertical_exaggeration_factor: float,
     ) -> npt.NDArray[Any]:
         return slope_aspect(
@@ -118,13 +144,13 @@ class Slope(Visualization):
         ).slope
 
 
-class Hillshade(Visualization):
-    RVT_VISUALIZATION = RVTVisualization.HILLSHADE
+class Shadow(Visualization):
+    RVT_VISUALIZATION = RVTVisualization.SHADOW
     _DEFAULT_TO_8BIT = To8bit(
         normalization_mode=NormalizationMode.VALUE, minimum=0.00, maximum=1.00
     )
-    _DEFAULT_SUN_AZIMUTH = 315
-    _DEFAULT_SUN_ELEVATION = 35
+    _DEFAULT_SUN_AZIMUTH = 315.0
+    _DEFAULT_SUN_ELEVATION = 35.0
 
     def __init__(
         self,
@@ -136,15 +162,62 @@ class Hillshade(Visualization):
         self.sun_elevation = sun_elevation
         self.to_8bit = to_8bit
 
-    @property
-    def rvt_visualization(self):
-        return RVTVisualization.HILLSHADE
+    def get_visualization_file_name(self, dem_file_name: str, is_8bit: bool) -> str:
+        dem_file_name = dem_file_name.rstrip(".tif").rstrip(".tiff")
+        output_name = (
+            f"{dem_file_name}_shadow_A{self.sun_azimuth}_H{self.sun_elevation}"
+        )
+        if is_8bit:
+            output_name += "_8bit"
+        return output_name + ".tif"
 
     def compute_visualization(
         self,
         dem: npt.NDArray[Any],
         dem_resolution: float,
-        dem_nodata: float,
+        dem_nodata: Optional[float],
+        vertical_exaggeration_factor: float,
+    ) -> npt.NDArray[Any]:
+        return shadow_horizon(
+            dem=dem,
+            resolution=dem_resolution,
+            shadow_az=self.sun_azimuth,
+            shadow_el=self.sun_elevation,
+            vertical_exaggeration_factor=vertical_exaggeration_factor,
+            no_data=dem_nodata,
+        )["shadow"]
+
+
+class Hillshade(Visualization):
+    RVT_VISUALIZATION = RVTVisualization.HILLSHADE
+    _DEFAULT_TO_8BIT = To8bit(
+        normalization_mode=NormalizationMode.VALUE, minimum=0.00, maximum=1.00
+    )
+    _DEFAULT_SUN_AZIMUTH = 315.0
+    _DEFAULT_SUN_ELEVATION = 35.0
+
+    def __init__(
+        self,
+        sun_azimuth: float = _DEFAULT_SUN_AZIMUTH,
+        sun_elevation: float = _DEFAULT_SUN_ELEVATION,
+        to_8bit: To8bit = _DEFAULT_TO_8BIT,
+    ):
+        self.sun_azimuth = sun_azimuth
+        self.sun_elevation = sun_elevation
+        self.to_8bit = to_8bit
+
+    def get_visualization_file_name(self, dem_file_name: str, is_8bit: bool) -> str:
+        dem_file_name = dem_file_name.rstrip(".tif").rstrip(".tiff")
+        output_name = f"{dem_file_name}_HS_A{self.sun_azimuth}_H{self.sun_elevation}"
+        if is_8bit:
+            output_name += "_8bit"
+        return output_name + ".tif"
+
+    def compute_visualization(
+        self,
+        dem: npt.NDArray[Any],
+        dem_resolution: float,
+        dem_nodata: Optional[float],
         vertical_exaggeration_factor: float,
     ) -> npt.NDArray[Any]:
         return hillshade(
@@ -164,23 +237,26 @@ class MultipleDirectionsHillshade(Visualization):
         normalization_mode=NormalizationMode.VALUE, minimum=0.00, maximum=1.00
     )
     _DEFAULT_NUMBER_OF_DIRECTIONS: int = 16
-    _DEFAULT_SUN_ELEVATION: float = 35
+    _DEFAULT_SUN_ELEVATION: float = 35.0
 
     def __init__(
         self,
-        number_od_direction: int = _DEFAULT_NUMBER_OF_DIRECTIONS,
+        number_of_directions: int = _DEFAULT_NUMBER_OF_DIRECTIONS,
         sun_elevation: float = _DEFAULT_SUN_ELEVATION,
         to_8bit: To8bit = _DEFAULT_TO_8BIT,
     ):
-        self.number_of_direction = number_od_direction
+        self.number_of_directions = number_of_directions
         self.sun_elevation = sun_elevation
         self.to_8bit = to_8bit
+
+    def get_visualization_file_name(self, dem_file_name: str, is_8bit: bool) -> str:
+        return
 
     def compute_visualization(
         self,
         dem: npt.NDArray[Any],
         dem_resolution: float,
-        dem_nodata: float,
+        dem_nodata: Optional[float],
         vertical_exaggeration_factor: float,
     ) -> npt.NDArray[Any]:
         return multi_hillshade(
@@ -209,11 +285,14 @@ class SimpleLocalReliefModel(Visualization):
         self.radius_cell = radius_cell
         self.to_8bit = to_8bit
 
+    def get_visualization_file_name(self, dem_file_name: str, is_8bit: bool) -> str:
+        return
+
     def compute_visualization(
         self,
         dem: npt.NDArray[Any],
         dem_resolution: float,
-        dem_nodata: float,
+        dem_nodata: Optional[float],
         vertical_exaggeration_factor: float,
     ) -> npt.NDArray[Any]:
         return simple_local_relief_model(
@@ -249,11 +328,14 @@ class SkyViewFactor(Visualization):
         self.noise_remove = noise_remove
         self.to_8bit = to_8bit
 
+    def get_visualization_file_name(self, dem_file_name: str, is_8bit: bool) -> str:
+        return
+
     def compute_visualization(
         self,
         dem: npt.NDArray[Any],
         dem_resolution: float,
-        dem_nodata: float,
+        dem_nodata: Optional[float],
         vertical_exaggeration_factor: float,
     ) -> npt.NDArray[Any]:
         return horizon_visualizations(
@@ -305,11 +387,14 @@ class AnisotropicSkyViewFactor(Visualization):
         self.anisotropy_level = anisotropy_level
         self.to_8bit = to_8bit
 
+    def get_visualization_file_name(self, dem_file_name: str, is_8bit: bool) -> str:
+        return
+
     def compute_visualization(
         self,
         dem: npt.NDArray[Any],
         dem_resolution: float,
-        dem_nodata: float,
+        dem_nodata: Optional[float],
         vertical_exaggeration_factor: float,
     ) -> npt.NDArray[Any]:
         return horizon_visualizations(
@@ -373,11 +458,14 @@ class Openness(Visualization):
         else:
             self.to_8bit = to_8bit
 
+    def get_visualization_file_name(self, dem_file_name: str, is_8bit: bool) -> str:
+        return
+
     def compute_visualization(
         self,
         dem: npt.NDArray[Any],
         dem_resolution: float,
-        dem_nodata: float,
+        dem_nodata: Optional[float],
         vertical_exaggeration_factor: float,
     ) -> npt.NDArray[Any]:
         if OpennessType.NEGATIVE:
@@ -446,7 +534,7 @@ class HorizonVisualizations:
         self,
         dem: npt.NDArray[Any],
         dem_resolution: float,
-        dem_nodata: float,
+        dem_nodata: Optional[float],
         vertical_exaggeration_factor: float,
         compute_svf: bool,
         compute_opns: bool,
@@ -493,11 +581,14 @@ class LocalDominance(Visualization):
         self.observer_height = observer_height
         self.to_8bit = to_8bit
 
+    def get_visualization_file_name(self, dem_file_name: str, is_8bit: bool) -> str:
+        return
+
     def compute_visualization(
         self,
         dem: npt.NDArray[Any],
         dem_resolution: float,
-        dem_nodata: float,
+        dem_nodata: Optional[float],
         vertical_exaggeration_factor: float,
     ) -> npt.NDArray[Any]:
         return local_dominance(
@@ -527,8 +618,8 @@ class MultiScaleReliefModel(Visualization):
     _DEFAULT_TO_8BIT: To8bit = To8bit(
         normalization_mode=NormalizationMode.VALUE, minimum=-2.50, maximum=2.50
     )
-    _DEFAULT_MINIMUM_FEATURE_SIZE: float = 0
-    _DEFAULT_MAXIMUM_FEATURE_SIZE: float = 20
+    _DEFAULT_MINIMUM_FEATURE_SIZE: float = 0.0
+    _DEFAULT_MAXIMUM_FEATURE_SIZE: float = 20.0
     _DEFAULT_SCALING_FACTOR: int = 2
 
     def __init__(
@@ -543,11 +634,14 @@ class MultiScaleReliefModel(Visualization):
         self.scaling_factor = scaling_factor
         self.to_8bit = to_8bit
 
+    def get_visualization_file_name(self, dem_file_name: str, is_8bit: bool) -> str:
+        return
+
     def compute_visualization(
         self,
         dem: npt.NDArray[Any],
         dem_resolution: float,
-        dem_nodata: float,
+        dem_nodata: Optional[float],
         vertical_exaggeration_factor: float,
     ) -> npt.NDArray[Any]:
         return multi_scale_relief_model(
@@ -585,11 +679,14 @@ class MultiScaleTopographicPosition(Visualization):
         self.lightness = lightness
         self.to_8bit = to_8bit
 
+    def get_visualization_file_name(self, dem_file_name: str, is_8bit: bool) -> str:
+        return
+
     def compute_visualization(
         self,
         dem: npt.NDArray[Any],
         dem_resolution: float,
-        dem_nodata: float,
+        dem_nodata: Optional[float],
         vertical_exaggeration_factor: float,
     ) -> npt.NDArray[Any]:
         return multi_scale_topographic_position(
@@ -604,45 +701,58 @@ class MultiScaleTopographicPosition(Visualization):
 
 
 @dataclass
-class DefaultValues:  # TODO: Rename to something better like Visualizer or VisualizationFactory or smth else
+class RVTVisualizationFactory:
+    """
+    Class to store parameter values for all RVT visualizations, class also contain methods related to visualizations
+    (methods like saving visualizations, getting visualizations file names, storing visualizations parameters to file,
+     ...).
+    """
+
     overwrite: bool = False
+    """If True, overwrite visualizations when saving if they already exist."""
     vertical_exaggeration_factor: float = 1.0
+    """Vertical exaggeration to apply to DEM before computing visualizations."""
     # Slope
-    save_slope: bool = False
+    enable_slope: bool = False
     save_slope_float: bool = False
     save_slope_8bit: bool = False
     slope: Slope = Slope()
+    # Shadow
+    enable_shadow: bool = False
+    save_shadow_float: bool = False
+    save_shadow_8bit: bool = False
+    shadow: Shadow = Shadow()
     # Hillshade
-    save_hillshade: bool = True
+    enable_hillshade: bool = True
     save_hillshade_float: bool = True
     save_hillshade_8bit: bool = False
     hillshade: Hillshade = Hillshade()
     # Multiple Directions Hillshade
-    save_multiple_directions_hillshade: bool = False
+    enable_multiple_directions_hillshade: bool = False
     save_multiple_directions_hillshade_float: bool = False
     save_multiple_directions_hillshade_8bit: bool = False
     multiple_directions_hillshade: MultipleDirectionsHillshade = (
         MultipleDirectionsHillshade()
     )
     # Simple Local Relief Model
-    save_simple_local_relief_model: bool = False
+    enable_simple_local_relief_model: bool = False
     save_simple_local_relief_model_float: bool = False
     save_simple_local_relief_model_8bit: bool = False
     simple_local_relief_model: SimpleLocalReliefModel = SimpleLocalReliefModel()
     # Sky-View Factor
-    save_sky_view_factor: bool = False
+    enable_sky_view_factor: bool = False
     save_sky_view_factor_float: bool = False
     save_sky_view_factor_8bit: bool = False
     # Anisotropic Sky-View Factor
-    save_anisotropic_sky_view_factor: bool = False
+    enable_anisotropic_sky_view_factor: bool = False
     save_anisotropic_sky_view_factor_float: bool = False
     save_anisotropic_sky_view_factor_8bit: bool = False
     # Positive Openness
-    save_positive_openness: bool = False
+    enable_positive_openness: bool = False
     save_positive_openness_float: bool = False
     save_positive_openness_8bit: bool = False
     # Negative Openness
-    save_negative_openness: bool = False
+    enable_negative_openness: bool = False
     save_negative_openness_float: bool = False
     save_negative_openness_8bit: bool = False
     # Horizon Visualizations (Sky-View Factor, Anisotropic Sky-View factor, Openness)
@@ -653,17 +763,17 @@ class DefaultValues:  # TODO: Rename to something better like Visualizer or Visu
     # save_sky_illumination_8bit: bool = False
     # sky_illumination: SkyIllumination = SkyIllumination()
     # Local Dominance
-    save_local_dominance: bool = False
+    enable_local_dominance: bool = False
     save_local_dominance_float: bool = False
     save_local_dominance_8bit: bool = False
     local_dominance = LocalDominance()
     # Multi Scale Relief Model
-    save_multi_scale_relief_model: bool = False
+    enable_multi_scale_relief_model: bool = False
     save_multi_scale_relief_model_float: bool = False
     save_multi_scale_relief_model_8bit: bool = False
     multi_scale_relief_model = MultiScaleReliefModel()
     # Multi Scale Topographic Position
-    save_multi_scale_topographic_position: bool = False
+    enable_multi_scale_topographic_position: bool = False
     save_multi_scale_topographic_position_float: bool = False
     save_multi_scale_topographic_position_8bit: bool = False
     multi_scale_topographic_position = MultiScaleTopographicPosition()
@@ -682,7 +792,7 @@ class DefaultValues:  # TODO: Rename to something better like Visualizer or Visu
 
     def save_parameters_to_file(self, file_path: Path) -> None:
         """Save parameters to JSON file."""
-        class_parameters_dict = self.__dict__
+        class_parameters_dict = deepcopy(self).__dict__
         for parameter, parameter_value in class_parameters_dict.items():
             if issubclass(type(parameter_value), Visualization) or isinstance(
                 parameter_value, HorizonVisualizations
@@ -709,52 +819,42 @@ class DefaultValues:  # TODO: Rename to something better like Visualizer or Visu
             json.dump(class_parameters_dict, json_file, indent=4)
 
     @classmethod
-    def read_parameters_from_file(cls, file_path: Path) -> DefaultValues:
+    def read_parameters_from_file(cls, file_path: Path) -> RVTVisualizationFactory:
         """Reads parameters from JSON file."""
 
         def _init_visualization_class(
             visualization_parameters_dict: Dict[str, Any],
             visualization_type: Type[Visualization],
         ) -> Visualization:
-            if "to_8bit" not in visualization_parameters_dict:
-                raise ValueError(
-                    "Missing `to_8bit` key in visualization_parameters_dict!"
+            for (
+                visualization_attribute_name,
+                visualization_attribute_value,
+            ) in visualization_parameters_dict.items():
+                visualization_attribute_type = type(
+                    # Initialize visualization_type to check the type of default values.
+                    getattr(visualization_type(), visualization_attribute_name)
                 )
-            for visualization_attribute_name in visualization_type.__annotations__:
-                if visualization_attribute_name in visualization_parameters_dict:
-                    visualization_attribute_type = type(
-                        getattr(visualization_type, visualization_attribute_name)
+                if visualization_attribute_name == "to_8bit":
+                    visualization_parameters_dict["to_8bit"] = To8bit.from_string(
+                        string=visualization_parameters_dict["to_8bit"]
                     )
-                    if visualization_attribute_name == "to_8bit":
-                        visualization_parameters_dict["to_8bit"] = To8bit.from_string(
-                            string=visualization_parameters_dict["to_8bit"]
-                        )
-                    else:
-                        visualization_parameters_dict[
-                            visualization_attribute_name
-                        ] = visualization_attribute_type(
-                            visualization_parameters_dict[visualization_attribute_name]
-                        )
+                else:
+                    visualization_parameters_dict[
+                        visualization_attribute_name
+                    ] = visualization_attribute_type(
+                        visualization_parameters_dict[visualization_attribute_name]
+                    )
 
             return visualization_type(**visualization_parameters_dict)
 
         with open(file_path, "r") as json_file:
             parameters_dict = json.load(json_file)
-        # Get all parameter names that represent Visualization
-        # visualization_parameter_names = [
-        #     attribute
-        #     for attribute in vars(cls)
-        #     if issubclass(getattr(cls, attribute), Visualization)
-        # ]
-        # [attr for attr in dir(MyClass) if isinstance(getattr(MyClass, attr), int)]
-        # for visualization_parameter_name in visualization_parameter_names:
-        #     if visualization_parameter_name not in parameters_dict:
-        #         continue
-        #     parameters_dict[visualization_parameter_name] = pa
 
         for attribute_name in cls.__annotations__:
             attribute_type = type(getattr(cls, attribute_name))
-            if issubclass(attribute_type, Visualization):
+            if issubclass(attribute_type, Visualization) or issubclass(
+                attribute_type, HorizonVisualizations
+            ):
                 if attribute_name not in parameters_dict:
                     continue
                 parameters_dict[attribute_name] = _init_visualization_class(
@@ -1475,7 +1575,7 @@ class DefaultValues:  # TODO: Rename to something better like Visualizer or Visu
 #             return rvt.vis.byte_scale(data=norm_arr, no_data=np.nan, c_min=0, c_max=1)
 #         else:
 #             raise Exception(
-#                 "rvt.default.DefaultValues.float_to_8bit: Wrong visualization (visualization) parameter!"
+#                 "rvt.default.RVTVisualizationFactory.float_to_8bit: Wrong visualization (visualization) parameter!"
 #             )
 #
 #     def get_slope(
@@ -1516,12 +1616,12 @@ class DefaultValues:  # TODO: Rename to something better like Visualizer or Visu
 #
 #         if not save_float and not save_8bit:
 #             raise Exception(
-#                 "rvt.default.DefaultValues.save_slope: Both save_float and save_8bit are False,"
+#                 "rvt.default.RVTVisualizationFactory.save_slope: Both save_float and save_8bit are False,"
 #                 " at least one of them has to be True!"
 #             )
 #         if not os.path.isfile(dem_path):
 #             raise Exception(
-#                 "rvt.default.DefaultValues.save_slope: dem_path doesn't exist!"
+#                 "rvt.default.RVTVisualizationFactory.save_slope: dem_path doesn't exist!"
 #             )
 #
 #         if custom_dir is None:
@@ -1660,12 +1760,12 @@ class DefaultValues:  # TODO: Rename to something better like Visualizer or Visu
 #
 #         if not save_float and not save_8bit:
 #             raise Exception(
-#                 "rvt.default.DefaultValues.save_hillshade: Both save_float and save_8bit are False,"
+#                 "rvt.default.RVTVisualizationFactory.save_hillshade: Both save_float and save_8bit are False,"
 #                 " at least one of them has to be True!"
 #             )
 #         if not os.path.isfile(dem_path):
 #             raise Exception(
-#                 "rvt.default.DefaultValues.save_hillshade: dem_path doesn't exist!"
+#                 "rvt.default.RVTVisualizationFactory.save_hillshade: dem_path doesn't exist!"
 #             )
 #
 #         if custom_dir is None:
@@ -1824,12 +1924,12 @@ class DefaultValues:  # TODO: Rename to something better like Visualizer or Visu
 #
 #         if not save_float and not save_8bit:
 #             raise Exception(
-#                 "rvt.default.DefaultValues.save_multi_hillshade: Both save_float and save_8bit are False,"
+#                 "rvt.default.RVTVisualizationFactory.save_multi_hillshade: Both save_float and save_8bit are False,"
 #                 " at least one of them has to be True!"
 #             )
 #         if not os.path.isfile(dem_path):
 #             raise Exception(
-#                 "rvt.default.DefaultValues.save_multi_hillshade: dem_path doesn't exist!"
+#                 "rvt.default.RVTVisualizationFactory.save_multi_hillshade: dem_path doesn't exist!"
 #             )
 #
 #         if custom_dir is None:
@@ -1950,12 +2050,12 @@ class DefaultValues:  # TODO: Rename to something better like Visualizer or Visu
 #
 #         if not save_float and not save_8bit:
 #             raise Exception(
-#                 "rvt.default.DefaultValues.save_slrm: Both save_float and save_8bit are False,"
+#                 "rvt.default.RVTVisualizationFactory.save_slrm: Both save_float and save_8bit are False,"
 #                 " at least one of them has to be True!"
 #             )
 #         if not os.path.isfile(dem_path):
 #             raise Exception(
-#                 "rvt.default.DefaultValues.save_slrm: dem_path doesn't exist!"
+#                 "rvt.default.RVTVisualizationFactory.save_slrm: dem_path doesn't exist!"
 #             )
 #
 #         if custom_dir is None:
@@ -2080,12 +2180,12 @@ class DefaultValues:  # TODO: Rename to something better like Visualizer or Visu
 #
 #         if not save_float and not save_8bit:
 #             raise Exception(
-#                 "rvt.default.DefaultValues.save_sky_view_factor: Both save_float and save_8bit are False,"
+#                 "rvt.default.RVTVisualizationFactory.save_sky_view_factor: Both save_float and save_8bit are False,"
 #                 " at least one of them has to be True!"
 #             )
 #         if not os.path.isfile(dem_path):
 #             raise Exception(
-#                 "rvt.default.DefaultValues.save_sky_view_factor: dem_path doesn't exist!"
+#                 "rvt.default.RVTVisualizationFactory.save_sky_view_factor: dem_path doesn't exist!"
 #             )
 #
 #         svf_path = Path()
@@ -2329,12 +2429,12 @@ class DefaultValues:  # TODO: Rename to something better like Visualizer or Visu
 #
 #         if not save_float and not save_8bit:
 #             raise Exception(
-#                 "rvt.default.DefaultValues.save_neg_opns: Both save_float and save_8bit are False,"
+#                 "rvt.default.RVTVisualizationFactory.save_neg_opns: Both save_float and save_8bit are False,"
 #                 " at least one of them has to be True!"
 #             )
 #         if not os.path.isfile(dem_path):
 #             raise Exception(
-#                 "rvt.default.DefaultValues.save_neg_opns: dem_path doesn't exist!"
+#                 "rvt.default.RVTVisualizationFactory.save_neg_opns: dem_path doesn't exist!"
 #             )
 #
 #         if custom_dir is None:
@@ -2455,12 +2555,12 @@ class DefaultValues:  # TODO: Rename to something better like Visualizer or Visu
 #
 #         if not save_float and not save_8bit:
 #             raise Exception(
-#                 "rvt.default.DefaultValues.save_sky_illumination: Both save_float and save_8bit are False,"
+#                 "rvt.default.RVTVisualizationFactory.save_sky_illumination: Both save_float and save_8bit are False,"
 #                 " at least one of them has to be True!"
 #             )
 #         if not os.path.isfile(dem_path):
 #             raise Exception(
-#                 "rvt.default.DefaultValues.save_sky_illumination: dem_path doesn't exist!"
+#                 "rvt.default.RVTVisualizationFactory.save_sky_illumination: dem_path doesn't exist!"
 #             )
 #
 #         if custom_dir is None:
@@ -2582,12 +2682,12 @@ class DefaultValues:  # TODO: Rename to something better like Visualizer or Visu
 #
 #         if not save_float and not save_8bit:
 #             raise Exception(
-#                 "rvt.default.DefaultValues.save_local_dominance: Both save_float and save_8bit are False,"
+#                 "rvt.default.RVTVisualizationFactory.save_local_dominance: Both save_float and save_8bit are False,"
 #                 " at least one of them has to be True!"
 #             )
 #         if not os.path.isfile(dem_path):
 #             raise Exception(
-#                 "rvt.default.DefaultValues.save_local_dominance: dem_path doesn't exist!"
+#                 "rvt.default.RVTVisualizationFactory.save_local_dominance: dem_path doesn't exist!"
 #             )
 #
 #         if custom_dir is None:
@@ -2708,12 +2808,12 @@ class DefaultValues:  # TODO: Rename to something better like Visualizer or Visu
 #
 #         if not save_float and not save_8bit:
 #             raise Exception(
-#                 "rvt.default.DefaultValues.save_msrm: Both save_float and save_8bit are False,"
+#                 "rvt.default.RVTVisualizationFactory.save_msrm: Both save_float and save_8bit are False,"
 #                 " at least one of them has to be True!"
 #             )
 #         if not os.path.isfile(dem_path):
 #             raise Exception(
-#                 "rvt.default.DefaultValues.save_msrm: dem_path doesn't exist!"
+#                 "rvt.default.RVTVisualizationFactory.save_msrm: dem_path doesn't exist!"
 #             )
 #
 #         if custom_dir is None:
@@ -2826,13 +2926,13 @@ class DefaultValues:  # TODO: Rename to something better like Visualizer or Visu
 #
 #         if not save_float and not save_8bit:
 #             raise Exception(
-#                 "rvt.default.DefaultValues.save_mstp: Both save_float and save_8bit are False,"
+#                 "rvt.default.RVTVisualizationFactory.save_mstp: Both save_float and save_8bit are False,"
 #                 " at least one of them has to be True!"
 #             )
 #
 #         if not os.path.isfile(dem_path):
 #             raise Exception(
-#                 "rvt.default.DefaultValues.save_mstp: dem_path doesn't exist!"
+#                 "rvt.default.RVTVisualizationFactory.save_mstp: dem_path doesn't exist!"
 #             )
 #
 #         if custom_dir is None:
