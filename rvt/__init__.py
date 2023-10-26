@@ -1,5 +1,5 @@
 """
-Relief Visualization Toolbox – Python library
+Relief RVTVisualization Toolbox – Python library
 
 Credits:
     Žiga Kokalj (ziga.kokalj@zrc-sazu.si)

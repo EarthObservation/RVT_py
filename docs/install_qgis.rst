@@ -5,7 +5,7 @@ QGIS installation
 
 To use RVT in QGIS, first open QGIS and select ``Plugins → Manage and Install Plugins → All``.
 
-Search for ``RVT`` or ``Relief Visualization Toolbox`` and select ``Install Plugin``.
+Search for ``RVT`` or ``Relief RVTVisualization Toolbox`` and select ``Install Plugin``.
 
 Once the plugin is installed, it can be accessed from the ``Raster menu`` or by selecting the icon that will appear on the toolbar. All the visualization functions are also available as processing functions in the ``Processing toolbox``.
 

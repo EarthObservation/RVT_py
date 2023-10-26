@@ -2,11 +2,11 @@
 [![Anaconda-Server Badge](https://anaconda.org/zmigyyy/rvt_py/badges/version.svg)](https://anaconda.org/zmigyyy/rvt_py)
 [![Anaconda-Server Badge](https://anaconda.org/zmigyyy/rvt_py/badges/latest_release_date.svg)](https://anaconda.org/zmigyyy/rvt_py)
 
-# Relief Visualization Toolbox Python library
+# Relief RVTVisualization Toolbox Python library
 
 ![](./docs/figures/RVT_head.png)
 
-Relief Visualization Toolbox (RVT) was produced to help scientists visualize raster elevation model datasets. We have narrowed down the selection to include techniques that have proven to be effective for identification of small scale features. The default settings therefore assume working with high resolution digital elevation models derived from airborne laser scanning missions (lidar), however RVT methods can also be used for other purposes.
+Relief RVTVisualization Toolbox (RVT) was produced to help scientists visualize raster elevation model datasets. We have narrowed down the selection to include techniques that have proven to be effective for identification of small scale features. The default settings therefore assume working with high resolution digital elevation models derived from airborne laser scanning missions (lidar), however RVT methods can also be used for other purposes.
 
 Sky-view factor, for example, can be efficiently used in numerous studies where digital elevation model visualizations and automatic feature extraction techniques are indispensable, e.g. in geography, archaeology,  geomorphology, cartography, hydrology, glaciology, forestry and disaster management. It can even be used in engineering applications, such as predicting the availability of the GPS signal in urban areas.
 
@@ -39,7 +39,7 @@ The ``rvt`` Python package contains three modules:
 When using the tools, please cite:
 
 *   Kokalj, Ž., Somrak, M. 2019. Why Not a Single Image? Combining Visualizations to Facilitate Fieldwork and On-Screen Mapping. Remote Sensing 11(7): 747.
-*   Zakšek, K., Oštir, K., Kokalj, Ž. 2011. Sky-View Factor as a Relief Visualization Technique. Remote Sensing 3: 398-415.
+*   Zakšek, K., Oštir, K., Kokalj, Ž. 2011. Sky-View Factor as a Relief RVTVisualization Technique. Remote Sensing 3: 398-415.
 
 ## Installation
 
@@ -80,7 +80,7 @@ Required libraries (specified versions have been tested, other versions may also
 We recommend using Python 3.6 or higher and a Conda environment (this works best with ``gdal``).
 
 ## Documentation
-Documentation of the package and its use is available at [Relief Visualization Toolbox in Python documentation](https://rvt-py.readthedocs.io/).
+Documentation of the package and its use is available at [Relief RVTVisualization Toolbox in Python documentation](https://rvt-py.readthedocs.io/).
 
 ## Contributing
 Pull requests are welcome. For major changes, please open an issue first to discuss what you would like to change. Please report any bugs and suggestions for improvements.

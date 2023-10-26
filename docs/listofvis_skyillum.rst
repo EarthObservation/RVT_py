@@ -11,4 +11,4 @@ Uniform and overcast sky models are implemented as they both disregard direction
 
 Calculations last much longer than for other visualizations especially with large maximum shadow modelling distance.
 
-Source: `Relief Visualization Toolbox ver. 2.2.1 Manual <https://www.zrc-sazu.si/sites/default/files/rvt_2.2.1_0.pdf>`_
+Source: `Relief RVTVisualization Toolbox ver. 2.2.1 Manual <https://www.zrc-sazu.si/sites/default/files/rvt_2.2.1_0.pdf>`_

@@ -61,7 +61,7 @@ def save_visualization_tile_by_tile(
     visualization_function : Callable
         Python function which represents visualization function. Function needs to have parameter called dem!
     function_parameters: Optional[Dict[str, Optional[Any]]]
-        Visualization function parameters in form of dict where key represents parameter and key value parameter value.
+        RVTVisualization function parameters in form of dict where key represents parameter and key value parameter value.
         Parameter dem needs to be excluded because it is read from dem_path!
         If function_parameters contains no_data key and its value is None it will be taken from dem (dem_path),
         same goes for resolutions (resolution_x, resolution_y, resolution).
@@ -239,8 +239,8 @@ def save_visualization_tile_by_tile(
     dem_ds = None
 
 
-def _create_rvt_visualization_blank_raster(
-    rvt_visualization: "import rvt.enums,
+def _create_RVT_VISUALIZATION_NAME_blank_raster(
+    RVT_VISUALIZATION_NAME: "import rvt.enums,
     rvt_default: "rvt.default.RVTVisualizationFactory"
 
 ,
@@ -250,18 +250,18 @@ def _create_rvt_visualization_blank_raster(
     save_float: bool,
     save_8bit: bool,
 ) -> None:
-    """ "Create blank raster or rasters for rvt_visualization to later store visualization in it tile by tile."""
+    """ "Create blank raster or rasters for RVT_VISUALIZATION_NAME to later store visualization in it tile by tile."""
     if save_float:
         out_float_path = rvt_default.get_visualization_path(
-            rvt_visualization=rvt_visualization,
+            RVT_VISUALIZATION_NAME=RVT_VISUALIZATION_NAME,
             dem_path=dem_path,
             output_dir_path=output_dir_path,
             path_8bit=False,
         )
         nr_bands = 1
         if (
-            rvt_visualization
-            == rvt.default.RVTVisualization.MULTIPLE_DIRECTIONS_HILLSHADE
+            RVT_VISUALIZATION_NAME
+            == rvt.default.RVTVisualizationName.MULTIPLE_DIRECTIONS_HILLSHADE
         ):
             nr_bands = rvt_default.mhs_nr_dir
         _create_blank_raster(
@@ -272,17 +272,17 @@ def _create_rvt_visualization_blank_raster(
         )
     if save_8bit:
         out_8bit_path = rvt_default.get_visualization_path(
-            rvt_visualization=rvt_visualization,
+            RVT_VISUALIZATION_NAME=RVT_VISUALIZATION_NAME,
             dem_path=dem_path,
             output_dir_path=output_dir_path,
             path_8bit=True,
         )
         nr_bands = 1
         if (
-            rvt_visualization
-            == rvt.default.RVTVisualization.MULTIPLE_DIRECTIONS_HILLSHADE
-            or rvt_visualization
-            == rvt.default.RVTVisualization.MULTI_SCALE_TOPOGRAPHIC_POSITION
+            RVT_VISUALIZATION_NAME
+            == rvt.default.RVTVisualizationName.MULTIPLE_DIRECTIONS_HILLSHADE
+            or RVT_VISUALIZATION_NAME
+            == rvt.default.RVTVisualizationName.MULTI_SCALE_TOPOGRAPHIC_POSITION
         ):
             nr_bands = 3
         _create_blank_raster(
@@ -293,47 +293,47 @@ def _create_rvt_visualization_blank_raster(
         )
 
 
-def _get_rvt_visualization_overlap(
-    rvt_visualization: "rvt.default.RVTVisualization",
+def _get_RVT_VISUALIZATION_NAME_overlap(
+    RVT_VISUALIZATION_NAME: "rvt.default.RVTVisualizationName",
     rvt_default: "rvt.default.RVTVisualizationFactory",
 ) -> int:
-    if rvt_visualization == rvt.default.RVTVisualization.SLOPE:
+    if RVT_VISUALIZATION_NAME == rvt.default.RVTVisualizationName.SLOPE:
         return 1
-    elif rvt_visualization == rvt.default.RVTVisualization.HILLSHADE:
+    elif RVT_VISUALIZATION_NAME == rvt.default.RVTVisualizationName.HILLSHADE:
         return 1
-    elif rvt_visualization == rvt.default.RVTVisualization.SHADOW:
+    elif RVT_VISUALIZATION_NAME == rvt.default.RVTVisualizationName.SHADOW:
         return 1
     elif (
-        rvt_visualization == rvt.default.RVTVisualization.MULTIPLE_DIRECTIONS_HILLSHADE
+        RVT_VISUALIZATION_NAME == rvt.default.RVTVisualizationName.MULTIPLE_DIRECTIONS_HILLSHADE
     ):
         return 1
-    elif rvt_visualization == rvt.default.RVTVisualization.SIMPLE_LOCAL_RELIEF_MODEL:
+    elif RVT_VISUALIZATION_NAME == rvt.default.RVTVisualizationName.SIMPLE_LOCAL_RELIEF_MODEL:
         return int(rvt_default.slrm_rad_cell)
-    elif rvt_visualization == rvt.default.RVTVisualization.SKY_VIEW_FACTOR:
+    elif RVT_VISUALIZATION_NAME == rvt.default.RVTVisualizationName.SKY_VIEW_FACTOR:
         return int(rvt_default.svf_r_max)
-    elif rvt_visualization == rvt.default.RVTVisualization.ANISOTROPIC_SKY_VIEW_FACTOR:
+    elif RVT_VISUALIZATION_NAME == rvt.default.RVTVisualizationName.ANISOTROPIC_SKY_VIEW_FACTOR:
         return int(rvt_default.svf_r_max)
-    elif rvt_visualization == rvt.default.RVTVisualization.POSITIVE_OPENNESS:
+    elif RVT_VISUALIZATION_NAME == rvt.default.RVTVisualizationName.POSITIVE_OPENNESS:
         return int(rvt_default.svf_r_max)
-    elif rvt_visualization == rvt.default.RVTVisualization.NEGATIVE_OPENNESS:
+    elif RVT_VISUALIZATION_NAME == rvt.default.RVTVisualizationName.NEGATIVE_OPENNESS:
         return int(rvt_default.svf_r_max)
-    elif rvt_visualization == rvt.default.RVTVisualization.SKY_ILLUMINATION:
+    elif RVT_VISUALIZATION_NAME == rvt.default.RVTVisualizationName.SKY_ILLUMINATION:
         return int(rvt_default.sim_shadow_dist)
-    elif rvt_visualization == rvt.default.RVTVisualization.LOCAL_DOMINANCE:
+    elif RVT_VISUALIZATION_NAME == rvt.default.RVTVisualizationName.LOCAL_DOMINANCE:
         return int(rvt_default.ld_max_rad)
-    elif rvt_visualization == rvt.default.RVTVisualization.MULTI_SCALE_RELIEF_MODEL:
+    elif RVT_VISUALIZATION_NAME == rvt.default.RVTVisualizationName.MULTI_SCALE_RELIEF_MODEL:
         return int(rvt_default.msrm_feature_max)
     elif (
-        rvt_visualization
-        == rvt.default.RVTVisualization.MULTI_SCALE_TOPOGRAPHIC_POSITION
+        RVT_VISUALIZATION_NAME
+        == rvt.default.RVTVisualizationName.MULTI_SCALE_TOPOGRAPHIC_POSITION
     ):
         return int(rvt_default.mstp_broad_scale[1])
     else:
-        raise ValueError(f"Overlap is not defined for {rvt_visualization.name}.")
+        raise ValueError(f"Overlap is not defined for {RVT_VISUALIZATION_NAME.name}.")
 
 
-def save_rvt_visualization_tile_by_tile(
-    rvt_visualization: "rvt.default.RVTVisualization",
+def save_RVT_VISUALIZATION_NAME_tile_by_tile(
+    RVT_VISUALIZATION_NAME: "rvt.default.RVTVisualizationName",
     rvt_default: "rvt.default.RVTVisualizationFactory",
     dem_path: Path,
     output_dir_path: Optional[Path] = None,
@@ -347,7 +347,7 @@ def save_rvt_visualization_tile_by_tile(
 
     Parameters
     ----------
-    rvt_visualization : RVTVisualization
+    RVT_VISUALIZATION_NAME : RVTVisualizationName
         RVT visualization.
     rvt_default : Default
         Class where RVT parameters are stored.
@@ -394,8 +394,8 @@ def save_rvt_visualization_tile_by_tile(
     x_size = band.XSize  # number of columns
     y_size = band.YSize  # number of rows
 
-    _create_rvt_visualization_blank_raster(
-        rvt_visualization=rvt_visualization,
+    _create_RVT_VISUALIZATION_NAME_blank_raster(
+        RVT_VISUALIZATION_NAME=RVT_VISUALIZATION_NAME,
         rvt_default=rvt_default,
         dem_path=dem_path,
         output_dir_path=output_dir_path,
@@ -404,8 +404,8 @@ def save_rvt_visualization_tile_by_tile(
         save_8bit=save_8bit,
     )
 
-    overlap = _get_rvt_visualization_overlap(
-        rvt_visualization=rvt_visualization, rvt_default=rvt_default
+    overlap = _get_RVT_VISUALIZATION_NAME_overlap(
+        RVT_VISUALIZATION_NAME=RVT_VISUALIZATION_NAME, rvt_default=rvt_default
     )
 
     for y in range(0, y_size, tile_size_y):
@@ -459,7 +459,7 @@ def save_rvt_visualization_tile_by_tile(
                 visualization_float_arr,
                 visualization_8bit_arr,
             ) = rvt_default.calculate_visualization(
-                visualization=rvt_visualization,
+                visualization=RVT_VISUALIZATION_NAME,
                 dem=tile_array,
                 resolution_x=x_res,
                 resolution_y=y_res,
@@ -543,7 +543,7 @@ def save_rvt_visualization_tile_by_tile(
             # write tile
             if visualization_float_arr is not None and save_float:
                 out_visualization_float_path = rvt_default.get_visualization_path(
-                    rvt_visualization=rvt_visualization,
+                    RVT_VISUALIZATION_NAME=RVT_VISUALIZATION_NAME,
                     dem_path=dem_path,
                     output_dir_path=output_dir_path,
                     path_8bit=False,
@@ -566,7 +566,7 @@ def save_rvt_visualization_tile_by_tile(
                 out_ds_float = None
             if visualization_8bit_arr is not None and save_8bit:  # multiple bands
                 out_visualization_8bit_path = rvt_default.get_visualization_path(
-                    rvt_visualization=rvt_visualization,
+                    RVT_VISUALIZATION_NAME=RVT_VISUALIZATION_NAME,
                     dem_path=dem_path,
                     output_dir_path=output_dir_path,
                     path_8bit=True,

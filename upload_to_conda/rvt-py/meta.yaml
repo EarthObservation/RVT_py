@@ -37,7 +37,7 @@ about:
   license: Apache Software
   license_family: APACHE
   license_file: 
-  summary: Relief Visualization Toolbox python library. It helps scientist visualize raster elevation model datasets.
+  summary: Relief RVTVisualization Toolbox python library. It helps scientist visualize raster elevation model datasets.
   doc_url: https://rvt-py.readthedocs.io/en/latest/
   dev_url: 
 

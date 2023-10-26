@@ -1,7 +1,7 @@
 from enum import Enum
 
 
-class RVTVisualization(Enum):
+class RVTVisualizationName(Enum):
     """Visualizations supported in RVT."""
 
     SLOPE = "slope"

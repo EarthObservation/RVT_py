@@ -17,49 +17,51 @@ import shutil
 # Needed for removing credits
 import sphinx.ext.autodoc
 
-sys.path.insert(0, os.path.abspath('..'))  # Source code dir relative to this file
+sys.path.insert(0, os.path.abspath(".."))  # Source code dir relative to this file
 
 # -- Project information -----------------------------------------------------
 
-project = 'Relief Visualization Toolbox in Python'
-copyright = '2010-2021, ZRC SAZU and University of Ljubljana'
-author = 'ZRC SAZU and University of Ljubljana'
+project = "Relief RVTVisualization Toolbox in Python"
+copyright = "2010-2021, ZRC SAZU and University of Ljubljana"
+author = "ZRC SAZU and University of Ljubljana"
 
 # -- General configuration ---------------------------------------------------
 
-master_doc = 'index'
+master_doc = "index"
 
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [
-    'sphinx.ext.autodoc',  # Core library for html generation from docstrings
-    'sphinx.ext.autosummary',  # Create neat summary tables
-    'sphinx.ext.viewcode',  # Add links to highlighted source code
-    'sphinx.ext.napoleon',  # Use NumPy docstrings
-    'sphinxcontrib.bibtex', # BibTeX support
-    'nbsphinx'  # Jupyter Notebook support
+    "sphinx.ext.autodoc",  # Core library for html generation from docstrings
+    "sphinx.ext.autosummary",  # Create neat summary tables
+    "sphinx.ext.viewcode",  # Add links to highlighted source code
+    "sphinx.ext.napoleon",  # Use NumPy docstrings
+    "sphinxcontrib.bibtex",  # BibTeX support
+    "nbsphinx",  # Jupyter Notebook support
 ]
 
-autodoc_member_order = 'bysource'  # Content is in the same order as in module
+autodoc_member_order = "bysource"  # Content is in the same order as in module
 autosummary_generate = True  # Turn on sphinx.ext.autosummary
 autoclass_content = "both"  # Add __init__ doc (ie. params) to class summaries
-html_show_sourcelink = False  # Remove 'view source code' from top of page (for html, not python)
+html_show_sourcelink = (
+    False  # Remove 'view source code' from top of page (for html, not python)
+)
 autodoc_inherit_docstrings = True  # If no class summary, inherit base class summary
 
 # Add any paths that contain templates here, relative to this directory.
-templates_path = ['_templates']
+templates_path = ["_templates"]
 
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
 # This pattern also affects html_static_path and html_extra_path.
-exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
+exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
 
 # Ignore import errors
 # nbsphinx_allow_errors = True
 
 # BibTeX files
-bibtex_bibfiles = ['RVT.bib']
+bibtex_bibfiles = ["RVT.bib"]
 
 # -- Options for HTML output -------------------------------------------------
 
@@ -67,12 +69,12 @@ bibtex_bibfiles = ['RVT.bib']
 # a list of builtin themes.
 #
 # html_theme = 'sphinx_rtd_theme'
-html_theme = 'furo'
+html_theme = "furo"
 
 # html_theme_options = {"announcement": "🚧 This page is currently being updated 😊"}
 
 # Logo
-html_logo = './figures/RVT_head.png'
+html_logo = "./figures/RVT_head.png"
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
@@ -81,16 +83,20 @@ html_static_path = []
 
 # Remove module docstring credits
 def setup(app):
-    app.connect('autodoc-process-docstring', sphinx.ext.autodoc.between('Credits:', what=['module'], exclude=True))
+    app.connect(
+        "autodoc-process-docstring",
+        sphinx.ext.autodoc.between("Credits:", what=["module"], exclude=True),
+    )
+
 
 # Automatically remove GDAL from imports
-autodoc_mock_imports = ['gdal', 'osgeo']
+autodoc_mock_imports = ["gdal", "osgeo"]
 
 # Copy examples to docs
-examples_folder = './examples'
+examples_folder = "./examples"
 shutil.rmtree(examples_folder, ignore_errors=True)
 
 try:
-    shutil.copytree('../examples', examples_folder)
+    shutil.copytree("../examples", examples_folder)
 except:
-    raise Exception('Error: Cannot copy examples to Docs')
+    raise Exception("Error: Cannot copy examples to Docs")

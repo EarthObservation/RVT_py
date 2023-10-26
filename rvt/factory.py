@@ -5,23 +5,18 @@ Copyright:
 """
 from __future__ import annotations
 from abc import ABC, abstractmethod
-from copy import copy, deepcopy
-from dataclasses import dataclass
+from copy import deepcopy
+from dataclasses import dataclass, fields
 from enum import Enum
 from pathlib import Path
 from typing import Optional, Tuple, Any, Dict, Type
 
-import os
-from osgeo import gdal
-import numpy as np
 import numpy.typing as npt
 import json
-import datetime
-import time
 
 from rvt.blender_functions import Normalization
 from rvt.enums import (
-    RVTVisualization,
+    RVTVisualizationName,
     OpennessType,
     SlopeOutputUnit,
     SvfNoiseRemove,
@@ -64,8 +59,8 @@ class To8bit(Normalization):
         )
 
 
-class Visualization(ABC):
-    RVT_VISUALIZATION: RVTVisualization
+class RVTVisualization(ABC):
+    RVT_VISUALIZATION_NAME: RVTVisualizationName
     to_8bit: To8bit
 
     @abstractmethod
@@ -105,8 +100,8 @@ class Visualization(ABC):
         pass  # TODO: implement
 
 
-class Slope(Visualization):
-    RVT_VISUALIZATION: RVTVisualization = RVTVisualization.SLOPE
+class Slope(RVTVisualization):
+    RVT_VISUALIZATION_NAME: RVTVisualizationName = RVTVisualizationName.SLOPE
     _DEFAULT_TO_8BIT: To8bit = To8bit(
         normalization_mode=NormalizationMode.VALUE, minimum=0.00, maximum=51.00
     )
@@ -144,8 +139,8 @@ class Slope(Visualization):
         ).slope
 
 
-class Shadow(Visualization):
-    RVT_VISUALIZATION = RVTVisualization.SHADOW
+class Shadow(RVTVisualization):
+    RVT_VISUALIZATION_NAME = RVTVisualizationName.SHADOW
     _DEFAULT_TO_8BIT = To8bit(
         normalization_mode=NormalizationMode.VALUE, minimum=0.00, maximum=1.00
     )
@@ -188,8 +183,8 @@ class Shadow(Visualization):
         )["shadow"]
 
 
-class Hillshade(Visualization):
-    RVT_VISUALIZATION = RVTVisualization.HILLSHADE
+class Hillshade(RVTVisualization):
+    RVT_VISUALIZATION_NAME = RVTVisualizationName.HILLSHADE
     _DEFAULT_TO_8BIT = To8bit(
         normalization_mode=NormalizationMode.VALUE, minimum=0.00, maximum=1.00
     )
@@ -231,8 +226,8 @@ class Hillshade(Visualization):
         )
 
 
-class MultipleDirectionsHillshade(Visualization):
-    RVT_VISUALIZATION = RVTVisualization.MULTIPLE_DIRECTIONS_HILLSHADE
+class MultipleDirectionsHillshade(RVTVisualization):
+    RVT_VISUALIZATION_NAME = RVTVisualizationName.MULTIPLE_DIRECTIONS_HILLSHADE
     _DEFAULT_TO_8BIT = To8bit(
         normalization_mode=NormalizationMode.VALUE, minimum=0.00, maximum=1.00
     )
@@ -250,7 +245,11 @@ class MultipleDirectionsHillshade(Visualization):
         self.to_8bit = to_8bit
 
     def get_visualization_file_name(self, dem_file_name: str, is_8bit: bool) -> str:
-        return
+        dem_file_name = dem_file_name.rstrip(".tif").rstrip(".tiff")
+        output_name = f"{dem_file_name}_MULTI-HS_D{self.number_of_directions}_H{self.sun_elevation}"
+        if is_8bit:
+            output_name += "_8bit"
+        return output_name + ".tif"
 
     def compute_visualization(
         self,
@@ -270,8 +269,8 @@ class MultipleDirectionsHillshade(Visualization):
         )
 
 
-class SimpleLocalReliefModel(Visualization):
-    RVT_VISUALIZATION = RVTVisualization.SIMPLE_LOCAL_RELIEF_MODEL
+class SimpleLocalReliefModel(RVTVisualization):
+    RVT_VISUALIZATION_NAME = RVTVisualizationName.SIMPLE_LOCAL_RELIEF_MODEL
     _DEFAULT_TO_8BIT = To8bit(
         normalization_mode=NormalizationMode.VALUE, minimum=-2.00, maximum=2.00
     )
@@ -286,7 +285,11 @@ class SimpleLocalReliefModel(Visualization):
         self.to_8bit = to_8bit
 
     def get_visualization_file_name(self, dem_file_name: str, is_8bit: bool) -> str:
-        return
+        dem_file_name = dem_file_name.rstrip(".tif").rstrip(".tiff")
+        output_name = f"{dem_file_name}_SLRM_R{self.radius_cell}"
+        if is_8bit:
+            output_name += "_8bit"
+        return output_name + ".tif"
 
     def compute_visualization(
         self,
@@ -303,8 +306,8 @@ class SimpleLocalReliefModel(Visualization):
         )
 
 
-class SkyViewFactor(Visualization):
-    RVT_VISUALIZATION = RVTVisualization.SKY_VIEW_FACTOR
+class SkyViewFactor(RVTVisualization):
+    RVT_VISUALIZATION_NAME = RVTVisualizationName.SKY_VIEW_FACTOR
     _DEFAULT_TO_8BIT = To8bit(
         normalization_mode=NormalizationMode.VALUE, minimum=0.6375, maximum=1.00
     )
@@ -329,7 +332,14 @@ class SkyViewFactor(Visualization):
         self.to_8bit = to_8bit
 
     def get_visualization_file_name(self, dem_file_name: str, is_8bit: bool) -> str:
-        return
+        dem_file_name = dem_file_name.rstrip(".tif").rstrip(".tiff")
+        output_name = (
+            f"{dem_file_name}_SVF_R{self.maximum_search_radius}_D{self.number_of_directions}_"
+            f"NR{self.noise_remove.value}"
+        )
+        if is_8bit:
+            output_name += "_8bit"
+        return output_name + ".tif"
 
     def compute_visualization(
         self,
@@ -352,8 +362,8 @@ class SkyViewFactor(Visualization):
         ).sky_view_factor
 
 
-class AnisotropicSkyViewFactor(Visualization):
-    RVT_VISUALIZATION = RVTVisualization.ANISOTROPIC_SKY_VIEW_FACTOR
+class AnisotropicSkyViewFactor(RVTVisualization):
+    RVT_VISUALIZATION_NAME = RVTVisualizationName.ANISOTROPIC_SKY_VIEW_FACTOR
     _DEFAULT_TO_8BIT: To8bit = To8bit(
         normalization_mode=NormalizationMode.VALUE, minimum=0.70, maximum=0.90
     )
@@ -388,7 +398,14 @@ class AnisotropicSkyViewFactor(Visualization):
         self.to_8bit = to_8bit
 
     def get_visualization_file_name(self, dem_file_name: str, is_8bit: bool) -> str:
-        return
+        dem_file_name = dem_file_name.rstrip(".tif").rstrip(".tiff")
+        output_name = (
+            f"{dem_file_name}_SVF_R{self.maximum_search_radius}_D{self.number_of_directions}_"
+            f"NR{self.noise_remove.value}_A{self.direction_of_anisotropy}_AL{self.anisotropy_level.value}"
+        )
+        if is_8bit:
+            output_name += "_8bit"
+        return output_name + ".tif"
 
     def compute_visualization(
         self,
@@ -413,13 +430,13 @@ class AnisotropicSkyViewFactor(Visualization):
         ).anisotropic_sky_view_factor
 
 
-class Openness(Visualization):
+class Openness(RVTVisualization):
     @property
-    def RVT_VISUALIZATION(self) -> RVTVisualization:
+    def RVT_VISUALIZATION_NAME(self) -> RVTVisualizationName:
         if OpennessType.POSITIVE:
-            return RVTVisualization.POSITIVE_OPENNESS
+            return RVTVisualizationName.POSITIVE_OPENNESS
         elif OpennessType.NEGATIVE:
-            return RVTVisualization.NEGATIVE_OPENNESS
+            return RVTVisualizationName.NEGATIVE_OPENNESS
         else:
             raise ValueError(f"Wrong Openness type {self.openness_type}!")
 
@@ -446,10 +463,10 @@ class Openness(Visualization):
         noise_remove: SvfNoiseRemove = _DEFAULT_NOISE_REMOVE,
         to_8bit: Optional[To8bit] = None,
     ):
-        self.openness_type = (openness_type,)
-        self.number_of_directions = (number_of_directions,)
-        self.maximum_search_radius = (maximum_search_radius,)
-        self.noise_remove = (noise_remove,)
+        self.openness_type = openness_type
+        self.number_of_directions = number_of_directions
+        self.maximum_search_radius = maximum_search_radius
+        self.noise_remove = noise_remove
         if to_8bit is None:
             if openness_type == OpennessType.POSITIVE:
                 self.to_8bit = self._DEFAULT_POSITIVE_OPENNESS_TO_8BIT
@@ -459,7 +476,14 @@ class Openness(Visualization):
             self.to_8bit = to_8bit
 
     def get_visualization_file_name(self, dem_file_name: str, is_8bit: bool) -> str:
-        return
+        dem_file_name = dem_file_name.rstrip(".tif").rstrip(".tiff")
+        output_name = (
+            f"{dem_file_name}_OPEN-{self.openness_type.name[:3]}_R{self.maximum_search_radius}_"
+            f"D{self.number_of_directions}_NR{self.noise_remove.value}"
+        )
+        if is_8bit:
+            output_name += "_8bit"
+        return output_name + ".tif"
 
     def compute_visualization(
         self,
@@ -554,8 +578,8 @@ class HorizonVisualizations:
         )
 
 
-class LocalDominance(Visualization):
-    RVT_VISUALIZATION = RVTVisualization.LOCAL_DOMINANCE
+class LocalDominance(RVTVisualization):
+    RVT_VISUALIZATION_NAME = RVTVisualizationName.LOCAL_DOMINANCE
     _DEFAULT_TO_8BIT = To8bit(
         normalization_mode=NormalizationMode.VALUE, minimum=0.50, maximum=1.80
     )
@@ -582,7 +606,14 @@ class LocalDominance(Visualization):
         self.to_8bit = to_8bit
 
     def get_visualization_file_name(self, dem_file_name: str, is_8bit: bool) -> str:
-        return
+        dem_file_name = dem_file_name.rstrip(".tif").rstrip(".tiff")
+        output_name = (
+            f"{dem_file_name}_LD_R_M{self.minimum_radius}-{self.maximum_radius}_DI{self.radial_distance_step}_"
+            f"A{self.angular_step}_OH{self.observer_height}"
+        )
+        if is_8bit:
+            output_name += "_8bit"
+        return output_name + ".tif"
 
     def compute_visualization(
         self,
@@ -603,8 +634,8 @@ class LocalDominance(Visualization):
         )
 
 
-class SkyIllumination:  # (Visualization)
-    RVT_VISUALIZATION = RVTVisualization.SKY_ILLUMINATION
+class SkyIllumination:  # (RVTVisualization)
+    RVT_VISUALIZATION_NAME = RVTVisualizationName.SKY_ILLUMINATION
     _DEFAULT_TO_8BIT = To8bit(
         normalization_mode=NormalizationMode.PERCENT, minimum=0.25, maximum=0.00
     )
@@ -613,8 +644,8 @@ class SkyIllumination:  # (Visualization)
         raise NotImplemented  # TODO: Fix visualization and implement
 
 
-class MultiScaleReliefModel(Visualization):
-    RVT_VISUALIZATION = RVTVisualization.MULTI_SCALE_RELIEF_MODEL
+class MultiScaleReliefModel(RVTVisualization):
+    RVT_VISUALIZATION_NAME = RVTVisualizationName.MULTI_SCALE_RELIEF_MODEL
     _DEFAULT_TO_8BIT: To8bit = To8bit(
         normalization_mode=NormalizationMode.VALUE, minimum=-2.50, maximum=2.50
     )
@@ -635,28 +666,36 @@ class MultiScaleReliefModel(Visualization):
         self.to_8bit = to_8bit
 
     def get_visualization_file_name(self, dem_file_name: str, is_8bit: bool) -> str:
-        return
-
-    def compute_visualization(
-        self,
-        dem: npt.NDArray[Any],
-        dem_resolution: float,
-        dem_nodata: Optional[float],
-        vertical_exaggeration_factor: float,
-    ) -> npt.NDArray[Any]:
-        return multi_scale_relief_model(
-            dem=dem,
-            resolution=dem_resolution,
-            minimum_feature_size=self.minimum_feature_size,
-            maximum_feature_size=self.maximum_feature_size,
-            scaling_factor=self.scaling_factor,
-            vertical_exaggeration_factor=vertical_exaggeration_factor,
-            no_data=dem_nodata,
+        dem_file_name = dem_file_name.rstrip(".tif").rstrip(".tiff")
+        output_name = (
+            f"{dem_file_name}_MSRM_F_M{self.minimum_feature_size}-{self.maximum_feature_size}_"
+            f"S{self.scaling_factor}"
         )
+        if is_8bit:
+            output_name += "_8bit"
+        return output_name + ".tif"
 
 
-class MultiScaleTopographicPosition(Visualization):
-    RVT_VISUALIZATION = RVTVisualization.MULTI_SCALE_TOPOGRAPHIC_POSITION
+def compute_visualization(
+    self,
+    dem: npt.NDArray[Any],
+    dem_resolution: float,
+    dem_nodata: Optional[float],
+    vertical_exaggeration_factor: float,
+) -> npt.NDArray[Any]:
+    return multi_scale_relief_model(
+        dem=dem,
+        resolution=dem_resolution,
+        minimum_feature_size=self.minimum_feature_size,
+        maximum_feature_size=self.maximum_feature_size,
+        scaling_factor=self.scaling_factor,
+        vertical_exaggeration_factor=vertical_exaggeration_factor,
+        no_data=dem_nodata,
+    )
+
+
+class MultiScaleTopographicPosition(RVTVisualization):
+    RVT_VISUALIZATION_NAME = RVTVisualizationName.MULTI_SCALE_TOPOGRAPHIC_POSITION
     _DEFAULT_TO_8BIT = To8bit(
         normalization_mode=NormalizationMode.VALUE, minimum=0.00, maximum=1.00
     )
@@ -680,7 +719,14 @@ class MultiScaleTopographicPosition(Visualization):
         self.to_8bit = to_8bit
 
     def get_visualization_file_name(self, dem_file_name: str, is_8bit: bool) -> str:
-        return
+        dem_file_name = dem_file_name.rstrip(".tif").rstrip(".tiff")
+        output_name = (
+            f"{dem_file_name}_MSTP_{self.local_scale[1]}_{self.meso_scale[1]}_{self.broad_scale[1]}_"
+            f"L{self.lightness}"
+        )
+        if is_8bit:
+            output_name += "_8bit"
+        return output_name + ".tif"
 
     def compute_visualization(
         self,
@@ -794,7 +840,7 @@ class RVTVisualizationFactory:
         """Save parameters to JSON file."""
         class_parameters_dict = deepcopy(self).__dict__
         for parameter, parameter_value in class_parameters_dict.items():
-            if issubclass(type(parameter_value), Visualization) or isinstance(
+            if issubclass(type(parameter_value), RVTVisualization) or isinstance(
                 parameter_value, HorizonVisualizations
             ):
                 sub_class_parameters_dict = parameter_value.__dict__
@@ -802,8 +848,8 @@ class RVTVisualizationFactory:
                     sub_class_parameter,
                     sub_class_parameter_value,
                 ) in sub_class_parameters_dict.items():
-                    if isinstance(sub_class_parameter_value, RVTVisualization):
-                        # remove RVTVisualization parameter since key already defines it
+                    if isinstance(sub_class_parameter_value, RVTVisualizationName):
+                        # remove RVTVisualizationName parameter since key already defines it
                         del sub_class_parameters_dict[sub_class_parameter]
                     elif isinstance(sub_class_parameter_value, To8bit):
                         sub_class_parameters_dict[
@@ -824,8 +870,8 @@ class RVTVisualizationFactory:
 
         def _init_visualization_class(
             visualization_parameters_dict: Dict[str, Any],
-            visualization_type: Type[Visualization],
-        ) -> Visualization:
+            visualization_type: Type[RVTVisualization],
+        ) -> RVTVisualization:
             for (
                 visualization_attribute_name,
                 visualization_attribute_value,
@@ -839,6 +885,13 @@ class RVTVisualizationFactory:
                         string=visualization_parameters_dict["to_8bit"]
                     )
                 else:
+                    # Default values in child classes of `RVTVisualization` should match their annotation
+                    # (i.e. _DEFAULT_SUN_ELEVATION should be float number not integer (35.0 not 35) in order to get the
+                    # right type when reading parameters from file. Currently, attributes of type `RVTVisualization` in
+                    # `RVTVisualizationFactory` are first initialized with default values to get the right type for
+                    # every parameter. This type is then used to convert string value to the right type.
+                    # This issue could be solved with PyDantic BaseModel and Field, for now we didn't want to introduce
+                    # dependency to PyDantic.
                     visualization_parameters_dict[
                         visualization_attribute_name
                     ] = visualization_attribute_type(
@@ -852,7 +905,7 @@ class RVTVisualizationFactory:
 
         for attribute_name in cls.__annotations__:
             attribute_type = type(getattr(cls, attribute_name))
-            if issubclass(attribute_type, Visualization) or issubclass(
+            if issubclass(attribute_type, RVTVisualization) or issubclass(
                 attribute_type, HorizonVisualizations
             ):
                 if attribute_name not in parameters_dict:
@@ -863,520 +916,212 @@ class RVTVisualizationFactory:
                 )
         return cls(**parameters_dict)
 
+    def get_shadow_file_name(self, dem_file_name: str, is_8bit: bool) -> str:
+        return self.shadow.get_visualization_file_name(
+            dem_file_name=dem_file_name, is_8bit=is_8bit
+        )
+
+    def get_shadow_path(
+        self, directory_path: Path, dem_file_name: str, is_8bit: bool
+    ) -> Path:
+        return self.shadow.get_visualization_path(
+            directory_path=directory_path, dem_file_name=dem_file_name, is_8bit=is_8bit
+        )
+
+    def get_slope_file_name(self, dem_file_name: str, is_8bit: bool) -> str:
+        return self.slope.get_visualization_file_name(
+            dem_file_name=dem_file_name, is_8bit=is_8bit
+        )
+
+    def get_slope_path(
+        self, directory_path: Path, dem_file_name: str, is_8bit: bool
+    ) -> Path:
+        return self.slope.get_visualization_path(
+            directory_path=directory_path, dem_file_name=dem_file_name, is_8bit=is_8bit
+        )
+
+    def get_hillshade_file_name(self, dem_file_name: str, is_8bit: bool) -> str:
+        return self.hillshade.get_visualization_file_name(
+            dem_file_name=dem_file_name, is_8bit=is_8bit
+        )
+
+    def get_hillshade_path(
+        self, directory_path: Path, dem_file_name: str, is_8bit: bool
+    ) -> Path:
+        return self.hillshade.get_visualization_path(
+            directory_path=directory_path, dem_file_name=dem_file_name, is_8bit=is_8bit
+        )
+
+    def get_multiple_directions_hillshade_file_name(
+        self, dem_file_name: str, is_8bit: bool
+    ) -> str:
+        return self.multiple_directions_hillshade.get_visualization_file_name(
+            dem_file_name=dem_file_name, is_8bit=is_8bit
+        )
+
+    def get_multiple_directions_hillshade_path(
+        self, directory_path: Path, dem_file_name: str, is_8bit: bool
+    ) -> Path:
+        return self.multiple_directions_hillshade.get_visualization_path(
+            directory_path=directory_path, dem_file_name=dem_file_name, is_8bit=is_8bit
+        )
+
+    def get_simple_local_relief_model_file_name(
+        self, dem_file_name: str, is_8bit: bool
+    ) -> str:
+        return self.simple_local_relief_model.get_visualization_file_name(
+            dem_file_name=dem_file_name, is_8bit=is_8bit
+        )
+
+    def get_simple_local_relief_model_path(
+        self, directory_path: Path, dem_file_name: str, is_8bit: bool
+    ) -> Path:
+        return self.simple_local_relief_model.get_visualization_path(
+            directory_path=directory_path, dem_file_name=dem_file_name, is_8bit=is_8bit
+        )
+
+    def get_sky_view_factor_file_name(self, dem_file_name: str, is_8bit: bool) -> str:
+        return self.horizon_visualizations.sky_view_factor.get_visualization_file_name(
+            dem_file_name=dem_file_name, is_8bit=is_8bit
+        )
+
+    def get_sky_view_factor_path(
+        self, directory_path: Path, dem_file_name: str, is_8bit: bool
+    ) -> Path:
+        return self.horizon_visualizations.sky_view_factor.get_visualization_path(
+            directory_path=directory_path, dem_file_name=dem_file_name, is_8bit=is_8bit
+        )
+
+    def get_anisotropic_sky_view_factor_file_name(
+        self, dem_file_name: str, is_8bit: bool
+    ) -> str:
+        return self.horizon_visualizations.anisotropic_sky_view_factor.get_visualization_file_name(
+            dem_file_name=dem_file_name, is_8bit=is_8bit
+        )
+
+    def get_anisotropic_sky_view_factor_path(
+        self, directory_path: Path, dem_file_name: str, is_8bit: bool
+    ) -> Path:
+        return self.horizon_visualizations.anisotropic_sky_view_factor.get_visualization_path(
+            directory_path=directory_path, dem_file_name=dem_file_name, is_8bit=is_8bit
+        )
+
+    def get_positive_openness_file_name(self, dem_file_name: str, is_8bit: bool) -> str:
+        return (
+            self.horizon_visualizations.positive_openness.get_visualization_file_name(
+                dem_file_name=dem_file_name, is_8bit=is_8bit
+            )
+        )
+
+    def get_positive_openness_path(
+        self, directory_path: Path, dem_file_name: str, is_8bit: bool
+    ) -> Path:
+        return self.horizon_visualizations.positive_openness.get_visualization_path(
+            directory_path=directory_path, dem_file_name=dem_file_name, is_8bit=is_8bit
+        )
+
+    def get_negative_openness_file_name(self, dem_file_name: str, is_8bit: bool) -> str:
+        return (
+            self.horizon_visualizations.negative_openness.get_visualization_file_name(
+                dem_file_name=dem_file_name, is_8bit=is_8bit
+            )
+        )
+
+    def get_negative_openness_path(
+        self, directory_path: Path, dem_file_name: str, is_8bit: bool
+    ) -> Path:
+        return self.horizon_visualizations.negative_openness.get_visualization_path(
+            directory_path=directory_path, dem_file_name=dem_file_name, is_8bit=is_8bit
+        )
+
+    def get_sky_illumination_file_name(self, dem_file_name: str, is_8bit: bool) -> str:
+        raise NotImplemented
+
+    def get_sky_illumination_path(
+        self, directory_path: Path, dem_file_name: str, is_8bit: bool
+    ) -> Path:
+        raise NotImplemented
+
+    def get_local_dominance_file_name(self, dem_file_name: str, is_8bit: bool) -> str:
+        return self.local_dominance.get_visualization_file_name(
+            dem_file_name=dem_file_name, is_8bit=is_8bit
+        )
+
+    def get_local_dominance_path(
+        self, directory_path: Path, dem_file_name: str, is_8bit: bool
+    ) -> Path:
+        return self.local_dominance.get_visualization_path(
+            directory_path=directory_path, dem_file_name=dem_file_name, is_8bit=is_8bit
+        )
+
+    def get_multi_scale_relief_model_file_name(
+        self, dem_file_name: str, is_8bit: bool
+    ) -> str:
+        return self.multi_scale_relief_model.get_visualization_file_name(
+            dem_file_name=dem_file_name, is_8bit=is_8bit
+        )
+
+    def get_multi_scale_relief_model_path(
+        self, directory_path: Path, dem_file_name: str, is_8bit: bool
+    ) -> Path:
+        return self.multi_scale_relief_model.get_visualization_path(
+            directory_path=directory_path, dem_file_name=dem_file_name, is_8bit=is_8bit
+        )
+
+    def get_multi_scale_topographic_position_file_name(
+        self, dem_file_name: str, is_8bit: bool
+    ) -> str:
+        return self.multi_scale_topographic_position.get_visualization_file_name(
+            dem_file_name=dem_file_name, is_8bit=is_8bit
+        )
+
+    def get_multi_scale_topographic_position_path(
+        self, directory_path: Path, dem_file_name: str, is_8bit: bool
+    ) -> Path:
+        return self.multi_scale_topographic_position.get_visualization_path(
+            directory_path=directory_path, dem_file_name=dem_file_name, is_8bit=is_8bit
+        )
+
+    def get_visualization_file_name(
+        self,
+        visualization_name: RVTVisualizationName,
+        dem_file_name: str,
+        is_8bit: bool,
+    ) -> str:
+        for field in fields(self.__class__):
+            field_value = getattr(self, field.name)
+            if issubclass(field_value, RVTVisualization):
+                if field_value.RVT_VISUALIZATION_NAME == visualization_name:
+                    return field_value.get_visualization_file_name(
+                        dem_file_name=dem_file_name, is_8bit=is_8bit
+                    )
+        raise ValueError(f"Unknown visualization name {visualization_name}!")
+
+    def get_visualization_path(
+        self,
+        visualization_name: RVTVisualizationName,
+        directory_path: Path,
+        dem_file_name: str,
+        is_8bit: bool,
+    ) -> Path:
+        for field in fields(self.__class__):
+            field_value = getattr(self, field.name)
+            if issubclass(field_value, RVTVisualization):
+                if field_value.RVT_VISUALIZATION_NAME == visualization_name:
+                    return field_value.get_visualization_path(
+                        directory_path=directory_path,
+                        dem_file_name=dem_file_name,
+                        is_8bit=is_8bit,
+                    )
+        raise ValueError(f"Unknown visualization name {visualization_name}!")
+
 
 #  TODO: Rewrite and clean methods/functions bellow
 
-#     def get_shadow_path(self, dem_path: Path) -> Path:
-#         """Returns path to Shadow. Generates shadow name (uses default attributes and dem name from dem_path) and
-#         adds dem directory (dem_path) to it."""
-#         return Path(
-#             os.path.normpath(
-#                 os.path.join(
-#                     os.path.dirname(dem_path), self.get_shadow_file_name(dem_path)
-#                 )
-#             )
-#         )
-#
-#     def get_shadow_file_name(self, dem_path: Path) -> str:
-#         """Returns shadow name, with added hillshade parameters (hs_sun_azi == shadow azimuth,
-#         hs_sun_el == shadow_elevation)."""
-#         dem_name = os.path.basename(dem_path).split(".")[
-#             0
-#         ]  # base name without extension
-#         return "{}_shadow_A{}_H{}.tif".format(dem_name, self.hs_sun_azi, self.hs_sun_el)
-#
-#     def get_hillshade_file_name(self, dem_path: Path, is_8bit: bool = False) -> str:
-#         """Returns Hillshade name, dem name (from dem_path) with added hillshade parameters.
-#         If is_8bit it returns 8bit file name."""
-#         dem_name = os.path.basename(dem_path).split(".")[
-#             0
-#         ]  # base name without extension
-#         if is_8bit:
-#             return "{}_HS_A{}_H{}_8bit.tif".format(
-#                 dem_name, self.hs_sun_azi, self.hs_sun_el
-#             )
-#         else:
-#             return "{}_HS_A{}_H{}.tif".format(dem_name, self.hs_sun_azi, self.hs_sun_el)
-#
-#     def get_hillshade_path(self, dem_path: Path, is_8bit: bool = False) -> Path:
-#         """Returns path to Hillshade. Generates hillshade name (uses default attributes and dem name from dem_path) and
-#         adds dem directory (dem_path) to it. If is_8bit it returns 8bit file path."""
-#         return Path(
-#             os.path.normpath(
-#                 os.path.join(
-#                     os.path.dirname(dem_path),
-#                     self.get_hillshade_file_name(dem_path, is_8bit),
-#                 )
-#             )
-#         )
-#
-#     def get_slope_file_name(self, dem_path: Path, is_8bit: bool = False) -> str:
-#         """Returns Slope name, dem name (from dem_path) with added slope parameters.
-#         If is_8bit it returns 8bit file name."""
-#         dem_name = os.path.basename(dem_path).split(".")[
-#             0
-#         ]  # base name without extension
-#         if is_8bit:
-#             return "{}_SLOPE_8bit.tif".format(dem_name)
-#         else:
-#             return "{}_SLOPE.tif".format(dem_name)
-#
-#     def get_slope_path(self, dem_path: Path, is_8bit: bool = False) -> Path:
-#         """Returns path to slope. Generates slope name and adds dem directory (dem_path) to it.
-#         If is_8bit it returns 8bit file path."""
-#         return Path(
-#             os.path.normpath(
-#                 os.path.join(
-#                     os.path.dirname(dem_path),
-#                     self.get_slope_file_name(dem_path, is_8bit),
-#                 )
-#             )
-#         )
-#
-#     def get_multi_hillshade_file_name(
-#         self, dem_path: Path, is_8bit: bool = False
-#     ) -> str:
-#         """Returns Multiple directions hillshade name, dem name (from dem_path) with added
-#         multi hillshade parameters. If is_8bit it returns 8bit file name."""
-#         dem_name = os.path.basename(dem_path).split(".")[
-#             0
-#         ]  # base name without extension
-#         if is_8bit:
-#             return "{}_MULTI-HS_D{}_H{}_8bit.tif".format(
-#                 dem_name, self.mhs_nr_dir, self.mhs_sun_el
-#             )
-#         else:
-#             return "{}_MULTI-HS_D{}_H{}.tif".format(
-#                 dem_name, self.mhs_nr_dir, self.mhs_sun_el
-#             )
-#
-#     def get_multi_hillshade_path(self, dem_path: Path, is_8bit: bool = False) -> Path:
-#         """Returns path to Multiple directions hillshade. Generates multi hillshade name (uses default attributes and
-#         dem name from dem_path) and adds dem directory (dem_path) to it. If is_8bit it returns 8bit file path."""
-#         return Path(
-#             os.path.normpath(
-#                 os.path.join(
-#                     os.path.dirname(dem_path),
-#                     self.get_multi_hillshade_file_name(dem_path, is_8bit),
-#                 )
-#             )
-#         )
-#
-#     def get_slrm_file_name(self, dem_path: Path, is_8bit: bool = False) -> str:
-#         """Returns Simple local relief model name, dem name (from dem_path) with added simple_local_relief_model parameters.
-#         If is_8bit it returns 8bit file name."""
-#         dem_name = os.path.basename(dem_path).split(".")[
-#             0
-#         ]  # base name without extension
-#         if is_8bit:
-#             return "{}_SLRM_R{}_8bit.tif".format(dem_name, self.slrm_rad_cell)
-#         else:
-#             return "{}_SLRM_R{}.tif".format(dem_name, self.slrm_rad_cell)
-#
-#     def get_slrm_path(self, dem_path: Path, is_8bit: bool = False) -> Path:
-#         """Returns path to Simple local relief model. Generates simple_local_relief_model name (uses default attributes and dem name from
-#         dem_path) and adds dem directory (dem_path) to it. If is_8bit it returns 8bit file path."""
-#         return Path(
-#             os.path.normpath(
-#                 os.path.join(
-#                     os.path.dirname(dem_path),
-#                     self.get_slrm_file_name(dem_path, is_8bit),
-#                 )
-#             )
-#         )
-#
-#     def get_svf_file_name(self, dem_path: Path, is_8bit: bool = False) -> str:
-#         """Returns Sky-view factor name, dem name (from dem_path) with added svf parameters.
-#         If is_8bit it returns 8bit file name."""
-#         dem_name = os.path.basename(dem_path).split(".")[
-#             0
-#         ]  # base name without extension
-#         out_name = "{}_SVF_R{}_D{}".format(dem_name, self.svf_r_max, self.svf_n_dir)
-#         if self.svf_noise == 1:
-#             out_name += "_NRlow"
-#         elif self.svf_noise == 2:
-#             out_name += "_NRmedium"
-#         elif self.svf_noise == 3:
-#             out_name += "_NRhigh"
-#         if is_8bit:
-#             out_name += "_8bit"
-#         return out_name + ".tif"
-#
-#     def get_svf_path(self, dem_path: Path, is_8bit: bool = False) -> Path:
-#         """Returns path to Sky-view factor. Generates svf name (uses default attributes and dem name from
-#         dem_path) and adds dem directory (dem_path) to it. If is_8bit it returns 8bit file path."""
-#         return Path(
-#             os.path.normpath(
-#                 os.path.join(
-#                     os.path.dirname(dem_path), self.get_svf_file_name(dem_path, is_8bit)
-#                 )
-#             )
-#         )
-#
-#     def get_asvf_file_name(self, dem_path: Path, is_8bit: bool = False) -> str:
-#         """Returns Anisotropic Sky-view factor name, dem name (from dem_path) with added asvf parameters.
-#         If is_8bit it returns 8bit file name."""
-#         dem_name = os.path.basename(dem_path).split(".")[
-#             0
-#         ]  # base name without extension
-#         out_name = "{}_SVF-A_R{}_D{}_A{}".format(
-#             dem_name, self.svf_r_max, self.svf_n_dir, self.asvf_dir
-#         )
-#         if self.asvf_level == 1:
-#             out_name += "_ALlow"
-#         elif self.asvf_level == 2:
-#             out_name += "_ALhigh"
-#         if self.svf_noise == 1:
-#             out_name += "_NRlow"
-#         elif self.svf_noise == 2:
-#             out_name += "_NRmedium"
-#         elif self.svf_noise == 3:
-#             out_name += "_NRhigh"
-#         if is_8bit:
-#             out_name += "_8bit"
-#         return out_name + ".tif"
-#
-#     def get_asvf_path(self, dem_path: Path, is_8bit: bool = False) -> Path:
-#         """Returns path to Anisotropic Sky-view factor. Generates asvf name (uses default attributes and dem name from
-#         dem_path) and adds dem directory (dem_path) to it. If is_8bit it returns 8bit file path."""
-#         return Path(
-#             os.path.normpath(
-#                 os.path.join(
-#                     os.path.dirname(dem_path),
-#                     self.get_asvf_file_name(dem_path, is_8bit),
-#                 )
-#             )
-#         )
-#
-#     def get_opns_file_name(self, dem_path: Path, is_8bit: bool = False) -> str:
-#         """Returns Positive Openness name, dem name (from dem_path) with added pos opns parameters.
-#         If is_8bit it returns 8bit file name."""
-#         dem_name = os.path.basename(dem_path).split(".")[
-#             0
-#         ]  # base name without extension
-#         out_name = "{}_OPEN-POS_R{}_D{}".format(
-#             dem_name, self.svf_r_max, self.svf_n_dir
-#         )
-#         if self.svf_noise == 1:
-#             out_name += "_NRlow"
-#         elif self.svf_noise == 2:
-#             out_name += "_NRmedium"
-#         elif self.svf_noise == 3:
-#             out_name += "_NRhigh"
-#         if is_8bit:
-#             out_name += "_8bit"
-#         return out_name + ".tif"
-#
-#     def get_opns_path(self, dem_path: Path, is_8bit: bool = False) -> Path:
-#         """Returns path to Positive Openness. Generates pos opns name (uses default attributes and dem name from
-#         dem_path) and adds dem directory (dem_path) to it. If is_8bit it returns 8bit file path."""
-#         return Path(
-#             os.path.normpath(
-#                 os.path.join(
-#                     os.path.dirname(dem_path),
-#                     self.get_opns_file_name(dem_path, is_8bit),
-#                 )
-#             )
-#         )
-#
-#     def get_neg_opns_file_name(self, dem_path: Path, is_8bit: bool = False) -> str:
-#         """Returns Negative Openness name, dem name (from dem_path) with added neg opns parameters.
-#         If is_8bit it returns 8bit file name."""
-#         dem_name = os.path.basename(dem_path).split(".")[
-#             0
-#         ]  # base name without extension
-#         out_name = "{}_OPEN-NEG_R{}_D{}".format(
-#             dem_name, self.svf_r_max, self.svf_n_dir
-#         )
-#         if self.svf_noise == 1:
-#             out_name += "_NRlow"
-#         elif self.svf_noise == 2:
-#             out_name += "_NRmedium"
-#         elif self.svf_noise == 3:
-#             out_name += "_NRstrong"
-#         if is_8bit:
-#             out_name += "_8bit"
-#         return out_name + ".tif"
-#
-#     def get_neg_opns_path(self, dem_path: Path, is_8bit: bool = False) -> Path:
-#         """Returns path to Negative Openness. Generates pos neg name (uses default attributes and dem name from
-#         dem_path) and adds dem directory (dem_path) to it. If is_8bit it returns 8bit file path."""
-#         return Path(
-#             os.path.normpath(
-#                 os.path.join(
-#                     os.path.dirname(dem_path),
-#                     self.get_neg_opns_file_name(dem_path, is_8bit),
-#                 )
-#             )
-#         )
-#
-#     def get_sky_illumination_file_name(
-#         self, dem_path: Path, is_8bit: bool = False
-#     ) -> str:
-#         """Returns Sky illumination name, dem name (from dem_path) with added sim parameters.
-#         If is_8bit it returns 8bit file name."""
-#         dem_name = os.path.basename(dem_path).split(".")[
-#             0
-#         ]  # base name without extension
-#         if is_8bit:
-#             return "{}_SIM_{}_D{}_{}px_8bit.tif".format(
-#                 dem_name, self.sim_sky_mod, self.sim_nr_dir, self.sim_shadow_dist
-#             )
-#         else:
-#             return "{}_SIM_{}_D{}_{}px.tif".format(
-#                 dem_name, self.sim_sky_mod, self.sim_nr_dir, self.sim_shadow_dist
-#             )
-#
-#     def get_sky_illumination_path(self, dem_path: Path, is_8bit: bool = False) -> Path:
-#         """Returns path to Sky illumination. Generates sim name (uses default attributes and dem name from
-#         dem_path) and adds dem directory (dem_path) to it. If is_8bit it returns 8bit file path."""
-#         return Path(
-#             os.path.normpath(
-#                 os.path.join(
-#                     os.path.dirname(dem_path),
-#                     self.get_sky_illumination_file_name(dem_path, is_8bit),
-#                 )
-#             )
-#         )
-#
-#     def get_local_dominance_file_name(
-#         self, dem_path: Path, is_8bit: bool = False
-#     ) -> str:
-#         """Returns Local dominance name, dem name (from dem_path) with added ld parameters.
-#         If is_8bit it returns 8bit file name."""
-#         dem_name = os.path.basename(dem_path).split(".")[
-#             0
-#         ]  # base name without extension
-#         if is_8bit:
-#             return "{}_LD_R_M{}-{}_DI{}_A{}_OH{}_8bit.tif".format(
-#                 dem_name,
-#                 self.ld_min_rad,
-#                 self.ld_max_rad,
-#                 self.ld_rad_inc,
-#                 self.ld_anglr_res,
-#                 self.ld_observer_h,
-#             )
-#         else:
-#             return "{}_LD_R_M{}-{}_DI{}_A{}_OH{}.tif".format(
-#                 dem_name,
-#                 self.ld_min_rad,
-#                 self.ld_max_rad,
-#                 self.ld_rad_inc,
-#                 self.ld_anglr_res,
-#                 self.ld_observer_h,
-#             )
-#
-#     def get_local_dominance_path(self, dem_path: Path, is_8bit: bool = False) -> Path:
-#         """Returns path to Local dominance. Generates ld name (uses default attributes and dem name from
-#         dem_path) and adds dem directory (dem_path) to it. If is_8bit it returns 8bit file path."""
-#         return Path(
-#             os.path.normpath(
-#                 os.path.join(
-#                     os.path.dirname(dem_path),
-#                     self.get_local_dominance_file_name(dem_path, is_8bit),
-#                 )
-#             )
-#         )
-#
-#     def get_msrm_file_name(self, dem_path: Path, is_8bit: bool = False) -> str:
-#         """Returns Multi-scale relief model name, dem name (from dem_path) with added multi_scale_relief_model parameters.
-#         If is_8bit it returns 8bit file name."""
-#         dem_name = os.path.basename(dem_path).split(".")[
-#             0
-#         ]  # base name without extension
-#         if is_8bit:
-#             return "{}_MSRM_F_M{}-{}_S{}_8bit.tif".format(
-#                 dem_name,
-#                 self.msrm_feature_min,
-#                 self.msrm_feature_max,
-#                 self.msrm_scaling_factor,
-#             )
-#         else:
-#             return "{}_MSRM_F_M{}-{}_S{}.tif".format(
-#                 dem_name,
-#                 self.msrm_feature_min,
-#                 self.msrm_feature_max,
-#                 self.msrm_scaling_factor,
-#             )
-#
-#     def get_msrm_path(self, dem_path: Path, is_8bit: bool = False) -> Path:
-#         """Returns path to Multi-scale relief model. Generates multi_scale_relief_model name (uses default attributes and dem name from
-#         dem_path) and adds dem directory (dem_path) to it. If is_8bit it returns 8bit file path."""
-#         return Path(
-#             os.path.normpath(
-#                 os.path.join(
-#                     os.path.dirname(dem_path),
-#                     self.get_msrm_file_name(dem_path, is_8bit),
-#                 )
-#             )
-#         )
-#
-#     def get_mstp_file_name(self, dem_path: Path, is_8bit: bool = False) -> str:
-#         """Returns Multi-scale topographic position name, dem name (from dem_path) with added multi_scale_topographic_position parameters.
-#         If is_8bit it returns 8bit file name."""
-#         dem_name = os.path.basename(dem_path).split(".")[
-#             0
-#         ]  # base name without extension
-#
-#         mstp_file_name = "{}_MSTP_{}_{}_{}_L{}.tif".format(
-#             dem_name,
-#             self.mstp_local_scale[1],
-#             self.mstp_meso_scale[1],
-#             self.mstp_broad_scale[1],
-#             self.mstp_lightness,
-#         )
-#
-#         if is_8bit:
-#             mstp_file_name = mstp_file_name.replace(".tif", "_8bit.tif")
-#
-#         return mstp_file_name
-#
-#     def get_mstp_path(self, dem_path: Path, is_8bit: bool = False) -> Path:
-#         return Path(
-#             os.path.normpath(
-#                 os.path.join(
-#                     os.path.dirname(dem_path),
-#                     self.get_mstp_file_name(dem_path, is_8bit),
-#                 )
-#             )
-#         )
-#
-#     def get_visualization_file_name(
-#         self, rvt_visualization: RVTVisualization, dem_path: Path, path_8bit: bool
-#     ) -> str:
-#         """ "Return visualization path."""
-#         if rvt_visualization == rvt.enums.RVTVisualization.SLOPE:
-#             return self.get_slope_file_name(dem_path=dem_path, is_8bit=path_8bit)
-#         elif rvt_visualization == rvt.enums.RVTVisualization.HILLSHADE:
-#             return self.get_hillshade_file_name(dem_path=dem_path, is_8bit=path_8bit)
-#         elif rvt_visualization == rvt.enums.RVTVisualization.SHADOW:
-#             return self.get_shadow_file_name(dem_path=dem_path)
-#         elif (
-#             rvt_visualization
-#             == rvt.enums.RVTVisualization.MULTIPLE_DIRECTIONS_HILLSHADE
-#         ):
-#             return self.get_multi_hillshade_file_name(
-#                 dem_path=dem_path, is_8bit=path_8bit
-#             )
-#         elif rvt_visualization == rvt.enums.RVTVisualization.SIMPLE_LOCAL_RELIEF_MODEL:
-#             return self.get_slrm_file_name(dem_path=dem_path, is_8bit=path_8bit)
-#         elif rvt_visualization == rvt.enums.RVTVisualization.SKY_VIEW_FACTOR:
-#             return self.get_svf_file_name(dem_path=dem_path, is_8bit=path_8bit)
-#         elif (
-#             rvt_visualization == rvt.enums.RVTVisualization.ANISOTROPIC_SKY_VIEW_FACTOR
-#         ):
-#             return self.get_asvf_file_name(dem_path=dem_path, is_8bit=path_8bit)
-#         elif rvt_visualization == rvt.enums.RVTVisualization.POSITIVE_OPENNESS:
-#             return self.get_opns_file_name(dem_path=dem_path, is_8bit=path_8bit)
-#         elif rvt_visualization == rvt.enums.RVTVisualization.NEGATIVE_OPENNESS:
-#             return self.get_neg_opns_file_name(dem_path=dem_path, is_8bit=path_8bit)
-#         elif rvt_visualization == rvt.enums.RVTVisualization.SKY_ILLUMINATION:
-#             return self.get_sky_illumination_file_name(
-#                 dem_path=dem_path, is_8bit=path_8bit
-#             )
-#         elif rvt_visualization == rvt.enums.RVTVisualization.LOCAL_DOMINANCE:
-#             return self.get_local_dominance_file_name(
-#                 dem_path=dem_path, is_8bit=path_8bit
-#             )
-#         elif rvt_visualization == rvt.enums.RVTVisualization.MULTI_SCALE_RELIEF_MODEL:
-#             return self.get_msrm_file_name(dem_path=dem_path, is_8bit=path_8bit)
-#         elif (
-#             rvt_visualization
-#             == rvt.enums.RVTVisualization.MULTI_SCALE_TOPOGRAPHIC_POSITION
-#         ):
-#             return self.get_mstp_file_name(dem_path=dem_path, is_8bit=path_8bit)
-#         else:
-#             raise ValueError(
-#                 f"Can't return visualization file name for {rvt_visualization.name}!"
-#             )
-#
-#     def get_visualization_path(
-#         self,
-#         rvt_visualization: RVTVisualization,
-#         dem_path: Path,
-#         output_dir_path: Path,
-#         path_8bit: bool,
-#     ) -> Path:
-#         """ "Return visualization path."""
-#         if rvt_visualization == rvt.enums.RVTVisualization.SLOPE:
-#             return output_dir_path / self.get_slope_file_name(
-#                 dem_path=dem_path, is_8bit=path_8bit
-#             )
-#
-#         elif rvt_visualization == rvt.enums.RVTVisualization.HILLSHADE:
-#             return output_dir_path / self.get_hillshade_file_name(
-#                 dem_path=dem_path, is_8bit=path_8bit
-#             )
-#
-#         elif rvt_visualization == rvt.enums.RVTVisualization.SHADOW:
-#             return output_dir_path / self.get_shadow_file_name(dem_path=dem_path)
-#         elif (
-#             rvt_visualization
-#             == rvt.enums.RVTVisualization.MULTIPLE_DIRECTIONS_HILLSHADE
-#         ):
-#             return output_dir_path / self.get_multi_hillshade_file_name(
-#                 dem_path=dem_path, is_8bit=path_8bit
-#             )
-#
-#         elif rvt_visualization == rvt.enums.RVTVisualization.SIMPLE_LOCAL_RELIEF_MODEL:
-#             return output_dir_path / self.get_slrm_file_name(
-#                 dem_path=dem_path, is_8bit=path_8bit
-#             )
-#
-#         elif rvt_visualization == rvt.enums.RVTVisualization.SKY_VIEW_FACTOR:
-#             return output_dir_path / self.get_svf_file_name(
-#                 dem_path=dem_path, is_8bit=path_8bit
-#             )
-#
-#         elif (
-#             rvt_visualization == rvt.enums.RVTVisualization.ANISOTROPIC_SKY_VIEW_FACTOR
-#         ):
-#             return output_dir_path / self.get_asvf_file_name(
-#                 dem_path=dem_path, is_8bit=path_8bit
-#             )
-#
-#         elif rvt_visualization == rvt.enums.RVTVisualization.POSITIVE_OPENNESS:
-#             return output_dir_path / self.get_opns_file_name(
-#                 dem_path=dem_path, is_8bit=path_8bit
-#             )
-#
-#         elif rvt_visualization == rvt.enums.RVTVisualization.NEGATIVE_OPENNESS:
-#             return output_dir_path / self.get_neg_opns_file_name(
-#                 dem_path=dem_path, is_8bit=path_8bit
-#             )
-#
-#         elif rvt_visualization == rvt.enums.RVTVisualization.SKY_ILLUMINATION:
-#             return output_dir_path / self.get_sky_illumination_file_name(
-#                 dem_path=dem_path, is_8bit=path_8bit
-#             )
-#
-#         elif rvt_visualization == rvt.enums.RVTVisualization.LOCAL_DOMINANCE:
-#             return output_dir_path / self.get_local_dominance_file_name(
-#                 dem_path=dem_path, is_8bit=path_8bit
-#             )
-#
-#         elif rvt_visualization == rvt.enums.RVTVisualization.MULTI_SCALE_RELIEF_MODEL:
-#             return output_dir_path / self.get_msrm_file_name(
-#                 dem_path=dem_path, is_8bit=path_8bit
-#             )
-#
-#         elif (
-#             rvt_visualization
-#             == rvt.enums.RVTVisualization.MULTI_SCALE_TOPOGRAPHIC_POSITION
-#         ):
-#             return output_dir_path / self.get_mstp_file_name(
-#                 dem_path=dem_path, is_8bit=path_8bit
-#             )
-#
-#         else:
-#             raise ValueError(
-#                 f"Can't return visualization path for {rvt_visualization.name}!"
-#             )
-#
 #     def float_to_8bit(
 #         self,
 #         float_arr: npt.NDArray[Any],
-#         visualization: RVTVisualization,
+#         visualization: RVTVisualizationName,
 #         x_res: Optional[float] = None,
 #         y_res: Optional[float] = None,
 #         no_data: Optional[float] = None,
@@ -1385,7 +1130,7 @@ class RVTVisualizationFactory:
 #         Converts (byte scale) float visualization to 8bit. Resolution (x_res, y_res) and no_data needed only for
 #         multiple directions hillshade! Method first normalize then byte scale (0-255).
 #         """
-#         if visualization == RVTVisualization.HILLSHADE:
+#         if visualization == RVTVisualizationName.HILLSHADE:
 #             norm_arr = rvt.blend_func.normalize_image(
 #                 visualization="hs",
 #                 image=float_arr,
@@ -1394,7 +1139,7 @@ class RVTVisualizationFactory:
 #                 normalization=self.hs_bytscl[0],
 #             )
 #             return rvt.vis.byte_scale(data=norm_arr, no_data=np.nan, c_min=0, c_max=1)
-#         elif visualization == RVTVisualization.SLOPE:
+#         elif visualization == RVTVisualizationName.SLOPE:
 #             norm_arr = rvt.blend_func.normalize_image(
 #                 visualization="slp",
 #                 image=float_arr,
@@ -1403,9 +1148,9 @@ class RVTVisualizationFactory:
 #                 normalization=self.slp_bytscl[0],
 #             )
 #             return rvt.vis.byte_scale(data=norm_arr, no_data=np.nan, c_min=0, c_max=1)
-#         elif visualization == RVTVisualization.SHADOW:
+#         elif visualization == RVTVisualizationName.SHADOW:
 #             return float_arr
-#         elif visualization == RVTVisualization.MULTIPLE_DIRECTIONS_HILLSHADE:
+#         elif visualization == RVTVisualizationName.MULTIPLE_DIRECTIONS_HILLSHADE:
 #             if x_res is None or y_res is None:
 #                 raise ValueError("Resolution (x_res, y_res) needs to be specified!")
 #             # Be careful when multihillshade we input dem, because we have to calculate hillshade in 3 directions
@@ -1490,7 +1235,7 @@ class RVTVisualizationFactory:
 #                 [red_band_arr, green_band_arr, blue_band_arr]
 #             )
 #             return multi_hillshade_8bit_arr
-#         elif visualization == RVTVisualization.SIMPLE_LOCAL_RELIEF_MODEL:
+#         elif visualization == RVTVisualizationName.SIMPLE_LOCAL_RELIEF_MODEL:
 #             norm_arr = rvt.blend_func.normalize_image(
 #                 visualization="simple_local_relief_model",
 #                 image=float_arr,
@@ -1499,7 +1244,7 @@ class RVTVisualizationFactory:
 #                 normalization=self.slrm_bytscl[0],
 #             )
 #             return rvt.vis.byte_scale(data=norm_arr, no_data=np.nan, c_min=0, c_max=1)
-#         elif visualization == RVTVisualization.SKY_VIEW_FACTOR:
+#         elif visualization == RVTVisualizationName.SKY_VIEW_FACTOR:
 #             norm_arr = rvt.blend_func.normalize_image(
 #                 visualization="svf",
 #                 image=float_arr,
@@ -1508,7 +1253,7 @@ class RVTVisualizationFactory:
 #                 normalization=self.svf_bytscl[0],
 #             )
 #             return rvt.vis.byte_scale(data=norm_arr, no_data=np.nan, c_min=0, c_max=1)
-#         elif visualization == RVTVisualization.ANISOTROPIC_SKY_VIEW_FACTOR:
+#         elif visualization == RVTVisualizationName.ANISOTROPIC_SKY_VIEW_FACTOR:
 #             norm_arr = rvt.blend_func.normalize_image(
 #                 visualization="asvf",
 #                 image=float_arr,
@@ -1517,7 +1262,7 @@ class RVTVisualizationFactory:
 #                 normalization=self.asvf_bytscl[0],
 #             )
 #             return rvt.vis.byte_scale(data=norm_arr, no_data=np.nan, c_min=0, c_max=1)
-#         elif visualization == RVTVisualization.POSITIVE_OPENNESS:
+#         elif visualization == RVTVisualizationName.POSITIVE_OPENNESS:
 #             norm_arr = rvt.blend_func.normalize_image(
 #                 visualization="pos_opns",
 #                 image=float_arr,
@@ -1526,7 +1271,7 @@ class RVTVisualizationFactory:
 #                 normalization=self.pos_opns_bytscl[0],
 #             )
 #             return rvt.vis.byte_scale(data=norm_arr, no_data=np.nan, c_min=0, c_max=1)
-#         elif visualization == RVTVisualization.NEGATIVE_OPENNESS:
+#         elif visualization == RVTVisualizationName.NEGATIVE_OPENNESS:
 #             norm_arr = rvt.blend_func.normalize_image(
 #                 visualization="neg_opns",
 #                 image=float_arr,
@@ -1535,7 +1280,7 @@ class RVTVisualizationFactory:
 #                 normalization=self.neg_opns_bytscl[0],
 #             )
 #             return rvt.vis.byte_scale(data=norm_arr, no_data=np.nan, c_min=0, c_max=1)
-#         elif visualization == RVTVisualization.SKY_ILLUMINATION:
+#         elif visualization == RVTVisualizationName.SKY_ILLUMINATION:
 #             norm_arr = rvt.blend_func.normalize_image(
 #                 visualization="sim",
 #                 image=float_arr,
@@ -1544,7 +1289,7 @@ class RVTVisualizationFactory:
 #                 normalization=self.sim_bytscl[0],
 #             )
 #             return rvt.vis.byte_scale(data=norm_arr, no_data=np.nan, c_min=0, c_max=1)
-#         elif visualization == RVTVisualization.LOCAL_DOMINANCE:
+#         elif visualization == RVTVisualizationName.LOCAL_DOMINANCE:
 #             norm_arr = rvt.blend_func.normalize_image(
 #                 visualization="ld",
 #                 image=float_arr,
@@ -1553,7 +1298,7 @@ class RVTVisualizationFactory:
 #                 normalization=self.ld_bytscl[0],
 #             )
 #             return rvt.vis.byte_scale(data=norm_arr, no_data=np.nan, c_min=0, c_max=1)
-#         elif visualization == RVTVisualization.MULTI_SCALE_RELIEF_MODEL:
+#         elif visualization == RVTVisualizationName.MULTI_SCALE_RELIEF_MODEL:
 #             norm_arr = rvt.blend_func.normalize_image(
 #                 visualization="multi_scale_relief_model",
 #                 image=float_arr,
@@ -1562,7 +1307,7 @@ class RVTVisualizationFactory:
 #                 normalization=self.msrm_bytscl[0],
 #             )
 #             return rvt.vis.byte_scale(data=norm_arr, no_data=np.nan, c_min=0, c_max=1)
-#         elif visualization == RVTVisualization.MULTI_SCALE_TOPOGRAPHIC_POSITION:
+#         elif visualization == RVTVisualizationName.MULTI_SCALE_TOPOGRAPHIC_POSITION:
 #             # This might not be necessary, as all multi_scale_topographic_position data should already be between 0 and 1
 #             norm_arr = rvt.blend_func.normalize_image(
 #                 visualization="multi_scale_topographic_position",
@@ -1654,8 +1399,8 @@ class RVTVisualizationFactory:
 #         ):  # tile by tile calculation
 #             if custom_dir is None:
 #                 custom_dir = Path(dem_path).parent
-#             rvt.tile.save_rvt_visualization_tile_by_tile(
-#                 rvt_visualization=RVTVisualization.SLOPE,
+#             rvt.tile.save_RVT_VISUALIZATION_NAME_tile_by_tile(
+#                 RVT_VISUALIZATION_NAME=RVTVisualizationName.SLOPE,
 #                 rvt_default=self,
 #                 dem_path=Path(dem_path),
 #                 output_dir_path=Path(custom_dir),
@@ -1691,7 +1436,7 @@ class RVTVisualizationFactory:
 #                     pass
 #                 else:
 #                     slope_8bit_arr = self.float_to_8bit(
-#                         float_arr=slope_arr, visualization=RVTVisualization.SLOPE
+#                         float_arr=slope_arr, visualization=RVTVisualizationName.SLOPE
 #                     )
 #                     save_raster(
 #                         src_raster_path=dem_path,
@@ -1813,8 +1558,8 @@ class RVTVisualizationFactory:
 #         if dem_size[0] * dem_size[1] > self.compute_multiple_tile_limit:  # tile by tile
 #             if custom_dir is None:
 #                 custom_dir = Path(dem_path).parent
-#             rvt.tile.save_rvt_visualization_tile_by_tile(
-#                 rvt_visualization=RVTVisualization.HILLSHADE,
+#             rvt.tile.save_RVT_VISUALIZATION_NAME_tile_by_tile(
+#                 RVT_VISUALIZATION_NAME=RVTVisualizationName.HILLSHADE,
 #                 rvt_default=self,
 #                 dem_path=Path(dem_path),
 #                 output_dir_path=Path(custom_dir),
@@ -1822,8 +1567,8 @@ class RVTVisualizationFactory:
 #                 save_8bit=save_8bit,
 #             )
 #             if save_shadow:
-#                 rvt.tile.save_rvt_visualization_tile_by_tile(
-#                     rvt_visualization=RVTVisualization.SHADOW,
+#                 rvt.tile.save_RVT_VISUALIZATION_NAME_tile_by_tile(
+#                     RVT_VISUALIZATION_NAME=RVTVisualizationName.SHADOW,
 #                     rvt_default=self,
 #                     dem_path=Path(dem_path),
 #                     output_dir_path=Path(custom_dir),
@@ -1860,7 +1605,7 @@ class RVTVisualizationFactory:
 #                 else:
 #                     hillshade_8_bit_arr = self.float_to_8bit(
 #                         float_arr=hillshade_arr,
-#                         visualization=RVTVisualization.HILLSHADE,
+#                         visualization=RVTVisualizationName.HILLSHADE,
 #                     )
 #                     save_raster(
 #                         src_raster_path=dem_path,
@@ -1964,8 +1709,8 @@ class RVTVisualizationFactory:
 #         if dem_size[0] * dem_size[1] > self.compute_multiple_tile_limit:  # tile by tile
 #             if custom_dir is None:
 #                 custom_dir = Path(dem_path).parent
-#             rvt.tile.save_rvt_visualization_tile_by_tile(
-#                 rvt_visualization=RVTVisualization.MULTIPLE_DIRECTIONS_HILLSHADE,
+#             rvt.tile.save_RVT_VISUALIZATION_NAME_tile_by_tile(
+#                 RVT_VISUALIZATION_NAME=RVTVisualizationName.MULTIPLE_DIRECTIONS_HILLSHADE,
 #                 rvt_default=self,
 #                 dem_path=Path(dem_path),
 #                 output_dir_path=Path(custom_dir),
@@ -2005,7 +1750,7 @@ class RVTVisualizationFactory:
 #                 else:
 #                     multi_hillshade_8bit_arr = self.float_to_8bit(
 #                         float_arr=dem_arr,
-#                         visualization=RVTVisualization.MULTIPLE_DIRECTIONS_HILLSHADE,
+#                         visualization=RVTVisualizationName.MULTIPLE_DIRECTIONS_HILLSHADE,
 #                         x_res=x_res,
 #                         y_res=y_res,
 #                         no_data=no_data,
@@ -2086,8 +1831,8 @@ class RVTVisualizationFactory:
 #         if dem_size[0] * dem_size[1] > self.compute_multiple_tile_limit:  # tile by tile
 #             if custom_dir is None:
 #                 custom_dir = Path(dem_path).parent
-#             rvt.tile.save_rvt_visualization_tile_by_tile(
-#                 rvt_visualization=RVTVisualization.SIMPLE_LOCAL_RELIEF_MODEL,
+#             rvt.tile.save_RVT_VISUALIZATION_NAME_tile_by_tile(
+#                 RVT_VISUALIZATION_NAME=RVTVisualizationName.SIMPLE_LOCAL_RELIEF_MODEL,
 #                 rvt_default=self,
 #                 dem_path=Path(dem_path),
 #                 output_dir_path=Path(custom_dir),
@@ -2120,7 +1865,7 @@ class RVTVisualizationFactory:
 #                 else:
 #                     slrm_8bit_arr = self.float_to_8bit(
 #                         float_arr=slrm_arr,
-#                         visualization=RVTVisualization.SIMPLE_LOCAL_RELIEF_MODEL,
+#                         visualization=RVTVisualizationName.SIMPLE_LOCAL_RELIEF_MODEL,
 #                     )
 #                     save_raster(
 #                         src_raster_path=dem_path,
@@ -2255,8 +2000,8 @@ class RVTVisualizationFactory:
 #             if custom_dir is None:
 #                 custom_dir = Path(dem_path).parent
 #             if save_svf:
-#                 rvt.tile.save_rvt_visualization_tile_by_tile(
-#                     rvt_visualization=RVTVisualization.SKY_VIEW_FACTOR,
+#                 rvt.tile.save_RVT_VISUALIZATION_NAME_tile_by_tile(
+#                     RVT_VISUALIZATION_NAME=RVTVisualizationName.SKY_VIEW_FACTOR,
 #                     rvt_default=self,
 #                     dem_path=Path(dem_path),
 #                     output_dir_path=Path(custom_dir),
@@ -2264,8 +2009,8 @@ class RVTVisualizationFactory:
 #                     save_8bit=save_8bit,
 #                 )
 #             if save_asvf:
-#                 rvt.tile.save_rvt_visualization_tile_by_tile(
-#                     rvt_visualization=RVTVisualization.ANISOTROPIC_SKY_VIEW_FACTOR,
+#                 rvt.tile.save_RVT_VISUALIZATION_NAME_tile_by_tile(
+#                     RVT_VISUALIZATION_NAME=RVTVisualizationName.ANISOTROPIC_SKY_VIEW_FACTOR,
 #                     rvt_default=self,
 #                     dem_path=Path(dem_path),
 #                     output_dir_path=Path(custom_dir),
@@ -2273,8 +2018,8 @@ class RVTVisualizationFactory:
 #                     save_8bit=save_8bit,
 #                 )
 #             if save_opns:
-#                 rvt.tile.save_rvt_visualization_tile_by_tile(
-#                     rvt_visualization=RVTVisualization.POSITIVE_OPENNESS,
+#                 rvt.tile.save_RVT_VISUALIZATION_NAME_tile_by_tile(
+#                     RVT_VISUALIZATION_NAME=RVTVisualizationName.POSITIVE_OPENNESS,
 #                     rvt_default=self,
 #                     dem_path=Path(dem_path),
 #                     output_dir_path=Path(custom_dir),
@@ -2342,7 +2087,7 @@ class RVTVisualizationFactory:
 #                     else:  # svf_8bit_path, file doesn't exists or exists and overwrite=1
 #                         svf_8bit_arr = self.float_to_8bit(
 #                             float_arr=dict_svf_asvf_opns["svf"],
-#                             visualization=RVTVisualization.SKY_VIEW_FACTOR,
+#                             visualization=RVTVisualizationName.SKY_VIEW_FACTOR,
 #                         )
 #                         save_raster(
 #                             src_raster_path=dem_path,
@@ -2358,7 +2103,7 @@ class RVTVisualizationFactory:
 #                     else:  # asvf_8bit_path, file doesn't exists or exists and overwrite=1
 #                         asvf_8bit_arr = self.float_to_8bit(
 #                             float_arr=dict_svf_asvf_opns["asvf"],
-#                             visualization=RVTVisualization.ANISOTROPIC_SKY_VIEW_FACTOR,
+#                             visualization=RVTVisualizationName.ANISOTROPIC_SKY_VIEW_FACTOR,
 #                         )
 #                         save_raster(
 #                             src_raster_path=dem_path,
@@ -2374,7 +2119,7 @@ class RVTVisualizationFactory:
 #                     else:  # opns_8bit_path, file doesn't exists or exists and overwrite=1
 #                         opns_8bit_arr = self.float_to_8bit(
 #                             float_arr=dict_svf_asvf_opns["opns"],
-#                             visualization=RVTVisualization.POSITIVE_OPENNESS,
+#                             visualization=RVTVisualizationName.POSITIVE_OPENNESS,
 #                         )
 #                         save_raster(
 #                             src_raster_path=dem_path,
@@ -2465,8 +2210,8 @@ class RVTVisualizationFactory:
 #         if dem_size[0] * dem_size[1] > self.compute_multiple_tile_limit:  # tile by tile
 #             if custom_dir is None:
 #                 custom_dir = Path(dem_path).parent
-#             rvt.tile.save_rvt_visualization_tile_by_tile(
-#                 rvt_visualization=RVTVisualization.NEGATIVE_OPENNESS,
+#             rvt.tile.save_RVT_VISUALIZATION_NAME_tile_by_tile(
+#                 RVT_VISUALIZATION_NAME=RVTVisualizationName.NEGATIVE_OPENNESS,
 #                 rvt_default=self,
 #                 dem_path=Path(dem_path),
 #                 output_dir_path=Path(custom_dir),
@@ -2504,7 +2249,7 @@ class RVTVisualizationFactory:
 #                 else:
 #                     neg_opns_8bit_arr = self.float_to_8bit(
 #                         float_arr=neg_opns_arr,
-#                         visualization=RVTVisualization.NEGATIVE_OPENNESS,
+#                         visualization=RVTVisualizationName.NEGATIVE_OPENNESS,
 #                     )
 #                     save_raster(
 #                         src_raster_path=dem_path,
@@ -2595,8 +2340,8 @@ class RVTVisualizationFactory:
 #         if dem_size[0] * dem_size[1] > self.compute_multiple_tile_limit:  # tile by tile
 #             if custom_dir is None:
 #                 custom_dir = Path(dem_path).parent
-#             rvt.tile.save_rvt_visualization_tile_by_tile(
-#                 rvt_visualization=RVTVisualization.SKY_ILLUMINATION,
+#             rvt.tile.save_RVT_VISUALIZATION_NAME_tile_by_tile(
+#                 RVT_VISUALIZATION_NAME=RVTVisualizationName.SKY_ILLUMINATION,
 #                 rvt_default=self,
 #                 dem_path=Path(dem_path),
 #                 output_dir_path=Path(custom_dir),
@@ -2634,7 +2379,7 @@ class RVTVisualizationFactory:
 #                 else:
 #                     sky_illumination_8bit_arr = self.float_to_8bit(
 #                         float_arr=sky_illumination_arr,
-#                         visualization=RVTVisualization.SKY_ILLUMINATION,
+#                         visualization=RVTVisualizationName.SKY_ILLUMINATION,
 #                     )
 #                     save_raster(
 #                         src_raster_path=dem_path,
@@ -2722,8 +2467,8 @@ class RVTVisualizationFactory:
 #         if dem_size[0] * dem_size[1] > self.compute_multiple_tile_limit:  # tile by tile
 #             if custom_dir is None:
 #                 custom_dir = Path(dem_path).parent
-#             rvt.tile.save_rvt_visualization_tile_by_tile(
-#                 rvt_visualization=RVTVisualization.LOCAL_DOMINANCE,
+#             rvt.tile.save_RVT_VISUALIZATION_NAME_tile_by_tile(
+#                 RVT_VISUALIZATION_NAME=RVTVisualizationName.LOCAL_DOMINANCE,
 #                 rvt_default=self,
 #                 dem_path=Path(dem_path),
 #                 output_dir_path=Path(custom_dir),
@@ -2758,7 +2503,7 @@ class RVTVisualizationFactory:
 #                 else:
 #                     local_dominance_8bit_arr = self.float_to_8bit(
 #                         float_arr=local_dominance_arr,
-#                         visualization=RVTVisualization.LOCAL_DOMINANCE,
+#                         visualization=RVTVisualizationName.LOCAL_DOMINANCE,
 #                     )
 #                     save_raster(
 #                         src_raster_path=dem_path,
@@ -2844,8 +2589,8 @@ class RVTVisualizationFactory:
 #         if dem_size[0] * dem_size[1] > self.compute_multiple_tile_limit:  # tile by tile
 #             if custom_dir is None:
 #                 custom_dir = Path(dem_path).parent
-#             rvt.tile.save_rvt_visualization_tile_by_tile(
-#                 rvt_visualization=RVTVisualization.MULTI_SCALE_RELIEF_MODEL,
+#             rvt.tile.save_RVT_VISUALIZATION_NAME_tile_by_tile(
+#                 RVT_VISUALIZATION_NAME=RVTVisualizationName.MULTI_SCALE_RELIEF_MODEL,
 #                 rvt_default=self,
 #                 dem_path=Path(dem_path),
 #                 output_dir_path=Path(custom_dir),
@@ -2883,7 +2628,7 @@ class RVTVisualizationFactory:
 #                 else:
 #                     msrm_8bit_arr = self.float_to_8bit(
 #                         float_arr=msrm_arr,
-#                         visualization=RVTVisualization.MULTI_SCALE_RELIEF_MODEL,
+#                         visualization=RVTVisualizationName.MULTI_SCALE_RELIEF_MODEL,
 #                     )
 #                     save_raster(
 #                         src_raster_path=dem_path,
@@ -2965,8 +2710,8 @@ class RVTVisualizationFactory:
 #         ):  # tile by tile calculation
 #             if custom_dir is None:
 #                 custom_dir = Path(dem_path).parent
-#             rvt.tile.save_rvt_visualization_tile_by_tile(
-#                 rvt_visualization=RVTVisualization.MULTI_SCALE_TOPOGRAPHIC_POSITION,
+#             rvt.tile.save_RVT_VISUALIZATION_NAME_tile_by_tile(
+#                 RVT_VISUALIZATION_NAME=RVTVisualizationName.MULTI_SCALE_TOPOGRAPHIC_POSITION,
 #                 rvt_default=self,
 #                 dem_path=Path(dem_path),
 #                 output_dir_path=Path(custom_dir),
@@ -3002,7 +2747,7 @@ class RVTVisualizationFactory:
 #                 else:
 #                     mstp_8bit_arr = self.float_to_8bit(
 #                         float_arr=mstp_arr,
-#                         visualization=RVTVisualization.MULTI_SCALE_TOPOGRAPHIC_POSITION,
+#                         visualization=RVTVisualizationName.MULTI_SCALE_TOPOGRAPHIC_POSITION,
 #                     )
 #                     save_raster(
 #                         src_raster_path=dem_path,
@@ -3054,7 +2799,7 @@ class RVTVisualizationFactory:
 #
 #     def calculate_visualization(
 #         self,
-#         visualization: RVTVisualization,
+#         visualization: RVTVisualizationName,
 #         dem: npt.NDArray[Any],
 #         resolution_x: float,
 #         resolution_y: float,
@@ -3067,34 +2812,34 @@ class RVTVisualizationFactory:
 #         vis_arr = None
 #         vis_float_arr = None
 #         vis_8bit_arr = None
-#         if visualization == RVTVisualization.SLOPE:
+#         if visualization == RVTVisualizationName.SLOPE:
 #             vis_arr = self.get_slope(
 #                 dem_arr=dem,
 #                 resolution_x=resolution_x,
 #                 resolution_y=resolution_y,
 #                 no_data=no_data,
 #             )
-#         elif visualization == RVTVisualization.SHADOW:
+#         elif visualization == RVTVisualizationName.SHADOW:
 #             vis_arr = self.get_shadow(
 #                 dem_arr=dem, resolution=resolution_x, no_data=no_data
 #             )
-#         elif visualization == RVTVisualization.HILLSHADE:
+#         elif visualization == RVTVisualizationName.HILLSHADE:
 #             vis_arr = self.get_hillshade(
 #                 dem_arr=dem,
 #                 resolution_x=resolution_x,
 #                 resolution_y=resolution_y,
 #                 no_data=no_data,
 #             )
-#         elif visualization == RVTVisualization.MULTIPLE_DIRECTIONS_HILLSHADE:
+#         elif visualization == RVTVisualizationName.MULTIPLE_DIRECTIONS_HILLSHADE:
 #             vis_arr = self.get_multi_hillshade(
 #                 dem_arr=dem,
 #                 resolution_x=resolution_x,
 #                 resolution_y=resolution_y,
 #                 no_data=no_data,
 #             )
-#         elif visualization == RVTVisualization.SIMPLE_LOCAL_RELIEF_MODEL:
+#         elif visualization == RVTVisualizationName.SIMPLE_LOCAL_RELIEF_MODEL:
 #             vis_arr = self.get_slrm(dem_arr=dem, no_data=no_data)
-#         elif visualization == RVTVisualization.SKY_VIEW_FACTOR:
+#         elif visualization == RVTVisualizationName.SKY_VIEW_FACTOR:
 #             vis_arr = self.get_sky_view_factor(
 #                 dem_arr=dem,
 #                 resolution=resolution_x,
@@ -3103,7 +2848,7 @@ class RVTVisualizationFactory:
 #                 compute_opns=False,
 #                 no_data=no_data,
 #             )["svf"]
-#         elif visualization == RVTVisualization.ANISOTROPIC_SKY_VIEW_FACTOR:
+#         elif visualization == RVTVisualizationName.ANISOTROPIC_SKY_VIEW_FACTOR:
 #             vis_arr = self.get_sky_view_factor(
 #                 dem_arr=dem,
 #                 resolution=resolution_x,
@@ -3112,7 +2857,7 @@ class RVTVisualizationFactory:
 #                 compute_opns=False,
 #                 no_data=no_data,
 #             )["asvf"]
-#         elif visualization == RVTVisualization.POSITIVE_OPENNESS:
+#         elif visualization == RVTVisualizationName.POSITIVE_OPENNESS:
 #             vis_arr = self.get_sky_view_factor(
 #                 dem_arr=dem,
 #                 resolution=resolution_x,
@@ -3121,26 +2866,26 @@ class RVTVisualizationFactory:
 #                 compute_opns=True,
 #                 no_data=no_data,
 #             )["opns"]
-#         elif visualization == RVTVisualization.NEGATIVE_OPENNESS:
+#         elif visualization == RVTVisualizationName.NEGATIVE_OPENNESS:
 #             vis_arr = self.get_neg_opns(
 #                 dem_arr=dem, resolution=resolution_x, no_data=no_data
 #             )
-#         elif visualization == RVTVisualization.SKY_ILLUMINATION:
+#         elif visualization == RVTVisualizationName.SKY_ILLUMINATION:
 #             vis_arr = self.get_sky_illumination(
 #                 dem_arr=dem, resolution=resolution_x, no_data=no_data
 #             )
-#         elif visualization == RVTVisualization.LOCAL_DOMINANCE:
+#         elif visualization == RVTVisualizationName.LOCAL_DOMINANCE:
 #             vis_arr = self.get_local_dominance(dem_arr=dem, no_data=no_data)
-#         elif visualization == RVTVisualization.MULTI_SCALE_RELIEF_MODEL:
+#         elif visualization == RVTVisualizationName.MULTI_SCALE_RELIEF_MODEL:
 #             vis_arr = self.get_msrm(
 #                 dem_arr=dem, resolution=resolution_x, no_data=no_data
 #             )
-#         elif visualization == RVTVisualization.MULTI_SCALE_TOPOGRAPHIC_POSITION:
+#         elif visualization == RVTVisualizationName.MULTI_SCALE_TOPOGRAPHIC_POSITION:
 #             vis_arr = self.get_mstp(dem_arr=dem, no_data=no_data)
 #         if save_float:
 #             vis_float_arr = vis_arr
 #         if save_8bit:
-#             if visualization == RVTVisualization.MULTIPLE_DIRECTIONS_HILLSHADE:
+#             if visualization == RVTVisualizationName.MULTIPLE_DIRECTIONS_HILLSHADE:
 #                 vis_8bit_arr = self.float_to_8bit(
 #                     float_arr=dem,
 #                     visualization=visualization,
@@ -3192,7 +2937,7 @@ class RVTVisualizationFactory:
 #         dat = open(log_path, "w")
 #         dat.write(
 #             "===============================================================================================\n"
-#             "Relief Visualization Toolbox (python), visualizations log\n"
+#             "Relief RVTVisualization Toolbox (python), visualizations log\n"
 #             "Copyright:\n"
 #             "\tResearch Centre of the Slovenian Academy of Sciences and Arts\n"
 #             "\tUniversity of Ljubljana, Faculty of Civil and Geodetic Engineering\n"

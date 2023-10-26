@@ -16,7 +16,7 @@ Setting up
 
    .. image:: ./figures/rvt_qgis_dem.png
 
-#. Select ``Raster → Relief Visualization Toolbox`` or the RVT icon in the toolbar.
+#. Select ``Raster → Relief RVTVisualization Toolbox`` or the RVT icon in the toolbar.
 
    .. image:: ./figures/rvt_qgis_menu.png
    
@@ -25,7 +25,7 @@ Setting up
 Computing visualizations
 ------------------------
 
-#. Select the DEM in ``List of currently selected files:``, then select the ``Visualizations`` tab. In the ``Visualization`` tab select ``preferred visualizations`` and set their parameters (options).
+#. Select the DEM in ``List of currently selected files:``, then select the ``Visualizations`` tab. In the ``RVTVisualization`` tab select ``preferred visualizations`` and set their parameters (options).
 
    .. image:: ./figures/rvt_qgis_toolbox.png
 

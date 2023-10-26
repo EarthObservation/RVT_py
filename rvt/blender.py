@@ -98,7 +98,7 @@ class BlenderLayer:
     """
     image: Optional[Union[Path, npt.NDArray[Any]]]
     """
-    Visualization raster.
+    RVTVisualization raster.
     """
 
     def __post_init__(self) -> None:
@@ -937,7 +937,7 @@ class BlenderCombination:
         dat = open(log_path, "w")
         dat.write(
             "===============================================================================================\n"
-            "Relief Visualization Toolbox (python), blender log\n"
+            "Relief RVTVisualization Toolbox (python), blender log\n"
             "Copyright:\n"
             "\tResearch Centre of the Slovenian Academy of Sciences and Arts\n"
             "\tUniversity of Ljubljana, Faculty of Civil and Geodetic Engineering\n"
@@ -976,7 +976,7 @@ class BlenderCombination:
         i_layer = 1
         for layer in self.layers:
             dat.write("Layer: {}\n".format(i_layer))
-            dat.write("Visualization: {}\n".format(layer.vis))
+            dat.write("RVTVisualization: {}\n".format(layer.vis))
             if layer.vis.lower() == "hillshade":
                 dat.write("\ths_sun_el=\t\t{}\n".format(default.hs_sun_el))
                 dat.write("\ths_sun_azi=\t\t{}\n".format(default.hs_sun_azi))

@@ -14,7 +14,7 @@ from matplotlib.cm import get_cmap
 from matplotlib.colors import LinearSegmentedColormap, Colormap
 from dataclasses import dataclass
 
-from rvt.enums import RVTVisualization, NormalizationMode
+from rvt.enums import RVTVisualizationName, NormalizationMode
 
 
 @dataclass
@@ -541,7 +541,7 @@ def apply_opacity(
 
 
 def normalize_image(
-    visualization: RVTVisualization,
+    visualization: RVTVisualizationName,
     image: npt.NDArray[Any],
     normalization: Normalization,
 ) -> npt.NDArray[Any]:
@@ -566,7 +566,7 @@ def normalize_image(
         warnings.warn("rvt.blend_func.normalize_image: unexpected values! min < 0")
 
     # For slope invert scale (high slopes will be black)
-    if visualization == RVTVisualization.SLOPE or visualization.NEGATIVE_OPENNESS:
+    if visualization == RVTVisualizationName.SLOPE or visualization.NEGATIVE_OPENNESS:
         norm_image = 1 - norm_image
 
     return norm_image
