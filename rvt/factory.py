@@ -675,23 +675,22 @@ class MultiScaleReliefModel(RVTVisualization):
             output_name += "_8bit"
         return output_name + ".tif"
 
-
-def compute_visualization(
-    self,
-    dem: npt.NDArray[Any],
-    dem_resolution: float,
-    dem_nodata: Optional[float],
-    vertical_exaggeration_factor: float,
-) -> npt.NDArray[Any]:
-    return multi_scale_relief_model(
-        dem=dem,
-        resolution=dem_resolution,
-        minimum_feature_size=self.minimum_feature_size,
-        maximum_feature_size=self.maximum_feature_size,
-        scaling_factor=self.scaling_factor,
-        vertical_exaggeration_factor=vertical_exaggeration_factor,
-        no_data=dem_nodata,
-    )
+    def compute_visualization(
+        self,
+        dem: npt.NDArray[Any],
+        dem_resolution: float,
+        dem_nodata: Optional[float],
+        vertical_exaggeration_factor: float,
+    ) -> npt.NDArray[Any]:
+        return multi_scale_relief_model(
+            dem=dem,
+            resolution=dem_resolution,
+            minimum_feature_size=self.minimum_feature_size,
+            maximum_feature_size=self.maximum_feature_size,
+            scaling_factor=self.scaling_factor,
+            vertical_exaggeration_factor=vertical_exaggeration_factor,
+            no_data=dem_nodata,
+        )
 
 
 class MultiScaleTopographicPosition(RVTVisualization):
