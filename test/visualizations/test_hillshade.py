@@ -11,12 +11,8 @@ import pytest
 
 
 @pytest.mark.parametrize(
-    "rvt_vis_factory",
-    "directory_path",
-    "dem_file_name",
-    "is_8bit",
-    "expected_path",
-    (
+    "rvt_vis_factory, directory_path, dem_file_name, is_8bit, expected_path",
+    [
         (
             RVTVisualizationFactory(
                 hillshade=Hillshade(sun_azimuth=60.123, sun_elevation=50),
@@ -24,9 +20,18 @@ import pytest
             Path("/some/directory"),
             "some_dem",
             False,
-            "",  # TODO: ZiM you stayed here
-        )
-    ),
+            Path("/some/directory/some_dem_HS_A60.123_H50.tif"),
+        ),
+        (
+            RVTVisualizationFactory(
+                hillshade=Hillshade(sun_azimuth=30.0, sun_elevation=10),
+            ),
+            Path("/results/"),
+            "DEM_123",
+            True,
+            Path("/results/DEM_123_HS_A30.0_H10_8bit.tif"),
+        ),
+    ],
 )
 def test_get_hillshade_path(
     rvt_vis_factory: RVTVisualizationFactory,

@@ -160,7 +160,7 @@ class Shadow(RVTVisualization):
     def get_visualization_file_name(self, dem_file_name: str, is_8bit: bool) -> str:
         dem_file_name = dem_file_name.rstrip(".tif").rstrip(".tiff")
         output_name = (
-            f"{dem_file_name}_shadow_A{self.sun_azimuth}_H{self.sun_elevation}"
+            f"{dem_file_name}_SHADOW_A{self.sun_azimuth}_H{self.sun_elevation}"
         )
         if is_8bit:
             output_name += "_8bit"
@@ -400,7 +400,7 @@ class AnisotropicSkyViewFactor(RVTVisualization):
     def get_visualization_file_name(self, dem_file_name: str, is_8bit: bool) -> str:
         dem_file_name = dem_file_name.rstrip(".tif").rstrip(".tiff")
         output_name = (
-            f"{dem_file_name}_SVF_R{self.maximum_search_radius}_D{self.number_of_directions}_"
+            f"{dem_file_name}_SVF-A_R{self.maximum_search_radius}_D{self.number_of_directions}_"
             f"NR{self.noise_remove.value}_A{self.direction_of_anisotropy}_AL{self.anisotropy_level.value}"
         )
         if is_8bit:
@@ -433,9 +433,9 @@ class AnisotropicSkyViewFactor(RVTVisualization):
 class Openness(RVTVisualization):
     @property
     def RVT_VISUALIZATION_NAME(self) -> RVTVisualizationName:
-        if OpennessType.POSITIVE:
+        if self.openness_type == OpennessType.POSITIVE:
             return RVTVisualizationName.POSITIVE_OPENNESS
-        elif OpennessType.NEGATIVE:
+        elif self.openness_type == OpennessType.NEGATIVE:
             return RVTVisualizationName.NEGATIVE_OPENNESS
         else:
             raise ValueError(f"Wrong Openness type {self.openness_type}!")
@@ -668,7 +668,7 @@ class MultiScaleReliefModel(RVTVisualization):
     def get_visualization_file_name(self, dem_file_name: str, is_8bit: bool) -> str:
         dem_file_name = dem_file_name.rstrip(".tif").rstrip(".tiff")
         output_name = (
-            f"{dem_file_name}_MSRM_F_M{self.minimum_feature_size}-{self.maximum_feature_size}_"
+            f"{dem_file_name}_MSRM_FS{self.minimum_feature_size}-{self.maximum_feature_size}_"
             f"S{self.scaling_factor}"
         )
         if is_8bit:
@@ -811,17 +811,19 @@ class RVTVisualizationFactory:
     enable_local_dominance: bool = False
     save_local_dominance_float: bool = False
     save_local_dominance_8bit: bool = False
-    local_dominance = LocalDominance()
+    local_dominance: LocalDominance = LocalDominance()
     # Multi Scale Relief Model
     enable_multi_scale_relief_model: bool = False
     save_multi_scale_relief_model_float: bool = False
     save_multi_scale_relief_model_8bit: bool = False
-    multi_scale_relief_model = MultiScaleReliefModel()
+    multi_scale_relief_model: MultiScaleReliefModel = MultiScaleReliefModel()
     # Multi Scale Topographic Position
     enable_multi_scale_topographic_position: bool = False
     save_multi_scale_topographic_position_float: bool = False
     save_multi_scale_topographic_position_8bit: bool = False
-    multi_scale_topographic_position = MultiScaleTopographicPosition()
+    multi_scale_topographic_position: MultiScaleTopographicPosition = (
+        MultiScaleTopographicPosition()
+    )
 
     compute_multiple_tile_limit = 10000 * 10000
     """
@@ -1103,15 +1105,35 @@ class RVTVisualizationFactory:
         dem_file_name: str,
         is_8bit: bool,
     ) -> Path:
+        # Loop through the fields of RVTVisualizationFactory.
         for field in fields(self.__class__):
             field_value = getattr(self, field.name)
-            if issubclass(field_value, RVTVisualization):
+            # If field value is child class of RVTVisualization.
+            if issubclass(type(field_value), RVTVisualization):
                 if field_value.RVT_VISUALIZATION_NAME == visualization_name:
                     return field_value.get_visualization_path(
                         directory_path=directory_path,
                         dem_file_name=dem_file_name,
                         is_8bit=is_8bit,
                     )
+            # If field value is HorizonVisualizations.
+            if isinstance(field_value, HorizonVisualizations):
+                # Loop through the fields of HorizonVisualizations.
+                for horizon_vis_attr_name in dir(field_value):
+                    horizon_vis_field_value = getattr(
+                        field_value, horizon_vis_attr_name
+                    )
+                    # If horizon visualization field value is child class of RVTVisualization.
+                    if issubclass(type(horizon_vis_field_value), RVTVisualization):
+                        if (
+                            horizon_vis_field_value.RVT_VISUALIZATION_NAME
+                            == visualization_name
+                        ):
+                            return horizon_vis_field_value.get_visualization_path(
+                                directory_path=directory_path,
+                                dem_file_name=dem_file_name,
+                                is_8bit=is_8bit,
+                            )
         raise ValueError(f"Unknown visualization name {visualization_name}!")
 
 
