@@ -14,6 +14,8 @@ from typing import Optional, Tuple, Any, Dict, Type
 import numpy.typing as npt
 import json
 
+import rasterio
+import rasterio.io
 from rvt.blender_functions import Normalization
 from rvt.enums import (
     RVTVisualizationName,
@@ -34,6 +36,7 @@ from rvt.visualizations import (
     multi_scale_relief_model,
     multi_scale_topographic_position,
     shadow_horizon,
+    byte_scale,
 )
 
 _HORIZON_VISUALIZATIONS_DEFAULT_NUMBER_OF_DIRECTIONS: int = 16
@@ -58,20 +61,20 @@ class To8bit(Normalization):
             maximum=float(elements[2].strip().lstrip("max=")),
         )
 
+    def from_float(self, float_image: npt.NDArray[Any], no_data: Optional[float]):
+        return byte_scale(
+            data=self.normalize_image(image=float_image),
+            c_min=0,
+            c_max=1,
+            high=255,
+            low=0,
+            no_data=no_data,
+        )
+
 
 class RVTVisualization(ABC):
     RVT_VISUALIZATION_NAME: RVTVisualizationName
     to_8bit: To8bit
-
-    @abstractmethod
-    def compute_visualization(
-        self,
-        dem: npt.NDArray[Any],
-        dem_resolution: float,
-        dem_nodata: Optional[float],
-        vertical_exaggeration_factor: float,
-    ) -> npt.NDArray[Any]:
-        pass
 
     @abstractmethod
     def get_visualization_file_name(self, dem_file_name: str, is_8bit: bool) -> str:
@@ -88,16 +91,44 @@ class RVTVisualization(ABC):
             dem_file_name=dem_file_name, is_8bit=is_8bit
         )
 
-    def compute_visualization_from_dem_file(self, dem_path: Path) -> npt.NDArray[Any]:
-        pass  # TODO: implement
+    @abstractmethod
+    def compute_visualization(
+        self,
+        dem: npt.NDArray[Any],
+        dem_resolution: float,
+        dem_nodata: Optional[float],
+        vertical_exaggeration_factor: float,
+    ) -> npt.NDArray[Any]:
+        pass
+
+    def compute_visualization_from_dem_file(
+        self, dem_path: Path, vertical_exaggeration_factor: float
+    ) -> npt.NDArray[Any]:
+        dem_file: rasterio.io.DatasetReader
+        with rasterio.open(dem_path, "r") as dem_file:
+            return self.compute_visualization(
+                dem=dem_file.read(0),
+                dem_resolution=(abs(dem_file.transform[0]) + abs(dem_file.transform[4]))
+                / 2,
+                dem_nodata=dem_file.nodata,
+                vertical_exaggeration_factor=vertical_exaggeration_factor,
+            )
 
     def save_visualization(
         self,
         dem_path: Path,
+        vertical_exaggeration_factor: float,
         output_visualization_path: Path,
-        output_visualization: npt.NDArray,
     ) -> None:
-        pass  # TODO: implement
+        with rasterio.open(dem_path, "r") as dem_file:
+            visualization_array = self.compute_visualization(
+                dem=dem_file.read(0),
+                dem_resolution=(abs(dem_file.transform[0]) + abs(dem_file.transform[4]))
+                / 2,
+                dem_nodata=dem_file.nodata,
+                vertical_exaggeration_factor=vertical_exaggeration_factor,
+            )
+            with rasterio.open()  # TODO: ZiM you stayed here!
 
 
 class Slope(RVTVisualization):

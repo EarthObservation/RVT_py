@@ -52,7 +52,7 @@ class Normalization:
                 image=image, minimum=self.minimum, maximum=self.maximum
             )
         if self.normalization_mode == NormalizationMode.PERCENT:
-            equ_image = normalize_perc(
+            return normalize_perc(
                 image=image, minimum=self.minimum, maximum=self.maximum
             )
         raise ValueError(f"Can't normalize for normalization mode {self}!")
