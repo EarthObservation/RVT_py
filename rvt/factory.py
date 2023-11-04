@@ -5,7 +5,7 @@ Copyright:
 """
 from __future__ import annotations
 from abc import ABC, abstractmethod
-from copy import deepcopy
+from copy import deepcopy, copy
 from dataclasses import dataclass, fields
 from enum import Enum
 from pathlib import Path
@@ -16,6 +16,10 @@ import json
 
 import rasterio
 import rasterio.io
+from rasterio import DatasetReader
+from rasterio.enums import Compression
+from rasterio.io import DatasetWriter
+
 from rvt.blender_functions import Normalization
 from rvt.enums import (
     RVTVisualizationName,
@@ -119,7 +123,16 @@ class RVTVisualization(ABC):
         dem_path: Path,
         vertical_exaggeration_factor: float,
         output_visualization_path: Path,
+        compression: Compression = Compression.lzw,
+        overwrite: bool = True,
+        # TODO: Add 8bit
     ) -> None:
+        if not overwrite:
+            if output_visualization_path.exists():
+                raise ValueError(
+                    f"Output visualization path ({output_visualization_path}) already exists!"
+                )
+        dem_file: DatasetReader
         with rasterio.open(dem_path, "r") as dem_file:
             visualization_array = self.compute_visualization(
                 dem=dem_file.read(0),
@@ -128,7 +141,20 @@ class RVTVisualization(ABC):
                 dem_nodata=dem_file.nodata,
                 vertical_exaggeration_factor=vertical_exaggeration_factor,
             )
-            with rasterio.open()  # TODO: ZiM you stayed here!
+            visualization_profile = copy(dem_file.profile)
+            visualization_profile["compression"] = compression.value
+            number_of_bands = (
+                2
+                if len(visualization_array.shape) == 2
+                else visualization_array.shape[0]
+            )
+            visualization_profile["count"] = number_of_bands
+            visualization_profile["dtype"] = rasterio.float32
+            visualization_file: DatasetWriter
+            with rasterio.open(
+                output_visualization_path, "w", **visualization_profile
+            ) as visualization_file:
+                visualization_file.write(visualization_array)
 
 
 class Slope(RVTVisualization):
