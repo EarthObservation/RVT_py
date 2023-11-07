@@ -13,12 +13,12 @@ from typing import Optional, Tuple, Any, Dict, Type
 
 import numpy.typing as npt
 import json
-
+import numpy as np
 import rasterio
 import rasterio.io
-from rasterio import DatasetReader
-from rasterio.enums import Compression
-from rasterio.io import DatasetWriter
+import rasterio.profiles
+import rasterio.enums
+
 
 from rvt.blender_functions import Normalization
 from rvt.enums import (
@@ -29,6 +29,7 @@ from rvt.enums import (
     AnisotropyLevel,
     NormalizationMode,
 )
+from rvt.raster_utils import save_raster
 from rvt.visualizations import (
     slope_aspect,
     hillshade,
@@ -122,17 +123,38 @@ class RVTVisualization(ABC):
         self,
         dem_path: Path,
         vertical_exaggeration_factor: float,
-        output_visualization_path: Path,
-        compression: Compression = Compression.lzw,
         overwrite: bool = True,
-        # TODO: Add 8bit
+        compression: rasterio.enums.Compression = rasterio.enums.Compression.lzw,
+        save_float_visualization: bool = True,
+        output_float_visualization_path: Optional[Path] = None,
+        output_float_visualization_nodata: Optional[float] = np.nan,
+        save_8bit_visualization: bool = False,
+        output_8bit_visualization_path: Optional[Path] = None,
     ) -> None:
+        if not save_float_visualization and not save_8bit_visualization:
+            raise ValueError(
+                "In order to save visualization `save_float_visualization` or `save_8bit_visualization` "
+                "needs to be True!"
+            )
+        if save_float_visualization and output_float_visualization_path is None:
+            raise ValueError(
+                "If `save_float_visualization`=True, `output_float_visualization_path` needs to be provided!"
+            )
+        if save_8bit_visualization and output_8bit_visualization_path is None:
+            raise ValueError(
+                "If `save_8bit_visualization`=True, `output_8bit_visualization_path` needs to be provided!"
+            )
         if not overwrite:
-            if output_visualization_path.exists():
+            if save_float_visualization and output_float_visualization_path.exists():
                 raise ValueError(
-                    f"Output visualization path ({output_visualization_path}) already exists!"
+                    f"Output visualization path ({output_float_visualization_path}) already exists!"
                 )
-        dem_file: DatasetReader
+            if save_8bit_visualization and output_8bit_visualization_path.exists():
+                raise ValueError(
+                    f"Output visualization path ({output_8bit_visualization_path}) already exists!"
+                )
+
+        dem_file: rasterio.io.DatasetReader
         with rasterio.open(dem_path, "r") as dem_file:
             visualization_array = self.compute_visualization(
                 dem=dem_file.read(0),
@@ -141,20 +163,51 @@ class RVTVisualization(ABC):
                 dem_nodata=dem_file.nodata,
                 vertical_exaggeration_factor=vertical_exaggeration_factor,
             )
-            visualization_profile = copy(dem_file.profile)
-            visualization_profile["compression"] = compression.value
-            number_of_bands = (
-                2
-                if len(visualization_array.shape) == 2
-                else visualization_array.shape[0]
-            )
-            visualization_profile["count"] = number_of_bands
-            visualization_profile["dtype"] = rasterio.float32
-            visualization_file: DatasetWriter
-            with rasterio.open(
-                output_visualization_path, "w", **visualization_profile
-            ) as visualization_file:
-                visualization_file.write(visualization_array)
+            if save_float_visualization:
+                if not np.isnan(
+                    output_float_visualization_nodata
+                ):  # change nodata value
+                    visualization_array[
+                        np.isnan(visualization_array)
+                    ] = output_float_visualization_nodata
+                number_of_bands = (
+                    2
+                    if len(visualization_array.shape) == 2
+                    else visualization_array.shape[0]
+                )
+                visualization_profile = rasterio.profiles.DefaultGTiffProfile(
+                    transform=dem_file.profile["transform"],
+                    compression=compression.value,
+                    count=number_of_bands,
+                    dtype=rasterio.float32,
+                    nodata=output_float_visualization_nodata,
+                )
+                save_raster(
+                    output_path=output_float_visualization_path,
+                    rasterio_profile=visualization_profile,
+                    raster_array=visualization_array,
+                )
+
+            if save_8bit_visualization:
+                visualization_profile = rasterio.profiles.DefaultGTiffProfile(
+                    transform=dem_file.profile["transform"],
+                    compression=compression.value,
+                    count=number_of_bands,
+                    dtype=rasterio.uint8,
+                    nodata=None,
+                )
+                visualization_8bit_array = self.to_8bit.from_float(
+                    float_image=visualization_array, no_data=np.nan
+                )
+                nodata_mask = visualization_array[np.isnan(visualization_array)]
+                visualization_8bit_array[nodata_mask] = 0
+                save_raster(
+                    output_path=output_8bit_visualization_path,
+                    rasterio_profile=visualization_profile,
+                    raster_array=visualization_8bit_array,
+                    save_internal_nodata_mask=True,
+                    internal_nodata_mask_array=nodata_mask,
+                )
 
 
 class Slope(RVTVisualization):
