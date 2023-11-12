@@ -18,7 +18,7 @@ import rasterio
 import rasterio.io
 import rasterio.profiles
 import rasterio.enums
-
+from typing_extensions import override
 
 from rvt.blender_functions import Normalization
 from rvt.enums import (
@@ -106,6 +106,16 @@ class RVTVisualization(ABC):
     ) -> npt.NDArray[Any]:
         pass
 
+    def convert_visualization_to_8bit(
+        self, visualization_array: npt.NDArray[Any], no_data: Optional[float] = np.nan
+    ) -> npt.NDArray[Any]:
+        if len(visualization_array.shape) == 3 and visualization_array.shape[2] != 3:
+            raise RuntimeError(
+                f"Can't convert visualization array to 8bit, invalid shape ({visualization_array.shape}). "
+                "Only single band (2D array) or 3 band (3D array) supported."
+            )
+        return self.to_8bit.from_float(float_image=visualization_array, no_data=no_data)
+
     def compute_visualization_from_dem_file(
         self, dem_path: Path, vertical_exaggeration_factor: float
     ) -> npt.NDArray[Any]:
@@ -189,6 +199,11 @@ class RVTVisualization(ABC):
                 )
 
             if save_8bit_visualization:
+                visualization_8bit_array = self.convert_visualization_to_8bit(
+                    visualization_array=visualization_array, no_data=np.nan
+                )
+                nodata_mask = visualization_array[np.isnan(visualization_array)]
+                visualization_8bit_array[nodata_mask] = 0
                 visualization_profile = rasterio.profiles.DefaultGTiffProfile(
                     transform=dem_file.profile["transform"],
                     compression=compression.value,
@@ -196,16 +211,10 @@ class RVTVisualization(ABC):
                     dtype=rasterio.uint8,
                     nodata=None,
                 )
-                visualization_8bit_array = self.to_8bit.from_float(
-                    float_image=visualization_array, no_data=np.nan
-                )
-                nodata_mask = visualization_array[np.isnan(visualization_array)]
-                visualization_8bit_array[nodata_mask] = 0
                 save_raster(
                     output_path=output_8bit_visualization_path,
                     rasterio_profile=visualization_profile,
                     raster_array=visualization_8bit_array,
-                    save_internal_nodata_mask=True,
                     internal_nodata_mask_array=nodata_mask,
                 )
 
@@ -377,6 +386,48 @@ class MultipleDirectionsHillshade(RVTVisualization):
             vertical_exaggeration_factor=vertical_exaggeration_factor,
             no_data=dem_nodata,
         )
+
+    @override
+    def save_visualization(
+        self,
+        dem_path: Path,
+        vertical_exaggeration_factor: float,
+        overwrite: bool = True,
+        compression: rasterio.enums.Compression = rasterio.enums.Compression.lzw,
+        save_float_visualization: bool = True,
+        output_float_visualization_path: Optional[Path] = None,
+        output_float_visualization_nodata: Optional[float] = np.nan,
+        save_8bit_visualization: bool = False,
+        output_8bit_visualization_path: Optional[Path] = None,
+    ) -> None:
+        if not save_float_visualization and not save_8bit_visualization:
+            raise ValueError(
+                "In order to save visualization `save_float_visualization` or `save_8bit_visualization` "
+                "needs to be True!"
+            )
+        if save_8bit_visualization and output_8bit_visualization_path is None:
+            raise ValueError(
+                "If `save_8bit_visualization`=True, `output_8bit_visualization_path` needs to be provided!"
+            )
+        if not overwrite:
+            if save_8bit_visualization and output_8bit_visualization_path.exists():
+                raise ValueError(
+                    f"Output visualization path ({output_8bit_visualization_path}) already exists!"
+                )
+        if save_float_visualization:
+            super().save_visualization(
+                dem_path=dem_path,
+                vertical_exaggeration_factor=vertical_exaggeration_factor,
+                overwrite=overwrite,
+                compression=compression,
+                save_float_visualization=True,
+                output_float_visualization_path=output_float_visualization_path,
+                output_float_visualization_nodata=output_float_visualization_nodata,
+                save_8bit_visualization=False,
+                output_8bit_visualization_path=None,
+            )
+        if save_8bit_visualization:
+            # TODO: ZiM you stayed here: Calculate hillshade for 3 directions ...
 
 
 class SimpleLocalReliefModel(RVTVisualization):
