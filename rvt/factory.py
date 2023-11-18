@@ -5,7 +5,7 @@ Copyright:
 """
 from __future__ import annotations
 from abc import ABC, abstractmethod
-from copy import deepcopy, copy
+from copy import deepcopy
 from dataclasses import dataclass, fields
 from enum import Enum
 from pathlib import Path
@@ -352,6 +352,7 @@ class MultipleDirectionsHillshade(RVTVisualization):
     )
     _DEFAULT_NUMBER_OF_DIRECTIONS: int = 16
     _DEFAULT_SUN_ELEVATION: float = 35.0
+    _SUN_AZIMUTHS_FOR_8BIT_VISUALIZATION = (315, 22.5, 90)
 
     def __init__(
         self,
@@ -386,6 +387,60 @@ class MultipleDirectionsHillshade(RVTVisualization):
             vertical_exaggeration_factor=vertical_exaggeration_factor,
             no_data=dem_nodata,
         )
+
+    @override
+    def convert_visualization_to_8bit(
+        self, visualization_array: npt.NDArray[Any], no_data: Optional[float] = np.nan
+    ) -> npt.NDArray[Any]:
+        raise NotImplementedError(
+            "Impossible to convert Multiple directions hillshade float visualization to 8bit. "
+            "Use `compute_8bit_visualization()` method instead."
+        )
+
+    def compute_8bit_visualization(
+        self,
+        dem: npt.NDArray[Any],
+        dem_resolution: float,
+        dem_nodata: Optional[float],
+        vertical_exaggeration_factor: float,
+    ) -> npt.NDArray[Any]:
+        red_channel = self.to_8bit.from_float(
+            float_image=Hillshade(
+                sun_azimuth=self._SUN_AZIMUTHS_FOR_8BIT_VISUALIZATION[0],
+                sun_elevation=self.sun_elevation,
+            ).compute_visualization(
+                dem=dem,
+                dem_resolution=dem_resolution,
+                dem_nodata=dem_nodata,
+                vertical_exaggeration_factor=vertical_exaggeration_factor,
+            ),
+            no_data=np.nan,
+        )
+        green_channel = self.to_8bit.from_float(
+            float_image=Hillshade(
+                sun_azimuth=self._SUN_AZIMUTHS_FOR_8BIT_VISUALIZATION[1],
+                sun_elevation=self.sun_elevation,
+            ).compute_visualization(
+                dem=dem,
+                dem_resolution=dem_resolution,
+                dem_nodata=dem_nodata,
+                vertical_exaggeration_factor=vertical_exaggeration_factor,
+            ),
+            no_data=np.nan,
+        )
+        blue_channel = self.to_8bit.from_float(
+            float_image=Hillshade(
+                sun_azimuth=self._SUN_AZIMUTHS_FOR_8BIT_VISUALIZATION[2],
+                sun_elevation=self.sun_elevation,
+            ).compute_visualization(
+                dem=dem,
+                dem_resolution=dem_resolution,
+                dem_nodata=dem_nodata,
+                vertical_exaggeration_factor=vertical_exaggeration_factor,
+            ),
+            no_data=np.nan,
+        )
+        return np.array([red_channel, green_channel, blue_channel])
 
     @override
     def save_visualization(
@@ -427,7 +482,33 @@ class MultipleDirectionsHillshade(RVTVisualization):
                 output_8bit_visualization_path=None,
             )
         if save_8bit_visualization:
-            # TODO: ZiM you stayed here: Calculate hillshade for 3 directions ...
+            with rasterio.open(dem_path) as dem_file:
+                visualization_8bit_array = self.compute_8bit_visualization(
+                    dem=dem_file.read(0),
+                    dem_resolution=(
+                        abs(dem_file.transform[0]) + abs(dem_file.transform[4])
+                    )
+                    / 2,
+                    dem_nodata=dem_file.nodata,
+                    vertical_exaggeration_factor=vertical_exaggeration_factor,
+                )
+                nodata_mask = visualization_8bit_array[
+                    np.isnan(visualization_8bit_array)
+                ]
+                visualization_8bit_array[nodata_mask] = 0
+                visualization_profile = rasterio.profiles.DefaultGTiffProfile(
+                    transform=dem_file.profile["transform"],
+                    compression=compression.value,
+                    count=3,
+                    dtype=rasterio.uint8,
+                    nodata=None,
+                )
+                save_raster(
+                    output_path=output_8bit_visualization_path,
+                    rasterio_profile=visualization_profile,
+                    raster_array=visualization_8bit_array,
+                    internal_nodata_mask_array=nodata_mask,
+                )
 
 
 class SimpleLocalReliefModel(RVTVisualization):
