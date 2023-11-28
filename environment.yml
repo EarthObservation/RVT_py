@@ -12,9 +12,9 @@ dependencies:
   - brotli=1.0.9=h8ffe710_7
   - brotli-bin=1.0.9=h8ffe710_7
   - bzip2=1.0.8=h8ffe710_4
-  - ca-certificates=2023.08.22=haa95532_0
+  - ca-certificates=2022.9.24=h5b45459_0
   - cairo=1.16.0=h15b3021_1010
-  - certifi=2023.7.22=py39haa95532_0
+  - certifi=2022.9.24=pyhd8ed1ab_0
   - cffi=1.15.1=py39h0878f49_0
   - cfgv=3.3.1=pyhd8ed1ab_0
   - cfitsio=4.1.0=h5a969a9_0
@@ -100,7 +100,8 @@ dependencies:
   - nodeenv=1.7.0=pyhd8ed1ab_0
   - numpy=1.23.1=py39h1a62c8c_0
   - openjpeg=2.4.0=hb211442_1
-  - openssl=1.1.1w=h2bbff1b_0
+  - openssl=1.1.1q=h8ffe710_0
+  - overrides=7.3.1=pyhd8ed1ab_0
   - packaging=21.3=pyhd8ed1ab_0
   - pathspec=0.10.2=pyhd8ed1ab_0
   - pcre=8.45=h0e60522_0
@@ -143,6 +144,7 @@ dependencies:
   - typing=3.10.0.0=pyhd8ed1ab_0
   - typing-extensions=4.4.0=hd8ed1ab_0
   - typing_extensions=4.4.0=pyha770c72_0
+  - typing_utils=0.1.0=pyhd8ed1ab_0
   - tzdata=2022a=hda174b7_0
   - ukkonen=1.0.1=py39h2e07f2f_2
   - unicodedata2=14.0.0=py39hb82d6ee_1

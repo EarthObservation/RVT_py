@@ -18,7 +18,7 @@ import rasterio
 import rasterio.io
 import rasterio.profiles
 import rasterio.enums
-from typing_extensions import override
+from overrides import override
 
 from rvt.blender_functions import Normalization
 from rvt.enums import (
@@ -129,18 +129,18 @@ class RVTVisualization(ABC):
                 vertical_exaggeration_factor=vertical_exaggeration_factor,
             )
 
-    def save_visualization(
-        self,
+    @classmethod
+    def _validate_save_visualization_parameters(
+        cls,
         dem_path: Path,
-        vertical_exaggeration_factor: float,
-        overwrite: bool = True,
-        compression: rasterio.enums.Compression = rasterio.enums.Compression.lzw,
-        save_float_visualization: bool = True,
-        output_float_visualization_path: Optional[Path] = None,
-        output_float_visualization_nodata: Optional[float] = np.nan,
-        save_8bit_visualization: bool = False,
-        output_8bit_visualization_path: Optional[Path] = None,
+        overwrite: bool,
+        save_float_visualization: bool,
+        output_float_visualization_path: Optional[Path],
+        save_8bit_visualization: bool,
+        output_8bit_visualization_path: Optional[Path],
     ) -> None:
+        if not dem_path.exists():
+            raise ValueError(f"Dem path {dem_path} doesn't exist!")
         if not save_float_visualization and not save_8bit_visualization:
             raise ValueError(
                 "In order to save visualization `save_float_visualization` or `save_8bit_visualization` "
@@ -164,8 +164,29 @@ class RVTVisualization(ABC):
                     f"Output visualization path ({output_8bit_visualization_path}) already exists!"
                 )
 
+    def save_visualization(
+        self,
+        dem_path: Path,
+        vertical_exaggeration_factor: float,
+        overwrite: bool = True,
+        compression: rasterio.enums.Compression = rasterio.enums.Compression.lzw,
+        save_float_visualization: bool = True,
+        output_float_visualization_path: Optional[Path] = None,
+        output_float_visualization_nodata: Optional[float] = np.nan,
+        save_8bit_visualization: bool = False,
+        output_8bit_visualization_path: Optional[Path] = None,
+    ) -> None:
+        self._validate_save_visualization_parameters(
+            dem_path=dem_path,
+            overwrite=overwrite,
+            save_float_visualization=save_float_visualization,
+            output_float_visualization_path=output_float_visualization_path,
+            save_8bit_visualization=save_8bit_visualization,
+            output_8bit_visualization_path=output_8bit_visualization_path,
+        )
         dem_file: rasterio.io.DatasetReader
         with rasterio.open(dem_path, "r") as dem_file:
+            dem_transform = dem_file.profile["transform"]
             visualization_array = self.compute_visualization(
                 dem=dem_file.read(0),
                 dem_resolution=(abs(dem_file.transform[0]) + abs(dem_file.transform[4]))
@@ -173,50 +194,46 @@ class RVTVisualization(ABC):
                 dem_nodata=dem_file.nodata,
                 vertical_exaggeration_factor=vertical_exaggeration_factor,
             )
-            if save_float_visualization:
-                if not np.isnan(
-                    output_float_visualization_nodata
-                ):  # change nodata value
-                    visualization_array[
-                        np.isnan(visualization_array)
-                    ] = output_float_visualization_nodata
-                number_of_bands = (
-                    2
-                    if len(visualization_array.shape) == 2
-                    else visualization_array.shape[0]
-                )
-                visualization_profile = rasterio.profiles.DefaultGTiffProfile(
-                    transform=dem_file.profile["transform"],
-                    compression=compression.value,
-                    count=number_of_bands,
-                    dtype=rasterio.float32,
-                    nodata=output_float_visualization_nodata,
-                )
-                save_raster(
-                    output_path=output_float_visualization_path,
-                    rasterio_profile=visualization_profile,
-                    raster_array=visualization_array,
-                )
+        number_of_bands = (
+            1 if len(visualization_array.shape) == 2 else visualization_array.shape[0]
+        )
+        if save_float_visualization:
+            if not np.isnan(output_float_visualization_nodata):  # change nodata value
+                visualization_array[
+                    np.isnan(visualization_array)
+                ] = output_float_visualization_nodata
+            visualization_profile = rasterio.profiles.DefaultGTiffProfile(
+                transform=dem_transform,
+                compression=compression.value,
+                count=number_of_bands,
+                dtype=rasterio.float32,
+                nodata=output_float_visualization_nodata,
+            )
+            save_raster(
+                output_path=output_float_visualization_path,
+                rasterio_profile=visualization_profile,
+                raster_array=visualization_array,
+            )
 
-            if save_8bit_visualization:
-                visualization_8bit_array = self.convert_visualization_to_8bit(
-                    visualization_array=visualization_array, no_data=np.nan
-                )
-                nodata_mask = visualization_array[np.isnan(visualization_array)]
-                visualization_8bit_array[nodata_mask] = 0
-                visualization_profile = rasterio.profiles.DefaultGTiffProfile(
-                    transform=dem_file.profile["transform"],
-                    compression=compression.value,
-                    count=number_of_bands,
-                    dtype=rasterio.uint8,
-                    nodata=None,
-                )
-                save_raster(
-                    output_path=output_8bit_visualization_path,
-                    rasterio_profile=visualization_profile,
-                    raster_array=visualization_8bit_array,
-                    internal_nodata_mask_array=nodata_mask,
-                )
+        if save_8bit_visualization:
+            visualization_8bit_array = self.convert_visualization_to_8bit(
+                visualization_array=visualization_array, no_data=np.nan
+            )
+            nodata_mask = visualization_array[np.isnan(visualization_array)]
+            visualization_8bit_array[nodata_mask] = 0
+            visualization_profile = rasterio.profiles.DefaultGTiffProfile(
+                transform=dem_transform,
+                compression=compression.value,
+                count=number_of_bands,
+                dtype=rasterio.uint8,
+                nodata=None,
+            )
+            save_raster(
+                output_path=output_8bit_visualization_path,
+                rasterio_profile=visualization_profile,
+                raster_array=visualization_8bit_array,
+                internal_nodata_mask_array=nodata_mask,
+            )
 
 
 class Slope(RVTVisualization):
@@ -818,6 +835,211 @@ class HorizonVisualizations:
             vertical_exaggeration_factor=vertical_exaggeration_factor,
             no_data=dem_nodata,
         )
+
+    @classmethod
+    def _validate_save_horizon_visualization_parameters(
+        cls,
+        dem_path: Path,
+        overwrite: bool,
+        save_svf_float_visualization: bool,
+        output_svf_float_visualization_path: Optional[Path],
+        save_svf_8bit_visualization: bool,
+        output_svf_8bit_visualization_path: Optional[Path],
+        save_asvf_float_visualization: bool,
+        output_asvf_float_visualization_path: Optional[Path],
+        save_asvf_8bit_visualization: bool,
+        output_asvf_8bit_visualization_path: Optional[Path],
+        save_opns_float_visualization: bool,
+        output_opns_float_visualization_path: Optional[Path],
+        save_opns_8bit_visualization: bool,
+        output_opns_8bit_visualization_path: Optional[Path],
+    ) -> None:
+        if not dem_path.exists():
+            raise ValueError(f"Dem path {dem_path} doesn't exist!")
+        if not save_svf_float_visualization and not save_svf_8bit_visualization:
+            raise ValueError(
+                "In order to save visualization one of the `save_{vis}_float_visualization` or"
+                " `save_{vis}_8bit_visualization` needs to be True!"
+            )
+        if save_svf_float_visualization and output_svf_float_visualization_path is None:
+            raise ValueError(
+                "If `save_svf_float_visualization`=True, `output_svf_float_visualization_path` needs to be provided!"
+            )
+        if save_svf_8bit_visualization and output_svf_8bit_visualization_path is None:
+            raise ValueError(
+                "If `save_svf_8bit_visualization`=True, `output_svf_8bit_visualization_path` needs to be provided!"
+            )
+        if (
+            save_asvf_float_visualization
+            and output_asvf_float_visualization_path is None
+        ):
+            raise ValueError(
+                "If `save_asvf_float_visualization`=True, `output_asvf_float_visualization_path` needs to be provided!"
+            )
+        if save_asvf_8bit_visualization and output_asvf_8bit_visualization_path is None:
+            raise ValueError(
+                "If `save_asvf_8bit_visualization`=True, `output_asvf_8bit_visualization_path` needs to be provided!"
+            )
+        if (
+            save_opns_float_visualization
+            and output_opns_float_visualization_path is None
+        ):
+            raise ValueError(
+                "If `save_opns_float_visualization`=True, `output_opns_float_visualization_path` needs to be provided!"
+            )
+        if save_opns_8bit_visualization and output_opns_8bit_visualization_path is None:
+            raise ValueError(
+                "If `save_opns_8bit_visualization`=True, `output_opns_8bit_visualization_path` needs to be provided!"
+            )
+        if not overwrite:
+            if (
+                save_svf_float_visualization
+                and output_svf_float_visualization_path.exists()
+            ):
+                raise ValueError(
+                    f"Output visualization path ({output_svf_float_visualization_path}) already exists!"
+                )
+            if (
+                save_svf_8bit_visualization
+                and output_svf_8bit_visualization_path.exists()
+            ):
+                raise ValueError(
+                    f"Output visualization path ({output_svf_8bit_visualization_path}) already exists!"
+                )
+            if (
+                save_asvf_float_visualization
+                and output_asvf_float_visualization_path.exists()
+            ):
+                raise ValueError(
+                    f"Output visualization path ({output_asvf_float_visualization_path}) already exists!"
+                )
+            if (
+                save_asvf_8bit_visualization
+                and output_asvf_8bit_visualization_path.exists()
+            ):
+                raise ValueError(
+                    f"Output visualization path ({output_asvf_8bit_visualization_path}) already exists!"
+                )
+            if (
+                save_opns_float_visualization
+                and output_opns_float_visualization_path.exists()
+            ):
+                raise ValueError(
+                    f"Output visualization path ({output_opns_float_visualization_path}) already exists!"
+                )
+            if (
+                save_opns_8bit_visualization
+                and output_opns_8bit_visualization_path.exists()
+            ):
+                raise ValueError(
+                    f"Output visualization path ({output_opns_8bit_visualization_path}) already exists!"
+                )
+
+    def save_horizon_visualizations(
+        self,
+        dem_path: Path,
+        vertical_exaggeration_factor: float,
+        overwrite: bool = True,
+        compression: rasterio.enums.Compression = rasterio.enums.Compression.lzw,
+        save_svf_float_visualization: bool = True,
+        output_svf_float_visualization_path: Optional[Path] = None,
+        output_svf_float_visualization_nodata: Optional[float] = np.nan,
+        save_svf_8bit_visualization: bool = False,
+        output_svf_8bit_visualization_path: Optional[Path] = None,
+        save_asvf_float_visualization: bool = True,
+        output_asvf_float_visualization_path: Optional[Path] = None,
+        output_asvf_float_visualization_nodata: Optional[float] = np.nan,
+        save_asvf_8bit_visualization: bool = False,
+        output_asvf_8bit_visualization_path: Optional[Path] = None,
+        save_opns_float_visualization: bool = True,
+        output_opns_float_visualization_path: Optional[Path] = None,
+        output_opns_float_visualization_nodata: Optional[float] = np.nan,
+        save_opns_8bit_visualization: bool = False,
+        output_opns_8bit_visualization_path: Optional[Path] = None,
+    ):
+        self._validate_save_horizon_visualization_parameters(
+            dem_path=dem_path,
+            overwrite=overwrite,
+            save_svf_float_visualization=save_svf_float_visualization,
+            output_svf_float_visualization_path=output_svf_float_visualization_path,
+            save_svf_8bit_visualization=save_svf_8bit_visualization,
+            output_svf_8bit_visualization_path=output_svf_8bit_visualization_path,
+            save_asvf_float_visualization=save_asvf_float_visualization,
+            output_asvf_float_visualization_path=output_asvf_float_visualization_path,
+            save_asvf_8bit_visualization=save_asvf_8bit_visualization,
+            output_asvf_8bit_visualization_path=output_asvf_8bit_visualization_path,
+            save_opns_float_visualization=save_opns_float_visualization,
+            output_opns_float_visualization_path=output_opns_float_visualization_path,
+            save_opns_8bit_visualization=save_opns_8bit_visualization,
+            output_opns_8bit_visualization_path=output_opns_8bit_visualization_path,
+        )
+
+        dem_file: rasterio.io.DatasetReader
+        with rasterio.open(dem_path, "r") as dem_file:
+            dem_transform = dem_file.profile["transform"]
+            horizon_visualization_result = self.compute_horizon_visualizations(
+                dem=dem_file.read(0),
+                dem_resolution=(abs(dem_file.transform[0]) + abs(dem_file.transform[4]))
+                / 2,
+                dem_nodata=dem_file.nodata,
+                vertical_exaggeration_factor=vertical_exaggeration_factor,
+                compute_svf=save_svf_float_visualization or save_svf_8bit_visualization,
+                compute_opns=save_opns_float_visualization
+                or save_opns_8bit_visualization,
+                compute_asvf=save_asvf_float_visualization
+                or save_asvf_8bit_visualization,
+            )
+        svf_visualization_array = horizon_visualization_result.sky_view_factor
+        asvf_visualization_array = (
+            horizon_visualization_result.anisotropic_sky_view_factor
+        )
+        opns_visualization_array = horizon_visualization_result.openness
+        if save_svf_float_visualization:
+            assert svf_visualization_array is not None
+            if not np.isnan(
+                output_svf_float_visualization_nodata
+            ):  # change nodata value
+                svf_visualization_array = svf_visualization_array[
+                    np.isnan(svf_visualization_array)
+                ] = output_svf_float_visualization_nodata
+            number_of_bands = 1
+            visualization_profile = rasterio.profiles.DefaultGTiffProfile(
+                transform=dem_transform,
+                compression=compression.value,
+                count=number_of_bands,
+                dtype=rasterio.float32,
+                nodata=output_svf_float_visualization_nodata,
+            )
+            save_raster(
+                output_path=output_svf_float_visualization_path,
+                rasterio_profile=visualization_profile,
+                raster_array=svf_visualization_array,
+            )
+        if save_svf_8bit_visualization:
+            assert svf_visualization_array is not None
+            svf_visualization_8bit_array = (
+                self.sky_view_factor.convert_visualization_to_8bit(
+                    visualization_array=svf_visualization_array, no_data=np.nan
+                )
+            )
+            nodata_mask = svf_visualization_8bit_array[
+                np.isnan(svf_visualization_8bit_array)
+            ]
+            svf_visualization_8bit_array[nodata_mask] = 0
+            visualization_profile = rasterio.profiles.DefaultGTiffProfile(
+                transform=dem_transform,
+                compression=compression.value,
+                count=1,
+                dtype=rasterio.uint8,
+                nodata=None,
+            )
+            save_raster(
+                output_path=output_svf_8bit_visualization_path,
+                rasterio_profile=visualization_profile,
+                raster_array=svf_visualization_8bit_array,
+                internal_nodata_mask_array=nodata_mask,
+            )
+        # TODO: ZiM you stayed here, do it for asvf and opns
 
 
 class LocalDominance(RVTVisualization):
