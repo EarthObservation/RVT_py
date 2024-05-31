@@ -1,3 +1,9 @@
+"""
+Tiled processing with RVT_py
+Created on 6 May 2024
+@author: Nejc Čož, ZRC SAZU, Novi trg 2, 1000 Ljubljana, Slovenia
+"""
+
 import glob
 import multiprocessing as mp
 import time
@@ -120,7 +126,7 @@ def compute_save_blends(src_path, low_levels_path, blend_types, res, one_extent)
     default_2.keep_original_no_data = 0
 
     # default_2.hs_sun_el = 15
-    default_2.svf_r_max = ceil(10 / res)  # 10 m (divide by pixel size)
+    # default_2.svf_r_max = ceil(10 / res)  # 10 m (divide by pixel size)
     # ***************************************************************
 
     # Only compute required visualizations
