@@ -6,6 +6,7 @@ Created on 6 May 2024
 
 import glob
 import multiprocessing as mp
+import os
 import time
 from math import ceil
 from pathlib import Path
@@ -20,16 +21,17 @@ from rasterio.windows import from_bounds
 from rvt.blend_func import normalize_image
 
 
-def tiled_blending(blend_types, input_vrt_path, tiles_list, nr_processes):
+def tiled_blending(blend_types, input_vrt_path, tiles_list):
     t0 = time.time()
 
-    # ds_path = Path(input_vrt_path).parent
-    # # ds_name = ds_path.name
-    # # We are saving low-levels to a different disk, but we are keeping the folder structure the same
-    # ll_path = ds_path  # Path(low_levels_main_dir) / ds_name
-
+    # Prepare paths
     src_tif_path = Path(input_vrt_path)
     ll_path = src_tif_path.parent
+
+    # Determine nr_processes from available CPUs (leave two free)
+    nr_processes = os.cpu_count() - 2
+    if nr_processes < 1:
+        nr_processes = 1
 
     # We need to know the resolution, to select correct radius R# for svf/opns
     with rasterio.open(src_tif_path) as src:

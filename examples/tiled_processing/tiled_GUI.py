@@ -93,7 +93,6 @@ def on_button_clicked(b):
     # CONSTANT INPUT PARAMETERS
     tile_size = 1000  # in PIXELS!
     refgrid_existing = False  # Change to true, to avoid re-creating refgrid
-    nr_processes = 4  # How many CPUs to use?
 
     with output_widget:
         print(list_tifs)
@@ -146,8 +145,7 @@ def on_button_clicked(b):
             tiled_blending(
                 blend_types=blend_types,
                 input_vrt_path=in_file,
-                tiles_list=tiles_list,
-                nr_processes=nr_processes
+                tiles_list=tiles_list
             )
 
     button_run_adaf.disabled = False
