@@ -9,6 +9,14 @@
             "description": "Vertical exaggeration."
         },
         "Hillshade": {
+            "hs_compute": {
+                "value": 1,
+                "description": "If compute Hillshade. Parameter for GUIs."
+            },
+            "hs_sun_azi": {
+                "value": 315,
+                "description": "Solar azimuth angle (clockwise from North) in degrees."
+            },
             "hs_sun_el": {
                 "value": 35,
                 "description": "GENERAL terrain, used for calculating VAT general"
