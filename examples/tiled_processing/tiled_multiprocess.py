@@ -21,7 +21,7 @@ from rasterio.windows import from_bounds
 from rvt.blend_func import normalize_image
 
 
-def tiled_blending(blend_types, input_vrt_path, tiles_list):
+def tiled_blending(vis_types, blend_types, input_vrt_path, tiles_list):
     t0 = time.time()
 
     # Prepare paths
@@ -46,17 +46,17 @@ def tiled_blending(blend_types, input_vrt_path, tiles_list):
     # - one_tile  (variable)
     #
     # ----------------------------------
-    input_process_list = [(src_tif_path, ll_path, blend_types, res, i) for i in tiles_list]
-    with mp.Pool(nr_processes) as p:
-        realist = [p.apply_async(compute_save_blends, r) for r in input_process_list]
-        for result in realist:
-            pool_out = result.get()
-            print("Finished tile:", pool_out[1])
+    # input_process_list = [(src_tif_path, ll_path, vis_types, blend_types, res, i) for i in tiles_list]
+    # with mp.Pool(nr_processes) as p:
+    #     realist = [p.apply_async(compute_save_blends, r) for r in input_process_list]
+    #     for result in realist:
+    #         pool_out = result.get()
+    #         print("Finished tile:", pool_out[1])
 
-    # # SINGLE-PROCESS FOR DEBUG
-    # for one_tile in [tiles_list[3]]:
-    #     result = compute_save_blends(src_tif_path, ll_path, blend_types, res, one_tile)
-    #     print("Finished tile:", result[1])
+    # SINGLE-PROCESS FOR DEBUG
+    for one_tile in [tiles_list[3]]:
+        result = compute_save_blends(src_tif_path, ll_path, vis_types, blend_types, res, one_tile)
+        print("Finished tile:", result[1])
 
     # Build VRTs
     for ds_dir in [ll_path / i for i in blend_types]:
@@ -87,15 +87,16 @@ def tiled_blending(blend_types, input_vrt_path, tiles_list):
     print(f"Done with computing blends in {round(t1/60, ndigits=None)} min.")
 
 
-def compute_save_blends(src_path, low_levels_path, blend_types, res, one_extent):
+def compute_save_blends(src_path, low_levels_path, vis_types, blend_types, res, one_extent):
 
     # Determine name of the tile (coordinates)
     one_tile = f"{one_extent[0]:.0f}_{one_extent[1]:.0f}"
 
-    # Determine required datasets paths!
-    req_arrays, req_arr_dirs = get_required_arrays(blend_types, low_levels_path, res, one_tile, find_paths=False)
+    # ********** COMPUTE LOW-LEVELS *****************************************************
 
-    # ***************************************************************
+    # Determine req. low-level vis (vis_types from input + req. by blends)
+    req_arrays = get_required_arrays(vis_types, blend_types)
+
     # Default 1 is for GENERAL
     default_1 = rvt.default.DefaultValues()
     # Read from file, path is relative to the Current script directory
@@ -104,20 +105,6 @@ def compute_save_blends(src_path, low_levels_path, blend_types, res, one_extent)
 
     default_1.fill_no_data = 1
     default_1.keep_original_no_data = 0
-
-    # default_1.hs_sun_el = 35  # HILLSHADE FOR VAT General
-    # default_1.svf_r_max = ceil(5 / res)
-
-    # default_1.slrm_rad_cell = ceil(10 / res) if res < 1 else 10
-
-    # default_1.ld_min_rad = ceil(10 / res)
-    # default_1.ld_max_rad = ceil(20 / res)
-
-    # MSTP (default values divided by resolution to get meters)
-    # default_1.mstp_local_scale = tuple(ceil(ti / res) for ti in default_1.mstp_local_scale)
-    # default_1.mstp_meso_scale = tuple(ceil(ti / res) for ti in default_1.mstp_meso_scale)
-    # default_1.mstp_broad_scale = tuple(ceil(ti / res) for ti in default_1.mstp_broad_scale)
-
     # Default 2 is for FLAT
     default_2 = rvt.default.DefaultValues()
     # Read from file, path is relative to the Current script directory
@@ -126,11 +113,6 @@ def compute_save_blends(src_path, low_levels_path, blend_types, res, one_extent)
 
     default_2.fill_no_data = 1
     default_2.keep_original_no_data = 0
-
-    # default_2.hs_sun_el = 15
-    # default_2.svf_r_max = ceil(10 / res)  # 10 m (divide by pixel size)
-    # ***************************************************************
-
     # Only compute required visualizations
     in_arrays = compute_low_levels(
         default_1,
@@ -172,6 +154,7 @@ def compute_save_blends(src_path, low_levels_path, blend_types, res, one_extent)
 
     if "e2MSTP" in blend_types:
         if not req_arrays["rrim"]:
+            # TODO: RRIMa verjetno ne rabim shranit???
             save_path = low_levels_path / "rrim" / f"{one_tile}_rvt_RRIM.tif"
             save_path.parent.mkdir(exist_ok=True)
             in_arrays["rrim"] = blend_rrim(in_arrays, save_path)
@@ -183,6 +166,7 @@ def compute_save_blends(src_path, low_levels_path, blend_types, res, one_extent)
 
     if "e3MSTP" in blend_types:
         if not req_arrays["crim"]:
+            # TODO: CRIMa verjetno ne rabim shranit???
             save_path = low_levels_path / "crim" / f"{one_tile}_rvt_CRIM.tif"
             save_path.parent.mkdir(exist_ok=True)
             in_arrays["crim"] = blend_crim(in_arrays, save_path)
@@ -215,7 +199,7 @@ def vat_combined_8bit(dict_arrays, save_path):
         maximum=1.0,
         blend_mode="Multiply",
         opacity=25,
-        image=dict_arrays['svf_R_small'].squeeze()
+        image=dict_arrays['svf_1'].squeeze()
     )
     vat_combination_general.create_layer(
         vis_method="Openness - Positive",
@@ -224,7 +208,7 @@ def vat_combined_8bit(dict_arrays, save_path):
         maximum=93,
         blend_mode="Overlay",
         opacity=50,
-        image=dict_arrays['opns_R_small'].squeeze()
+        image=dict_arrays['opns_1'].squeeze()
     )
     vat_combination_general.create_layer(
         vis_method="Slope gradient",
@@ -233,7 +217,7 @@ def vat_combined_8bit(dict_arrays, save_path):
         maximum=50,
         blend_mode="Luminosity",
         opacity=50,
-        image=dict_arrays['slope'].squeeze()
+        image=dict_arrays['slope_1'].squeeze()
     )
     vat_combination_general.create_layer(
         vis_method="Hillshade",
@@ -242,7 +226,7 @@ def vat_combined_8bit(dict_arrays, save_path):
         maximum=1,
         blend_mode="Normal",
         opacity=100,
-        image=dict_arrays['hs_general'].squeeze()
+        image=dict_arrays['hillshade_1'].squeeze()
     )
     vat_1 = vat_combination_general.render_all_images(
         save_visualizations=False,
@@ -260,7 +244,7 @@ def vat_combined_8bit(dict_arrays, save_path):
         maximum=1.0,
         blend_mode="Multiply",
         opacity=25,
-        image=dict_arrays['svf_R_large'].squeeze()
+        image=dict_arrays['svf_2'].squeeze()
     )
     vat_combination_flat.create_layer(
         vis_method="Openness - Positive",
@@ -269,7 +253,7 @@ def vat_combined_8bit(dict_arrays, save_path):
         maximum=93,
         blend_mode="Overlay",
         opacity=50,
-        image=dict_arrays['opns_R_large'].squeeze()
+        image=dict_arrays['opns_2'].squeeze()
     )
     vat_combination_flat.create_layer(
         vis_method="Slope gradient",
@@ -278,7 +262,7 @@ def vat_combined_8bit(dict_arrays, save_path):
         maximum=15,
         blend_mode="Luminosity",
         opacity=50,
-        image=dict_arrays['slope'].squeeze()
+        image=dict_arrays['slope_1'].squeeze()
     )
     vat_combination_flat.create_layer(
         vis_method="Hillshade",
@@ -287,7 +271,7 @@ def vat_combined_8bit(dict_arrays, save_path):
         maximum=1,
         blend_mode="Normal",
         opacity=100,
-        image=dict_arrays['hs_flat'].squeeze()
+        image=dict_arrays['hillshade_2'].squeeze()
     )
     vat_2 = vat_combination_flat.render_all_images(
         save_visualizations=False,
@@ -338,21 +322,21 @@ def vat_flat_3bands(dict_arrays, save_path):
 
     svf = normalize_image(
         visualization="sky-view factor",
-        image=dict_arrays["svf_R_large"].squeeze(),
+        image=dict_arrays["svf_2"].squeeze(),
         min_norm=0.9,
         max_norm=1,
         normalization="value"
     )
     opns = normalize_image(
         visualization="openness - positive",
-        image=dict_arrays["opns_R_large"].squeeze(),
+        image=dict_arrays["opns_2"].squeeze(),
         min_norm=85,
         max_norm=93,
         normalization="value"
     )
     slope = normalize_image(
         visualization="slope gradient",
-        image=dict_arrays["slope"].squeeze(),
+        image=dict_arrays["slope_1"].squeeze(),
         min_norm=0,
         max_norm=15,
         normalization="value"
@@ -382,21 +366,21 @@ def vat_3bands(dict_arrays, save_path):
 
     svf = normalize_image(
         visualization="sky-view factor",
-        image=dict_arrays["svf_R_small"].squeeze(),
+        image=dict_arrays["svf_1"].squeeze(),
         min_norm=0.7,
         max_norm=1,
         normalization="value"
     )
     opns = normalize_image(
         visualization="openness - positive",
-        image=dict_arrays["opns_R_small"].squeeze(),
+        image=dict_arrays["opns_1"].squeeze(),
         min_norm=68,
         max_norm=93,
         normalization="value"
     )
     slope = normalize_image(
         visualization="slope gradient",
-        image=dict_arrays["slope"].squeeze(),
+        image=dict_arrays["slope_1"].squeeze(),
         min_norm=0,
         max_norm=50,
         normalization="value"
@@ -474,13 +458,13 @@ def blend_rrim(dict_arrays, save_path):
                            minimum=0, maximum=45,
                            blend_mode="Normal", opacity=50,
                            colormap="Reds_r", min_colormap_cut=0, max_colormap_cut=1,
-                           image=dict_arrays['slope'].squeeze()
+                           image=dict_arrays['slope_1'].squeeze()
                            )
     comb_rrim.create_layer(vis_method="Opns_Pos_Neg/2", normalization="Value",
                            minimum=-25, maximum=25,
                            blend_mode="Normal", opacity=100,
                            colormap="Greys_r", min_colormap_cut=0, max_colormap_cut=1,
-                           image=((dict_arrays['opns_R_small'] - dict_arrays['neg_opns_R_small'])/2).squeeze()
+                           image=((dict_arrays['opns_1'] - dict_arrays['neg_opns_1'])/2).squeeze()
                            )
     out_rrim = comb_rrim.render_all_images(save_visualizations=False,
                                            save_render_path=None,
@@ -502,7 +486,7 @@ def blend_e2mstp(dict_arrays, save_path):
     comb_e2mstp.create_layer(vis_method="slrm", normalization="value",
                              minimum=-0.5, maximum=0.5,
                              blend_mode="screen", opacity=25,
-                             image=dict_arrays["slrm_vis"].squeeze()
+                             image=dict_arrays["slrm_1"].squeeze()
                              )
     comb_e2mstp.create_layer(vis_method="rrim", normalization="value",
                              minimum=0, maximum=1,
@@ -512,13 +496,13 @@ def blend_e2mstp(dict_arrays, save_path):
     comb_e2mstp.create_layer(vis_method="mstp", normalization="value",
                              minimum=0, maximum=1,
                              blend_mode="normal", opacity=100,
-                             image=dict_arrays["mstp"]
+                             image=dict_arrays["mstp_1"]
                              )
     out_e2mstp = comb_e2mstp.render_all_images(save_visualizations=False,
                                                save_render_path=None,
                                                no_data=np.nan)
     out_e2mstp = out_e2mstp.astype("float32")
-    out_e2mstp[np.isnan(dict_arrays["mstp"])] = np.nan
+    out_e2mstp[np.isnan(dict_arrays["mstp_1"])] = np.nan
     out_e2mstp[out_e2mstp > 1] = 1
     # Save GeoTIF
     rasterio_save(
@@ -536,18 +520,18 @@ def blend_crim(dict_arrays, save_path):
     comb_crim.create_layer(vis_method="Openness_Pos-Neg", normalization="Value",
                            minimum=-28, maximum=28,
                            blend_mode="overlay", opacity=50,
-                           image=(dict_arrays['opns_R_small'] - dict_arrays['neg_opns_R_small']).squeeze()
+                           image=(dict_arrays['opns_1'] - dict_arrays['neg_opns_1']).squeeze()
                            )
     comb_crim.create_layer(vis_method="Openness_Pos-Neg", normalization="Value",
                            minimum=-28, maximum=28,
                            blend_mode="luminosity", opacity=50,
-                           image=(dict_arrays['opns_R_small'] - dict_arrays['neg_opns_R_small']).squeeze()
+                           image=(dict_arrays['opns_1'] - dict_arrays['neg_opns_1']).squeeze()
                            )
     comb_crim.create_layer(vis_method="slope gradient red", normalization="Value",
                            minimum=0, maximum=45,
                            blend_mode="normal", opacity=100,
                            colormap="OrRd", min_colormap_cut=0, max_colormap_cut=1,
-                           image=dict_arrays['slope'].squeeze()
+                           image=dict_arrays['slope_1'].squeeze()
                            )
     out_crim = comb_crim.render_all_images(save_visualizations=False,
                                            save_render_path=None,
@@ -569,7 +553,7 @@ def blend_e3mstp(dict_arrays, save_path):
     comb_e3mstp.create_layer(vis_method="slrm", normalization="value",
                              minimum=-0.5, maximum=0.5,
                              blend_mode="screen", opacity=25,
-                             image=dict_arrays["slrm_vis"].squeeze()
+                             image=dict_arrays["slrm_1"].squeeze()
                              )
     comb_e3mstp.create_layer(vis_method="crim", normalization="value",
                              minimum=0, maximum=1,
@@ -579,13 +563,13 @@ def blend_e3mstp(dict_arrays, save_path):
     comb_e3mstp.create_layer(vis_method="mstp", normalization="value",
                              minimum=0, maximum=1,
                              blend_mode="normal", opacity=100,
-                             image=dict_arrays["mstp"]
+                             image=dict_arrays["mstp_1"]
                              )
     out_e3mstp = comb_e3mstp.render_all_images(save_visualizations=False,
                                                save_render_path=None,
                                                no_data=np.nan)
     out_e3mstp = out_e3mstp.astype("float32")
-    out_e3mstp[np.isnan(dict_arrays["mstp"])] = np.nan
+    out_e3mstp[np.isnan(dict_arrays["mstp_1"])] = np.nan
     out_e3mstp[out_e3mstp > 1] = 1
     # Save GeoTIF
     rasterio_save(
@@ -609,7 +593,7 @@ def blend_e4mstp(dict_arrays, save_path):
         vis_method="mstp",
         normalization="value", minimum=0, maximum=1,
         blend_mode="overlay", opacity=90,
-        image=dict_arrays['mstp']
+        image=dict_arrays['mstp_1']
     )
     comb_nv.create_layer(
         vis_method="Comb svf",
@@ -635,7 +619,7 @@ def blend_e4mstp(dict_arrays, save_path):
         no_data=np.nan
     )
     out_e4mstp = out_e4mstp.astype("float32")
-    out_e4mstp[np.isnan(dict_arrays['mstp'])] = np.nan
+    out_e4mstp[np.isnan(dict_arrays['mstp_1'])] = np.nan
     out_e4mstp[out_e4mstp > 1] = 1
 
     # Save GeoTIF
@@ -657,7 +641,7 @@ def blend_coloured_slope(dict_arrays, save_path=None):
         minimum=0, maximum=55,
         blend_mode="normal", opacity=100,
         colormap="Reds_r", min_colormap_cut=0, max_colormap_cut=1,
-        image=dict_arrays['slope'].squeeze()
+        image=dict_arrays['slope_1'].squeeze()
     )
     coloured_slope = comb_cs.render_all_images(
         save_visualizations=False,
@@ -689,13 +673,13 @@ def blend_opns_ld(dict_arrays, save_path=None):
         vis_method="Openness difference", normalization="Value",
         minimum=-15, maximum=15,
         blend_mode="normal", opacity=50,
-        image=(dict_arrays['opns_R_small'] - dict_arrays['neg_opns_R_small']).squeeze()
+        image=(dict_arrays['opns_1'] - dict_arrays['neg_opns_1']).squeeze()
     )
     comb.create_layer(
         vis_method="Local dominance", normalization="Value",
         minimum=0.5, maximum=1.8,
         blend_mode="normal", opacity=100,
-        image=dict_arrays['ld'].squeeze()
+        image=dict_arrays['ld_1'].squeeze()
     )
     opns_ld = comb.render_all_images(
         save_visualizations=False,
@@ -725,12 +709,12 @@ def blend_svf_combined(dict_arrays, save_path=None):
     comb_svf.create_layer(vis_method="Sky-view factor", normalization="Value",
                           minimum=0.7, maximum=1,
                           blend_mode="normal", opacity=50,
-                          image=dict_arrays['svf_R_small'].squeeze()
+                          image=dict_arrays['svf_1'].squeeze()
                           )
     comb_svf.create_layer(vis_method="Sky-view factor", normalization="Value",
                           minimum=0.9, maximum=1,
                           blend_mode="normal", opacity=100,
-                          image=dict_arrays['svf_R_large'].squeeze()
+                          image=dict_arrays['svf_2'].squeeze()
                           )
     cs_svf = comb_svf.render_all_images(save_visualizations=False,
                                         save_render_path=None,
@@ -761,98 +745,82 @@ def rasterio_save(array, profile, save_path, nodata=None):
         dst.write(array)
 
 
-def get_required_arrays(blend_types, low_levels_path, res, one_tile, find_paths=True):
-    r_large = ceil(10 / res) if res < 1 else 10
-    r_small = ceil(5 / res)
-
+def get_required_arrays(vis_types, blend_types):
+    # Initialize dict with all possible visualizations
+    # NOTE: The keys with "_1" have to match the input values of visualizations in GUI!!!
     req_arrays = {
-        # These are visualizations:
-        "slope": False,
-        "slrm_vis": False,
-        "ld": False,
-        "mstp": False,
+        # These are visualizations (also GENERAL for VAT):
+        "slope_1": False,
+        "hillshade_1": False,
+        "multi_hillshade_1": False,
+        "slrm_1": False,
+        "svf_1": False,  # large = FLAT = 5m
+        "opns_1": False,
+        "neg_opns_1": False,
+        "ld_1": False,
+        "sky_illumination_1": False,
+        "shadow_horizon_1": False,
+        "msrm_1": False,
+        "mstp_1": False,
 
-        # Hillshade general/flat
-        "hs_general": False,
-        "hs_flat": False,
-
-        # small = GENERAL = 5m
-        "svf_R_small": False,
-        "opns_R_small": False,
-        "neg_opns_R_small": False,
-
-        # large = FLAT = 10m
-        "svf_R_large": False,
-        "opns_R_large": False,
-        "neg_opns_R_large": False,
-
-        # These are combinations:
-        "rrim": False,
-        "crim": False
+        # Flat terrain:
+        "hillshade_2": False,
+        "svf_2": False,  # large = FLAT = 10m
+        "opns_2": False,
+        "neg_opns_2": False
     }
 
+    # Update dictionary based on given visualizations:
+    for key in vis_types:
+        key = key + "_1"
+        if key in req_arrays:
+            req_arrays[key] = True
+
+    # Update dictionary based on given blends:
     if "VAT_3B" in blend_types:
-        req_arrays["svf_R_small"] = True
-        req_arrays["opns_R_small"] = True
-        req_arrays["slope"] = True
+        req_arrays["svf_1"] = True
+        req_arrays["opns_1"] = True
+        req_arrays["slope_1"] = True
 
     if "VAT_flat_3B" in blend_types:
-        req_arrays["svf_R_large"] = True
-        req_arrays["opns_R_large"] = True
-        req_arrays["slope"] = True
+        req_arrays["svf_2"] = True
+        req_arrays["opns_2"] = True
+        req_arrays["slope_1"] = True
 
     if "VAT_combined_3B" in blend_types:
-        req_arrays["svf_R_large"] = True
-        req_arrays["opns_R_large"] = True
-        req_arrays["svf_R_small"] = True
-        req_arrays["opns_R_small"] = True
-        req_arrays["slope"] = True
-
-    if "SLRM" in blend_types:
-        req_arrays["slrm_vis"] = True
+        req_arrays["svf_2"] = True
+        req_arrays["opns_2"] = True
+        req_arrays["svf_1"] = True
+        req_arrays["opns_1"] = True
+        req_arrays["slope_1"] = True
 
     if ("e3MSTP" in blend_types) or ("e2MSTP" in blend_types):
-        req_arrays["slrm_vis"] = True
-        req_arrays["mstp"] = True
-        req_arrays["slope"] = True
-        req_arrays["opns_R_small"] = True
-        req_arrays["neg_opns_R_small"] = True
+        req_arrays["slrm_1"] = True
+        req_arrays["mstp_1"] = True
+        req_arrays["slope_1"] = True
+        req_arrays["opns_1"] = True
+        req_arrays["neg_opns_1"] = True
 
     if "e4MSTP" in blend_types:
-        req_arrays["ld"] = True
-        req_arrays["svf_R_small"] = True,
-        req_arrays["mstp"] = True
-        req_arrays["svf_R_large"] = True
-        req_arrays["opns_R_large"] = True
-        req_arrays["opns_R_small"] = True
-        req_arrays["neg_opns_R_small"] = True
-        req_arrays["slope"] = True
+        req_arrays["ld_1"] = True
+        req_arrays["svf_1"] = True,
+        req_arrays["mstp_1"] = True
+        req_arrays["svf_2"] = True
+        req_arrays["opns_2"] = True
+        req_arrays["opns_1"] = True
+        req_arrays["neg_opns_1"] = True
+        req_arrays["slope_1"] = True
 
     if "vat_combined_8bit" in blend_types:
-        req_arrays["svf_R_large"] = True
-        req_arrays["opns_R_large"] = True
-        req_arrays["svf_R_small"] = True
-        req_arrays["opns_R_small"] = True
-        req_arrays["slope"] = True
-        req_arrays["hs_general"] = True
-        req_arrays["hs_flat"] = True
+        req_arrays["svf_2"] = True
+        req_arrays["opns_2"] = True
+        req_arrays["svf_1"] = True
+        req_arrays["opns_1"] = True
+        req_arrays["slope_1"] = True
+        req_arrays["hillshade_1"] = True
+        req_arrays["hillshade_2"] = True
 
-    if find_paths:
-        req_arr_dirs = {}
-        for (k, v) in req_arrays.items():
-            vis_type = k
-            if k[-6:] == "_small":
-                k = k.replace("_small", f"{r_small}")
-            elif k[-6:] == "_large":
-                k = k.replace("_large", f"{r_large}")
-
-            if v:
-                add_path = next(Path(low_levels_path / k).glob(f"{one_tile}*.tif"))
-                req_arr_dirs[vis_type] = add_path
-    else:
-        req_arr_dirs = None
-
-    return req_arrays, req_arr_dirs
+    return req_arrays
 
 
 def compute_low_levels(
@@ -864,13 +832,13 @@ def compute_low_levels(
 ):
     # Read buffer values from defaults (already changed from meters to pixels!!!)!
     all_buffers = {
-        "slope": 0,
-        "slrm_vis": default_1.slrm_rad_cell,
-        "ld": default_1.ld_max_rad,
-        # "mstp": default_1.mstp_broad_scale[1],
+        "slope_1": 0,
+        "slrm_1": default_1.slrm_rad_cell,
+        "ld_1": default_1.ld_max_rad,
+        # "mstp_1": default_1.mstp_broad_scale[1],
 
-        "hs_general": 1,
-        "hs_flat": 1,
+        "hillshade_1": 1,
+        "hillshade_2": 1,
 
         "svf_GEN": default_1.svf_r_max,  # SVF, OPNS+ and OPNS- for (GENERAL = SMALL = 5m)
 
@@ -879,9 +847,9 @@ def compute_low_levels(
 
     # Filter buffer_dict based on required visualizations
     req_visualizations = [a for (a, v) in vis_types.items() if v]
-    if any(value in req_visualizations for value in ["svf_R_small", "opns_R_small", "neg_opns_R_small"]):
+    if any(value in req_visualizations for value in ["svf_1", "opns_1", "neg_opns_1"]):
         req_visualizations.append("svf_GEN")
-    if any(value in req_visualizations for value in ["svf_R_large", "opns_R_large", "neg_opns_R_large"]):
+    if any(value in req_visualizations for value in ["svf_2", "opns_2", "neg_opns_2"]):
         req_visualizations.append("svf_FLAT")
     buffer_dict = {key: all_buffers[key] for key in req_visualizations if key in all_buffers}
 
@@ -909,7 +877,7 @@ def compute_low_levels(
             sliced_arr = dict_arrays["array"][arr_slice:-arr_slice, arr_slice:-arr_slice]
 
         # Run visualization
-        if vis_type == "slope":
+        if vis_type == "slope_1":
             vis_out = {
                 vis_type: default_1.get_slope(
                     sliced_arr,
@@ -917,19 +885,19 @@ def compute_low_levels(
                     resolution_y=dict_arrays["resolution"][1]
                 )
             }
-        elif vis_type == "slrm_vis":
+        elif vis_type == "slrm_1":
             vis_out = {
                 vis_type: default_1.get_slrm(sliced_arr)
             }
-        elif vis_type == "ld":
+        elif vis_type == "ld_1":
             vis_out = {
                 vis_type: default_1.get_local_dominance(sliced_arr)
             }
-        elif vis_type == "mstp":
+        elif vis_type == "mstp_1":
             vis_out = {
                 vis_type: default_1.get_mstp(sliced_arr)
             }
-        elif vis_type == "hs_general":
+        elif vis_type == "hillshade_1":
             vis_out = {
                 vis_type: default_1.get_hillshade(
                     sliced_arr,
@@ -937,7 +905,7 @@ def compute_low_levels(
                     resolution_y=dict_arrays["resolution"][1]
                 )
             }
-        elif vis_type == "hs_flat":
+        elif vis_type == "hillshade_2":
             vis_out = {
                 vis_type: default_2.get_hillshade(
                     sliced_arr,
@@ -947,9 +915,9 @@ def compute_low_levels(
             }
         elif vis_type == "svf_GEN":  # small, GENERAL, 5m
             # Check which of the 3 to be computed
-            compute_svf = True if "svf_R_small" in req_visualizations else False
-            compute_opns = True if "opns_R_small" in req_visualizations else False
-            compute_neg_opns = True if "neg_opns_R_small" in req_visualizations else False
+            compute_svf = True if "svf_1" in req_visualizations else False
+            compute_opns = True if "opns_1" in req_visualizations else False
+            compute_neg_opns = True if "neg_opns_1" in req_visualizations else False
 
             if compute_svf or compute_opns:
                 vis_out = default_1.get_sky_view_factor(
@@ -960,20 +928,20 @@ def compute_low_levels(
                 )
                 # Rename to correct vis_type (which svf is this?)
                 for k in list(vis_out.keys()):
-                    vis_out[f"{k}_R_small"] = vis_out.pop(k)
+                    vis_out[f"{k}_1"] = vis_out.pop(k)
 
             if compute_neg_opns:
                 vis_out = {
-                    "neg_opns_R_small": default_1.get_neg_opns(
+                    "neg_opns_1": default_1.get_neg_opns(
                         sliced_arr,
                         dict_arrays["resolution"][0]
                     )
                 }
         elif vis_type == "svf_FLAT":  # large, FLAT, 10m
             # Check which of the 3 to be computed
-            compute_svf = True if "svf_R_large" in req_visualizations else False
-            compute_opns = True if "opns_R_large" in req_visualizations else False
-            compute_neg_opns = True if "neg_opns_R_large" in req_visualizations else False
+            compute_svf = True if "svf_2" in req_visualizations else False
+            compute_opns = True if "opns_2" in req_visualizations else False
+            compute_neg_opns = True if "neg_opns_2" in req_visualizations else False
 
             if compute_svf or compute_opns:
                 vis_out = default_1.get_sky_view_factor(
@@ -984,11 +952,11 @@ def compute_low_levels(
                 )
                 # Rename to correct vis_type (which svf is this?)
                 for k in list(vis_out.keys()):
-                    vis_out[f"{k}_R_large"] = vis_out.pop(k)
+                    vis_out[f"{k}_2"] = vis_out.pop(k)
 
             if compute_neg_opns:
                 vis_out = {
-                    "neg_opns_R_large": default_1.get_neg_opns(
+                    "neg_opns_2": default_1.get_neg_opns(
                         sliced_arr,
                         dict_arrays["resolution"][0]
                     )

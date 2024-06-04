@@ -10,8 +10,13 @@ list_tifs = [
 ]
 
 # Select visualizations
+# 'slope_aspect', 'hillshade', 'multi_hillshade', 'slrm', 'sky_view_factor', 'openness', 'neg_openness',
+# 'local_dominance', 'sky_illumination', 'shadow_horizon', 'msrm', 'mstp'
+vis_types = [
+    "slrm",
+]
+# "vat_combined_8bit" / "e2MSTP" / "e4MSTP"
 blend_types = [
-    "SLRM",
     "vat_combined_8bit"
 ]
 
@@ -55,6 +60,7 @@ for in_file in list_tifs:
     tiles_list = tiles_extents[["minx", "miny", "maxx", "maxy"]].values.tolist()
 
     tiled_blending(
+        vis_types=vis_types,
         blend_types=blend_types,
         input_vrt_path=in_file,
         tiles_list=tiles_list
