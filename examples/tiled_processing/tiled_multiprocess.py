@@ -27,34 +27,35 @@ def tiled_blending(vis_types, blend_types, input_vrt_path, tiles_list):
     src_tif_path = Path(input_vrt_path)
     ll_path = src_tif_path.parent
 
-    # Determine nr_processes from available CPUs (leave two free)
-    nr_processes = os.cpu_count() - 2
-    if nr_processes < 1:
-        nr_processes = 1
+    if tiles_list:
+        # Determine nr_processes from available CPUs (leave two free)
+        nr_processes = os.cpu_count() - 2
+        if nr_processes < 1:
+            nr_processes = 1
 
-    # We need to know the resolution, to select correct radius R# for svf/opns
-    with rasterio.open(src_tif_path) as src:
-        res = src.res[0]
+        # # HERE MULTIPROCESSING STARTS
+        #
+        # - ds_path  (const) ... for creating output file name
+        # - ll_path  (const)
+        # - blend_types  (const)
+        # - one_tile  (variable)
+        #
+        # ----------------------------------
+        # input_process_list = [(src_tif_path, ll_path, vis_types, blend_types, i) for i in tiles_list]
+        # with mp.Pool(nr_processes) as p:
+        #     realist = [p.apply_async(compute_save_blends, r) for r in input_process_list]
+        #     for result in realist:
+        #         pool_out = result.get()
+        #         print("Finished tile:", pool_out[1])
 
-    # # HERE MULTIPROCESSING STARTS
-    #
-    # - ds_path  (const) ... for creating output file name
-    # - ll_path  (const)
-    # - blend_types  (const)
-    # - res  (const)
-    # - one_tile  (variable)
-    #
-    # ----------------------------------
-    # input_process_list = [(src_tif_path, ll_path, vis_types, blend_types, res, i) for i in tiles_list]
-    # with mp.Pool(nr_processes) as p:
-    #     realist = [p.apply_async(compute_save_blends, r) for r in input_process_list]
-    #     for result in realist:
-    #         pool_out = result.get()
-    #         print("Finished tile:", pool_out[1])
+        # SINGLE-PROCESS FOR DEBUG
+        for one_tile in [tiles_list[3]]:
+            result = compute_save_blends(src_tif_path, ll_path, vis_types, blend_types, one_tile)
+            print("Finished tile:", result[1])
 
-    # SINGLE-PROCESS FOR DEBUG
-    for one_tile in [tiles_list[3]]:
-        result = compute_save_blends(src_tif_path, ll_path, vis_types, blend_types, res, one_tile)
+    else:
+        one_tile = None
+        result = compute_save_blends(src_tif_path, ll_path, vis_types, blend_types, one_tile)
         print("Finished tile:", result[1])
 
     # # Build VRTs
@@ -86,11 +87,16 @@ def tiled_blending(vis_types, blend_types, input_vrt_path, tiles_list):
     print(f"Done with computing blends in {round(t1/60, ndigits=None)} min.")
 
 
-def compute_save_blends(src_path, low_levels_path, vis_types, blend_types, res, one_extent):
+def compute_save_blends(src_path, low_levels_path, vis_types, blend_types, one_extent):
 
-    # Determine name of the tile (coordinates)
-    one_tile = f"{one_extent[0]:.0f}_{one_extent[1]:.0f}"
-
+    # Prepare filenames for saving
+    if one_extent:
+        # Determine name of the tile (coordinates)
+        one_tile_name = f"{one_extent[0]:.0f}_{one_extent[1]:.0f}"
+    else:
+        one_tile_name = None
+    # Filename that will be use RVT built-in function for naming
+    filename_rvt = src_path.name
     # ********** COMPUTE LOW-LEVELS *****************************************************
 
     # Determine req. low-level vis (vis_types from input + req. by blends)
@@ -126,9 +132,13 @@ def compute_save_blends(src_path, low_levels_path, vis_types, blend_types, res, 
     # ********** SAVE SELECTED VISUALIZATIONS *****************************************************
     for vis in vis_types:
         # Determine save path
-        # TODO: default_1.get_slrm_file_name("test"), have to add name of the file!
-        save_path = low_levels_path / vis / f"{one_tile}_rvt_{vis}.tif"
-        save_path.parent.mkdir(exist_ok=True)
+        if not one_tile_name:
+            # Use RVT naming
+            save_path = low_levels_path / getattr(default_1, "get_" + vis + "_path")(filename_rvt)
+        else:
+            # Use tile naming
+            save_path = low_levels_path / vis / f"{one_tile_name}_rvt_{vis}.tif"
+            save_path.parent.mkdir(exist_ok=True)
 
         # Convert to byte scale and save to disk
         vis_bytscl_save(in_arrays, vis, default_1, save_path)
@@ -138,7 +148,7 @@ def compute_save_blends(src_path, low_levels_path, vis_types, blend_types, res, 
     # Calculate selected BLENDS
     if "vat_combined_8bit" in blend_types:
         # Determine save path
-        save_path = low_levels_path / "VAT_combined_8bit" / f"{one_tile}_rvt_VAT_comb_8bit.tif"
+        save_path = low_levels_path / "VAT_combined_8bit" / f"{one_tile_name}_rvt_VAT_comb_8bit.tif"
         save_path.parent.mkdir(exist_ok=True)
         in_arrays["vat_combined_8bit"] = vat_combined_8bit(in_arrays, save_path)
 
@@ -161,7 +171,7 @@ def compute_save_blends(src_path, low_levels_path, vis_types, blend_types, res, 
     #     vat_combined_3bands(in_arrays, save_path)
 
     if "rrim" in blend_types:
-        save_path = low_levels_path / "rrim" / f"{one_tile}_rvt_RRIM.tif"
+        save_path = low_levels_path / "rrim" / f"{one_tile_name}_rvt_RRIM.tif"
         save_path.parent.mkdir(exist_ok=True)
         in_arrays["rrim"] = blend_rrim(in_arrays, save_path)
 
@@ -169,12 +179,12 @@ def compute_save_blends(src_path, low_levels_path, vis_types, blend_types, res, 
         if "rrim" not in in_arrays.keys():
             in_arrays["rrim"] = blend_crim(in_arrays)
         # Determine save path
-        save_path = low_levels_path / "e2MSTP" / f"{one_tile}_rvt_e2MSTP.tif"
+        save_path = low_levels_path / "e2MSTP" / f"{one_tile_name}_rvt_e2MSTP.tif"
         save_path.parent.mkdir(exist_ok=True)
         blend_e2mstp(in_arrays, save_path)
 
     if "crim" in blend_types:
-        save_path = low_levels_path / "crim" / f"{one_tile}_rvt_CRIM.tif"
+        save_path = low_levels_path / "crim" / f"{one_tile_name}_rvt_CRIM.tif"
         save_path.parent.mkdir(exist_ok=True)
         in_arrays["crim"] = blend_crim(in_arrays, save_path)
 
@@ -183,17 +193,17 @@ def compute_save_blends(src_path, low_levels_path, vis_types, blend_types, res, 
         if "crim" not in in_arrays.keys():
             in_arrays["crim"] = blend_crim(in_arrays)
         # Determine save path
-        save_path = low_levels_path / "e3MSTP" / f"{one_tile}_rvt_e3MSTP.tif"
+        save_path = low_levels_path / "e3MSTP" / f"{one_tile_name}_rvt_e3MSTP.tif"
         save_path.parent.mkdir(exist_ok=True)
         blend_e3mstp(in_arrays, save_path)
 
     if "e4MSTP" in blend_types:
         # Determine save path
-        save_path = low_levels_path / "e4MSTP" / f"{one_tile}_rvt_e4MSTP.tif"
+        save_path = low_levels_path / "e4MSTP" / f"{one_tile_name}_rvt_e4MSTP.tif"
         save_path.parent.mkdir(exist_ok=True)
         blend_e4mstp(in_arrays, save_path)
 
-    return 0, one_tile
+    return 0, one_tile_name
 
 
 def vat_combined_8bit(dict_arrays, save_path):
@@ -1086,6 +1096,9 @@ def get_raster_vrt(vrt_path, extents, buffer):
 
     """
     with rasterio.open(vrt_path) as vrt:
+        # If extents are not given, use source extents
+        extents = list(vrt.bounds)
+
         # Read VRT metadata
         vrt_res = vrt.res
         vrt_nodata = vrt.nodata
