@@ -172,13 +172,15 @@ def compute_save_blends(src_path, low_levels_path, vis_types, blend_types, res, 
         save_path.parent.mkdir(exist_ok=True)
         blend_e2mstp(in_arrays, save_path)
 
-    if "e3MSTP" in blend_types:
-        if not req_arrays["crim"]:
-            # TODO: CRIMa verjetno ne rabim shranit???
-            save_path = low_levels_path / "crim" / f"{one_tile}_rvt_CRIM.tif"
-            save_path.parent.mkdir(exist_ok=True)
-            in_arrays["crim"] = blend_crim(in_arrays, save_path)
+    if "crim" in blend_types:
+        save_path = low_levels_path / "crim" / f"{one_tile}_rvt_CRIM.tif"
+        save_path.parent.mkdir(exist_ok=True)
+        in_arrays["crim"] = blend_crim(in_arrays, save_path)
 
+    if "e3MSTP" in blend_types:
+        # Check if CRIM was already calculated
+        if "crim" not in in_arrays.keys():
+            in_arrays["crim"] = blend_crim(in_arrays)
         # Determine save path
         save_path = low_levels_path / "e3MSTP" / f"{one_tile}_rvt_e3MSTP.tif"
         save_path.parent.mkdir(exist_ok=True)
@@ -307,7 +309,7 @@ def vat_combined_8bit(dict_arrays, save_path):
         no_data=np.nan
     )
 
-    #
+    # Convert to 8bit image
     out_vat_combined = rvt.vis.byte_scale(
         out_vat_combined,
         c_min=0,
@@ -536,7 +538,7 @@ def blend_e2mstp(dict_arrays, save_path):
     return out_e2mstp
 
 
-def blend_crim(dict_arrays, save_path):
+def blend_crim(dict_arrays, save_path=None):
     comb_crim = rvt.blend.BlenderCombination()
     comb_crim.create_layer(vis_method="Openness_Pos-Neg", normalization="Value",
                            minimum=-28, maximum=28,
@@ -558,13 +560,25 @@ def blend_crim(dict_arrays, save_path):
                                            save_render_path=None,
                                            no_data=np.nan)
     out_crim = out_crim.astype("float32")
+
     # Save GeoTIF
-    rasterio_save(
-        out_crim,
-        dict_arrays['profile'],
-        save_path=save_path,
-        nodata=np.nan
-    )
+    if save_path:
+        # Convert to 8bit image
+        out_crim_8bit = rvt.vis.byte_scale(
+            out_crim,
+            c_min=0,
+            c_max=1
+        )
+
+        # Save GeoTIF
+        out_profile = dict_arrays['profile'].copy()
+        out_profile.update(dtype='uint8')
+        rasterio_save(
+            out_crim_8bit,
+            out_profile,
+            save_path=save_path,
+            nodata=None
+        )
 
     return out_crim
 
@@ -590,14 +604,24 @@ def blend_e3mstp(dict_arrays, save_path):
                                                save_render_path=None,
                                                no_data=np.nan)
     out_e3mstp = out_e3mstp.astype("float32")
-    out_e3mstp[np.isnan(dict_arrays["mstp_1"])] = np.nan
+    out_e3mstp[np.isnan(dict_arrays["crim"])] = np.nan
     out_e3mstp[out_e3mstp > 1] = 1
+
+    # Convert to 8bit image
+    out_e3mstp = rvt.vis.byte_scale(
+        out_e3mstp,
+        c_min=0,
+        c_max=1
+    )
+
     # Save GeoTIF
+    out_profile = dict_arrays['profile'].copy()
+    out_profile.update(dtype='uint8')
     rasterio_save(
         out_e3mstp,
-        dict_arrays['profile'],
+        out_profile,
         save_path=save_path,
-        nodata=np.nan
+        nodata=None
     )
 
 
@@ -866,12 +890,14 @@ def compute_low_levels(
         "svf_FLAT": default_2.svf_r_max,  # SVF, OPNS+ and OPNS- for (FLAT = LARGE = 10m)
     }
 
-    # Filter buffer_dict based on required visualizations
+    # Get required visualizations (account for SVF, opns and neg.opns, they are calculated in the same function)
     req_visualizations = [a for (a, v) in vis_types.items() if v]
     if any(value in req_visualizations for value in ["svf_1", "opns_1", "neg_opns_1"]):
         req_visualizations.append("svf_GEN")
     if any(value in req_visualizations for value in ["svf_2", "opns_2", "neg_opns_2"]):
         req_visualizations.append("svf_FLAT")
+
+    # Filter buffer_dict based on required visualizations
     buffer_dict = {key: all_buffers[key] for key in req_visualizations if key in all_buffers}
 
     # Select the largest required buffer
@@ -940,6 +966,8 @@ def compute_low_levels(
             compute_opns = True if "opns_1" in req_visualizations else False
             compute_neg_opns = True if "neg_opns_1" in req_visualizations else False
 
+            vis_out = {}
+
             if compute_svf or compute_opns:
                 vis_out = default_1.get_sky_view_factor(
                     sliced_arr,
@@ -952,17 +980,17 @@ def compute_low_levels(
                     vis_out[f"{k}_1"] = vis_out.pop(k)
 
             if compute_neg_opns:
-                vis_out = {
-                    "neg_opns_1": default_1.get_neg_opns(
-                        sliced_arr,
-                        dict_arrays["resolution"][0]
-                    )
-                }
+                vis_out["neg_opns_1"] = default_1.get_neg_opns(
+                    sliced_arr,
+                    dict_arrays["resolution"][0]
+                )
         elif vis_type == "svf_FLAT":  # large, FLAT, 10m
             # Check which of the 3 to be computed
             compute_svf = True if "svf_2" in req_visualizations else False
             compute_opns = True if "opns_2" in req_visualizations else False
             compute_neg_opns = True if "neg_opns_2" in req_visualizations else False
+
+            vis_out = {}
 
             if compute_svf or compute_opns:
                 vis_out = default_1.get_sky_view_factor(
@@ -976,12 +1004,10 @@ def compute_low_levels(
                     vis_out[f"{k}_2"] = vis_out.pop(k)
 
             if compute_neg_opns:
-                vis_out = {
-                    "neg_opns_2": default_1.get_neg_opns(
-                        sliced_arr,
-                        dict_arrays["resolution"][0]
-                    )
-                }
+                vis_out["neg_opns_2"] = default_1.get_neg_opns(
+                    sliced_arr,
+                    dict_arrays["resolution"][0]
+                )
         else:
             raise ValueError("Wrong vis_type in the visualization for loop")
 
