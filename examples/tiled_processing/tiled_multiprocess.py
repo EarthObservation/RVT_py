@@ -142,28 +142,28 @@ def compute_save_blends(src_path, low_levels_path, vis_types, blend_types, res, 
         save_path.parent.mkdir(exist_ok=True)
         in_arrays["vat_combined_8bit"] = vat_combined_8bit(in_arrays, save_path)
 
-    if "VAT_flat_3B" in blend_types:
-        # Determine save path
-        save_path = low_levels_path / "VAT_flat_3B" / f"{one_tile}_rvt_VAT_flat_3B.tif"
-        save_path.parent.mkdir(exist_ok=True)
-        in_arrays["vat_flat_3bands"] = vat_flat_3bands(in_arrays, save_path)
+    # if "VAT_flat_3B" in blend_types:
+    #     # Determine save path
+    #     save_path = low_levels_path / "VAT_flat_3B" / f"{one_tile}_rvt_VAT_flat_3B.tif"
+    #     save_path.parent.mkdir(exist_ok=True)
+    #     in_arrays["vat_flat_3bands"] = vat_flat_3bands(in_arrays, save_path)
 
-    if "VAT_3B" in blend_types:
-        # Determine save path
-        save_path = low_levels_path / "VAT_3B" / f"{one_tile}_rvt_VAT_3B.tif"
-        save_path.parent.mkdir(exist_ok=True)
-        in_arrays["vat_3bands"] = vat_3bands(in_arrays, save_path)
+    # if "VAT_3B" in blend_types:
+    #     # Determine save path
+    #     save_path = low_levels_path / "VAT_3B" / f"{one_tile}_rvt_VAT_3B.tif"
+    #     save_path.parent.mkdir(exist_ok=True)
+    #     in_arrays["vat_3bands"] = vat_3bands(in_arrays, save_path)
 
-    if "VAT_combined_3B" in blend_types:
-        # Determine save path
-        save_path = low_levels_path / "VAT_combined_3B" / f"{one_tile}_rvt_VAT_combined_3B.tif"
-        save_path.parent.mkdir(exist_ok=True)
-        vat_combined_3bands(in_arrays, save_path)
+    # if "VAT_combined_3B" in blend_types:
+    #     # Determine save path
+    #     save_path = low_levels_path / "VAT_combined_3B" / f"{one_tile}_rvt_VAT_combined_3B.tif"
+    #     save_path.parent.mkdir(exist_ok=True)
+    #     vat_combined_3bands(in_arrays, save_path)
 
     if "rrim" in blend_types:
         save_path = low_levels_path / "rrim" / f"{one_tile}_rvt_RRIM.tif"
         save_path.parent.mkdir(exist_ok=True)
-        in_arrays["crim"] = blend_crim(in_arrays, save_path)
+        in_arrays["rrim"] = blend_rrim(in_arrays, save_path)
 
     if "e2MSTP" in blend_types:
         if "rrim" not in in_arrays.keys():
@@ -541,7 +541,7 @@ def blend_e2mstp(dict_arrays, save_path):
     out_e2mstp[out_e2mstp > 1] = 1
 
     # Convert to 8bit image
-    out_crim_8bit = rvt.vis.byte_scale(
+    out_8bit = rvt.vis.byte_scale(
         out_e2mstp,
         c_min=0,
         c_max=1
@@ -551,7 +551,7 @@ def blend_e2mstp(dict_arrays, save_path):
     out_profile = dict_arrays['profile'].copy()
     out_profile.update(dtype='uint8')
     rasterio_save(
-        out_crim_8bit,
+        out_8bit,
         out_profile,
         save_path=save_path,
         nodata=None
@@ -842,22 +842,22 @@ def get_required_arrays(vis_types, blend_types):
             req_arrays[key] = True
 
     # Update dictionary based on given blends:
-    if "VAT_3B" in blend_types:
-        req_arrays["svf_1"] = True
-        req_arrays["opns_1"] = True
-        req_arrays["slope_1"] = True
+    # if "VAT_3B" in blend_types:
+    #     req_arrays["svf_1"] = True
+    #     req_arrays["opns_1"] = True
+    #     req_arrays["slope_1"] = True
 
-    if "VAT_flat_3B" in blend_types:
-        req_arrays["svf_2"] = True
-        req_arrays["opns_2"] = True
-        req_arrays["slope_1"] = True
+    # if "VAT_flat_3B" in blend_types:
+    #     req_arrays["svf_2"] = True
+    #     req_arrays["opns_2"] = True
+    #     req_arrays["slope_1"] = True
 
-    if "VAT_combined_3B" in blend_types:
-        req_arrays["svf_2"] = True
-        req_arrays["opns_2"] = True
-        req_arrays["svf_1"] = True
-        req_arrays["opns_1"] = True
-        req_arrays["slope_1"] = True
+    # if "VAT_combined_3B" in blend_types:
+    #     req_arrays["svf_2"] = True
+    #     req_arrays["opns_2"] = True
+    #     req_arrays["svf_1"] = True
+    #     req_arrays["opns_1"] = True
+    #     req_arrays["slope_1"] = True
 
     if ("e3MSTP" in blend_types) or ("e2MSTP" in blend_types):
         req_arrays["slrm_1"] = True
@@ -884,6 +884,11 @@ def get_required_arrays(vis_types, blend_types):
         req_arrays["slope_1"] = True
         req_arrays["hillshade_1"] = True
         req_arrays["hillshade_2"] = True
+
+    if "rrim" in blend_types:
+        req_arrays["slope_1"] = True
+        req_arrays["opns_1"] = True
+        req_arrays["neg_opns_1"] = True
 
     return req_arrays
 
