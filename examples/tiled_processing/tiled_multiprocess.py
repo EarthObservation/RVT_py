@@ -687,12 +687,21 @@ def blend_e4mstp(dict_arrays, save_path):
     out_e4mstp[np.isnan(dict_arrays['mstp_1'])] = np.nan
     out_e4mstp[out_e4mstp > 1] = 1
 
+    # Convert to 8bit image
+    out_e4mstp = rvt.vis.byte_scale(
+        out_e4mstp,
+        c_min=0,
+        c_max=1
+    )
+
     # Save GeoTIF
+    out_profile = dict_arrays['profile'].copy()
+    out_profile.update(dtype='uint8')
     rasterio_save(
         out_e4mstp,
-        dict_arrays['profile'],
+        out_profile,
         save_path=save_path,
-        nodata=np.nan
+        nodata=None
     )
 
     return out_e4mstp
