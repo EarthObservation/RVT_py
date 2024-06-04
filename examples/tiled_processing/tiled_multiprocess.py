@@ -103,11 +103,17 @@ def compute_save_blends(src_path, low_levels_path, vis_types, blend_types, res, 
     def1_pth = Path(__file__).resolve().parent / "default_1.json"
     default_1.read_default_from_file(def1_pth)
 
+    default_1.fill_no_data = 1
+    default_1.keep_original_no_data = 0
+
     # Default 2 is for FLAT
     default_2 = rvt.default.DefaultValues()
     # Read from file, path is relative to the Current script directory
     def2_pth = Path(__file__).resolve().parent / "default_2.json"
     default_2.read_default_from_file(def2_pth)
+
+    default_2.fill_no_data = 1
+    default_2.keep_original_no_data = 0
 
     # Only compute required visualizations
     in_arrays = compute_low_levels(
@@ -120,22 +126,15 @@ def compute_save_blends(src_path, low_levels_path, vis_types, blend_types, res, 
 
     # ********** SAVE SELECTED VISUALIZATIONS *****************************************************
     for vis in vis_types:
-        # Adapt to visualization keywords used in in_arrays
-        vis_1 = vis + "_1"
-
         # Determine save path
+        # TODO: default_1.get_slrm_file_name("test"), have to add name of the file!
         save_path = low_levels_path / vis / f"{one_tile}_rvt_{vis}.tif"
         save_path.parent.mkdir(exist_ok=True)
 
-        # Determine min/max values for norm from default.json "bytscl"
-        bytscl_value = getattr(default_1, vis)
-
         # Normalize and save to disk
-        low_level_normalize(in_arrays[vis_1], vis, bytscl_value, save_path)
+        low_level_normalize(in_arrays, vis, default_1, save_path)
 
     # ********** COMPUTE SELECTED BLENDS *****************************************************
-
-    # TODO: Do tukaj sem naredil
 
     # Calculate selected BLENDS
     if "vat_combined_8bit" in blend_types:
@@ -444,19 +443,25 @@ def vat_combined_3bands(dict_arrays, save_path):
     return out_vat_combined_3bands
 
 
-def low_level_normalize(image_array, visualization, bytscl_value, save_path):
+def low_level_normalize(image_arrays, visualization, defaults, save_path):
+    # Adapt to visualization keywords used in in_arrays
+    vis_1 = visualization + "_1"
+
+    # Determine min/max values for norm from default.json "bytscl"
+    bytscl_value = getattr(defaults, visualization + "_bytscl")
     # Use RVT function for normalization
     out_image = normalize_image(
         visualization=visualization,
-        image=image_array.squeeze(),
+        image=image_arrays[vis_1].squeeze(),
         min_norm=bytscl_value[1],
         max_norm=bytscl_value[2],
         normalization=bytscl_value[0]
     )
+
     # Save GeoTIF
     rasterio_save(
         out_image,
-        image_array['profile'],
+        image_arrays['profile'],
         save_path=save_path,
         nodata=np.nan
     )
@@ -846,7 +851,7 @@ def compute_low_levels(
         "slope_1": 0,
         "slrm_1": default_1.slrm_rad_cell,
         "ld_1": default_1.ld_max_rad,
-        # "mstp_1": default_1.mstp_broad_scale[1],
+        "mstp_1": default_1.mstp_broad_scale[1],
 
         "hillshade_1": 1,
         "hillshade_2": 1,
