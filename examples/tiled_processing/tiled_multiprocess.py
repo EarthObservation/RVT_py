@@ -197,7 +197,6 @@ def vat_combined_8bit(dict_arrays, save_path):
     """
     VAT Combined 8bit
     """
-
     # BLEND VAT GENERAL
     vat_combination_general = rvt.blend.BlenderCombination()
     vat_combination_general.create_layer(
@@ -288,6 +287,7 @@ def vat_combined_8bit(dict_arrays, save_path):
     )
     vat_2 = vat_2.astype("float32")
 
+    # BLEND VAT COMBINED
     comb_vat_combined = rvt.blend.BlenderCombination()
     comb_vat_combined.create_layer(
         vis_method="vat_general", normalization="value",
@@ -307,15 +307,21 @@ def vat_combined_8bit(dict_arrays, save_path):
         no_data=np.nan
     )
 
-    out_vat_combined = rvt.vis.byte_scale(out_vat_combined, c_min=0, c_max=1)
+    #
+    out_vat_combined = rvt.vis.byte_scale(
+        out_vat_combined,
+        c_min=0,
+        c_max=1
+    )
 
     # Save GeoTIF
     out_profile = dict_arrays['profile'].copy()
-    out_profile.update(dtype='uint8', nodata=None)
+    out_profile.update(dtype='uint8')
     rasterio_save(
         out_vat_combined,
         out_profile,
-        save_path=save_path
+        save_path=save_path,
+        nodata=None
     )
 
     return out_vat_combined
