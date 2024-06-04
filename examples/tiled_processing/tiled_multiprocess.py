@@ -8,7 +8,6 @@ import glob
 import multiprocessing as mp
 import os
 import time
-from math import ceil
 from pathlib import Path
 
 import numpy as np
@@ -131,8 +130,8 @@ def compute_save_blends(src_path, low_levels_path, vis_types, blend_types, res, 
         save_path = low_levels_path / vis / f"{one_tile}_rvt_{vis}.tif"
         save_path.parent.mkdir(exist_ok=True)
 
-        # Normalize and save to disk
-        low_level_normalize(in_arrays, vis, default_1, save_path)
+        # Convert to byte scale and save to disk
+        vis_bytscl_save(in_arrays, vis, default_1, save_path)
 
     # ********** COMPUTE SELECTED BLENDS *****************************************************
 
@@ -443,27 +442,27 @@ def vat_combined_3bands(dict_arrays, save_path):
     return out_vat_combined_3bands
 
 
-def low_level_normalize(image_arrays, visualization, defaults, save_path):
+def vis_bytscl_save(image_arrays, visualization, defaults, save_path):
     # Adapt to visualization keywords used in in_arrays
     vis_1 = visualization + "_1"
 
     # Determine min/max values for norm from default.json "bytscl"
     bytscl_value = getattr(defaults, visualization + "_bytscl")
     # Use RVT function for normalization
-    out_image = normalize_image(
-        visualization=visualization,
-        image=image_arrays[vis_1].squeeze(),
-        min_norm=bytscl_value[1],
-        max_norm=bytscl_value[2],
-        normalization=bytscl_value[0]
+    out_image = rvt.vis.byte_scale(
+        image_arrays[vis_1].squeeze(),
+        c_min=bytscl_value[1],
+        c_max=bytscl_value[2]
     )
 
     # Save GeoTIF
+    out_profile = image_arrays['profile'].copy()
+    out_profile.update(dtype='uint8')
     rasterio_save(
         out_image,
-        image_arrays['profile'],
+        out_profile,
         save_path=save_path,
-        nodata=np.nan
+        nodata=None
     )
     return out_image
 
