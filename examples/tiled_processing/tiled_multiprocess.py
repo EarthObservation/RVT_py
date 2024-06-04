@@ -57,30 +57,30 @@ def tiled_blending(vis_types, blend_types, input_vrt_path, tiles_list):
         result = compute_save_blends(src_tif_path, ll_path, vis_types, blend_types, res, one_tile)
         print("Finished tile:", result[1])
 
-    # Build VRTs
-    for ds_dir in [ll_path / i for i in blend_types]:
-        # Name = <original DEM name> + <visualization (subdir name)> + .vrt
-        if ds_dir == "e2MSTP" or ds_dir == "e3MSTP":
-            vrt_name = Path(input_vrt_path).stem + "_" + Path(ds_dir).name + ".vrt"
-            ds_dir = ds_dir
-        else:
-            vrt_name = Path(input_vrt_path).stem + "_" + Path(ds_dir).name + ".vrt"
-        out_path = build_vrt(ds_dir, vrt_name)
-        print("  - Created:", out_path)
-    if "e2MSTP" in blend_types:
-        ds_dir = ll_path / "rrim"
-        vrt_name = Path(input_vrt_path).stem + "_" + Path(ds_dir).name + ".vrt"
-        vrt_path = ds_dir.parents[0] / vrt_name
-        if not vrt_path.exists():
-            out_path = build_vrt(ds_dir, vrt_name)
-            print("  - Created:", out_path)
-    if "e3MSTP" in blend_types:
-        ds_dir = ll_path / "crim"
-        vrt_name = Path(input_vrt_path).stem + "_" + Path(ds_dir).name + ".vrt"
-        vrt_path = ds_dir.parents[0] / vrt_name
-        if not vrt_path.exists():
-            out_path = build_vrt(ds_dir, vrt_name)
-            print("  - Created:", out_path)
+    # # Build VRTs
+    # for ds_dir in [ll_path / i for i in blend_types]:
+    #     # Name = <original DEM name> + <visualization (subdir name)> + .vrt
+    #     if ds_dir == "e2MSTP" or ds_dir == "e3MSTP":
+    #         vrt_name = Path(input_vrt_path).stem + "_" + Path(ds_dir).name + ".vrt"
+    #         ds_dir = ds_dir
+    #     else:
+    #         vrt_name = Path(input_vrt_path).stem + "_" + Path(ds_dir).name + ".vrt"
+    #     out_path = build_vrt(ds_dir, vrt_name)
+    #     print("  - Created:", out_path)
+    # if "e2MSTP" in blend_types:
+    #     ds_dir = ll_path / "rrim"
+    #     vrt_name = Path(input_vrt_path).stem + "_" + Path(ds_dir).name + ".vrt"
+    #     vrt_path = ds_dir.parents[0] / vrt_name
+    #     if not vrt_path.exists():
+    #         out_path = build_vrt(ds_dir, vrt_name)
+    #         print("  - Created:", out_path)
+    # if "e3MSTP" in blend_types:
+    #     ds_dir = ll_path / "crim"
+    #     vrt_name = Path(input_vrt_path).stem + "_" + Path(ds_dir).name + ".vrt"
+    #     vrt_path = ds_dir.parents[0] / vrt_name
+    #     if not vrt_path.exists():
+    #         out_path = build_vrt(ds_dir, vrt_name)
+    #         print("  - Created:", out_path)
 
     t1 = time.time() - t0
     print(f"Done with computing blends in {round(t1/60, ndigits=None)} min.")
@@ -975,7 +975,9 @@ def compute_low_levels(
                 vis_type: default_1.get_local_dominance(sliced_arr)
             }
         elif vis_type == "mstp_1":
+            # test = default_1.get_slrm(sliced_arr)
             vis_out = {
+                # vis_type: np.stack((test, test, test), 0)
                 vis_type: default_1.get_mstp(sliced_arr)
             }
         elif vis_type == "hillshade_1":
