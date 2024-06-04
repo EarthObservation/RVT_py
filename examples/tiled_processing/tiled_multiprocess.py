@@ -160,13 +160,14 @@ def compute_save_blends(src_path, low_levels_path, vis_types, blend_types, res, 
         save_path.parent.mkdir(exist_ok=True)
         vat_combined_3bands(in_arrays, save_path)
 
-    if "e2MSTP" in blend_types:
-        if not req_arrays["rrim"]:
-            # TODO: RRIMa verjetno ne rabim shranit???
-            save_path = low_levels_path / "rrim" / f"{one_tile}_rvt_RRIM.tif"
-            save_path.parent.mkdir(exist_ok=True)
-            in_arrays["rrim"] = blend_rrim(in_arrays, save_path)
+    if "rrim" in blend_types:
+        save_path = low_levels_path / "rrim" / f"{one_tile}_rvt_RRIM.tif"
+        save_path.parent.mkdir(exist_ok=True)
+        in_arrays["crim"] = blend_crim(in_arrays, save_path)
 
+    if "e2MSTP" in blend_types:
+        if "rrim" not in in_arrays.keys():
+            in_arrays["rrim"] = blend_crim(in_arrays)
         # Determine save path
         save_path = low_levels_path / "e2MSTP" / f"{one_tile}_rvt_e2MSTP.tif"
         save_path.parent.mkdir(exist_ok=True)
@@ -475,7 +476,7 @@ def vis_bytscl_save(image_arrays, visualization, defaults, save_path):
     return out_image
 
 
-def blend_rrim(dict_arrays, save_path):
+def blend_rrim(dict_arrays, save_path=None):
     comb_rrim = rvt.blend.BlenderCombination()
     comb_rrim.create_layer(vis_method="Slope gradient", normalization="Value",
                            minimum=0, maximum=45,
@@ -494,12 +495,23 @@ def blend_rrim(dict_arrays, save_path):
                                            no_data=np.nan)
     out_rrim = out_rrim.astype("float32")
     # Save GeoTIF
-    rasterio_save(
-        out_rrim,
-        dict_arrays['profile'],
-        save_path=save_path,
-        nodata=np.nan
-    )
+    if save_path:
+        # Convert to 8bit image
+        out_rrim_8bit = rvt.vis.byte_scale(
+            out_rrim,
+            c_min=0,
+            c_max=1
+        )
+
+        # Save GeoTIF
+        out_profile = dict_arrays['profile'].copy()
+        out_profile.update(dtype='uint8')
+        rasterio_save(
+            out_rrim_8bit,
+            out_profile,
+            save_path=save_path,
+            nodata=None
+        )
 
     return out_rrim
 
@@ -525,17 +537,25 @@ def blend_e2mstp(dict_arrays, save_path):
                                                save_render_path=None,
                                                no_data=np.nan)
     out_e2mstp = out_e2mstp.astype("float32")
-    out_e2mstp[np.isnan(dict_arrays["mstp_1"])] = np.nan
+    out_e2mstp[np.isnan(dict_arrays["rrim"])] = np.nan
     out_e2mstp[out_e2mstp > 1] = 1
-    # Save GeoTIF
-    rasterio_save(
+
+    # Convert to 8bit image
+    out_crim_8bit = rvt.vis.byte_scale(
         out_e2mstp,
-        dict_arrays['profile'],
-        save_path=save_path,
-        nodata=np.nan
+        c_min=0,
+        c_max=1
     )
 
-    return out_e2mstp
+    # Save GeoTIF
+    out_profile = dict_arrays['profile'].copy()
+    out_profile.update(dtype='uint8')
+    rasterio_save(
+        out_crim_8bit,
+        out_profile,
+        save_path=save_path,
+        nodata=None
+    )
 
 
 def blend_crim(dict_arrays, save_path=None):
