@@ -53,6 +53,8 @@ def tiled_blending(vis_types, blend_types, input_vrt_path, tiles_list):
             result = compute_save_blends(src_tif_path, ll_path, vis_types, blend_types, one_tile)
             print("Finished tile:", result[1])
 
+        # TODO: Build mosaics, need path to folder with tiffs
+
     else:
         one_tile = None
         result = compute_save_blends(src_tif_path, ll_path, vis_types, blend_types, one_tile)
@@ -93,6 +95,7 @@ def compute_save_blends(src_path, low_levels_path, vis_types, blend_types, one_e
     if one_extent:
         # Determine name of the tile (coordinates)
         one_tile_name = f"{one_extent[0]:.0f}_{one_extent[1]:.0f}"
+        # This dictionary will be used to save director
     else:
         one_tile_name = None
     # Filename that will be use RVT built-in function for naming
@@ -129,27 +132,32 @@ def compute_save_blends(src_path, low_levels_path, vis_types, blend_types, one_e
         req_arrays
     )
 
-    # ********** SAVE SELECTED VISUALIZATIONS *****************************************************
+    # ********** COMPUTE & SAVE SELECTED VISUALIZATIONS *****************************************************
     for vis in vis_types:
         # Determine save path
         if not one_tile_name:
-            # Use RVT naming
+            # Use RVT naming if this is a single image
             save_path = low_levels_path / getattr(default_1, "get_" + vis + "_path")(filename_rvt)
         else:
-            # Use tile naming
+            # Use tile naming if this is only one tile
             save_path = low_levels_path / vis / f"{one_tile_name}_rvt_{vis}.tif"
             save_path.parent.mkdir(exist_ok=True)
 
         # Convert to byte scale and save to disk
         vis_bytscl_save(in_arrays, vis, default_1, save_path)
 
-    # ********** COMPUTE SELECTED BLENDS *****************************************************
+    # ********** COMPUTE & SAVE SELECTED BLENDS *****************************************************
 
     # Calculate selected BLENDS
     if "vat_combined_8bit" in blend_types:
         # Determine save path
-        save_path = low_levels_path / "VAT_combined_8bit" / f"{one_tile_name}_rvt_VAT_comb_8bit.tif"
-        save_path.parent.mkdir(exist_ok=True)
+        save_path = save_path_for_blend(
+            save_filename="VAT_combined_8bit",
+            save_dir=low_levels_path,
+            source_filename=filename_rvt,
+            save_tile_name=one_tile_name
+        )
+        # Run VAT Combined 8bit blend
         in_arrays["vat_combined_8bit"] = vat_combined_8bit(in_arrays, save_path)
 
     # if "VAT_flat_3B" in blend_types:
@@ -171,21 +179,38 @@ def compute_save_blends(src_path, low_levels_path, vis_types, blend_types, one_e
     #     vat_combined_3bands(in_arrays, save_path)
 
     if "rrim" in blend_types:
-        save_path = low_levels_path / "rrim" / f"{one_tile_name}_rvt_RRIM.tif"
-        save_path.parent.mkdir(exist_ok=True)
+        # Determine save path
+        save_path = save_path_for_blend(
+            save_filename="RRIM",
+            save_dir=low_levels_path,
+            source_filename=filename_rvt,
+            save_tile_name=one_tile_name
+        )
+        # Run RRIM blend
         in_arrays["rrim"] = blend_rrim(in_arrays, save_path)
 
     if "e2MSTP" in blend_types:
         if "rrim" not in in_arrays.keys():
-            in_arrays["rrim"] = blend_crim(in_arrays)
+            in_arrays["rrim"] = blend_rrim(in_arrays)
         # Determine save path
-        save_path = low_levels_path / "e2MSTP" / f"{one_tile_name}_rvt_e2MSTP.tif"
-        save_path.parent.mkdir(exist_ok=True)
+        save_path = save_path_for_blend(
+            save_filename="e2MSTP",
+            save_dir=low_levels_path,
+            source_filename=filename_rvt,
+            save_tile_name=one_tile_name
+        )
+        # Run e2MSTP blend
         blend_e2mstp(in_arrays, save_path)
 
     if "crim" in blend_types:
-        save_path = low_levels_path / "crim" / f"{one_tile_name}_rvt_CRIM.tif"
-        save_path.parent.mkdir(exist_ok=True)
+        # Determine save path
+        save_path = save_path_for_blend(
+            save_filename="CRIM",
+            save_dir=low_levels_path,
+            source_filename=filename_rvt,
+            save_tile_name=one_tile_name
+        )
+        # Run CRIM blend
         in_arrays["crim"] = blend_crim(in_arrays, save_path)
 
     if "e3MSTP" in blend_types:
@@ -193,14 +218,24 @@ def compute_save_blends(src_path, low_levels_path, vis_types, blend_types, one_e
         if "crim" not in in_arrays.keys():
             in_arrays["crim"] = blend_crim(in_arrays)
         # Determine save path
-        save_path = low_levels_path / "e3MSTP" / f"{one_tile_name}_rvt_e3MSTP.tif"
-        save_path.parent.mkdir(exist_ok=True)
+        save_path = save_path_for_blend(
+            save_filename="e3MSTP",
+            save_dir=low_levels_path,
+            source_filename=filename_rvt,
+            save_tile_name=one_tile_name
+        )
+        # Run e3MSTP blend
         blend_e3mstp(in_arrays, save_path)
 
     if "e4MSTP" in blend_types:
         # Determine save path
-        save_path = low_levels_path / "e4MSTP" / f"{one_tile_name}_rvt_e4MSTP.tif"
-        save_path.parent.mkdir(exist_ok=True)
+        save_path = save_path_for_blend(
+            save_filename="e4MSTP",
+            save_dir=low_levels_path,
+            source_filename=filename_rvt,
+            save_tile_name=one_tile_name
+        )
+        # Run e4MSTP blend
         blend_e4mstp(in_arrays, save_path)
 
     return 0, one_tile_name
@@ -1165,3 +1200,26 @@ def build_vrt(ds_dir, vrt_name):
     my_vrt = None
 
     return vrt_path
+
+
+def save_path_for_blend(save_filename: str, save_dir, source_filename, save_tile_name=None):
+    """
+    Two options for creating save path:
+
+    - if single TIF, save the raster using the path to the final save file (located in the same folder as source file
+        and using RVT naming conventions). In this case the save_tile_name variable is given as None
+
+    - in the case where we want to save only the one tile, use the constructed save_tile_name and save into a child
+        directory of the same name as the final name of the save file
+    """
+    save_dir = Path(save_dir)
+    source_filename = Path(source_filename)
+    # Determine save path
+    if not save_tile_name:
+        # Use RVT naming if this is a single image
+        save_path = save_dir / f"{source_filename.stem}_{save_filename}.tif"
+    else:
+        # Use tile naming if this is only one tile
+        save_path = save_dir / save_filename / f"{save_tile_name}_rvt_{save_filename}.tif"
+        save_path.parent.mkdir(exist_ok=True)
+    return save_path
