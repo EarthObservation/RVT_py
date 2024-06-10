@@ -25,6 +25,59 @@ import rvt.vis
 from rvt.blend_func import normalize_image
 
 
+def run_main(list_tifs, vis_types, blend_types):
+    for in_file in list_tifs:
+        in_file = Path(in_file)
+
+        # (1) Instead of folder, the tif/vrt is given
+        input_vrt = in_file.as_posix()
+        ds = in_file.parent
+
+        print("Start --- " + in_file.as_posix())
+
+        # (2) Check if larger than 4000 px
+        with rasterio.open(input_vrt) as src:
+            if src.shape > (6000, 6000):
+                # If at least 1 dim is larger than 6000 pixels
+                tile_size = 4000
+            elif src.shape > (4000, 4000):
+                tile_size = 2000
+            else:
+                tile_size = None
+
+        tile_size = 500 # TODO
+
+        if tile_size:
+            # (3) To filter we need polygon covering valid data
+            valid_data_outline = gt.poly_from_valid(input_vrt, save_gpkg=False)
+
+            # (4) Create reference grid
+            refgrid_name = input_vrt[:-4] + "_refgrid.gpkg"
+            if Path(refgrid_name).exists():
+                Path(refgrid_name).unlink()
+            tiles_extents = gt.bounding_grid(input_vrt, tile_size, tag=True)
+
+            # (5) Filter the grid
+            tiles_extents = gt.filter_by_outline(
+                tiles_extents,
+                valid_data_outline,
+                save_gpkg=False
+            )
+
+            # Extract list from GeoDataFrame
+            tiles_list = tiles_extents["extents"].values.tolist()
+        else:
+            tiles_list = None
+
+        # (4) Run tiled blending (visualizations calculated on the go, stored in memory)
+        tiled_blending(
+            vis_types=vis_types,
+            blend_types=blend_types,
+            input_vrt_path=in_file,
+            tiles_list=tiles_list
+        )
+
+
 def tiled_blending(vis_types, blend_types, input_vrt_path, tiles_list):
     t0 = time.time()
 
