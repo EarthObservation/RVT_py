@@ -92,7 +92,7 @@ def filter_by_outline(in_grid, outline_file, save_gpkg=False, save_path=None):
     ----------
     in_grid : gpd.geodataframe.GeoDataFrame, str
         Grid made of polygons in GeoDataFormat
-    outline_file : str
+    outline_file : gpd.geodataframe.GeoDataFrame, str
         Path to the outline file (any format readable by GeoPandas).
     save_gpkg : bool, default False
         If true, grid is saved to disk.
@@ -180,7 +180,6 @@ def poly_from_valid(tif_pth, save_gpkg=False):
     if save_gpkg:
         new_name = tif_pth[:-4] + "_validDataMask.gpkg"
         grid.to_file(new_name, driver="GPKG")
+        return Path(new_name)
     else:
-        new_name = None
-
-    return Path(new_name)
+        return grid
