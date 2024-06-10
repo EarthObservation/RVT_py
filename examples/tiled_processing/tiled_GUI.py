@@ -3,17 +3,13 @@ GUI for tiled processing with RVT_py
 Created on 6 May 2024
 @author: Nejc Čož, ZRC SAZU, Novi trg 2, 1000 Ljubljana, Slovenia
 """
-
-from pathlib import Path
 from tkinter import Tk, filedialog
 
-import geopandas as gpd
 import ipywidgets as widgets
 import traitlets
 from IPython.display import display
 
-import grid_tools as gt
-from tiled_multiprocess import tiled_blending
+from tiled_multiprocess import run_main
 
 
 class SelectFilesButton(widgets.Button):
@@ -60,14 +56,35 @@ b_file_select = SelectFilesButton()
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~11
-dropdown_options = widgets.SelectMultiple(
+dropdown_options_blends = widgets.SelectMultiple(
     options=[
-        ("VAT combined - 8 bit", 'vat_combined_8bit'),
+        ("VAT combined", 'vat_combined_8bit'),
         # "VAT_combined_3B",
-        ('SLRM', 'SLRM'),
         ('e2MSTP', 'e2MSTP'),
         # ('e3MSTP', 'e3MSTP'),
-        ('e4MSTP', 'e4MSTP')
+        ('e4MSTP', 'e4MSTP'),
+        ('RRIM', 'rrim'),
+        ('CRIM', 'crim')
+    ],
+    value=[],
+    rows=10,
+    disabled=False
+)
+
+dropdown_options_visualizations = widgets.SelectMultiple(
+    options=[
+        ('Slope', 'slp'),
+        ('Hillshade', 'hs'),
+        # ('multi_hillshade', 'multi_hillshade'),
+        ('SLRM', 'slrm'),
+        ('Sky view factor', 'svf'),
+        ('Openness', 'opns'),
+        ('Negative openness', 'neg_opns'),
+        ('Local dominance', 'ld'),
+        # ('sky_illumination', 'sky_illumination'),
+        # ('shadow_horizon', 'shadow_horizon'),
+        # ('MSRM', 'msrm'),
+        ('MSTP', 'mstp')
     ],
     value=[],
     rows=10,
@@ -88,7 +105,8 @@ def on_button_clicked(b):
 
     list_tifs = b_file_select.files
 
-    blend_types = list(dropdown_options.value)
+    vis_types = list(dropdown_options_visualizations.value)
+    blend_types = list(dropdown_options_blends.value)
 
     # CONSTANT INPUT PARAMETERS
     tile_size = 1000  # in PIXELS!
@@ -96,57 +114,10 @@ def on_button_clicked(b):
 
     with output_widget:
         print(list_tifs)
+        print(vis_types)
         print(blend_types)
 
-        for in_file in list_tifs:
-            in_file = Path(in_file)
-            # (1b) Instead of folder, the tif/vrt is given
-            input_vrt = in_file.as_posix()
-            ds = in_file.parent
-
-            print("Start --- " + ds.name)
-
-            # (2) and (3) if refgrid doesn't exist, else read it from file
-            if refgrid_existing:
-                # I have added this option for Noise Mapping, because vrt and refgrid are filtered to contain
-                # only the tiles with archeology.
-                print("* refgrid exists; Reading from file...")
-                refgrid_name = list(ds.glob("*_refgrid*.gpkg"))[0]
-                tiles_extents = gpd.read_file(refgrid_name)
-            else:
-                # (2) To filter we need polygon covering valid data
-                vdm_file = list(ds.glob("*_validDataMask*"))
-
-                if vdm_file:
-                    print("* validDataMask exists; Removing and creating new...")
-                    Path(vdm_file[0]).unlink()
-                else:
-                    # If it doesn't exist, try creating from VRT
-                    print("* validDataMask doesn't exists; Creating...")
-
-                valid_data_outline = gt.poly_from_valid(input_vrt, save_gpkg=True)
-
-                # (3) Create reference grid, filter it and save it to disk
-                print("Create REF GRID")
-
-                refgrid_name = input_vrt[:-4] + "_refgrid.gpkg"
-                if Path(refgrid_name).exists():
-                    Path(refgrid_name).unlink()
-
-                tiles_extents = gt.bounding_grid(input_vrt, tile_size, tag=True)
-                tiles_extents = gt.filter_by_outline(
-                    tiles_extents, valid_data_outline.as_posix(),
-                    save_gpkg=True, save_path=refgrid_name
-                )
-
-            # Run tiled blending (visualizations calculated on the go, stored in memory)
-            tiles_list = tiles_extents[["minx", "miny", "maxx", "maxy"]].values.tolist()
-
-            tiled_blending(
-                blend_types=blend_types,
-                input_vrt_path=in_file,
-                tiles_list=tiles_list
-            )
+        run_main(list_tifs, vis_types, blend_types)
 
     button_run_adaf.disabled = False
 
@@ -157,13 +128,22 @@ button_run_adaf.on_click(on_button_clicked)
 output_widget = widgets.Output()
 
 # DISPLAY WIDGET ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~11
+selection_options = widgets.HBox([
+    widgets.VBox([
+        widgets.Label("Select visualizations:"),
+        dropdown_options_visualizations
+    ]),
+    widgets.VBox([
+        widgets.Label("Select blends:"),
+        dropdown_options_blends
+    ])
+])
 display(
     widgets.VBox(
         [
             widgets.HTML(value=f"<b>RVT - TILED PROCESSING FOR LARGE FILES</b>"),
             b_file_select,
-            widgets.Label("Select visualizations:"),
-            dropdown_options,
+            selection_options,
             button_run_adaf,
             output_widget
         ]
