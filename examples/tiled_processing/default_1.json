@@ -1,0 +1,362 @@
+{
+    "default_settings": {
+        "overwrite": {
+            "value": 0,
+            "description": "When saving visualisation functions and file already exists, if 0 it doesn't compute it, if 1 it overwrites it."
+        },
+        "ve_factor": {
+            "value": 1,
+            "description": "Vertical exaggeration."
+        },
+        "Hillshade": {
+            "hs_compute": {
+                "value": 1,
+                "description": "If compute Hillshade. Parameter for GUIs."
+            },
+            "hs_sun_azi": {
+                "value": 315,
+                "description": "Solar azimuth angle (clockwise from North) in degrees."
+            },
+            "hs_sun_el": {
+                "value": 35,
+                "description": "GENERAL terrain, used for calculating VAT general"
+            },
+            "hs_save_float": {
+                "value": 1,
+                "description": "If 1 it saves float raster, if 0 it doesn't."
+            },
+            "hs_save_8bit": {
+                "value": 0,
+                "description": "If 1 it saves 8bit raster, if 0 it doesn't."
+            },
+            "hs_shadow": {
+                "value": 0,
+                "description": "If 1 it saves shadow binary raster, if 0 it doesn't."
+            },
+            "hs_bytscl": {
+                "mode": "value",
+                "min": 0.0,
+                "max": 1.0,
+                "description": "Linear stretch and byte scale (0-255) for 8bit raster. Mode can be 'value' or 'percent' (cut-off units). Values min and max define stretch borders (in mode units)."
+            }
+        },
+        "Multiple directions hillshade": {
+            "mhs_compute": {
+                "value": 0,
+                "description": "If compute Multiple directions hillshade. Parameter for GUIs."
+            },
+            "mhs_nr_dir": {
+                "value": 16,
+                "description": "Number of solar azimuth angles (clockwise from North)."
+            },
+            "mhs_sun_el": {
+                "value": 35,
+                "description": "Solar vertical angle (above the horizon) in degrees."
+            },
+            "mhs_save_float": {
+                "value": 1,
+                "description": "If 1 it saves float raster, if 0 it doesn't."
+            },
+            "mhs_save_8bit": {
+                "value": 0,
+                "description": "If 1 it saves 8bit raster, if 0 it doesn't."
+            },
+            "mhs_bytscl": {
+                "mode": "value",
+                "min": 0.0,
+                "max": 1.0,
+                "description": "Linear stretch and byte scale (0-255) for 8bit raster. Mode can be 'value' or 'percent' (cut-off units). Values min and max define stretch borders (in mode units)."
+            }
+        },
+        "Slope gradient": {
+            "slp_compute": {
+                "value": 0,
+                "description": "If compute Slope. Parameter for GUIs."
+            },
+            "slp_output_units": {
+                "value": "degree",
+                "description": "Slope output units [radian, degree, percent]."
+            },
+            "slp_save_float": {
+                "value": 1,
+                "description": "If 1 it saves float raster, if 0 it doesn't."
+            },
+            "slp_save_8bit": {
+                "value": 0,
+                "description": "If 1 it saves 8bit raster, if 0 it doesn't."
+            },
+            "slp_bytscl": {
+                "mode": "value",
+                "min": 0.0,
+                "max": 51.0,
+                "description": "Linear stretch and byte scale (0-255) for 8bit raster. Mode can be 'value' or 'percent' (cut-off units). Values min and max define stretch borders (in mode units)."
+            }
+        },
+        "Simple local relief model": {
+            "slrm_compute": {
+                "value": 0,
+                "description": "If compute Simple local relief model. Parameter for GUIs."
+            },
+            "slrm_rad_cell": {
+                "value": 20,
+                "description": "GENERAL use 10m - Radius for trend assessment in pixels."
+            },
+            "slrm_save_float": {
+                "value": 1,
+                "description": "If 1 it saves float raster, if 0 it doesn't."
+            },
+            "slrm_save_8bit": {
+                "value": 0,
+                "description": "If 1 it saves 8bit raster, if 0 it doesn't."
+            },
+            "slrm_bytscl": {
+                "mode": "value",
+                "min": -0.5,
+                "max": 0.5,
+                "description": "Linear stretch and byte scale (0-255) for 8bit raster. Mode can be 'value' or 'percent' (cut-off units). Values min and max define stretch borders (in mode units)."
+            }
+        },
+        "Multi-scale relief model": {
+            "msrm_compute": {
+                "value": 0,
+                "description": "If compute Multi-scale relief model. Parameter for GUIs."
+            },
+            "msrm_feature_min": {
+                "value": 0,
+                "description": "Minimum size of the feature you want to detect in meters."
+            },
+            "msrm_feature_max": {
+                "value": 20,
+                "description": "Maximum size of the feature you want to detect in meters."
+            },
+            "msrm_scaling_factor": {
+                "value": 2,
+                "description": "Scaling factor."
+            },
+            "msrm_save_float": {
+                "value": 1,
+                "description": "If 1 it saves float raster, if 0 it doesn't."
+            },
+            "msrm_save_8bit": {
+                "value": 0,
+                "description": "If 1 it saves 8bit raster, if 0 it doesn't."
+            },
+            "msrm_bytscl": {
+                "mode": "value",
+                "min": -2.5,
+                "max": 2.5,
+                "description": "Linear stretch and byte scale (0-255) for 8bit raster. Mode can be 'value' or 'percent' (cut-off units). Values min and max define stretch borders (in mode units)."
+            }
+        },
+        "Sky-View Factor": {
+            "svf_compute": {
+                "value": 0,
+                "description": "If compute Sky-View Factor. Parameter for GUIs."
+            },
+            "svf_n_dir": {
+                "value": 16,
+                "description": "Number of directions."
+            },
+            "svf_r_max": {
+                "value": 10,
+                "description": "GENERAL use 5m, this is for 0.5m resolution - Maximal search radious in pixels."
+            },
+            "svf_noise": {
+                "value": 0,
+                "description": "The level of noise remove [0-don't remove, 1-low, 2-med, 3-high]."
+            },
+            "svf_save_float": {
+                "value": 1,
+                "description": "If 1 it saves float raster, if 0 it doesn't."
+            },
+            "svf_save_8bit": {
+                "value": 0,
+                "description": "If 1 it saves 8bit raster, if 0 it doesn't."
+            },
+            "svf_bytscl": {
+                "mode": "value",
+                "min": 0.6375,
+                "max": 1.0,
+                "description": "Linear stretch and byte scale (0-255) for 8bit raster. Mode can be 'value' or 'percent' (cut-off units). Values min and max define stretch borders (in mode units)."
+            }
+        },
+        "Anisotropic Sky-View Factor": {
+            "asvf_compute": {
+                "value": 0,
+                "description": "If compute Anisotropic Sky-View Factor. Parameter for GUIs."
+            },
+            "asvf_dir": {
+                "value": 315,
+                "description": "Direction of anisotropy in degrees."
+            },
+            "asvf_level": {
+                "value": 1,
+                "description": "Level of anisotropy [1-low, 2-high]."
+            },
+            "asvf_bytscl": {
+                "mode": "value",
+                "min": 0.7,
+                "max": 0.9,
+                "description": "Linear stretch and byte scale (0-255) for 8bit raster. Mode can be 'value' or 'percent' (cut-off units). Values min and max define stretch borders (in mode units)."
+            }
+        },
+        "Openness - Positive": {
+            "pos_opns_compute": {
+                "value": 0,
+                "description": "If compute Openness - Positive. Parameter for GUIs."
+            },
+            "pos_opns_bytscl": {
+                "mode": "value",
+                "min": 60.0,
+                "max": 95.0,
+                "description": "Linear stretch and byte scale (0-255) for 8bit raster. Mode can be 'value' or 'percent' (cut-off units). Values min and max define stretch borders (in mode units)."
+            }
+        },
+        "Openness - Negative": {
+            "neg_opns_compute": {
+                "value": 0,
+                "description": "If compute Openness - Negative. Parameter for GUIs."
+            },
+            "neg_opns_save_float": {
+                "value": 1,
+                "description": "If 1 it saves float raster, if 0 it doesn't."
+            },
+            "neg_opns_save_8bit": {
+                "value": 0,
+                "description": "If 1 it saves 8bit raster, if 0 it doesn't."
+            },
+            "neg_opns_bytscl": {
+                "mode": "value",
+                "min": 60.0,
+                "max": 95.0,
+                "description": "Linear stretch and byte scale (0-255) for 8bit raster. Mode can be 'value' or 'percent' (cut-off units). Values min and max define stretch borders (in mode units)."
+            }
+        },
+        "Sky illumination": {
+            "sim_compute": {
+                "value": 0,
+                "description": "If compute Sky illumination. Parameter for GUIs."
+            },
+            "sim_sky_mod": {
+                "value": "overcast",
+                "description": "Sky model [overcast, uniform]."
+            },
+            "sim_compute_shadow": {
+                "value": 0,
+                "description": "If 1 it computes shadows, if 0 it doesn't."
+            },
+            "sim_shadow_dist": {
+                "value": 100,
+                "description": "Max shadow modeling distance in pixels."
+            },
+            "sim_nr_dir": {
+                "value": 32,
+                "description": "Number of directions to search for horizon"
+            },
+            "sim_shadow_az": {
+                "value": 315,
+                "description": "Shadow azimuth in degrees."
+            },
+            "sim_shadow_el": {
+                "value": 35,
+                "description": "Shadow elevation in degrees."
+            },
+            "sim_save_float": {
+                "value": 1,
+                "description": "If 1 it saves float raster, if 0 it doesn't."
+            },
+            "sim_save_8bit": {
+                "value": 0,
+                "description": "If 1 it saves 8bit raster, if 0 it doesn't."
+            },
+            "sim_bytscl": {
+                "mode": "percent",
+                "min": 0.25,
+                "max": 0.0,
+                "description": "Linear stretch and byte scale (0-255) for 8bit raster. Mode can be 'value' or 'percent' (cut-off units). Values min and max define stretch borders (in mode units)."
+            }
+        },
+        "Local dominance": {
+            "ld_compute": {
+                "value": 0,
+                "description": "If compute Local dominance. Parameter for GUIs."
+            },
+            "ld_min_rad": {
+                "value": 20,
+                "description": "GENERAL use 10m, this is for 0.5m resolution - Minimum radial distance (in pixels) at which the algorithm starts with visualization computation."
+            },
+            "ld_max_rad": {
+                "value": 40,
+                "description": "GENERAL use 20m, this is for 0.5m resolution -Maximum radial distance (in pixels) at which the algorithm ends with visualization computation."
+            },
+            "ld_rad_inc": {
+                "value": 1,
+                "description": "Radial distance steps in pixels."
+            },
+            "ld_anglr_res": {
+                "value": 15,
+                "description": "Angular step for determination of number of angular directions."
+            },
+            "ld_observer_h": {
+                "value": 1.7,
+                "description": "Height at which we observe the terrain."
+            },
+            "ld_save_float": {
+                "value": 1,
+                "description": "If 1 it saves float raster, if 0 it doesn't."
+            },
+            "ld_save_8bit": {
+                "value": 0,
+                "description": "If 1 it saves 8bit raster, if 0 it doesn't."
+            },
+            "ld_bytscl": {
+                "mode": "value",
+                "min": 0.5,
+                "max": 1.8,
+                "description": "Linear stretch and byte scale (0-255) for 8bit raster. Mode can be 'value' or 'percent' (cut-off units). Values min and max define stretch borders (in mode units)."
+            }
+        },
+        "Multi-scale topographic position": {
+            "mstp_compute": {
+                "value": 0,
+                "description": "If compute Multi-scale topographic position. Parameter for GUIs."
+            },
+            "mstp_local_scale": {
+                "min": 6,
+                "max": 42,
+                "step": 4,
+                "description": "Local scale minimum radius, maximum radius and step in pixels to calculate maximum mean deviation from elevation. All have to be integers!"
+            },
+            "mstp_meso_scale": {
+                "min": 46,
+                "max": 406,
+                "step": 36,
+                "description": "Meso scale minimum radius, maximum radius and step in pixels to calculate maximum mean deviation from elevation. All have to be integers!"
+            },
+            "mstp_broad_scale": {
+                "min": 446,
+                "max": 4046,
+                "step": 360,
+                "description": "Broad scale minimum radius, maximum radius and step in pixels to calculate maximum mean deviation from elevation. All have to be integers!"
+            },
+            "mstp_lightness": {
+                "value": 1.2,
+                "description": "Lightness factor to adjust MSTP visibility."
+            },
+            "mstp_save_float": {
+                "value": 1,
+                "description": "If 1 it saves float raster, if 0 it doesn't."
+            },
+            "mstp_save_8bit": {
+                "value": 0,
+                "description": "If 1 it saves 8bit raster, if 0 it doesn't."
+            },
+            "mstp_bytscl": {
+                "mode": "value",
+                "min": 0.0,
+                "max": 1.0,
+                "description": "Linear stretch and byte scale (0-255) for 8bit raster. Mode can be 'value' or 'percent' (cut-off units). Values min and max define stretch borders (in mode units)."
+            }
+        }
+    }
+}
