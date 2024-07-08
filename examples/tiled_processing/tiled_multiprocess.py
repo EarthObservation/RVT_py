@@ -54,12 +54,14 @@ def run_main(list_tifs, vis_types, blend_types):
                 Path(refgrid_name).unlink()
             tiles_extents = gt.bounding_grid(input_vrt, tile_size, tag=True)
 
-            # (5) Filter the grid
-            tiles_extents = gt.filter_by_outline(
-                tiles_extents,
-                valid_data_outline,
-                save_gpkg=False
-            )
+            # # (5) Filter the grid
+            # tiles_extents = gt.filter_by_outline(
+            #     tiles_extents,
+            #     valid_data_outline,
+            #     save_gpkg=False
+            # )
+            # Add extents column: Extents are (L, B, R, T).
+            tiles_extents["extents"] = tiles_extents.bounds.apply(lambda x: (x.minx, x.miny, x.maxx, x.maxy), axis=1)
 
             # Extract list from GeoDataFrame
             tiles_list = tiles_extents["extents"].values.tolist()
@@ -115,6 +117,7 @@ def tiled_blending(vis_types, blend_types, input_vrt_path, tiles_list):
 
         # Collect all paths into a list for each visualisation to be merged
         result_dict = defaultdict(list)
+        # Empty dicts (of skipped all-nan tiles) are ignored
         for d in results:
             for key, value in d.items():
                 result_dict[key].append(value)
@@ -198,6 +201,11 @@ def compute_save_blends(src_path, low_levels_path, vis_types, blend_types, one_e
         one_extent,
         req_arrays
     )
+
+    # SKIP IF ALL-NANs ARE RETURNED
+    if in_arrays["all_nan"]:
+        # If all-nan tile encountered, this function will return an empty dict
+        return out_path_dict
 
     # ********** SAVE SELECTED VISUALIZATIONS *****************************************************
     for vis in vis_types:
@@ -1095,6 +1103,16 @@ def compute_low_levels(
     # Change nodata value to np.nan, to avoid problems later
     dict_arrays["array"][dict_arrays["array"] == dict_arrays["no_data"]] = np.nan
     dict_arrays["no_data"] = np.nan
+
+    # Skip if all pixels are nodata (remove buffer when checking)
+    all_nan_check = np.all(np.isnan(dict_arrays["array"][buffer: -buffer, buffer: -buffer]))
+    # True means we have all-nan array and have to skip this tile
+    if all_nan_check:
+        # SKIP THIS TILE
+        dict_arrays["all_nan"] = True
+        return dict_arrays
+    else:
+        dict_arrays["all_nan"] = False
 
     # --- START VISUALIZATION WITH RVT ---
     vis_out = dict()
