@@ -25,7 +25,7 @@ import rvt.vis
 from rvt.blend_func import normalize_image
 
 
-def run_main(list_tifs, vis_types, blend_types):
+def run_main(list_tifs, vis_types, blend_types, save_float):
     for in_file in list_tifs:
         in_file = Path(in_file)
 
@@ -73,11 +73,12 @@ def run_main(list_tifs, vis_types, blend_types):
             vis_types=vis_types,
             blend_types=blend_types,
             input_vrt_path=in_file,
-            tiles_list=tiles_list
+            tiles_list=tiles_list,
+            save_float=save_float
         )
 
 
-def tiled_blending(vis_types, blend_types, input_vrt_path, tiles_list):
+def tiled_blending(vis_types, blend_types, input_vrt_path, tiles_list, save_float):
     t0 = time.time()
 
     # Prepare paths
@@ -98,10 +99,11 @@ def tiled_blending(vis_types, blend_types, input_vrt_path, tiles_list):
         # - ll_path  (const)
         # - vis_types  (const)
         # - blend_types  (const)
+        # - save_float  (const)
         # - one_tile in tiles_list  (variable)
         #
         # ----------------------------------
-        input_process_list = [(src_tif_path, ll_path, vis_types, blend_types, i) for i in tiles_list]
+        input_process_list = [(src_tif_path, ll_path, vis_types, blend_types, i, save_float) for i in tiles_list]
         with mp.Pool(nr_processes) as p:
             realist = [p.apply_async(compute_save_blends, r) for r in input_process_list]
             for i, result in enumerate(realist):
@@ -111,7 +113,7 @@ def tiled_blending(vis_types, blend_types, input_vrt_path, tiles_list):
 
         # # SINGLE-PROCESS FOR DEBUG
         # for i, one_tile in enumerate(tiles_list):
-        #     result = compute_save_blends(src_tif_path, ll_path, vis_types, blend_types, one_tile)
+        #     result = compute_save_blends(src_tif_path, ll_path, vis_types, blend_types, one_tile, save_float)
         #     results.append(result)
         #     print(f"Finished tile {i + 1} of {len(tiles_list)}")
 
@@ -149,13 +151,13 @@ def tiled_blending(vis_types, blend_types, input_vrt_path, tiles_list):
         print("Processing as single tile...")
         # Run the whole image as single tile
         one_tile = None
-        _ = compute_save_blends(src_tif_path, ll_path, vis_types, blend_types, one_tile)
+        _ = compute_save_blends(src_tif_path, ll_path, vis_types, blend_types, one_tile, save_float)
 
     t1 = time.time() - t0
     print(f"Done with computing blends in {round(t1/60, ndigits=None)} min.")
 
 
-def compute_save_blends(src_path, low_levels_path, vis_types, blend_types, one_extent):
+def compute_save_blends(src_path, low_levels_path, vis_types, blend_types, one_extent, save_float=False):
 
     # Prepare filenames for saving
     if one_extent:
@@ -249,7 +251,7 @@ def compute_save_blends(src_path, low_levels_path, vis_types, blend_types, one_e
         # Add path to output dictionary
         out_path_dict[rvt_save_name] = save_path
         # Run VAT Combined 8bit blend
-        in_arrays["vat_combined"] = vat_combined(in_arrays, save_path)
+        in_arrays["vat_combined"] = vat_combined(in_arrays, save_path, save_float)
 
     # if "VAT_flat_3B" in blend_types:
     #     # Determine save path
@@ -280,10 +282,11 @@ def compute_save_blends(src_path, low_levels_path, vis_types, blend_types, one_e
         # Add path to output dictionary
         out_path_dict[rvt_save_name] = save_path
         # Run RRIM blend
-        in_arrays["rrim"] = blend_rrim(in_arrays, save_path)
+        in_arrays["rrim"] = blend_rrim(in_arrays, save_path, save_float)
 
     if "e2MSTP" in blend_types:
         if "rrim" not in in_arrays.keys():
+            # We need RRIM as component of e2MSTP, but don't need to save it
             in_arrays["rrim"] = blend_rrim(in_arrays)
         # Determine save path
         save_path, rvt_save_name = save_path_for_blend(
@@ -295,7 +298,7 @@ def compute_save_blends(src_path, low_levels_path, vis_types, blend_types, one_e
         # Add path to output dictionary
         out_path_dict[rvt_save_name] = save_path
         # Run e2MSTP blend
-        blend_e2mstp(in_arrays, save_path)
+        blend_e2mstp(in_arrays, save_path, save_float)
 
     if "crim" in blend_types:
         # Determine save path
@@ -308,7 +311,7 @@ def compute_save_blends(src_path, low_levels_path, vis_types, blend_types, one_e
         # Add path to output dictionary
         out_path_dict[rvt_save_name] = save_path
         # Run CRIM blend
-        in_arrays["crim"] = blend_crim(in_arrays, save_path)
+        in_arrays["crim"] = blend_crim(in_arrays, save_path, save_float)
 
     if "e3MSTP" in blend_types:
         # Check if CRIM was already calculated
@@ -324,7 +327,7 @@ def compute_save_blends(src_path, low_levels_path, vis_types, blend_types, one_e
         # Add path to output dictionary
         out_path_dict[rvt_save_name] = save_path
         # Run e3MSTP blend
-        blend_e3mstp(in_arrays, save_path)
+        blend_e3mstp(in_arrays, save_path, save_float)
 
     if "e4MSTP" in blend_types:
         # Determine save path
@@ -337,12 +340,12 @@ def compute_save_blends(src_path, low_levels_path, vis_types, blend_types, one_e
         # Add path to output dictionary
         out_path_dict[rvt_save_name] = save_path
         # Run e4MSTP blend
-        blend_e4mstp(in_arrays, save_path)
+        blend_e4mstp(in_arrays, save_path, save_float)
 
     return out_path_dict
 
 
-def vat_combined(dict_arrays, save_path):
+def vat_combined(dict_arrays, save_path, save_float=False):
     """
     VAT Combined 8bit
     """
@@ -456,6 +459,18 @@ def vat_combined(dict_arrays, save_path):
         no_data=np.nan
     )
 
+    # Save GeoTIF
+    out_profile = dict_arrays['profile'].copy()
+
+    if save_float:
+        # out_profile.update(dtype='uint8')
+        rasterio_save(
+            out_vat_combined,
+            out_profile,
+            save_path=save_path_float(save_path),
+            nodata=None
+        )
+
     # Convert to 8bit image
     out_vat_combined = rvt.vis.byte_scale(
         out_vat_combined,
@@ -463,8 +478,6 @@ def vat_combined(dict_arrays, save_path):
         c_max=1
     )
 
-    # Save GeoTIF
-    out_profile = dict_arrays['profile'].copy()
     out_profile.update(dtype='uint8')
     rasterio_save(
         out_vat_combined,
@@ -635,7 +648,7 @@ def vis_bytscl_save(image_arrays, visualization, defaults, save_path):
     return out_image
 
 
-def blend_rrim(dict_arrays, save_path=None):
+def blend_rrim(dict_arrays, save_path=None, save_float=False):
     comb_rrim = rvt.blend.BlenderCombination()
     comb_rrim.create_layer(vis_method="Slope gradient", normalization="Value",
                            minimum=0, maximum=45,
@@ -653,8 +666,20 @@ def blend_rrim(dict_arrays, save_path=None):
                                            save_render_path=None,
                                            no_data=np.nan)
     out_rrim = out_rrim.astype("float32")
+
     # Save GeoTIF
     if save_path:
+        out_profile = dict_arrays['profile'].copy()
+
+        if save_float:
+            # out_profile.update(dtype='uint8')
+            rasterio_save(
+                out_rrim,
+                out_profile,
+                save_path=save_path_float(save_path),
+                nodata=None
+            )
+
         # Convert to 8bit image
         out_rrim_8bit = rvt.vis.byte_scale(
             out_rrim,
@@ -662,8 +687,6 @@ def blend_rrim(dict_arrays, save_path=None):
             c_max=1
         )
 
-        # Save GeoTIF
-        out_profile = dict_arrays['profile'].copy()
         out_profile.update(dtype='uint8')
         rasterio_save(
             out_rrim_8bit,
@@ -675,7 +698,7 @@ def blend_rrim(dict_arrays, save_path=None):
     return out_rrim
 
 
-def blend_e2mstp(dict_arrays, save_path):
+def blend_e2mstp(dict_arrays, save_path, save_float=False):
     comb_e2mstp = rvt.blend.BlenderCombination()
     comb_e2mstp.create_layer(vis_method="slrm", normalization="value",
                              minimum=-0.5, maximum=0.5,
@@ -699,6 +722,18 @@ def blend_e2mstp(dict_arrays, save_path):
     out_e2mstp[np.isnan(dict_arrays["rrim"])] = np.nan
     out_e2mstp[out_e2mstp > 1] = 1
 
+    # Save GeoTIF
+    out_profile = dict_arrays['profile'].copy()
+
+    if save_float:
+        # out_profile.update(dtype='uint8')
+        rasterio_save(
+            out_e2mstp,
+            out_profile,
+            save_path=save_path_float(save_path),
+            nodata=None
+        )
+
     # Convert to 8bit image
     out_8bit = rvt.vis.byte_scale(
         out_e2mstp,
@@ -706,8 +741,6 @@ def blend_e2mstp(dict_arrays, save_path):
         c_max=1
     )
 
-    # Save GeoTIF
-    out_profile = dict_arrays['profile'].copy()
     out_profile.update(dtype='uint8')
     rasterio_save(
         out_8bit,
@@ -717,7 +750,7 @@ def blend_e2mstp(dict_arrays, save_path):
     )
 
 
-def blend_crim(dict_arrays, save_path=None):
+def blend_crim(dict_arrays, save_path=None, save_float=False):
     comb_crim = rvt.blend.BlenderCombination()
     comb_crim.create_layer(vis_method="Openness_Pos-Neg", normalization="Value",
                            minimum=-28, maximum=28,
@@ -742,6 +775,17 @@ def blend_crim(dict_arrays, save_path=None):
 
     # Save GeoTIF
     if save_path:
+        out_profile = dict_arrays['profile'].copy()
+
+        if save_float:
+            # out_profile.update(dtype='uint8')
+            rasterio_save(
+                out_crim,
+                out_profile,
+                save_path=save_path_float(save_path),
+                nodata=None
+            )
+
         # Convert to 8bit image
         out_crim_8bit = rvt.vis.byte_scale(
             out_crim,
@@ -750,7 +794,6 @@ def blend_crim(dict_arrays, save_path=None):
         )
 
         # Save GeoTIF
-        out_profile = dict_arrays['profile'].copy()
         out_profile.update(dtype='uint8')
         rasterio_save(
             out_crim_8bit,
@@ -762,7 +805,7 @@ def blend_crim(dict_arrays, save_path=None):
     return out_crim
 
 
-def blend_e3mstp(dict_arrays, save_path):
+def blend_e3mstp(dict_arrays, save_path, save_float=False):
     comb_e3mstp = rvt.blend.BlenderCombination()
     comb_e3mstp.create_layer(vis_method="slrm", normalization="value",
                              minimum=-0.5, maximum=0.5,
@@ -786,6 +829,18 @@ def blend_e3mstp(dict_arrays, save_path):
     out_e3mstp[np.isnan(dict_arrays["crim"])] = np.nan
     out_e3mstp[out_e3mstp > 1] = 1
 
+    # Save GeoTIF
+    out_profile = dict_arrays['profile'].copy()
+
+    if save_float:
+        # out_profile.update(dtype='uint8')
+        rasterio_save(
+            out_e3mstp,
+            out_profile,
+            save_path=save_path_float(save_path),
+            nodata=None
+        )
+
     # Convert to 8bit image
     out_e3mstp = rvt.vis.byte_scale(
         out_e3mstp,
@@ -793,8 +848,6 @@ def blend_e3mstp(dict_arrays, save_path):
         c_max=1
     )
 
-    # Save GeoTIF
-    out_profile = dict_arrays['profile'].copy()
     out_profile.update(dtype='uint8')
     rasterio_save(
         out_e3mstp,
@@ -804,7 +857,7 @@ def blend_e3mstp(dict_arrays, save_path):
     )
 
 
-def blend_e4mstp(dict_arrays, save_path):
+def blend_e4mstp(dict_arrays, save_path, save_float=False):
     # Get Coloured Slope
     dict_arrays['cs'] = blend_coloured_slope(dict_arrays)
     # Get SVF combined
@@ -846,6 +899,18 @@ def blend_e4mstp(dict_arrays, save_path):
     out_e4mstp[np.isnan(dict_arrays['mstp_1'])] = np.nan
     out_e4mstp[out_e4mstp > 1] = 1
 
+    # Save GeoTIF
+    out_profile = dict_arrays['profile'].copy()
+
+    if save_float:
+        # out_profile.update(dtype='uint8')
+        rasterio_save(
+            out_e4mstp,
+            out_profile,
+            save_path=save_path_float(save_path),
+            nodata=None
+        )
+
     # Convert to 8bit image
     out_e4mstp = rvt.vis.byte_scale(
         out_e4mstp,
@@ -853,8 +918,6 @@ def blend_e4mstp(dict_arrays, save_path):
         c_max=1
     )
 
-    # Save GeoTIF
-    out_profile = dict_arrays['profile'].copy()
     out_profile.update(dtype='uint8')
     rasterio_save(
         out_e4mstp,
@@ -1349,6 +1412,10 @@ def save_path_for_blend(save_filename: str, save_dir, source_filename, save_tile
         save_path = save_dir / save_filename / f"{save_tile_name}_rvt_{save_filename}.tif"
         save_path.parent.mkdir(exist_ok=True)
     return save_path, rvt_save_name
+
+
+def save_path_float(save_path):
+    return save_path.with_name(save_path.stem + "_float" + save_path.suffix)
 
 
 def create_mosaic(input_files_list, output_file):

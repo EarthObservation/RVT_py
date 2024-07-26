@@ -91,6 +91,15 @@ dropdown_options_visualizations = widgets.SelectMultiple(
     disabled=False
 )
 
+# Convert to 8bit image
+save_float_checkbox = widgets.Checkbox(
+    value=False,
+    description='Save float',
+    disabled=False,
+    indent=False
+)
+
+
 # RUN BUTTON ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~11
 button_run_adaf = widgets.Button(
     description="Run RVT",
@@ -108,16 +117,15 @@ def on_button_clicked(b):
     vis_types = list(dropdown_options_visualizations.value)
     blend_types = list(dropdown_options_blends.value)
 
-    # CONSTANT INPUT PARAMETERS
-    tile_size = 1000  # in PIXELS!
-    refgrid_existing = False  # Change to true, to avoid re-creating refgrid
+    save_float = save_float_checkbox.value
 
     with output_widget:
         print(list_tifs)
         print(vis_types)
         print(blend_types)
+        # print(str(save_float_checkbox.value))
 
-        run_main(list_tifs, vis_types, blend_types)
+        run_main(list_tifs, vis_types, blend_types, save_float)
 
     button_run_adaf.disabled = False
 
@@ -144,6 +152,7 @@ display(
             widgets.HTML(value=f"<b>RVT - TILED PROCESSING FOR LARGE FILES</b>"),
             b_file_select,
             selection_options,
+            save_float_checkbox,
             button_run_adaf,
             output_widget
         ]

@@ -18,4 +18,4 @@ if __name__ == "__main__":
         "vat_combined"
     ]
 
-    run_main(list_tifs, vis_types, blend_types)
+    run_main(list_tifs, vis_types, blend_types, save_float=False)
