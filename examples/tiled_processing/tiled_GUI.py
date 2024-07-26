@@ -58,7 +58,7 @@ b_file_select = SelectFilesButton()
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~11
 dropdown_options_blends = widgets.SelectMultiple(
     options=[
-        ("VAT combined", 'vat_combined_8bit'),
+        ("VAT combined", 'vat_combined'),
         # "VAT_combined_3B",
         ('e2MSTP', 'e2MSTP'),
         # ('e3MSTP', 'e3MSTP'),

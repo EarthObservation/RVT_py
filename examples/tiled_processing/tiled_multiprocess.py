@@ -238,10 +238,10 @@ def compute_save_blends(src_path, low_levels_path, vis_types, blend_types, one_e
     # ********** COMPUTE & SAVE SELECTED BLENDS *****************************************************
 
     # Calculate selected BLENDS
-    if "vat_combined_8bit" in blend_types:
+    if "vat_combined" in blend_types:
         # Determine save path
         save_path, rvt_save_name = save_path_for_blend(
-            save_filename="VAT_combined_8bit",
+            save_filename="VAT_combined",
             save_dir=low_levels_path,
             source_filename=filename_rvt,
             save_tile_name=one_tile_name
@@ -249,7 +249,7 @@ def compute_save_blends(src_path, low_levels_path, vis_types, blend_types, one_e
         # Add path to output dictionary
         out_path_dict[rvt_save_name] = save_path
         # Run VAT Combined 8bit blend
-        in_arrays["vat_combined_8bit"] = vat_combined_8bit(in_arrays, save_path)
+        in_arrays["vat_combined"] = vat_combined(in_arrays, save_path)
 
     # if "VAT_flat_3B" in blend_types:
     #     # Determine save path
@@ -342,7 +342,7 @@ def compute_save_blends(src_path, low_levels_path, vis_types, blend_types, one_e
     return out_path_dict
 
 
-def vat_combined_8bit(dict_arrays, save_path):
+def vat_combined(dict_arrays, save_path):
     """
     VAT Combined 8bit
     """
@@ -1044,7 +1044,7 @@ def get_required_arrays(vis_types, blend_types):
         req_arrays["neg_opns_1"] = True
         req_arrays["slp_1"] = True
 
-    if "vat_combined_8bit" in blend_types:
+    if "vat_combined" in blend_types:
         req_arrays["svf_2"] = True
         req_arrays["opns_2"] = True
         req_arrays["svf_1"] = True
