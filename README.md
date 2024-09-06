@@ -76,6 +76,7 @@ Required libraries (specified versions have been tested, other versions may also
 *   numpy 1.19.2
 *   scipy 1.5.2
 *   gdal 3.0.2
+*   rasterio 1.2.6
 
 We recommend using Python 3.6 or higher and a Conda environment (this works best with ``gdal``).
 
