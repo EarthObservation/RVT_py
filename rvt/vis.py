@@ -421,7 +421,9 @@ def mean_filter(dem, kernel_radius):
                 np.roll(dem_i1, (-radius_cell - 1, -radius_cell - 1), axis=(0, 1)) -
                 np.roll(dem_i1, (-radius_cell - 1, radius_cell), axis=(0, 1)) -
                 np.roll(dem_i1, (radius_cell, -radius_cell - 1), axis=(0, 1)))
-    mean_out = mean_out / kernel_nr_pix_arr
+    # Ignore warnings for dividing with nan
+    with np.errstate(divide='ignore', invalid='ignore'):
+        mean_out = mean_out / kernel_nr_pix_arr
     mean_out = mean_out.astype(np.float32)
     mean_out = mean_out[radius_cell:-(radius_cell + 1), radius_cell:-(radius_cell + 1)]  # remove padding
     # nan back to nan
