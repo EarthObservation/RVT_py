@@ -162,8 +162,8 @@
                 "description": "FLAT use 10m, this is for 0.5m resolution - Maximal search radious in pixels."
             },
             "svf_noise": {
-                "value": 0,
-                "description": "The level of noise remove [0-don't remove, 1-low, 2-med, 3-high]."
+                "value": 3,
+                "description": "FLAT use 3; The level of noise remove [0-don't remove, 1-low, 2-med, 3-high]."
             },
             "svf_save_float": {
                 "value": 1,

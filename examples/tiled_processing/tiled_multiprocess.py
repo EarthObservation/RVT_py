@@ -25,7 +25,7 @@ import rvt.vis
 from rvt.blend_func import normalize_image
 
 
-def run_main(list_tifs, vis_types, blend_types, save_float):
+def run_main(list_tifs, vis_types, blend_types, save_float=False):
     for in_file in list_tifs:
         in_file = Path(in_file)
 
@@ -250,8 +250,34 @@ def compute_save_blends(src_path, low_levels_path, vis_types, blend_types, one_e
         )
         # Add path to output dictionary
         out_path_dict[rvt_save_name] = save_path
-        # Run VAT Combined 8bit blend
+        # Run VAT Combined blend
         in_arrays["vat_combined"] = vat_combined(in_arrays, save_path, save_float)
+
+    if "vat_general" in blend_types:
+        # Determine save path
+        save_path, rvt_save_name = save_path_for_blend(
+            save_filename="VAT_general",
+            save_dir=low_levels_path,
+            source_filename=filename_rvt,
+            save_tile_name=one_tile_name
+        )
+        # Add path to output dictionary
+        out_path_dict[rvt_save_name] = save_path
+        # Run VAT general blend
+        in_arrays["vat_general"] = vat_general(in_arrays, save_path, save_float)
+
+    if "vat_flat" in blend_types:
+        # Determine save path
+        save_path, rvt_save_name = save_path_for_blend(
+            save_filename="VAT_flat",
+            save_dir=low_levels_path,
+            source_filename=filename_rvt,
+            save_tile_name=one_tile_name
+        )
+        # Add path to output dictionary
+        out_path_dict[rvt_save_name] = save_path
+        # Run VAT general blend
+        in_arrays["vat_flat"] = vat_flat(in_arrays, save_path, save_float)
 
     # if "VAT_flat_3B" in blend_types:
     #     # Determine save path
@@ -345,10 +371,7 @@ def compute_save_blends(src_path, low_levels_path, vis_types, blend_types, one_e
     return out_path_dict
 
 
-def vat_combined(dict_arrays, save_path, save_float=False):
-    """
-    VAT Combined 8bit
-    """
+def vat_general(dict_arrays, save_path=None, save_float=False):
     # BLEND VAT GENERAL
     vat_combination_general = rvt.blend.BlenderCombination()
     vat_combination_general.create_layer(
@@ -392,8 +415,40 @@ def vat_combined(dict_arrays, save_path, save_float=False):
         save_render_path=None,
         no_data=np.nan
     )
-    vat_1 = vat_1.astype("float32")
+    out_vat_general = vat_1.astype("float32")
 
+    # Save GeoTIF
+    out_profile = dict_arrays['profile'].copy()
+
+    if save_float:
+        # out_profile.update(dtype='uint8')
+        rasterio_save(
+            out_vat_general,
+            out_profile,
+            save_path=save_path_float(save_path),
+            nodata=None
+        )
+
+    if save_path:
+        # Convert to 8bit image
+        out_vat_general_8bit = rvt.vis.byte_scale(
+            out_vat_general,
+            c_min=0,
+            c_max=1
+        )
+
+        out_profile.update(dtype='uint8')
+        rasterio_save(
+            out_vat_general_8bit,
+            out_profile,
+            save_path=save_path,
+            nodata=None
+        )
+
+    return out_vat_general
+
+
+def vat_flat(dict_arrays, save_path=None, save_float=False):
     # BLEND VAT FLAT
     vat_combination_flat = rvt.blend.BlenderCombination()
     vat_combination_flat.create_layer(
@@ -437,7 +492,134 @@ def vat_combined(dict_arrays, save_path, save_float=False):
         save_render_path=None,
         no_data=np.nan
     )
-    vat_2 = vat_2.astype("float32")
+    out_vat_flat = vat_2.astype("float32")
+
+    # Save GeoTIF
+    out_profile = dict_arrays['profile'].copy()
+
+    if save_float:
+        # out_profile.update(dtype='uint8')
+        rasterio_save(
+            out_vat_flat,
+            out_profile,
+            save_path=save_path_float(save_path),
+            nodata=None
+        )
+
+    if save_path:
+        # Convert to 8bit image
+        out_vat_flat_8bit = rvt.vis.byte_scale(
+            out_vat_flat,
+            c_min=0,
+            c_max=1
+        )
+
+        out_profile.update(dtype='uint8')
+        rasterio_save(
+            out_vat_flat_8bit,
+            out_profile,
+            save_path=save_path,
+            nodata=None
+        )
+
+    return out_vat_flat
+
+
+def vat_combined(dict_arrays, save_path, save_float=False):
+    """
+    VAT Combined 8bit
+    """
+    # # BLEND VAT GENERAL
+    # vat_combination_general = rvt.blend.BlenderCombination()
+    # vat_combination_general.create_layer(
+    #     vis_method="Sky-View Factor",
+    #     normalization="Value",
+    #     minimum=0.7,
+    #     maximum=1.0,
+    #     blend_mode="Multiply",
+    #     opacity=25,
+    #     image=dict_arrays['svf_1'].squeeze()
+    # )
+    # vat_combination_general.create_layer(
+    #     vis_method="Openness - Positive",
+    #     normalization="Value",
+    #     minimum=68,
+    #     maximum=93,
+    #     blend_mode="Overlay",
+    #     opacity=50,
+    #     image=dict_arrays['opns_1'].squeeze()
+    # )
+    # vat_combination_general.create_layer(
+    #     vis_method="Slope gradient",
+    #     normalization="Value",
+    #     minimum=0,
+    #     maximum=50,
+    #     blend_mode="Luminosity",
+    #     opacity=50,
+    #     image=dict_arrays['slp_1'].squeeze()
+    # )
+    # vat_combination_general.create_layer(
+    #     vis_method="Hillshade",
+    #     normalization="Value",
+    #     minimum=0,
+    #     maximum=1,
+    #     blend_mode="Normal",
+    #     opacity=100,
+    #     image=dict_arrays['hs_1'].squeeze()
+    # )
+    # vat_1 = vat_combination_general.render_all_images(
+    #     save_visualizations=False,
+    #     save_render_path=None,
+    #     no_data=np.nan
+    # )
+    # vat_1 = vat_1.astype("float32")
+    vat_1 = vat_general(dict_arrays)
+
+    # # BLEND VAT FLAT
+    # vat_combination_flat = rvt.blend.BlenderCombination()
+    # vat_combination_flat.create_layer(
+    #     vis_method="Sky-View Factor",
+    #     normalization="Value",
+    #     minimum=0.9,
+    #     maximum=1.0,
+    #     blend_mode="Multiply",
+    #     opacity=25,
+    #     image=dict_arrays['svf_2'].squeeze()
+    # )
+    # vat_combination_flat.create_layer(
+    #     vis_method="Openness - Positive",
+    #     normalization="Value",
+    #     minimum=85,
+    #     maximum=93,
+    #     blend_mode="Overlay",
+    #     opacity=50,
+    #     image=dict_arrays['opns_2'].squeeze()
+    # )
+    # vat_combination_flat.create_layer(
+    #     vis_method="Slope gradient",
+    #     normalization="Value",
+    #     minimum=0,
+    #     maximum=15,
+    #     blend_mode="Luminosity",
+    #     opacity=50,
+    #     image=dict_arrays['slp_1'].squeeze()
+    # )
+    # vat_combination_flat.create_layer(
+    #     vis_method="Hillshade",
+    #     normalization="Value",
+    #     minimum=0,
+    #     maximum=1,
+    #     blend_mode="Normal",
+    #     opacity=100,
+    #     image=dict_arrays['hs_2'].squeeze()
+    # )
+    # vat_2 = vat_combination_flat.render_all_images(
+    #     save_visualizations=False,
+    #     save_render_path=None,
+    #     no_data=np.nan
+    # )
+    # vat_2 = vat_2.astype("float32")
+    vat_2 = vat_flat(dict_arrays)
 
     # BLEND VAT COMBINED
     comb_vat_combined = rvt.blend.BlenderCombination()
@@ -472,7 +654,7 @@ def vat_combined(dict_arrays, save_path, save_float=False):
         )
 
     # Convert to 8bit image
-    out_vat_combined = rvt.vis.byte_scale(
+    out_vat_combined_8bit = rvt.vis.byte_scale(
         out_vat_combined,
         c_min=0,
         c_max=1
@@ -480,7 +662,7 @@ def vat_combined(dict_arrays, save_path, save_float=False):
 
     out_profile.update(dtype='uint8')
     rasterio_save(
-        out_vat_combined,
+        out_vat_combined_8bit,
         out_profile,
         save_path=save_path,
         nodata=None
@@ -1116,6 +1298,18 @@ def get_required_arrays(vis_types, blend_types):
         req_arrays["hs_1"] = True
         req_arrays["hs_2"] = True
 
+    if "vat_general" in blend_types:
+        req_arrays["svf_1"] = True
+        req_arrays["opns_1"] = True
+        req_arrays["slp_1"] = True
+        req_arrays["hs_1"] = True
+
+    if "vat_flat" in blend_types:
+        req_arrays["svf_2"] = True
+        req_arrays["opns_2"] = True
+        req_arrays["slp_1"] = True
+        req_arrays["hs_2"] = True
+
     if "rrim" in blend_types:
         req_arrays["slp_1"] = True
         req_arrays["opns_1"] = True
@@ -1261,7 +1455,7 @@ def compute_low_levels(
             vis_out = {}
 
             if compute_svf or compute_opns:
-                vis_out = default_1.get_sky_view_factor(
+                vis_out = default_2.get_sky_view_factor(
                     sliced_arr,
                     dict_arrays["resolution"][0],
                     compute_svf=compute_svf,
@@ -1272,7 +1466,7 @@ def compute_low_levels(
                     vis_out[f"{k}_2"] = vis_out.pop(k)
 
             if compute_neg_opns:
-                vis_out["neg_opns_2"] = default_1.get_neg_opns(
+                vis_out["neg_opns_2"] = default_2.get_neg_opns(
                     sliced_arr,
                     dict_arrays["resolution"][0]
                 )
