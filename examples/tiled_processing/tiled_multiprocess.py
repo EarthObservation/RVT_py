@@ -244,6 +244,24 @@ def compute_save_blends(src_path, low_levels_path, vis_types, blend_types, one_e
         out_path_dict[rvt_save_name] = save_path
 
         # Convert to byte scale and save to disk
+        if save_float:
+            # Determine file path and create parent folder
+            spf = save_path_float(save_path)
+            spf.parent.mkdir(exist_ok=True)
+
+            # Save path to the list for creating VRTs
+            out_path_dict[rvt_save_name[:-4] + "_float.tif"] = spf
+
+            # Adapt to visualization keywords used in in_arrays
+            vis_1 = vis + "_1"
+
+            rasterio_save(
+                in_arrays[vis_1],
+                in_arrays["profile"],
+                save_path=spf,
+                nodata=np.nan
+            )
+
         vis_bytscl_save(in_arrays, vis, default_1, save_path)
 
     # ********** COMPUTE & SAVE SELECTED BLENDS *****************************************************
