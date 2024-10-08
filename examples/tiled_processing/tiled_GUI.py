@@ -37,7 +37,7 @@ class SelectFilesButton(widgets.Button):
 
         selected_files = filedialog.askopenfilename(
             title="Select input files",
-            filetypes=[("GeoTIF", "*.tif;*.tiff"), ("VRT", "*.vrt")],
+            filetypes=[("GeoTIF", "*.tif;*.tiff"), ("VRT", "*.vrt"), ("All files", "*.*")],
             multiple=True
         )
 
@@ -63,7 +63,7 @@ dropdown_options_blends = widgets.SelectMultiple(
         ('e2MSTP', 'e2MSTP'),
         # ('e3MSTP', 'e3MSTP'),
         ('e4MSTP', 'e4MSTP'),
-        ('RRIM', 'rrim'),
+        # ('RRIM', 'rrim'),
         ('CRIM', 'crim')
     ],
     value=[],
