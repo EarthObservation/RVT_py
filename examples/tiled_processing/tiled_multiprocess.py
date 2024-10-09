@@ -1367,6 +1367,10 @@ def compute_low_levels(
         "svf_FLAT": default_2.svf_r_max,  # SVF, OPNS+ and OPNS- for (FLAT = LARGE = 10m)
     }
 
+    # For processing a single raster ignore buffers
+    if not input_dem_extents:
+        all_buffers = {key: 0 for key in all_buffers}
+
     # Get required visualizations (account for SVF, opns and neg.opns, they are calculated in the same function)
     req_visualizations = [a for (a, v) in vis_types.items() if v]
     if any(value in req_visualizations for value in ["svf_1", "opns_1", "neg_opns_1"]):
@@ -1389,7 +1393,10 @@ def compute_low_levels(
     dict_arrays["no_data"] = np.nan
 
     # Skip if all pixels are nodata (remove buffer when checking)
-    all_nan_check = np.all(np.isnan(dict_arrays["array"][buffer: -buffer, buffer: -buffer]))
+    if buffer == 0:
+        all_nan_check = np.all(np.isnan(dict_arrays["array"]))
+    else:
+        all_nan_check = np.all(np.isnan(dict_arrays["array"][buffer: -buffer, buffer: -buffer]))
     # True means we have all-nan array and have to skip this tile
     if all_nan_check:
         # SKIP THIS TILE
@@ -1637,8 +1644,8 @@ def save_path_for_blend(save_filename: str, save_dir, source_filename, save_tile
     - if single TIF, save the raster using the path to the final save file (located in the same folder as source file
         and using RVT naming conventions). In this case the save_tile_name variable is given as None
 
-    - in the case where we want to save only the one tile (for VRT), use the constructed save_tile_name and save into a child
-        directory of the same name as the final name of the save file
+    - in the case where we want to save only the one tile (for VRT), use the constructed save_tile_name and save into a
+        child directory of the same name as the final name of the save file
     """
     save_dir = Path(save_dir)
     source_filename = Path(source_filename)
