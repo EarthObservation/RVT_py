@@ -35,10 +35,10 @@ def run_main(list_tifs, vis_types, blend_types, save_float=False):
 
         # (2) Check if larger than 4000 px
         with rasterio.open(input_vrt) as src:
-            if src.shape > (6000, 6000):
+            if any(dim > 6000 for dim in src.shape):
                 # If at least 1 dim is larger than 6000 pixels
                 tile_size = 4000
-            elif src.shape > (4000, 4000):
+            elif any(dim > 4000 for dim in src.shape):
                 tile_size = 2000
             else:
                 tile_size = None
@@ -470,9 +470,6 @@ def compute_save_blends(src_path, vis_types, blend_types, one_extent, save_float
             out_path_dict[rvt_save_name[:-4] + "_float.tif"] = spf
         else:
             spf = None
-
-        # Run VAT general blend
-        in_arrays["vat_general"] = vat_general(in_arrays, save_path, spf)
 
         # Run e4MSTP blend
         blend_e4mstp(in_arrays, save_path, spf)
@@ -1082,7 +1079,7 @@ def blend_e4mstp(dict_arrays, save_path, save_path_float=None):
     )
     comb_nv.create_layer(
         vis_method="Comb svf",
-        normalization="value", minimum=-0.5, maximum=0.5,
+        normalization="value", minimum=0, maximum=1,
         blend_mode="multiply", opacity=25,
         image=dict_arrays['svf_combined']
     )
@@ -1142,7 +1139,7 @@ def blend_coloured_slope(dict_arrays, save_path=None):
     comb_cs = rvt.blend.BlenderCombination()
     comb_cs.create_layer(
         vis_method="Slope gradient", normalization="Value",
-        minimum=0, maximum=55,
+        minimum=0, maximum=50,
         blend_mode="normal", opacity=100,
         colormap="Reds_r", min_colormap_cut=0, max_colormap_cut=1,
         image=dict_arrays['slp_1'].squeeze()
@@ -1157,7 +1154,7 @@ def blend_coloured_slope(dict_arrays, save_path=None):
     if save_path:
         # Save GeoTIF
         rasterio_save(
-            coloured_slope,
+            coloured_slope.astype("float32"),
             dict_arrays['profile'],
             save_path=save_path,
             nodata=np.nan
