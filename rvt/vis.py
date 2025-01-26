@@ -96,7 +96,7 @@ def byte_scale(data,
             byte_data[byte_data > high] = high
             byte_data[byte_data < 0] = 0
             byte_data[np.isnan(byte_data)] = 0  # change no_data to 0
-            return np.cast[np.uint8](byte_data) + np.cast[np.uint8](low)
+            return np.asarray(byte_data, np.uint8) + np.asarray(low, np.uint8)
 
         # scale = float(high - low) / cscale  # old scipy fn
         # byte_data = (data * 1.0 - cmin) * scale + 0.4999  # old scipy fn
@@ -105,7 +105,7 @@ def byte_scale(data,
         byte_data[byte_data > high] = high
         byte_data[byte_data < 0] = 0
         byte_data[np.isnan(byte_data)] = 255  # change no_data to 255
-        byte_data = np.cast[np.uint8](byte_data) + np.cast[np.uint8](low)
+        byte_data = np.asarray(byte_data, np.uint8) + np.asarray(low, np.uint8)
         byte_data_bands.append(byte_data)
 
     if is_2d_arr:  # if only one band
@@ -500,7 +500,7 @@ def horizon_shift_vector(num_directions=16,
             - for each key, a subdict contains a key "shift":
                 values for this key is a list of tuples prepared for np.roll - shift along lines and columns
             - the second key is "distance":
-                values for this key is a list of search radius used for the computation of the elevation angle 
+                values for this key is a list of search radius used for the computation of the elevation angle
     """
 
     # Initialize the output dict
@@ -528,7 +528,7 @@ def horizon_shift_vector(num_directions=16,
         # consider only the minimal number of points
         # use the trick with set and complex number as the input
         coord_complex = set(x_int + 1j * y_int)
-        # to sort proportional with increasing radius, 
+        # to sort proportional with increasing radius,
         # set has to be converted to numpy array
         shift_pairs = np.array([(k.real, k.imag) for k in coord_complex]).astype(int)
         distance = np.sqrt(np.sum(shift_pairs ** 2, axis=1))
@@ -586,7 +586,7 @@ def sky_view_factor_compute(height_arr,
         Level of polynomial that determines the anisotropy.
     a_min_weight : float
         Weight to consider anisotropy:
-                 0 - low anisotropy, 
+                 0 - low anisotropy,
                  1 - high  anisotropy (no illumination from the direction opposite the main direction)
 
     Returns
@@ -925,13 +925,13 @@ def horizon_generate_coarse_dem(dem_fine,
     dem_convolve = dem_convolve / pyramid_scale
 
     # Consider only the selected convoluted points according to the scale change.
-    # As we select slice's end point make sure to consider at least 1 point more 
+    # As we select slice's end point make sure to consider at least 1 point more
     # to the right / below to really include it (Python way of considering end index).
     dem_coarse = dem_convolve[-conv_from:(n_lin_coarse * pyramid_scale + 1):pyramid_scale,
                               -conv_from:(n_col_coarse * pyramid_scale + 1):pyramid_scale]
 
     # Final padding to enable searching the horizon over the edge:
-    # use constant-mode set to the minimal height, so it doesn't 
+    # use constant-mode set to the minimal height, so it doesn't
     # affect the horizon estimation.
     dem_coarse = np.pad(dem_coarse, ((max_radius, max_radius), (max_radius, max_radius)), mode="constant",
                         constant_values=dem_coarse.min())

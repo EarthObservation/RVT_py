@@ -326,245 +326,397 @@ class DefaultValues:
 
     def save_default_to_file(self, file_path=None):
         """Saves default attributes into .json file."""
-        data = {"default_settings": {
-            "overwrite": {
-                "value": self.overwrite,
-                "description": "When saving visualisation functions and file already exists, if 0 "
-                               "it doesn't compute it, if 1 it overwrites it."},
-            "ve_factor": {
-                "value": self.ve_factor,
-                "description": "Vertical exaggeration."},
-            "Hillshade": {
-                "hs_compute": {"value": self.hs_compute,
-                               "description": "If compute Hillshade. Parameter for GUIs."},
-                "hs_sun_azi": {"value": self.hs_sun_azi,
-                               "description": "Solar azimuth angle (clockwise from North) in "
-                                              "degrees."},
-                "hs_sun_el": {"value": self.hs_sun_el,
-                              "description": "Solar vertical angle (above the horizon) in "
-                                             "degrees."},
-                "hs_save_float": {"value": self.hs_save_float,
-                                  "description": "If 1 it saves float raster, if 0 it doesn't."},
-                "hs_save_8bit": {"value": self.hs_save_8bit,
-                                 "description": "If 1 it saves 8bit raster, if 0 it doesn't."},
-                "hs_shadow": {"value": self.hs_shadow,
-                              "description": "If 1 it saves shadow binary raster, if 0 it doesn't."},
-                "hs_bytscl": {"mode": self.hs_bytscl[0], "min": self.hs_bytscl[1], "max": self.hs_bytscl[2],
-                              "description": "Linear stretch and byte scale (0-255) for 8bit raster. "
-                                             "Mode can be 'value' or 'percent' (cut-off units). "
-                                             "Values min and max define stretch borders (in mode units)."}
-            },
-            "Multiple directions hillshade": {
-                "mhs_compute": {"value": self.mhs_compute,
-                                "description": "If compute Multiple directions hillshade."
-                                               " Parameter for GUIs."},
-                "mhs_nr_dir": {"value": self.mhs_nr_dir,
-                               "description": "Number of solar azimuth angles (clockwise "
-                                              "from North)."},
-                "mhs_sun_el": {"value": self.mhs_sun_el,
-                               "description": "Solar vertical angle (above the horizon) in "
-                                              "degrees."},
-                "mhs_save_float": {"value": self.mhs_save_float,
-                                   "description": "If 1 it saves float raster, if 0 it doesn't."},
-                "mhs_save_8bit": {"value": self.mhs_save_8bit,
-                                  "description": "If 1 it saves 8bit raster, if 0 it doesn't."},
-                "mhs_bytscl": {"mode": self.mhs_bytscl[0], "min": self.mhs_bytscl[1], "max": self.mhs_bytscl[2],
-                               "description": "Linear stretch and byte scale (0-255) for 8bit raster. "
-                                              "Mode can be 'value' or 'percent' (cut-off units). "
-                                              "Values min and max define stretch borders (in mode units)."}
-            },
-            "Slope gradient": {
-                "slp_compute": {"value": self.slp_compute,
-                                "description": "If compute Slope. Parameter for GUIs."},
-                "slp_output_units": {"value": self.slp_output_units,
-                                     "description": "Slope output units [radian, degree, "
-                                                    "percent]."},
-                "slp_save_float": {"value": self.slp_save_float,
-                                   "description": "If 1 it saves float raster, if 0 it doesn't."},
-                "slp_save_8bit": {"value": self.slp_save_8bit,
-                                  "description": "If 1 it saves 8bit raster, if 0 it doesn't."},
-                "slp_bytscl": {"mode": self.slp_bytscl[0], "min": self.slp_bytscl[1], "max": self.slp_bytscl[2],
-                               "description": "Linear stretch and byte scale (0-255) for 8bit raster. "
-                                              "Mode can be 'value' or 'percent' (cut-off units). "
-                                              "Values min and max define stretch borders (in mode units)."}
-            },
-            "Simple local relief model": {
-                "slrm_compute": {"value": self.slrm_compute,
-                                 "description": "If compute Simple local relief model. "
-                                                "Parameter for GUIs."},
-                "slrm_rad_cell": {"value": self.slrm_rad_cell,
-                                  "description": "Radius for trend assessment in pixels."},
-                "slrm_save_float": {"value": self.slrm_save_float,
-                                    "description": "If 1 it saves float raster, if 0 it doesn't."},
-                "slrm_save_8bit": {"value": self.slrm_save_8bit,
-                                   "description": "If 1 it saves 8bit raster, if 0 it doesn't."},
-                "slrm_bytscl": {"mode": self.slrm_bytscl[0], "min": self.slrm_bytscl[1], "max": self.slrm_bytscl[2],
-                                "description": "Linear stretch and byte scale (0-255) for 8bit raster. "
-                                               "Mode can be 'value' or 'percent' (cut-off units). "
-                                               "Values min and max define stretch borders (in mode units)."}
-            },
-            "Multi-scale relief model": {
-                "msrm_compute": {"value": self.msrm_compute,
-                                 "description": "If compute Multi-scale relief model. "
-                                                "Parameter for GUIs."},
-                "msrm_feature_min": {"value": self.msrm_feature_min,
-                                     "description": "Minimum size of the feature you want to detect in meters."},
-                "msrm_feature_max": {"value": self.msrm_feature_max,
-                                     "description": "Maximum size of the feature you want to detect in meters."},
-                "msrm_scaling_factor": {"value": self.msrm_scaling_factor,
-                                        "description": "Scaling factor."},
-                "msrm_save_float": {"value": self.msrm_save_float,
-                                    "description": "If 1 it saves float raster, if 0 it doesn't."},
-                "msrm_save_8bit": {"value": self.msrm_save_8bit,
-                                   "description": "If 1 it saves 8bit raster, if 0 it doesn't."},
-                "msrm_bytscl": {"mode": self.msrm_bytscl[0], "min": self.msrm_bytscl[1], "max": self.msrm_bytscl[2],
-                                "description": "Linear stretch and byte scale (0-255) for 8bit raster. "
-                                               "Mode can be 'value' or 'percent' (cut-off units). "
-                                               "Values min and max define stretch borders (in mode units)."}
-            },
-            "Sky-View Factor": {
-                "svf_compute": {"value": self.svf_compute,
-                                "description": "If compute Sky-View Factor."
-                                               " Parameter for GUIs."},
-                "svf_n_dir": {"value": self.svf_n_dir, "description": "Number of directions."},
-                "svf_r_max": {"value": self.svf_r_max, "description": "Maximal search "
-                                                                      "radious in pixels."},
-                "svf_noise": {"value": self.svf_noise,
-                              "description": "The level of noise remove [0-don't remove, "
-                                             "1-low, 2-med, 3-high]."},
-                "svf_save_float": {"value": self.svf_save_float,
-                                   "description": "If 1 it saves float raster, if 0 it doesn't."},
-                "svf_save_8bit": {"value": self.svf_save_8bit,
-                                  "description": "If 1 it saves 8bit raster, if 0 it doesn't."},
-                "svf_bytscl": {"mode": self.svf_bytscl[0], "min": self.svf_bytscl[1], "max": self.svf_bytscl[2],
-                               "description": "Linear stretch and byte scale (0-255) for 8bit raster. "
-                                              "Mode can be 'value' or 'percent' (cut-off units). "
-                                              "Values min and max define stretch borders (in mode units)."}
-            },
-            "Anisotropic Sky-View Factor": {
-                "asvf_compute": {"value": self.asvf_compute,
-                                 "description": "If compute Anisotropic Sky-View Factor."
-                                                " Parameter for GUIs."},
-                "asvf_dir": {"value": self.asvf_dir,
-                             "description": "Direction of anisotropy in degrees."},
-                "asvf_level": {"value": self.asvf_level,
-                               "description": "Level of anisotropy [1-low, 2-high]."},
-                "asvf_bytscl": {"mode": self.asvf_bytscl[0], "min": self.asvf_bytscl[1], "max": self.asvf_bytscl[2],
-                                "description": "Linear stretch and byte scale (0-255) for 8bit raster. "
-                                               "Mode can be 'value' or 'percent' (cut-off units). "
-                                               "Values min and max define stretch borders (in mode units)."}
-            },
-            "Openness - Positive": {
-                "pos_opns_compute": {"value": self.pos_opns_compute,
-                                     "description": "If compute Openness - Positive. "
-                                                    "Parameter for GUIs."},
-                "pos_opns_bytscl": {"mode": self.pos_opns_bytscl[0], "min": self.pos_opns_bytscl[1],
-                                    "max": self.pos_opns_bytscl[2],
-                                    "description": "Linear stretch and byte scale (0-255) for 8bit raster. "
-                                                   "Mode can be 'value' or 'percent' (cut-off units). "
-                                                   "Values min and max define stretch borders (in mode units)."}
-            },
-            "Openness - Negative": {
-                "neg_opns_compute": {"value": self.neg_opns_compute,
-                                     "description": "If compute Openness - Negative. "
-                                                    "Parameter for GUIs."},
-                "neg_opns_save_float": {"value": self.neg_opns_save_float,
-                                        "description": "If 1 it saves float raster, if 0 it doesn't."},
-                "neg_opns_save_8bit": {"value": self.neg_opns_save_8bit,
-                                       "description": "If 1 it saves 8bit raster, if 0 it doesn't."},
-                "neg_opns_bytscl": {"mode": self.neg_opns_bytscl[0], "min": self.neg_opns_bytscl[1],
-                                    "max": self.neg_opns_bytscl[2],
-                                    "description": "Linear stretch and byte scale (0-255) for 8bit raster. "
-                                                   "Mode can be 'value' or 'percent' (cut-off units). "
-                                                   "Values min and max define stretch borders (in mode units)."}
-            },
-            "Sky illumination": {
-                "sim_compute": {"value": self.sim_compute,
-                                "description": "If compute Sky illumination. Parameter for "
-                                               "GUIs."},
-                "sim_sky_mod": {"value": self.sim_sky_mod,
-                                "description": "Sky model [overcast, uniform]."},
-                "sim_compute_shadow": {"value": self.sim_compute_shadow,
-                                       "description": "If 1 it computes shadows, if 0 it doesn't."},
-                "sim_shadow_dist": {"value": self.sim_shadow_dist,
-                                    "description": "Max shadow modeling distance in pixels."},
-                "sim_nr_dir": {"value": self.sim_nr_dir,
-                               "description": "Number of directions to search for horizon"},
-                "sim_shadow_az": {"value": self.sim_shadow_az, "description": "Shadow "
-                                                                              "azimuth in "
-                                                                              "degrees."},
-                "sim_shadow_el": {"value": self.sim_shadow_el, "description": "Shadow "
-                                                                              "elevation in "
-                                                                              "degrees."},
-                "sim_save_float": {"value": self.sim_save_float,
-                                   "description": "If 1 it saves float raster, if 0 it doesn't."},
-                "sim_save_8bit": {"value": self.sim_save_8bit,
-                                  "description": "If 1 it saves 8bit raster, if 0 it doesn't."},
-                "sim_bytscl": {"mode": self.sim_bytscl[0], "min": self.sim_bytscl[1], "max": self.sim_bytscl[2],
-                               "description": "Linear stretch and byte scale (0-255) for 8bit raster. "
-                                              "Mode can be 'value' or 'percent' (cut-off units). "
-                                              "Values min and max define stretch borders (in mode units)."}
-            },
-            "Local dominance": {
-                "ld_compute": {"value": self.ld_compute,
-                               "description": "If compute Local dominance. Parameter for "
-                                              "GUIs."},
-                "ld_min_rad": {"value": self.ld_min_rad,
-                               "description": "Minimum radial distance (in pixels) at which "
-                                              "the algorithm starts with visualization "
-                                              "computation."},
-                "ld_max_rad": {"value": self.ld_max_rad,
-                               "description": "Maximum radial distance (in pixels) at which "
-                                              "the algorithm ends with visualization "
-                                              "computation."},
-                "ld_rad_inc": {"value": self.ld_rad_inc, "description": "Radial distance "
-                                                                        "steps in pixels."},
-                "ld_anglr_res": {"value": self.ld_anglr_res,
-                                 "description": "Angular step for determination of number of "
-                                                "angular directions."},
-                "ld_observer_h": {"value": self.ld_observer_h,
-                                  "description": "Height at which we observe the terrain."},
-                "ld_save_float": {"value": self.ld_save_float,
-                                  "description": "If 1 it saves float raster, if 0 it doesn't."},
-                "ld_save_8bit": {"value": self.ld_save_8bit,
-                                 "description": "If 1 it saves 8bit raster, if 0 it doesn't."},
-                "ld_bytscl": {"mode": self.ld_bytscl[0], "min": self.ld_bytscl[1], "max": self.ld_bytscl[2],
-                              "description": "Linear stretch and byte scale (0-255) for 8bit raster. "
-                                             "Mode can be 'value' or 'percent' (cut-off units). "
-                                             "Values min and max define stretch borders (in mode units)."}
-            },
-            "Multi-scale topographic position": {
-                "mstp_compute": {"value": self.mstp_compute,
-                                 "description": "If compute Multi-scale topographic position. "
-                                                "Parameter for GUIs."},
-                "mstp_local_scale": {"min": self.mstp_local_scale[0], "max": self.mstp_local_scale[1],
-                                     "step": self.mstp_local_scale[2],
-                                     "description": "Local scale minimum radius, maximum radius and step in pixels to"
-                                                    " calculate maximum mean deviation from elevation."
-                                                    " All have to be integers!"},
-                "mstp_meso_scale": {"min": self.mstp_meso_scale[0], "max": self.mstp_meso_scale[1],
-                                    "step": self.mstp_meso_scale[2],
-                                    "description": "Meso scale minimum radius, maximum radius and step in pixels to"
-                                                   " calculate maximum mean deviation from elevation."
-                                                   " All have to be integers!"},
-                "mstp_broad_scale": {"min": self.mstp_broad_scale[0], "max": self.mstp_broad_scale[1],
-                                     "step": self.mstp_broad_scale[2],
-                                     "description": "Broad scale minimum radius, maximum radius and step in pixels to"
-                                                    " calculate maximum mean deviation from elevation."
-                                                    " All have to be integers!"},
-                "mstp_lightness": {"value": self.mstp_lightness,
-                                   "description": "Lightness factor to adjust MSTP visibility."},
-                "mstp_save_float": {"value": self.mstp_save_float,
-                                  "description": "If 1 it saves float raster, if 0 it doesn't."},
-                "mstp_save_8bit": {"value": self.mstp_save_8bit,
-                                 "description": "If 1 it saves 8bit raster, if 0 it doesn't."},
-                "mstp_bytscl": {"mode": self.mstp_bytscl[0], "min": self.mstp_bytscl[1], "max": self.mstp_bytscl[2],
-                              "description": "Linear stretch and byte scale (0-255) for 8bit raster. "
-                                             "Mode can be 'value' or 'percent' (cut-off units). "
-                                             "Values min and max define stretch borders (in mode units)."}
+        data = {
+            "default_settings": {
+                "overwrite": {
+                    "value": self.overwrite,
+                    "description": "When saving visualisation functions and file already exists, if 0 "
+                    "it doesn't compute it, if 1 it overwrites it.",
+                },
+                "ve_factor": {"value": self.ve_factor, "description": "Vertical exaggeration."},
+                "Hillshade": {
+                    "hs_compute": {
+                        "value": self.hs_compute,
+                        "description": "If compute Hillshade. Parameter for GUIs.",
+                    },
+                    "hs_sun_azi": {
+                        "value": self.hs_sun_azi,
+                        "description": "Solar azimuth angle (clockwise from North) in " "degrees.",
+                    },
+                    "hs_sun_el": {
+                        "value": self.hs_sun_el,
+                        "description": "Solar vertical angle (above the horizon) in " "degrees.",
+                    },
+                    "hs_save_float": {
+                        "value": self.hs_save_float,
+                        "description": "If 1 it saves float raster, if 0 it doesn't.",
+                    },
+                    "hs_save_8bit": {
+                        "value": self.hs_save_8bit,
+                        "description": "If 1 it saves 8bit raster, if 0 it doesn't.",
+                    },
+                    "hs_shadow": {
+                        "value": self.hs_shadow,
+                        "description": "If 1 it saves shadow binary raster, if 0 it doesn't.",
+                    },
+                    "hs_bytscl": {
+                        "mode": self.hs_bytscl[0],
+                        "min": self.hs_bytscl[1],
+                        "max": self.hs_bytscl[2],
+                        "description": "Linear stretch and byte scale (0-255) for 8bit raster. "
+                        "Mode can be 'value' or 'percent' (cut-off units). "
+                        "Values min and max define stretch borders (in mode units).",
+                    },
+                },
+                "Multiple directions hillshade": {
+                    "mhs_compute": {
+                        "value": self.mhs_compute,
+                        "description": "If compute Multiple directions hillshade." " Parameter for GUIs.",
+                    },
+                    "mhs_nr_dir": {
+                        "value": self.mhs_nr_dir,
+                        "description": "Number of solar azimuth angles (clockwise " "from North).",
+                    },
+                    "mhs_sun_el": {
+                        "value": self.mhs_sun_el,
+                        "description": "Solar vertical angle (above the horizon) in " "degrees.",
+                    },
+                    "mhs_save_float": {
+                        "value": self.mhs_save_float,
+                        "description": "If 1 it saves float raster, if 0 it doesn't.",
+                    },
+                    "mhs_save_8bit": {
+                        "value": self.mhs_save_8bit,
+                        "description": "If 1 it saves 8bit raster, if 0 it doesn't.",
+                    },
+                    "mhs_bytscl": {
+                        "mode": self.mhs_bytscl[0],
+                        "min": self.mhs_bytscl[1],
+                        "max": self.mhs_bytscl[2],
+                        "description": "Linear stretch and byte scale (0-255) for 8bit raster. "
+                        "Mode can be 'value' or 'percent' (cut-off units). "
+                        "Values min and max define stretch borders (in mode units).",
+                    },
+                },
+                "Slope gradient": {
+                    "slp_compute": {
+                        "value": self.slp_compute,
+                        "description": "If compute Slope. Parameter for GUIs.",
+                    },
+                    "slp_output_units": {
+                        "value": self.slp_output_units,
+                        "description": "Slope output units [radian, degree, " "percent].",
+                    },
+                    "slp_save_float": {
+                        "value": self.slp_save_float,
+                        "description": "If 1 it saves float raster, if 0 it doesn't.",
+                    },
+                    "slp_save_8bit": {
+                        "value": self.slp_save_8bit,
+                        "description": "If 1 it saves 8bit raster, if 0 it doesn't.",
+                    },
+                    "slp_bytscl": {
+                        "mode": self.slp_bytscl[0],
+                        "min": self.slp_bytscl[1],
+                        "max": self.slp_bytscl[2],
+                        "description": "Linear stretch and byte scale (0-255) for 8bit raster. "
+                        "Mode can be 'value' or 'percent' (cut-off units). "
+                        "Values min and max define stretch borders (in mode units).",
+                    },
+                },
+                "Simple local relief model": {
+                    "slrm_compute": {
+                        "value": self.slrm_compute,
+                        "description": "If compute Simple local relief model. " "Parameter for GUIs.",
+                    },
+                    "slrm_rad_cell": {
+                        "value": self.slrm_rad_cell,
+                        "description": "Radius for trend assessment in pixels.",
+                    },
+                    "slrm_save_float": {
+                        "value": self.slrm_save_float,
+                        "description": "If 1 it saves float raster, if 0 it doesn't.",
+                    },
+                    "slrm_save_8bit": {
+                        "value": self.slrm_save_8bit,
+                        "description": "If 1 it saves 8bit raster, if 0 it doesn't.",
+                    },
+                    "slrm_bytscl": {
+                        "mode": self.slrm_bytscl[0],
+                        "min": self.slrm_bytscl[1],
+                        "max": self.slrm_bytscl[2],
+                        "description": "Linear stretch and byte scale (0-255) for 8bit raster. "
+                        "Mode can be 'value' or 'percent' (cut-off units). "
+                        "Values min and max define stretch borders (in mode units).",
+                    },
+                },
+                "Multi-scale relief model": {
+                    "msrm_compute": {
+                        "value": self.msrm_compute,
+                        "description": "If compute Multi-scale relief model. " "Parameter for GUIs.",
+                    },
+                    "msrm_feature_min": {
+                        "value": self.msrm_feature_min,
+                        "description": "Minimum size of the feature you want to detect in meters.",
+                    },
+                    "msrm_feature_max": {
+                        "value": self.msrm_feature_max,
+                        "description": "Maximum size of the feature you want to detect in meters.",
+                    },
+                    "msrm_scaling_factor": {
+                        "value": self.msrm_scaling_factor,
+                        "description": "Scaling factor.",
+                    },
+                    "msrm_save_float": {
+                        "value": self.msrm_save_float,
+                        "description": "If 1 it saves float raster, if 0 it doesn't.",
+                    },
+                    "msrm_save_8bit": {
+                        "value": self.msrm_save_8bit,
+                        "description": "If 1 it saves 8bit raster, if 0 it doesn't.",
+                    },
+                    "msrm_bytscl": {
+                        "mode": self.msrm_bytscl[0],
+                        "min": self.msrm_bytscl[1],
+                        "max": self.msrm_bytscl[2],
+                        "description": "Linear stretch and byte scale (0-255) for 8bit raster. "
+                        "Mode can be 'value' or 'percent' (cut-off units). "
+                        "Values min and max define stretch borders (in mode units).",
+                    },
+                },
+                "Sky-View Factor": {
+                    "svf_compute": {
+                        "value": self.svf_compute,
+                        "description": "If compute Sky-View Factor." " Parameter for GUIs.",
+                    },
+                    "svf_n_dir": {"value": self.svf_n_dir, "description": "Number of directions."},
+                    "svf_r_max": {
+                        "value": self.svf_r_max,
+                        "description": "Maximal search " "radious in pixels.",
+                    },
+                    "svf_noise": {
+                        "value": self.svf_noise,
+                        "description": "The level of noise remove [0-don't remove, " "1-low, 2-med, 3-high].",
+                    },
+                    "svf_save_float": {
+                        "value": self.svf_save_float,
+                        "description": "If 1 it saves float raster, if 0 it doesn't.",
+                    },
+                    "svf_save_8bit": {
+                        "value": self.svf_save_8bit,
+                        "description": "If 1 it saves 8bit raster, if 0 it doesn't.",
+                    },
+                    "svf_bytscl": {
+                        "mode": self.svf_bytscl[0],
+                        "min": self.svf_bytscl[1],
+                        "max": self.svf_bytscl[2],
+                        "description": "Linear stretch and byte scale (0-255) for 8bit raster. "
+                        "Mode can be 'value' or 'percent' (cut-off units). "
+                        "Values min and max define stretch borders (in mode units).",
+                    },
+                },
+                "Anisotropic Sky-View Factor": {
+                    "asvf_compute": {
+                        "value": self.asvf_compute,
+                        "description": "If compute Anisotropic Sky-View Factor." " Parameter for GUIs.",
+                    },
+                    "asvf_dir": {
+                        "value": self.asvf_dir,
+                        "description": "Direction of anisotropy in degrees.",
+                    },
+                    "asvf_level": {
+                        "value": self.asvf_level,
+                        "description": "Level of anisotropy [1-low, 2-high].",
+                    },
+                    "asvf_bytscl": {
+                        "mode": self.asvf_bytscl[0],
+                        "min": self.asvf_bytscl[1],
+                        "max": self.asvf_bytscl[2],
+                        "description": "Linear stretch and byte scale (0-255) for 8bit raster. "
+                        "Mode can be 'value' or 'percent' (cut-off units). "
+                        "Values min and max define stretch borders (in mode units).",
+                    },
+                },
+                "Openness - Positive": {
+                    "pos_opns_compute": {
+                        "value": self.pos_opns_compute,
+                        "description": "If compute Openness - Positive. " "Parameter for GUIs.",
+                    },
+                    "pos_opns_bytscl": {
+                        "mode": self.pos_opns_bytscl[0],
+                        "min": self.pos_opns_bytscl[1],
+                        "max": self.pos_opns_bytscl[2],
+                        "description": "Linear stretch and byte scale (0-255) for 8bit raster. "
+                        "Mode can be 'value' or 'percent' (cut-off units). "
+                        "Values min and max define stretch borders (in mode units).",
+                    },
+                },
+                "Openness - Negative": {
+                    "neg_opns_compute": {
+                        "value": self.neg_opns_compute,
+                        "description": "If compute Openness - Negative. " "Parameter for GUIs.",
+                    },
+                    "neg_opns_save_float": {
+                        "value": self.neg_opns_save_float,
+                        "description": "If 1 it saves float raster, if 0 it doesn't.",
+                    },
+                    "neg_opns_save_8bit": {
+                        "value": self.neg_opns_save_8bit,
+                        "description": "If 1 it saves 8bit raster, if 0 it doesn't.",
+                    },
+                    "neg_opns_bytscl": {
+                        "mode": self.neg_opns_bytscl[0],
+                        "min": self.neg_opns_bytscl[1],
+                        "max": self.neg_opns_bytscl[2],
+                        "description": "Linear stretch and byte scale (0-255) for 8bit raster. "
+                        "Mode can be 'value' or 'percent' (cut-off units). "
+                        "Values min and max define stretch borders (in mode units).",
+                    },
+                },
+                "Sky illumination": {
+                    "sim_compute": {
+                        "value": self.sim_compute,
+                        "description": "If compute Sky illumination. Parameter for " "GUIs.",
+                    },
+                    "sim_sky_mod": {
+                        "value": self.sim_sky_mod,
+                        "description": "Sky model [overcast, uniform].",
+                    },
+                    "sim_compute_shadow": {
+                        "value": self.sim_compute_shadow,
+                        "description": "If 1 it computes shadows, if 0 it doesn't.",
+                    },
+                    "sim_shadow_dist": {
+                        "value": self.sim_shadow_dist,
+                        "description": "Max shadow modeling distance in pixels.",
+                    },
+                    "sim_nr_dir": {
+                        "value": self.sim_nr_dir,
+                        "description": "Number of directions to search for horizon",
+                    },
+                    "sim_shadow_az": {
+                        "value": self.sim_shadow_az,
+                        "description": "Shadow " "azimuth in " "degrees.",
+                    },
+                    "sim_shadow_el": {
+                        "value": self.sim_shadow_el,
+                        "description": "Shadow " "elevation in " "degrees.",
+                    },
+                    "sim_save_float": {
+                        "value": self.sim_save_float,
+                        "description": "If 1 it saves float raster, if 0 it doesn't.",
+                    },
+                    "sim_save_8bit": {
+                        "value": self.sim_save_8bit,
+                        "description": "If 1 it saves 8bit raster, if 0 it doesn't.",
+                    },
+                    "sim_bytscl": {
+                        "mode": self.sim_bytscl[0],
+                        "min": self.sim_bytscl[1],
+                        "max": self.sim_bytscl[2],
+                        "description": "Linear stretch and byte scale (0-255) for 8bit raster. "
+                        "Mode can be 'value' or 'percent' (cut-off units). "
+                        "Values min and max define stretch borders (in mode units).",
+                    },
+                },
+                "Local dominance": {
+                    "ld_compute": {
+                        "value": self.ld_compute,
+                        "description": "If compute Local dominance. Parameter for " "GUIs.",
+                    },
+                    "ld_min_rad": {
+                        "value": self.ld_min_rad,
+                        "description": "Minimum radial distance (in pixels) at which "
+                        "the algorithm starts with visualization "
+                        "computation.",
+                    },
+                    "ld_max_rad": {
+                        "value": self.ld_max_rad,
+                        "description": "Maximum radial distance (in pixels) at which "
+                        "the algorithm ends with visualization "
+                        "computation.",
+                    },
+                    "ld_rad_inc": {
+                        "value": self.ld_rad_inc,
+                        "description": "Radial distance " "steps in pixels.",
+                    },
+                    "ld_anglr_res": {
+                        "value": self.ld_anglr_res,
+                        "description": "Angular step for determination of number of " "angular directions.",
+                    },
+                    "ld_observer_h": {
+                        "value": self.ld_observer_h,
+                        "description": "Height at which we observe the terrain.",
+                    },
+                    "ld_save_float": {
+                        "value": self.ld_save_float,
+                        "description": "If 1 it saves float raster, if 0 it doesn't.",
+                    },
+                    "ld_save_8bit": {
+                        "value": self.ld_save_8bit,
+                        "description": "If 1 it saves 8bit raster, if 0 it doesn't.",
+                    },
+                    "ld_bytscl": {
+                        "mode": self.ld_bytscl[0],
+                        "min": self.ld_bytscl[1],
+                        "max": self.ld_bytscl[2],
+                        "description": "Linear stretch and byte scale (0-255) for 8bit raster. "
+                        "Mode can be 'value' or 'percent' (cut-off units). "
+                        "Values min and max define stretch borders (in mode units).",
+                    },
+                },
+                "Multi-scale topographic position": {
+                    "mstp_compute": {
+                        "value": self.mstp_compute,
+                        "description": "If compute Multi-scale topographic position. " "Parameter for GUIs.",
+                    },
+                    "mstp_local_scale": {
+                        "min": self.mstp_local_scale[0],
+                        "max": self.mstp_local_scale[1],
+                        "step": self.mstp_local_scale[2],
+                        "description": "Local scale minimum radius, maximum radius and step in pixels to"
+                        " calculate maximum mean deviation from elevation."
+                        " All have to be integers!",
+                    },
+                    "mstp_meso_scale": {
+                        "min": self.mstp_meso_scale[0],
+                        "max": self.mstp_meso_scale[1],
+                        "step": self.mstp_meso_scale[2],
+                        "description": "Meso scale minimum radius, maximum radius and step in pixels to"
+                        " calculate maximum mean deviation from elevation."
+                        " All have to be integers!",
+                    },
+                    "mstp_broad_scale": {
+                        "min": self.mstp_broad_scale[0],
+                        "max": self.mstp_broad_scale[1],
+                        "step": self.mstp_broad_scale[2],
+                        "description": "Broad scale minimum radius, maximum radius and step in pixels to"
+                        " calculate maximum mean deviation from elevation."
+                        " All have to be integers!",
+                    },
+                    "mstp_lightness": {
+                        "value": self.mstp_lightness,
+                        "description": "Lightness factor to adjust MSTP visibility.",
+                    },
+                    "mstp_save_float": {
+                        "value": self.mstp_save_float,
+                        "description": "If 1 it saves float raster, if 0 it doesn't.",
+                    },
+                    "mstp_save_8bit": {
+                        "value": self.mstp_save_8bit,
+                        "description": "If 1 it saves 8bit raster, if 0 it doesn't.",
+                    },
+                    "mstp_bytscl": {
+                        "mode": self.mstp_bytscl[0],
+                        "min": self.mstp_bytscl[1],
+                        "max": self.mstp_bytscl[2],
+                        "description": "Linear stretch and byte scale (0-255) for 8bit raster. "
+                        "Mode can be 'value' or 'percent' (cut-off units). "
+                        "Values min and max define stretch borders (in mode units).",
+                    },
+                },
             }
-
-        }}
+        }
         if file_path is None:
             file_path = r"settings\default_settings.json"
             if os.path.isfile(file_path):
@@ -678,9 +830,11 @@ class DefaultValues:
             self.slp_output_units = str(default_data["Slope gradient"]["slp_output_units"]["value"])
             self.slp_save_float = int(default_data["Slope gradient"]["slp_save_float"]["value"])
             self.slp_save_8bit = int(default_data["Slope gradient"]["slp_save_8bit"]["value"])
-            self.slp_bytscl = (str(default_data["Slope gradient"]["slp_bytscl"]["mode"]),
-                               float(default_data["Slope gradient"]["slp_bytscl"]["min"]),
-                               float(default_data["Slope gradient"]["slp_bytscl"]["max"]))
+            self.slp_bytscl = (
+                str(default_data["Slope gradient"]["slp_bytscl"]["mode"]),
+                float(default_data["Slope gradient"]["slp_bytscl"]["min"]),
+                float(default_data["Slope gradient"]["slp_bytscl"]["max"]),
+            )
             # Hillshade
             self.hs_compute = int(default_data["Hillshade"]["hs_compute"]["value"])
             self.hs_sun_azi = int(default_data["Hillshade"]["hs_sun_azi"]["value"])
@@ -688,36 +842,52 @@ class DefaultValues:
             self.hs_save_float = int(default_data["Hillshade"]["hs_save_float"]["value"])
             self.hs_save_8bit = int(default_data["Hillshade"]["hs_save_8bit"]["value"])
             self.hs_shadow = int(default_data["Hillshade"]["hs_shadow"]["value"])
-            self.hs_bytscl = (str(default_data["Hillshade"]["hs_bytscl"]["mode"]),
-                              float(default_data["Hillshade"]["hs_bytscl"]["min"]),
-                              float(default_data["Hillshade"]["hs_bytscl"]["max"]))
+            self.hs_bytscl = (
+                str(default_data["Hillshade"]["hs_bytscl"]["mode"]),
+                float(default_data["Hillshade"]["hs_bytscl"]["min"]),
+                float(default_data["Hillshade"]["hs_bytscl"]["max"]),
+            )
             # Multiple directions hillshade
             self.mhs_compute = int(default_data["Multiple directions hillshade"]["mhs_compute"]["value"])
             self.mhs_nr_dir = int(default_data["Multiple directions hillshade"]["mhs_nr_dir"]["value"])
             self.mhs_sun_el = int(default_data["Multiple directions hillshade"]["mhs_sun_el"]["value"])
-            self.mhs_save_float = int(default_data["Multiple directions hillshade"]["mhs_save_float"]["value"])
+            self.mhs_save_float = int(
+                default_data["Multiple directions hillshade"]["mhs_save_float"]["value"]
+            )
             self.mhs_save_8bit = int(default_data["Multiple directions hillshade"]["mhs_save_8bit"]["value"])
-            self.mhs_bytscl = (str(default_data["Multiple directions hillshade"]["mhs_bytscl"]["mode"]),
-                               float(default_data["Multiple directions hillshade"]["mhs_bytscl"]["min"]),
-                               float(default_data["Multiple directions hillshade"]["mhs_bytscl"]["max"]))
+            self.mhs_bytscl = (
+                str(default_data["Multiple directions hillshade"]["mhs_bytscl"]["mode"]),
+                float(default_data["Multiple directions hillshade"]["mhs_bytscl"]["min"]),
+                float(default_data["Multiple directions hillshade"]["mhs_bytscl"]["max"]),
+            )
             # Simple local relief model
             self.slrm_compute = int(default_data["Simple local relief model"]["slrm_compute"]["value"])
             self.slrm_rad_cell = int(default_data["Simple local relief model"]["slrm_rad_cell"]["value"])
             self.slrm_save_float = int(default_data["Simple local relief model"]["slrm_save_float"]["value"])
             self.slrm_save_8bit = int(default_data["Simple local relief model"]["slrm_save_8bit"]["value"])
-            self.slrm_bytscl = (str(default_data["Simple local relief model"]["slrm_bytscl"]["mode"]),
-                                float(default_data["Simple local relief model"]["slrm_bytscl"]["min"]),
-                                float(default_data["Simple local relief model"]["slrm_bytscl"]["max"]))
+            self.slrm_bytscl = (
+                str(default_data["Simple local relief model"]["slrm_bytscl"]["mode"]),
+                float(default_data["Simple local relief model"]["slrm_bytscl"]["min"]),
+                float(default_data["Simple local relief model"]["slrm_bytscl"]["max"]),
+            )
             # Mulit-scale relief model
             self.msrm_compute = int(default_data["Multi-scale relief model"]["msrm_compute"]["value"])
-            self.msrm_feature_min = float(default_data["Multi-scale relief model"]["msrm_feature_min"]["value"])
-            self.msrm_feature_max = float(default_data["Multi-scale relief model"]["msrm_feature_max"]["value"])
-            self.msrm_scaling_factor = int(default_data["Multi-scale relief model"]["msrm_scaling_factor"]["value"])
+            self.msrm_feature_min = float(
+                default_data["Multi-scale relief model"]["msrm_feature_min"]["value"]
+            )
+            self.msrm_feature_max = float(
+                default_data["Multi-scale relief model"]["msrm_feature_max"]["value"]
+            )
+            self.msrm_scaling_factor = int(
+                default_data["Multi-scale relief model"]["msrm_scaling_factor"]["value"]
+            )
             self.msrm_save_float = int(default_data["Multi-scale relief model"]["msrm_save_float"]["value"])
             self.msrm_save_8bit = int(default_data["Multi-scale relief model"]["msrm_save_8bit"]["value"])
-            self.msrm_bytscl = (str(default_data["Multi-scale relief model"]["msrm_bytscl"]["mode"]),
-                                float(default_data["Multi-scale relief model"]["msrm_bytscl"]["min"]),
-                                float(default_data["Multi-scale relief model"]["msrm_bytscl"]["max"]))
+            self.msrm_bytscl = (
+                str(default_data["Multi-scale relief model"]["msrm_bytscl"]["mode"]),
+                float(default_data["Multi-scale relief model"]["msrm_bytscl"]["min"]),
+                float(default_data["Multi-scale relief model"]["msrm_bytscl"]["max"]),
+            )
             # Sky-View Factor
             self.svf_compute = int(default_data["Sky-View Factor"]["svf_compute"]["value"])
             self.svf_n_dir = int(default_data["Sky-View Factor"]["svf_n_dir"]["value"])
@@ -725,28 +895,38 @@ class DefaultValues:
             self.svf_noise = int(default_data["Sky-View Factor"]["svf_noise"]["value"])
             self.svf_save_float = int(default_data["Sky-View Factor"]["svf_save_float"]["value"])
             self.svf_save_8bit = int(default_data["Sky-View Factor"]["svf_save_8bit"]["value"])
-            self.svf_bytscl = (str(default_data["Sky-View Factor"]["svf_bytscl"]["mode"]),
-                               float(default_data["Sky-View Factor"]["svf_bytscl"]["min"]),
-                               float(default_data["Sky-View Factor"]["svf_bytscl"]["max"]))
+            self.svf_bytscl = (
+                str(default_data["Sky-View Factor"]["svf_bytscl"]["mode"]),
+                float(default_data["Sky-View Factor"]["svf_bytscl"]["min"]),
+                float(default_data["Sky-View Factor"]["svf_bytscl"]["max"]),
+            )
             # Anisotropic Sky-View Factor
             self.asvf_compute = int(default_data["Anisotropic Sky-View Factor"]["asvf_compute"]["value"])
             self.asvf_dir = int(default_data["Anisotropic Sky-View Factor"]["asvf_dir"]["value"])
             self.asvf_level = int(default_data["Anisotropic Sky-View Factor"]["asvf_level"]["value"])
-            self.asvf_bytscl = (str(default_data["Anisotropic Sky-View Factor"]["asvf_bytscl"]["mode"]),
-                                float(default_data["Anisotropic Sky-View Factor"]["asvf_bytscl"]["min"]),
-                                float(default_data["Anisotropic Sky-View Factor"]["asvf_bytscl"]["max"]))
+            self.asvf_bytscl = (
+                str(default_data["Anisotropic Sky-View Factor"]["asvf_bytscl"]["mode"]),
+                float(default_data["Anisotropic Sky-View Factor"]["asvf_bytscl"]["min"]),
+                float(default_data["Anisotropic Sky-View Factor"]["asvf_bytscl"]["max"]),
+            )
             # Openness - Positive
             self.pos_opns_compute = int(default_data["Openness - Positive"]["pos_opns_compute"]["value"])
-            self.pos_opns_bytscl = (str(default_data["Openness - Positive"]["pos_opns_bytscl"]["mode"]),
-                                    float(default_data["Openness - Positive"]["pos_opns_bytscl"]["min"]),
-                                    float(default_data["Openness - Positive"]["pos_opns_bytscl"]["max"]))
+            self.pos_opns_bytscl = (
+                str(default_data["Openness - Positive"]["pos_opns_bytscl"]["mode"]),
+                float(default_data["Openness - Positive"]["pos_opns_bytscl"]["min"]),
+                float(default_data["Openness - Positive"]["pos_opns_bytscl"]["max"]),
+            )
             # Openness - Negative
             self.neg_opns_compute = int(default_data["Openness - Negative"]["neg_opns_compute"]["value"])
-            self.neg_opns_save_float = int(default_data["Openness - Negative"]["neg_opns_save_float"]["value"])
+            self.neg_opns_save_float = int(
+                default_data["Openness - Negative"]["neg_opns_save_float"]["value"]
+            )
             self.neg_opns_save_8bit = int(default_data["Openness - Negative"]["neg_opns_save_8bit"]["value"])
-            self.neg_opns_bytscl = (str(default_data["Openness - Negative"]["neg_opns_bytscl"]["mode"]),
-                                    float(default_data["Openness - Negative"]["neg_opns_bytscl"]["min"]),
-                                    float(default_data["Openness - Negative"]["neg_opns_bytscl"]["max"]))
+            self.neg_opns_bytscl = (
+                str(default_data["Openness - Negative"]["neg_opns_bytscl"]["mode"]),
+                float(default_data["Openness - Negative"]["neg_opns_bytscl"]["min"]),
+                float(default_data["Openness - Negative"]["neg_opns_bytscl"]["max"]),
+            )
             # Sky illumination
             self.sim_compute = int(default_data["Sky illumination"]["sim_compute"]["value"])
             self.sim_sky_mod = str(default_data["Sky illumination"]["sim_sky_mod"]["value"])
@@ -757,9 +937,11 @@ class DefaultValues:
             self.sim_shadow_el = int(default_data["Sky illumination"]["sim_shadow_el"]["value"])
             self.sim_save_float = int(default_data["Sky illumination"]["sim_save_float"]["value"])
             self.sim_save_8bit = int(default_data["Sky illumination"]["sim_save_8bit"]["value"])
-            self.sim_bytscl = (str(default_data["Sky illumination"]["sim_bytscl"]["mode"]),
-                               float(default_data["Sky illumination"]["sim_bytscl"]["min"]),
-                               float(default_data["Sky illumination"]["sim_bytscl"]["max"]))
+            self.sim_bytscl = (
+                str(default_data["Sky illumination"]["sim_bytscl"]["mode"]),
+                float(default_data["Sky illumination"]["sim_bytscl"]["min"]),
+                float(default_data["Sky illumination"]["sim_bytscl"]["max"]),
+            )
             # Local dominance
             self.ld_compute = int(default_data["Local dominance"]["ld_compute"]["value"])
             self.ld_min_rad = int(default_data["Local dominance"]["ld_min_rad"]["value"])
@@ -769,26 +951,42 @@ class DefaultValues:
             self.ld_observer_h = float(default_data["Local dominance"]["ld_observer_h"]["value"])
             self.ld_save_float = int(default_data["Local dominance"]["ld_save_float"]["value"])
             self.ld_save_8bit = int(default_data["Local dominance"]["ld_save_8bit"]["value"])
-            self.ld_bytscl = (str(default_data["Local dominance"]["ld_bytscl"]["mode"]),
-                              float(default_data["Local dominance"]["ld_bytscl"]["min"]),
-                              float(default_data["Local dominance"]["ld_bytscl"]["max"]))
+            self.ld_bytscl = (
+                str(default_data["Local dominance"]["ld_bytscl"]["mode"]),
+                float(default_data["Local dominance"]["ld_bytscl"]["min"]),
+                float(default_data["Local dominance"]["ld_bytscl"]["max"]),
+            )
             # Multi-scale topographic position
             self.mstp_compute = int(default_data["Multi-scale topographic position"]["mstp_compute"]["value"])
-            self.mstp_local_scale = (int(default_data["Multi-scale topographic position"]["mstp_local_scale"]["min"]),
-                                     int(default_data["Multi-scale topographic position"]["mstp_local_scale"]["max"]),
-                                     int(default_data["Multi-scale topographic position"]["mstp_local_scale"]["step"]))
-            self.mstp_meso_scale = (int(default_data["Multi-scale topographic position"]["mstp_meso_scale"]["min"]),
-                                    int(default_data["Multi-scale topographic position"]["mstp_meso_scale"]["max"]),
-                                    int(default_data["Multi-scale topographic position"]["mstp_meso_scale"]["step"]))
-            self.mstp_broad_scale = (int(default_data["Multi-scale topographic position"]["mstp_broad_scale"]["min"]),
-                                     int(default_data["Multi-scale topographic position"]["mstp_broad_scale"]["max"]),
-                                     int(default_data["Multi-scale topographic position"]["mstp_broad_scale"]["step"]))
-            self.mstp_lightness = float(default_data["Multi-scale topographic position"]["mstp_lightness"]["value"])
-            self.mstp_save_float = int(default_data["Multi-scale topographic position"]["mstp_save_float"]["value"])
-            self.mstp_save_8bit = int(default_data["Multi-scale topographic position"]["mstp_save_8bit"]["value"])
-            self.mstp_bytscl = (str(default_data["Multi-scale topographic position"]["mstp_bytscl"]["mode"]),
-                              float(default_data["Multi-scale topographic position"]["mstp_bytscl"]["min"]),
-                              float(default_data["Multi-scale topographic position"]["mstp_bytscl"]["max"]))
+            self.mstp_local_scale = (
+                int(default_data["Multi-scale topographic position"]["mstp_local_scale"]["min"]),
+                int(default_data["Multi-scale topographic position"]["mstp_local_scale"]["max"]),
+                int(default_data["Multi-scale topographic position"]["mstp_local_scale"]["step"]),
+            )
+            self.mstp_meso_scale = (
+                int(default_data["Multi-scale topographic position"]["mstp_meso_scale"]["min"]),
+                int(default_data["Multi-scale topographic position"]["mstp_meso_scale"]["max"]),
+                int(default_data["Multi-scale topographic position"]["mstp_meso_scale"]["step"]),
+            )
+            self.mstp_broad_scale = (
+                int(default_data["Multi-scale topographic position"]["mstp_broad_scale"]["min"]),
+                int(default_data["Multi-scale topographic position"]["mstp_broad_scale"]["max"]),
+                int(default_data["Multi-scale topographic position"]["mstp_broad_scale"]["step"]),
+            )
+            self.mstp_lightness = float(
+                default_data["Multi-scale topographic position"]["mstp_lightness"]["value"]
+            )
+            self.mstp_save_float = int(
+                default_data["Multi-scale topographic position"]["mstp_save_float"]["value"]
+            )
+            self.mstp_save_8bit = int(
+                default_data["Multi-scale topographic position"]["mstp_save_8bit"]["value"]
+            )
+            self.mstp_bytscl = (
+                str(default_data["Multi-scale topographic position"]["mstp_bytscl"]["mode"]),
+                float(default_data["Multi-scale topographic position"]["mstp_bytscl"]["min"]),
+                float(default_data["Multi-scale topographic position"]["mstp_bytscl"]["max"]),
+            )
             dat.close()
 
     def get_shadow_file_name(self, dem_path):
@@ -814,7 +1012,9 @@ class DefaultValues:
     def get_hillshade_path(self, dem_path, bit8=False):
         """Returns path to Hillshade. Generates hillshade name (uses default attributes and dem name from dem_path) and
         adds dem directory (dem_path) to it. If bit8 it returns 8bit file path."""
-        return os.path.normpath(os.path.join(os.path.dirname(dem_path), self.get_hillshade_file_name(dem_path, bit8)))
+        return os.path.normpath(
+            os.path.join(os.path.dirname(dem_path), self.get_hillshade_file_name(dem_path, bit8))
+        )
 
     def get_slope_file_name(self, dem_path, bit8=False):
         """Returns Slope name, dem name (from dem_path) with added slope parameters.
@@ -828,7 +1028,9 @@ class DefaultValues:
     def get_slope_path(self, dem_path, bit8=False):
         """Returns path to slope. Generates slope name and adds dem directory (dem_path) to it.
         If bit8 it returns 8bit file path."""
-        return os.path.normpath(os.path.join(os.path.dirname(dem_path), self.get_slope_file_name(dem_path, bit8)))
+        return os.path.normpath(
+            os.path.join(os.path.dirname(dem_path), self.get_slope_file_name(dem_path, bit8))
+        )
 
     def get_multi_hillshade_file_name(self, dem_path, bit8=False):
         """Returns Multiple directions hillshade name, dem name (from dem_path) with added
@@ -842,8 +1044,9 @@ class DefaultValues:
     def get_multi_hillshade_path(self, dem_path, bit8=False):
         """Returns path to Multiple directions hillshade. Generates multi hillshade name (uses default attributes and
         dem name from dem_path) and adds dem directory (dem_path) to it. If bit8 it returns 8bit file path."""
-        return os.path.normpath(os.path.join(os.path.dirname(dem_path),
-                                             self.get_multi_hillshade_file_name(dem_path, bit8)))
+        return os.path.normpath(
+            os.path.join(os.path.dirname(dem_path), self.get_multi_hillshade_file_name(dem_path, bit8))
+        )
 
     def get_slrm_file_name(self, dem_path, bit8=False):
         """Returns Simple local relief model name, dem name (from dem_path) with added slrm parameters.
@@ -857,7 +1060,9 @@ class DefaultValues:
     def get_slrm_path(self, dem_path, bit8=False):
         """Returns path to Simple local relief model. Generates slrm name (uses default attributes and dem name from
         dem_path) and adds dem directory (dem_path) to it. If bit8 it returns 8bit file path."""
-        return os.path.normpath(os.path.join(os.path.dirname(dem_path), self.get_slrm_file_name(dem_path, bit8)))
+        return os.path.normpath(
+            os.path.join(os.path.dirname(dem_path), self.get_slrm_file_name(dem_path, bit8))
+        )
 
     def get_svf_file_name(self, dem_path, bit8=False):
         """Returns Sky-view factor name, dem name (from dem_path) with added svf parameters.
@@ -877,7 +1082,9 @@ class DefaultValues:
     def get_svf_path(self, dem_path, bit8=False):
         """Returns path to Sky-view factor. Generates svf name (uses default attributes and dem name from
         dem_path) and adds dem directory (dem_path) to it. If bit8 it returns 8bit file path."""
-        return os.path.normpath(os.path.join(os.path.dirname(dem_path), self.get_svf_file_name(dem_path, bit8)))
+        return os.path.normpath(
+            os.path.join(os.path.dirname(dem_path), self.get_svf_file_name(dem_path, bit8))
+        )
 
     def get_asvf_file_name(self, dem_path, bit8=False):
         """Returns Anisotropic Sky-view factor name, dem name (from dem_path) with added asvf parameters.
@@ -901,7 +1108,9 @@ class DefaultValues:
     def get_asvf_path(self, dem_path, bit8=False):
         """Returns path to Anisotropic Sky-view factor. Generates asvf name (uses default attributes and dem name from
         dem_path) and adds dem directory (dem_path) to it. If bit8 it returns 8bit file path."""
-        return os.path.normpath(os.path.join(os.path.dirname(dem_path), self.get_asvf_file_name(dem_path, bit8)))
+        return os.path.normpath(
+            os.path.join(os.path.dirname(dem_path), self.get_asvf_file_name(dem_path, bit8))
+        )
 
     def get_opns_file_name(self, dem_path, bit8=False):
         """Returns Positive Openness name, dem name (from dem_path) with added pos opns parameters.
@@ -921,7 +1130,9 @@ class DefaultValues:
     def get_opns_path(self, dem_path, bit8=False):
         """Returns path to Positive Openness. Generates pos opns name (uses default attributes and dem name from
         dem_path) and adds dem directory (dem_path) to it. If bit8 it returns 8bit file path."""
-        return os.path.normpath(os.path.join(os.path.dirname(dem_path), self.get_opns_file_name(dem_path, bit8)))
+        return os.path.normpath(
+            os.path.join(os.path.dirname(dem_path), self.get_opns_file_name(dem_path, bit8))
+        )
 
     def get_neg_opns_file_name(self, dem_path, bit8=False):
         """Returns Negative Openness name, dem name (from dem_path) with added neg opns parameters.
@@ -941,58 +1152,79 @@ class DefaultValues:
     def get_neg_opns_path(self, dem_path, bit8=False):
         """Returns path to Negative Openness. Generates pos neg name (uses default attributes and dem name from
         dem_path) and adds dem directory (dem_path) to it. If bit8 it returns 8bit file path."""
-        return os.path.normpath(os.path.join(os.path.dirname(dem_path), self.get_neg_opns_file_name(dem_path, bit8)))
+        return os.path.normpath(
+            os.path.join(os.path.dirname(dem_path), self.get_neg_opns_file_name(dem_path, bit8))
+        )
 
     def get_sky_illumination_file_name(self, dem_path, bit8=False):
         """Returns Sky illumination name, dem name (from dem_path) with added sim parameters.
         If bit8 it returns 8bit file name."""
         dem_name = os.path.basename(dem_path).split(".")[0]  # base name without extension
         if bit8:
-            return "{}_SIM_{}_D{}_{}px_8bit.tif".format(dem_name, self.sim_sky_mod, self.sim_nr_dir,
-                                                        self.sim_shadow_dist)
+            return "{}_SIM_{}_D{}_{}px_8bit.tif".format(
+                dem_name, self.sim_sky_mod, self.sim_nr_dir, self.sim_shadow_dist
+            )
         else:
-            return "{}_SIM_{}_D{}_{}px.tif".format(dem_name, self.sim_sky_mod, self.sim_nr_dir,
-                                                   self.sim_shadow_dist)
+            return "{}_SIM_{}_D{}_{}px.tif".format(
+                dem_name, self.sim_sky_mod, self.sim_nr_dir, self.sim_shadow_dist
+            )
 
     def get_sky_illumination_path(self, dem_path, bit8=False):
         """Returns path to Sky illumination. Generates sim name (uses default attributes and dem name from
         dem_path) and adds dem directory (dem_path) to it. If bit8 it returns 8bit file path."""
-        return os.path.normpath(os.path.join(os.path.dirname(dem_path),
-                                             self.get_sky_illumination_file_name(dem_path, bit8)))
+        return os.path.normpath(
+            os.path.join(os.path.dirname(dem_path), self.get_sky_illumination_file_name(dem_path, bit8))
+        )
 
     def get_local_dominance_file_name(self, dem_path, bit8=False):
         """Returns Local dominance name, dem name (from dem_path) with added ld parameters.
         If bit8 it returns 8bit file name."""
         dem_name = os.path.basename(dem_path).split(".")[0]  # base name without extension
         if bit8:
-            return "{}_LD_R_M{}-{}_DI{}_A{}_OH{}_8bit.tif".format(dem_name, self.ld_min_rad, self.ld_max_rad,
-                                                                  self.ld_rad_inc, self.ld_anglr_res,
-                                                                  self.ld_observer_h)
+            return "{}_LD_R_M{}-{}_DI{}_A{}_OH{}_8bit.tif".format(
+                dem_name,
+                self.ld_min_rad,
+                self.ld_max_rad,
+                self.ld_rad_inc,
+                self.ld_anglr_res,
+                self.ld_observer_h,
+            )
         else:
-            return "{}_LD_R_M{}-{}_DI{}_A{}_OH{}.tif".format(dem_name, self.ld_min_rad, self.ld_max_rad,
-                                                             self.ld_rad_inc, self.ld_anglr_res, self.ld_observer_h)
+            return "{}_LD_R_M{}-{}_DI{}_A{}_OH{}.tif".format(
+                dem_name,
+                self.ld_min_rad,
+                self.ld_max_rad,
+                self.ld_rad_inc,
+                self.ld_anglr_res,
+                self.ld_observer_h,
+            )
 
     def get_local_dominance_path(self, dem_path, bit8=False):
         """Returns path to Local dominance. Generates ld name (uses default attributes and dem name from
         dem_path) and adds dem directory (dem_path) to it. If bit8 it returns 8bit file path."""
-        return os.path.normpath(os.path.join(os.path.dirname(dem_path),
-                                             self.get_local_dominance_file_name(dem_path, bit8)))
+        return os.path.normpath(
+            os.path.join(os.path.dirname(dem_path), self.get_local_dominance_file_name(dem_path, bit8))
+        )
 
     def get_msrm_file_name(self, dem_path, bit8=False):
         """Returns Multi-scale relief model name, dem name (from dem_path) with added msrm parameters.
         If bit8 it returns 8bit file name."""
         dem_name = os.path.basename(dem_path).split(".")[0]  # base name without extension
         if bit8:
-            return "{}_MSRM_F_M{}-{}_S{}_8bit.tif".format(dem_name, self.msrm_feature_min, self.msrm_feature_max,
-                                                          self.msrm_scaling_factor)
+            return "{}_MSRM_F_M{}-{}_S{}_8bit.tif".format(
+                dem_name, self.msrm_feature_min, self.msrm_feature_max, self.msrm_scaling_factor
+            )
         else:
-            return "{}_MSRM_F_M{}-{}_S{}.tif".format(dem_name, self.msrm_feature_min, self.msrm_feature_max,
-                                                     self.msrm_scaling_factor)
+            return "{}_MSRM_F_M{}-{}_S{}.tif".format(
+                dem_name, self.msrm_feature_min, self.msrm_feature_max, self.msrm_scaling_factor
+            )
 
     def get_msrm_path(self, dem_path, bit8=False):
         """Returns path to Multi-scale relief model. Generates msrm name (uses default attributes and dem name from
         dem_path) and adds dem directory (dem_path) to it. If bit8 it returns 8bit file path."""
-        return os.path.normpath(os.path.join(os.path.dirname(dem_path), self.get_msrm_file_name(dem_path, bit8)))
+        return os.path.normpath(
+            os.path.join(os.path.dirname(dem_path), self.get_msrm_file_name(dem_path, bit8))
+        )
 
     def get_mstp_file_name(self, dem_path, bit8=False):
         """Returns Multi-scale topographic position name, dem name (from dem_path) with added mstp parameters.
@@ -1004,7 +1236,7 @@ class DefaultValues:
             self.mstp_local_scale[1],
             self.mstp_meso_scale[1],
             self.mstp_broad_scale[1],
-            self.mstp_lightness
+            self.mstp_lightness,
         )
 
         if bit8:
@@ -1013,14 +1245,14 @@ class DefaultValues:
         return mstp_file_name
 
     def get_mstp_path(self, dem_path, bit8=False):
-        return os.path.normpath(os.path.join(os.path.dirname(dem_path), self.get_mstp_file_name(dem_path, bit8)))
+        return os.path.normpath(
+            os.path.join(os.path.dirname(dem_path), self.get_mstp_file_name(dem_path, bit8))
+        )
 
-    def get_visualization_file_name(self,
-                                    rvt_visualization: RVTVisualization,
-                                    dem_path: Path,
-                                    path_8bit: bool
-                                    ) -> str:
-        """"Return visualization path."""
+    def get_visualization_file_name(
+        self, rvt_visualization: RVTVisualization, dem_path: Path, path_8bit: bool
+    ) -> str:
+        """ "Return visualization path."""
         if rvt_visualization == rvt.default.RVTVisualization.SLOPE:
             return self.get_slope_file_name(dem_path=dem_path, bit8=path_8bit)
         elif rvt_visualization == rvt.default.RVTVisualization.HILLSHADE:
@@ -1049,13 +1281,9 @@ class DefaultValues:
             return self.get_mstp_file_name(dem_path=dem_path, bit8=path_8bit)
 
     def get_visualization_path(
-            self,
-            rvt_visualization: RVTVisualization,
-            dem_path: Path,
-            output_dir_path: Path,
-            path_8bit: bool
+        self, rvt_visualization: RVTVisualization, dem_path: Path, output_dir_path: Path, path_8bit: bool
     ) -> Path:
-        """"Return visualization path."""
+        """ "Return visualization path."""
         if rvt_visualization == rvt.default.RVTVisualization.SLOPE:
             return output_dir_path / Path(self.get_slope_file_name(dem_path=dem_path, bit8=path_8bit))
         elif rvt_visualization == rvt.default.RVTVisualization.HILLSHADE:
@@ -1063,7 +1291,9 @@ class DefaultValues:
         elif rvt_visualization == rvt.default.RVTVisualization.SHADOW:
             return output_dir_path / Path(self.get_shadow_file_name(dem_path=dem_path))
         elif rvt_visualization == rvt.default.RVTVisualization.MULTI_HILLSHADE:
-            return output_dir_path / Path(self.get_multi_hillshade_file_name(dem_path=dem_path, bit8=path_8bit))
+            return output_dir_path / Path(
+                self.get_multi_hillshade_file_name(dem_path=dem_path, bit8=path_8bit)
+            )
         elif rvt_visualization == rvt.default.RVTVisualization.SIMPLE_LOCAL_RELIEF_MODEL:
             return output_dir_path / Path(self.get_slrm_file_name(dem_path=dem_path, bit8=path_8bit))
         elif rvt_visualization == rvt.default.RVTVisualization.SKY_VIEW_FACTOR:
@@ -1075,44 +1305,74 @@ class DefaultValues:
         elif rvt_visualization == rvt.default.RVTVisualization.NEGATIVE_OPENNESS:
             return output_dir_path / Path(self.get_neg_opns_file_name(dem_path=dem_path, bit8=path_8bit))
         elif rvt_visualization == rvt.default.RVTVisualization.SKY_ILLUMINATION:
-            return output_dir_path / Path(self.get_sky_illumination_file_name(dem_path=dem_path, bit8=path_8bit))
+            return output_dir_path / Path(
+                self.get_sky_illumination_file_name(dem_path=dem_path, bit8=path_8bit)
+            )
         elif rvt_visualization == rvt.default.RVTVisualization.LOCAL_DOMINANCE:
-            return output_dir_path / Path(self.get_local_dominance_file_name(dem_path=dem_path, bit8=path_8bit))
+            return output_dir_path / Path(
+                self.get_local_dominance_file_name(dem_path=dem_path, bit8=path_8bit)
+            )
         elif rvt_visualization == rvt.default.RVTVisualization.MULTI_SCALE_RELIEF_MODEL:
             return output_dir_path / Path(self.get_msrm_file_name(dem_path=dem_path, bit8=path_8bit))
         elif rvt_visualization == rvt.default.RVTVisualization.MULTI_SCALE_TOPOGRAPHIC_POSITION:
             return output_dir_path / Path(self.get_mstp_file_name(dem_path=dem_path, bit8=path_8bit))
 
     def float_to_8bit(
-            self,
-            float_arr: np.array,
-            visualization: RVTVisualization,
-            x_res: float = None,
-            y_res: float = None,
-            no_data: Optional[float] = None
+        self,
+        float_arr: np.array,
+        visualization: RVTVisualization,
+        x_res: float = None,
+        y_res: float = None,
+        no_data: Optional[float] = None,
     ):
         """Converts (byte scale) float visualization to 8bit. Resolution (x_res, y_res) and no_data needed only for
-         multiple directions hillshade! Method first normalize then byte scale (0-255)."""
+        multiple directions hillshade! Method first normalize then byte scale (0-255)."""
         if visualization == RVTVisualization.HILLSHADE:
-            norm_arr = rvt.blend_func.normalize_image(visualization="hs", image=float_arr,
-                                                      min_norm=self.hs_bytscl[1], max_norm=self.hs_bytscl[2],
-                                                      normalization=self.hs_bytscl[0])
+            norm_arr = rvt.blend_func.normalize_image(
+                visualization="hs",
+                image=float_arr,
+                min_norm=self.hs_bytscl[1],
+                max_norm=self.hs_bytscl[2],
+                normalization=self.hs_bytscl[0],
+            )
             return rvt.vis.byte_scale(data=norm_arr, no_data=np.nan, c_min=0, c_max=1)
         elif visualization == RVTVisualization.SLOPE:
-            norm_arr = rvt.blend_func.normalize_image(visualization="slp", image=float_arr,
-                                                      min_norm=self.slp_bytscl[1], max_norm=self.slp_bytscl[2],
-                                                      normalization=self.slp_bytscl[0])
+            norm_arr = rvt.blend_func.normalize_image(
+                visualization="slp",
+                image=float_arr,
+                min_norm=self.slp_bytscl[1],
+                max_norm=self.slp_bytscl[2],
+                normalization=self.slp_bytscl[0],
+            )
             return rvt.vis.byte_scale(data=norm_arr, no_data=np.nan, c_min=0, c_max=1)
         elif visualization == RVTVisualization.SHADOW:
             return float_arr
         elif visualization == RVTVisualization.MULTI_HILLSHADE:
             # Be careful when multihillshade we input dem, because we have to calculate hillshade in 3 directions
-            red_band_arr = rvt.vis.hillshade(dem=float_arr, resolution_x=x_res, resolution_y=y_res,
-                                             sun_elevation=self.mhs_sun_el, sun_azimuth=315, no_data=no_data)
-            green_band_arr = rvt.vis.hillshade(dem=float_arr, resolution_x=x_res, resolution_y=y_res,
-                                               sun_elevation=self.mhs_sun_el, sun_azimuth=22.5, no_data=no_data)
-            blue_band_arr = rvt.vis.hillshade(dem=float_arr, resolution_x=x_res, resolution_y=y_res,
-                                              sun_elevation=self.mhs_sun_el, sun_azimuth=90, no_data=no_data)
+            red_band_arr = rvt.vis.hillshade(
+                dem=float_arr,
+                resolution_x=x_res,
+                resolution_y=y_res,
+                sun_elevation=self.mhs_sun_el,
+                sun_azimuth=315,
+                no_data=no_data,
+            )
+            green_band_arr = rvt.vis.hillshade(
+                dem=float_arr,
+                resolution_x=x_res,
+                resolution_y=y_res,
+                sun_elevation=self.mhs_sun_el,
+                sun_azimuth=22.5,
+                no_data=no_data,
+            )
+            blue_band_arr = rvt.vis.hillshade(
+                dem=float_arr,
+                resolution_x=x_res,
+                resolution_y=y_res,
+                sun_elevation=self.mhs_sun_el,
+                sun_azimuth=90,
+                no_data=no_data,
+            )
             if self.mhs_bytscl[0].lower() == "percent" or self.slp_bytscl[0].lower() == "perc":
                 red_band_arr = rvt.blend_func.normalize_perc(
                     image=red_band_arr, minimum=self.mhs_bytscl[1], maximum=self.mhs_bytscl[2]
@@ -1130,64 +1390,88 @@ class DefaultValues:
                 red_band_arr = rvt.blend_func.normalize_lin(
                     image=red_band_arr, minimum=self.mhs_bytscl[1], maximum=self.mhs_bytscl[2]
                 )
-                red_band_arr = rvt.vis.byte_scale(
-                    data=red_band_arr, no_data=np.nan, c_min=0, c_max=1
-                )
+                red_band_arr = rvt.vis.byte_scale(data=red_band_arr, no_data=np.nan, c_min=0, c_max=1)
                 green_band_arr = rvt.blend_func.normalize_lin(
                     image=green_band_arr, minimum=self.mhs_bytscl[1], maximum=self.mhs_bytscl[2]
                 )
-                green_band_arr = rvt.vis.byte_scale(
-                    data=green_band_arr, no_data=np.nan, c_min=0, c_max=1
-                )
+                green_band_arr = rvt.vis.byte_scale(data=green_band_arr, no_data=np.nan, c_min=0, c_max=1)
                 blue_band_arr = rvt.blend_func.normalize_lin(
                     image=blue_band_arr, minimum=self.mhs_bytscl[1], maximum=self.mhs_bytscl[2]
                 )
-                blue_band_arr = rvt.vis.byte_scale(
-                    data=blue_band_arr, no_data=np.nan, c_min=0, c_max=1
-                )
+                blue_band_arr = rvt.vis.byte_scale(data=blue_band_arr, no_data=np.nan, c_min=0, c_max=1)
             multi_hillshade_8bit_arr = np.array([red_band_arr, green_band_arr, blue_band_arr])
             return multi_hillshade_8bit_arr
         elif visualization == RVTVisualization.SIMPLE_LOCAL_RELIEF_MODEL:
-            norm_arr = rvt.blend_func.normalize_image(visualization="slrm", image=float_arr,
-                                                      min_norm=self.slrm_bytscl[1], max_norm=self.slrm_bytscl[2],
-                                                      normalization=self.slrm_bytscl[0])
+            norm_arr = rvt.blend_func.normalize_image(
+                visualization="slrm",
+                image=float_arr,
+                min_norm=self.slrm_bytscl[1],
+                max_norm=self.slrm_bytscl[2],
+                normalization=self.slrm_bytscl[0],
+            )
             return rvt.vis.byte_scale(data=norm_arr, no_data=np.nan, c_min=0, c_max=1)
         elif visualization == RVTVisualization.SKY_VIEW_FACTOR:
-            norm_arr = rvt.blend_func.normalize_image(visualization="svf", image=float_arr,
-                                                      min_norm=self.svf_bytscl[1], max_norm=self.svf_bytscl[2],
-                                                      normalization=self.svf_bytscl[0])
+            norm_arr = rvt.blend_func.normalize_image(
+                visualization="svf",
+                image=float_arr,
+                min_norm=self.svf_bytscl[1],
+                max_norm=self.svf_bytscl[2],
+                normalization=self.svf_bytscl[0],
+            )
             return rvt.vis.byte_scale(data=norm_arr, no_data=np.nan, c_min=0, c_max=1)
         elif visualization == RVTVisualization.ANISOTROPIC_SKY_VIEW_FACTOR:
-            norm_arr = rvt.blend_func.normalize_image(visualization="asvf", image=float_arr,
-                                                      min_norm=self.asvf_bytscl[1], max_norm=self.asvf_bytscl[2],
-                                                      normalization=self.asvf_bytscl[0])
+            norm_arr = rvt.blend_func.normalize_image(
+                visualization="asvf",
+                image=float_arr,
+                min_norm=self.asvf_bytscl[1],
+                max_norm=self.asvf_bytscl[2],
+                normalization=self.asvf_bytscl[0],
+            )
             return rvt.vis.byte_scale(data=norm_arr, no_data=np.nan, c_min=0, c_max=1)
         elif visualization == RVTVisualization.POSITIVE_OPENNESS:
-            norm_arr = rvt.blend_func.normalize_image(visualization="pos_opns", image=float_arr,
-                                                      min_norm=self.pos_opns_bytscl[1],
-                                                      max_norm=self.pos_opns_bytscl[2],
-                                                      normalization=self.pos_opns_bytscl[0])
+            norm_arr = rvt.blend_func.normalize_image(
+                visualization="pos_opns",
+                image=float_arr,
+                min_norm=self.pos_opns_bytscl[1],
+                max_norm=self.pos_opns_bytscl[2],
+                normalization=self.pos_opns_bytscl[0],
+            )
             return rvt.vis.byte_scale(data=norm_arr, no_data=np.nan, c_min=0, c_max=1)
         elif visualization == RVTVisualization.NEGATIVE_OPENNESS:
-            norm_arr = rvt.blend_func.normalize_image(visualization="neg_opns", image=float_arr,
-                                                      min_norm=self.neg_opns_bytscl[1],
-                                                      max_norm=self.neg_opns_bytscl[2],
-                                                      normalization=self.neg_opns_bytscl[0])
+            norm_arr = rvt.blend_func.normalize_image(
+                visualization="neg_opns",
+                image=float_arr,
+                min_norm=self.neg_opns_bytscl[1],
+                max_norm=self.neg_opns_bytscl[2],
+                normalization=self.neg_opns_bytscl[0],
+            )
             return rvt.vis.byte_scale(data=norm_arr, no_data=np.nan, c_min=0, c_max=1)
         elif visualization == RVTVisualization.SKY_ILLUMINATION:
-            norm_arr = rvt.blend_func.normalize_image(visualization="sim", image=float_arr,
-                                                      min_norm=self.sim_bytscl[1], max_norm=self.sim_bytscl[2],
-                                                      normalization=self.sim_bytscl[0])
+            norm_arr = rvt.blend_func.normalize_image(
+                visualization="sim",
+                image=float_arr,
+                min_norm=self.sim_bytscl[1],
+                max_norm=self.sim_bytscl[2],
+                normalization=self.sim_bytscl[0],
+            )
             return rvt.vis.byte_scale(data=norm_arr, no_data=np.nan, c_min=0, c_max=1)
         elif visualization == RVTVisualization.LOCAL_DOMINANCE:
-            norm_arr = rvt.blend_func.normalize_image(visualization="ld", image=float_arr,
-                                                      min_norm=self.ld_bytscl[1], max_norm=self.ld_bytscl[2],
-                                                      normalization=self.ld_bytscl[0])
+            norm_arr = rvt.blend_func.normalize_image(
+                visualization="ld",
+                image=float_arr,
+                min_norm=self.ld_bytscl[1],
+                max_norm=self.ld_bytscl[2],
+                normalization=self.ld_bytscl[0],
+            )
             return rvt.vis.byte_scale(data=norm_arr, no_data=np.nan, c_min=0, c_max=1)
         elif visualization == RVTVisualization.MULTI_SCALE_RELIEF_MODEL:
-            norm_arr = rvt.blend_func.normalize_image(visualization="msrm", image=float_arr,
-                                                      min_norm=self.msrm_bytscl[1], max_norm=self.msrm_bytscl[2],
-                                                      normalization=self.msrm_bytscl[0])
+            norm_arr = rvt.blend_func.normalize_image(
+                visualization="msrm",
+                image=float_arr,
+                min_norm=self.msrm_bytscl[1],
+                max_norm=self.msrm_bytscl[2],
+                normalization=self.msrm_bytscl[0],
+            )
             return rvt.vis.byte_scale(data=norm_arr, no_data=np.nan, c_min=0, c_max=1)
         elif visualization == RVTVisualization.MULTI_SCALE_TOPOGRAPHIC_POSITION:
             # This might not be necessary, as all mstp data should already be between 0 and 1
@@ -1196,17 +1480,24 @@ class DefaultValues:
                 image=float_arr,
                 min_norm=self.mstp_bytscl[1],
                 max_norm=self.mstp_bytscl[2],
-                normalization=self.mstp_bytscl[0]
+                normalization=self.mstp_bytscl[0],
             )
 
             return rvt.vis.byte_scale(data=norm_arr, no_data=np.nan, c_min=0, c_max=1)
         else:
-            raise Exception("rvt.default.DefaultValues.float_to_8bit: Wrong visualization (visualization) parameter!")
+            raise Exception(
+                "rvt.default.DefaultValues.float_to_8bit: Wrong visualization (visualization) parameter!"
+            )
 
     def get_slope(self, dem_arr, resolution_x, resolution_y, no_data=None):
-        slope_arr = rvt.vis.slope_aspect(dem=dem_arr, resolution_x=resolution_x, resolution_y=resolution_y,
-                                         ve_factor=self.ve_factor, output_units=self.slp_output_units,
-                                         no_data=no_data)["slope"]
+        slope_arr = rvt.vis.slope_aspect(
+            dem=dem_arr,
+            resolution_x=resolution_x,
+            resolution_y=resolution_y,
+            ve_factor=self.ve_factor,
+            output_units=self.slp_output_units,
+            no_data=no_data,
+        )["slope"]
         return slope_arr
 
     def save_slope(self, dem_path, custom_dir=None, save_float=None, save_8bit=None):
@@ -1223,8 +1514,10 @@ class DefaultValues:
             save_8bit = self.slp_save_8bit
 
         if not save_float and not save_8bit:
-            raise Exception("rvt.default.DefaultValues.save_slope: Both save_float and save_8bit are False,"
-                            " at least one of them has to be True!")
+            raise Exception(
+                "rvt.default.DefaultValues.save_slope: Both save_float and save_8bit are False,"
+                " at least one of them has to be True!"
+            )
         if not os.path.isfile(dem_path):
             raise Exception("rvt.default.DefaultValues.save_slope: dem_path doesn't exist!")
 
@@ -1256,7 +1549,7 @@ class DefaultValues:
                 dem_path=Path(dem_path),
                 output_dir_path=Path(custom_dir),
                 save_float=save_float,
-                save_8bit=save_8bit
+                save_8bit=save_8bit,
             )
             return 1
         else:  # singleprocess
@@ -1265,32 +1558,55 @@ class DefaultValues:
             no_data = dict_arr_res["no_data"]
             x_res = dict_arr_res["resolution"][0]
             y_res = dict_arr_res["resolution"][1]
-            slope_arr = self.get_slope(dem_arr=dem_arr, resolution_x=x_res, resolution_y=y_res, no_data=no_data)
+            slope_arr = self.get_slope(
+                dem_arr=dem_arr, resolution_x=x_res, resolution_y=y_res, no_data=no_data
+            )
             if save_float:
                 if os.path.isfile(slope_path) and not self.overwrite:  # file exists and overwrite=0
                     pass
                 else:
-                    save_raster(src_raster_path=dem_path, out_raster_path=slope_path, out_raster_arr=slope_arr,
-                                no_data=np.nan)
+                    save_raster(
+                        src_raster_path=dem_path,
+                        out_raster_path=slope_path,
+                        out_raster_arr=slope_arr,
+                        no_data=np.nan,
+                    )
             if save_8bit:
                 if os.path.isfile(slope_8bit_path) and not self.overwrite:  # file exists and overwrite=0
                     pass
                 else:
-                    slope_8bit_arr = self.float_to_8bit(float_arr=slope_arr, visualization=RVTVisualization.SLOPE)
-                    save_raster(src_raster_path=dem_path, out_raster_path=slope_8bit_path,
-                                out_raster_arr=slope_8bit_arr, e_type=1)
+                    slope_8bit_arr = self.float_to_8bit(
+                        float_arr=slope_arr, visualization=RVTVisualization.SLOPE
+                    )
+                    save_raster(
+                        src_raster_path=dem_path,
+                        out_raster_path=slope_8bit_path,
+                        out_raster_arr=slope_8bit_arr,
+                        e_type=1,
+                    )
             return 1
 
     def get_shadow(self, dem_arr, resolution, no_data=None):
-        shadow_arr = rvt.vis.shadow_horizon(dem=dem_arr, resolution=resolution, shadow_az=self.hs_sun_azi,
-                                            shadow_el=self.hs_sun_el, ve_factor=self.ve_factor,
-                                            no_data=no_data)["shadow"]
+        shadow_arr = rvt.vis.shadow_horizon(
+            dem=dem_arr,
+            resolution=resolution,
+            shadow_az=self.hs_sun_azi,
+            shadow_el=self.hs_sun_el,
+            ve_factor=self.ve_factor,
+            no_data=no_data,
+        )["shadow"]
         return shadow_arr
 
     def get_hillshade(self, dem_arr, resolution_x, resolution_y, no_data=None):
-        hillshade_arr = rvt.vis.hillshade(dem=dem_arr, resolution_x=resolution_x, resolution_y=resolution_y,
-                                          sun_azimuth=self.hs_sun_azi, sun_elevation=self.hs_sun_el,
-                                          ve_factor=self.ve_factor, no_data=no_data)
+        hillshade_arr = rvt.vis.hillshade(
+            dem=dem_arr,
+            resolution_x=resolution_x,
+            resolution_y=resolution_y,
+            sun_azimuth=self.hs_sun_azi,
+            sun_elevation=self.hs_sun_el,
+            ve_factor=self.ve_factor,
+            no_data=no_data,
+        )
         return hillshade_arr
 
     def save_hillshade(self, dem_path, custom_dir=None, save_float=None, save_8bit=None, save_shadow=None):
@@ -1310,8 +1626,10 @@ class DefaultValues:
             save_shadow = self.hs_shadow
 
         if not save_float and not save_8bit:
-            raise Exception("rvt.default.DefaultValues.save_hillshade: Both save_float and save_8bit are False,"
-                            " at least one of them has to be True!")
+            raise Exception(
+                "rvt.default.DefaultValues.save_hillshade: Both save_float and save_8bit are False,"
+                " at least one of them has to be True!"
+            )
         if not os.path.isfile(dem_path):
             raise Exception("rvt.default.DefaultValues.save_hillshade: dem_path doesn't exist!")
 
@@ -1326,8 +1644,12 @@ class DefaultValues:
 
         # if file already exists and overwrite=0
         if save_float and save_8bit and save_shadow:
-            if os.path.isfile(hillshade_8bit_path) and os.path.isfile(hillshade_path) \
-                    and os.path.isfile(shadow_path) and not self.overwrite:
+            if (
+                os.path.isfile(hillshade_8bit_path)
+                and os.path.isfile(hillshade_path)
+                and os.path.isfile(shadow_path)
+                and not self.overwrite
+            ):
                 return 0
         elif save_float and not save_8bit and not save_shadow:
             if os.path.isfile(hillshade_path) and not self.overwrite:
@@ -1352,7 +1674,7 @@ class DefaultValues:
                 dem_path=Path(dem_path),
                 output_dir_path=Path(custom_dir),
                 save_float=save_float,
-                save_8bit=save_8bit
+                save_8bit=save_8bit,
             )
             if save_shadow:
                 rvt.tile.save_rvt_visualization_tile_by_tile(
@@ -1361,7 +1683,7 @@ class DefaultValues:
                     dem_path=Path(dem_path),
                     output_dir_path=Path(custom_dir),
                     save_float=True,
-                    save_8bit=False
+                    save_8bit=False,
                 )
             return 1
         else:  # singleprocess
@@ -1370,14 +1692,19 @@ class DefaultValues:
             no_data = dict_arr_res["no_data"]
             x_res = dict_arr_res["resolution"][0]
             y_res = dict_arr_res["resolution"][1]
-            hillshade_arr = self.get_hillshade(dem_arr=dem_arr, resolution_x=x_res, resolution_y=y_res,
-                                               no_data=no_data).astype('float32')
+            hillshade_arr = self.get_hillshade(
+                dem_arr=dem_arr, resolution_x=x_res, resolution_y=y_res, no_data=no_data
+            ).astype("float32")
             if save_float:
                 if os.path.isfile(hillshade_path) and not self.overwrite:  # file exists and overwrite=0
                     pass
                 else:
-                    save_raster(src_raster_path=dem_path, out_raster_path=hillshade_path, out_raster_arr=hillshade_arr,
-                                no_data=np.nan)
+                    save_raster(
+                        src_raster_path=dem_path,
+                        out_raster_path=hillshade_path,
+                        out_raster_arr=hillshade_arr,
+                        no_data=np.nan,
+                    )
             if save_8bit:
                 if os.path.isfile(hillshade_8bit_path) and not self.overwrite:  # file exists and overwrite=0
                     pass
@@ -1385,21 +1712,35 @@ class DefaultValues:
                     hillshade_8_bit_arr = self.float_to_8bit(
                         float_arr=hillshade_arr, visualization=RVTVisualization.HILLSHADE
                     )
-                    save_raster(src_raster_path=dem_path, out_raster_path=hillshade_8bit_path,
-                                out_raster_arr=hillshade_8_bit_arr, e_type=1)
+                    save_raster(
+                        src_raster_path=dem_path,
+                        out_raster_path=hillshade_8bit_path,
+                        out_raster_arr=hillshade_8_bit_arr,
+                        e_type=1,
+                    )
             if save_shadow:
                 shadow_arr = self.get_shadow(dem_arr=dem_arr, resolution=x_res)
                 if os.path.isfile(shadow_path) and not self.overwrite:  # file exists and overwrite=0
                     pass
                 else:
-                    save_raster(src_raster_path=dem_path, out_raster_path=shadow_path, out_raster_arr=shadow_arr,
-                                no_data=np.nan)
+                    save_raster(
+                        src_raster_path=dem_path,
+                        out_raster_path=shadow_path,
+                        out_raster_arr=shadow_arr,
+                        no_data=np.nan,
+                    )
             return 1
 
     def get_multi_hillshade(self, dem_arr, resolution_x, resolution_y, no_data=None):
-        multi_hillshade_arr = rvt.vis.multi_hillshade(dem=dem_arr, resolution_x=resolution_x, resolution_y=resolution_y,
-                                                      nr_directions=self.mhs_nr_dir, sun_elevation=self.mhs_sun_el,
-                                                      ve_factor=self.ve_factor, no_data=no_data)
+        multi_hillshade_arr = rvt.vis.multi_hillshade(
+            dem=dem_arr,
+            resolution_x=resolution_x,
+            resolution_y=resolution_y,
+            nr_directions=self.mhs_nr_dir,
+            sun_elevation=self.mhs_sun_el,
+            ve_factor=self.ve_factor,
+            no_data=no_data,
+        )
         return multi_hillshade_arr
 
     def save_multi_hillshade(self, dem_path, custom_dir=None, save_float=None, save_8bit=None):
@@ -1416,8 +1757,10 @@ class DefaultValues:
             save_8bit = self.mhs_save_8bit
 
         if not save_float and not save_8bit:
-            raise Exception("rvt.default.DefaultValues.save_multi_hillshade: Both save_float and save_8bit are False,"
-                            " at least one of them has to be True!")
+            raise Exception(
+                "rvt.default.DefaultValues.save_multi_hillshade: Both save_float and save_8bit are False,"
+                " at least one of them has to be True!"
+            )
         if not os.path.isfile(dem_path):
             raise Exception("rvt.default.DefaultValues.save_multi_hillshade: dem_path doesn't exist!")
 
@@ -1426,13 +1769,17 @@ class DefaultValues:
             multi_hillshade_8bit_path = self.get_multi_hillshade_path(dem_path, bit8=True)
         else:
             multi_hillshade_path = os.path.join(custom_dir, self.get_multi_hillshade_file_name(dem_path))
-            multi_hillshade_8bit_path = os.path.join(custom_dir, self.get_multi_hillshade_file_name(dem_path,
-                                                                                                    bit8=True))
+            multi_hillshade_8bit_path = os.path.join(
+                custom_dir, self.get_multi_hillshade_file_name(dem_path, bit8=True)
+            )
 
         # if file already exists and overwrite=0
         if save_float and save_8bit:
-            if os.path.isfile(multi_hillshade_8bit_path) and os.path.isfile(multi_hillshade_path) \
-                    and not self.overwrite:
+            if (
+                os.path.isfile(multi_hillshade_8bit_path)
+                and os.path.isfile(multi_hillshade_path)
+                and not self.overwrite
+            ):
                 return 0
         elif save_float and not save_8bit:
             if os.path.isfile(multi_hillshade_path) and not self.overwrite:
@@ -1451,7 +1798,7 @@ class DefaultValues:
                 dem_path=Path(dem_path),
                 output_dir_path=Path(custom_dir),
                 save_float=save_float,
-                save_8bit=save_8bit
+                save_8bit=save_8bit,
             )
             return 1
         else:  # singleprocess
@@ -1464,13 +1811,19 @@ class DefaultValues:
                 if os.path.isfile(multi_hillshade_path) and not self.overwrite:  # file exists and overwrite=0
                     pass
                 else:
-                    multi_hillshade_arr = self.get_multi_hillshade(dem_arr=dem_arr, resolution_x=x_res,
-                                                                   resolution_y=y_res,
-                                                                   no_data=no_data).astype('float32')
-                    save_raster(src_raster_path=dem_path, out_raster_path=multi_hillshade_path,
-                                out_raster_arr=multi_hillshade_arr, no_data=np.nan)
+                    multi_hillshade_arr = self.get_multi_hillshade(
+                        dem_arr=dem_arr, resolution_x=x_res, resolution_y=y_res, no_data=no_data
+                    ).astype("float32")
+                    save_raster(
+                        src_raster_path=dem_path,
+                        out_raster_path=multi_hillshade_path,
+                        out_raster_arr=multi_hillshade_arr,
+                        no_data=np.nan,
+                    )
             if save_8bit:
-                if os.path.isfile(multi_hillshade_8bit_path) and not self.overwrite:  # file exists and overwrite=0
+                if (
+                    os.path.isfile(multi_hillshade_8bit_path) and not self.overwrite
+                ):  # file exists and overwrite=0
                     pass
                 else:
                     multi_hillshade_8bit_arr = self.float_to_8bit(
@@ -1478,14 +1831,20 @@ class DefaultValues:
                         visualization=RVTVisualization.MULTI_HILLSHADE,
                         x_res=x_res,
                         y_res=y_res,
-                        no_data=no_data
+                        no_data=no_data,
                     )
-                    save_raster(src_raster_path=dem_path, out_raster_path=multi_hillshade_8bit_path,
-                                out_raster_arr=multi_hillshade_8bit_arr, e_type=1)
+                    save_raster(
+                        src_raster_path=dem_path,
+                        out_raster_path=multi_hillshade_8bit_path,
+                        out_raster_arr=multi_hillshade_8bit_arr,
+                        e_type=1,
+                    )
             return 1
 
     def get_slrm(self, dem_arr, no_data=None):
-        slrm_arr = rvt.vis.slrm(dem=dem_arr, radius_cell=self.slrm_rad_cell, ve_factor=self.ve_factor, no_data=no_data)
+        slrm_arr = rvt.vis.slrm(
+            dem=dem_arr, radius_cell=self.slrm_rad_cell, ve_factor=self.ve_factor, no_data=no_data
+        )
         return slrm_arr
 
     def save_slrm(self, dem_path, custom_dir=None, save_float=None, save_8bit=None):
@@ -1502,8 +1861,10 @@ class DefaultValues:
             save_8bit = self.slrm_save_8bit
 
         if not save_float and not save_8bit:
-            raise Exception("rvt.default.DefaultValues.save_slrm: Both save_float and save_8bit are False,"
-                            " at least one of them has to be True!")
+            raise Exception(
+                "rvt.default.DefaultValues.save_slrm: Both save_float and save_8bit are False,"
+                " at least one of them has to be True!"
+            )
         if not os.path.isfile(dem_path):
             raise Exception("rvt.default.DefaultValues.save_slrm: dem_path doesn't exist!")
 
@@ -1535,20 +1896,24 @@ class DefaultValues:
                 dem_path=Path(dem_path),
                 output_dir_path=Path(custom_dir),
                 save_float=save_float,
-                save_8bit=save_8bit
+                save_8bit=save_8bit,
             )
             return 1
         else:  # singleprocess
             dict_arr_res = get_raster_arr(raster_path=dem_path)
             dem_arr = dict_arr_res["array"]
             no_data = dict_arr_res["no_data"]
-            slrm_arr = self.get_slrm(dem_arr=dem_arr, no_data=no_data).astype('float32')
+            slrm_arr = self.get_slrm(dem_arr=dem_arr, no_data=no_data).astype("float32")
             if save_float:
                 if os.path.isfile(slrm_path) and not self.overwrite:  # file exists and overwrite=0
                     pass
                 else:
-                    save_raster(src_raster_path=dem_path, out_raster_path=slrm_path, out_raster_arr=slrm_arr,
-                                no_data=np.nan)
+                    save_raster(
+                        src_raster_path=dem_path,
+                        out_raster_path=slrm_path,
+                        out_raster_arr=slrm_arr,
+                        no_data=np.nan,
+                    )
             if save_8bit:
                 if os.path.isfile(slrm_8bit_path) and not self.overwrite:  # file exists and overwrite=0
                     pass
@@ -1556,22 +1921,43 @@ class DefaultValues:
                     slrm_8bit_arr = self.float_to_8bit(
                         float_arr=slrm_arr, visualization=RVTVisualization.SIMPLE_LOCAL_RELIEF_MODEL
                     )
-                    save_raster(src_raster_path=dem_path, out_raster_path=slrm_8bit_path, out_raster_arr=slrm_8bit_arr,
-                                e_type=1)
+                    save_raster(
+                        src_raster_path=dem_path,
+                        out_raster_path=slrm_8bit_path,
+                        out_raster_arr=slrm_8bit_arr,
+                        e_type=1,
+                    )
             return 1
 
-    def get_sky_view_factor(self, dem_arr, resolution, compute_svf=True, compute_asvf=False, compute_opns=False,
-                            no_data=None):
-        dict_svf_asvf_opns = rvt.vis.sky_view_factor(dem=dem_arr, resolution=resolution, compute_svf=compute_svf,
-                                                     compute_opns=compute_opns, compute_asvf=compute_asvf,
-                                                     svf_n_dir=self.svf_n_dir, svf_r_max=self.svf_r_max,
-                                                     svf_noise=self.svf_noise, asvf_dir=self.asvf_dir,
-                                                     asvf_level=self.asvf_level, ve_factor=self.ve_factor,
-                                                     no_data=no_data)
+    def get_sky_view_factor(
+        self, dem_arr, resolution, compute_svf=True, compute_asvf=False, compute_opns=False, no_data=None
+    ):
+        dict_svf_asvf_opns = rvt.vis.sky_view_factor(
+            dem=dem_arr,
+            resolution=resolution,
+            compute_svf=compute_svf,
+            compute_opns=compute_opns,
+            compute_asvf=compute_asvf,
+            svf_n_dir=self.svf_n_dir,
+            svf_r_max=self.svf_r_max,
+            svf_noise=self.svf_noise,
+            asvf_dir=self.asvf_dir,
+            asvf_level=self.asvf_level,
+            ve_factor=self.ve_factor,
+            no_data=no_data,
+        )
         return dict_svf_asvf_opns
 
-    def save_sky_view_factor(self, dem_path, save_svf=True, save_asvf=False, save_opns=False, custom_dir=None,
-                             save_float=None, save_8bit=None):
+    def save_sky_view_factor(
+        self,
+        dem_path,
+        save_svf=True,
+        save_asvf=False,
+        save_opns=False,
+        custom_dir=None,
+        save_float=None,
+        save_8bit=None,
+    ):
         """Calculates and saves Sky-view factor(save_svf=True), Anisotropic Sky-view factor(save_asvf=True) and
         Positive Openness(save_opns=True) from dem (dem_path) with default parameters.
         If custom_dir is None it saves in dem directory else in custom_dir. If path to file already exists we can
@@ -1586,8 +1972,10 @@ class DefaultValues:
             save_8bit = self.svf_save_8bit
 
         if not save_float and not save_8bit:
-            raise Exception("rvt.default.DefaultValues.save_sky_view_factor: Both save_float and save_8bit are False,"
-                            " at least one of them has to be True!")
+            raise Exception(
+                "rvt.default.DefaultValues.save_sky_view_factor: Both save_float and save_8bit are False,"
+                " at least one of them has to be True!"
+            )
         if not os.path.isfile(dem_path):
             raise Exception("rvt.default.DefaultValues.save_sky_view_factor: dem_path doesn't exist!")
 
@@ -1620,17 +2008,31 @@ class DefaultValues:
 
         # if file already exists and overwrite=0
         if save_float and save_8bit:
-            if os.path.isfile(svf_path) and os.path.isfile(asvf_path) and os.path.isfile(opns_path) and \
-                    os.path.isfile(svf_8bit_path) and os.path.isfile(asvf_8bit_path) and \
-                    os.path.isfile(opns_8bit_path) and not self.overwrite:
+            if (
+                os.path.isfile(svf_path)
+                and os.path.isfile(asvf_path)
+                and os.path.isfile(opns_path)
+                and os.path.isfile(svf_8bit_path)
+                and os.path.isfile(asvf_8bit_path)
+                and os.path.isfile(opns_8bit_path)
+                and not self.overwrite
+            ):
                 return 0
         elif save_float and not save_8bit:
-            if os.path.isfile(svf_path) and os.path.isfile(asvf_path) and os.path.isfile(opns_path) \
-                    and not self.overwrite:
+            if (
+                os.path.isfile(svf_path)
+                and os.path.isfile(asvf_path)
+                and os.path.isfile(opns_path)
+                and not self.overwrite
+            ):
                 return 0
         elif not save_float and save_8bit:
-            if os.path.isfile(svf_8bit_path) and os.path.isfile(asvf_8bit_path) and os.path.isfile(opns_8bit_path) \
-                    and not self.overwrite:
+            if (
+                os.path.isfile(svf_8bit_path)
+                and os.path.isfile(asvf_8bit_path)
+                and os.path.isfile(opns_8bit_path)
+                and not self.overwrite
+            ):
                 return 0
 
         dem_size = get_raster_size(raster_path=dem_path)
@@ -1644,7 +2046,7 @@ class DefaultValues:
                     dem_path=Path(dem_path),
                     output_dir_path=Path(custom_dir),
                     save_float=save_float,
-                    save_8bit=save_8bit
+                    save_8bit=save_8bit,
                 )
             if save_asvf:
                 rvt.tile.save_rvt_visualization_tile_by_tile(
@@ -1653,7 +2055,7 @@ class DefaultValues:
                     dem_path=Path(dem_path),
                     output_dir_path=Path(custom_dir),
                     save_float=save_float,
-                    save_8bit=save_8bit
+                    save_8bit=save_8bit,
                 )
             if save_opns:
                 rvt.tile.save_rvt_visualization_tile_by_tile(
@@ -1662,7 +2064,7 @@ class DefaultValues:
                     dem_path=Path(dem_path),
                     output_dir_path=Path(custom_dir),
                     save_float=save_float,
-                    save_8bit=save_8bit
+                    save_8bit=save_8bit,
                 )
             return 1
         else:
@@ -1671,65 +2073,104 @@ class DefaultValues:
             no_data = dict_arr_res["no_data"]
             x_res = dict_arr_res["resolution"][0]
             y_res = dict_arr_res["resolution"][1]
-            dict_svf_asvf_opns = self.get_sky_view_factor(dem_arr=dem_arr, resolution=x_res, compute_svf=save_svf,
-                                                          compute_asvf=save_asvf, compute_opns=save_opns,
-                                                          no_data=no_data)
+            dict_svf_asvf_opns = self.get_sky_view_factor(
+                dem_arr=dem_arr,
+                resolution=x_res,
+                compute_svf=save_svf,
+                compute_asvf=save_asvf,
+                compute_opns=save_opns,
+                no_data=no_data,
+            )
             if save_float:
                 if save_svf:
                     if os.path.isfile(svf_path) and not self.overwrite:  # file exists and overwrite=0
                         pass
                     else:  # svf_path, file doesn't exists or exists and overwrite=1
-                        save_raster(src_raster_path=dem_path, out_raster_path=svf_path,
-                                    out_raster_arr=dict_svf_asvf_opns["svf"].astype('float32'), no_data=np.nan)
+                        save_raster(
+                            src_raster_path=dem_path,
+                            out_raster_path=svf_path,
+                            out_raster_arr=dict_svf_asvf_opns["svf"].astype("float32"),
+                            no_data=np.nan,
+                        )
                 if save_asvf:
                     if os.path.isfile(asvf_path) and not self.overwrite:  # file exists and overwrite=0
                         pass
                     else:  # asvf_path, file doesn't exists or exists and overwrite=1
-                        save_raster(src_raster_path=dem_path, out_raster_path=asvf_path,
-                                    out_raster_arr=dict_svf_asvf_opns["asvf"].astype('float32'), no_data=np.nan)
+                        save_raster(
+                            src_raster_path=dem_path,
+                            out_raster_path=asvf_path,
+                            out_raster_arr=dict_svf_asvf_opns["asvf"].astype("float32"),
+                            no_data=np.nan,
+                        )
                 if save_opns:
                     if os.path.isfile(opns_path) and not self.overwrite:  # file exists and overwrite=0
                         pass
                     else:  # opns_path, file doesn't exists or exists and overwrite=1
-                        save_raster(src_raster_path=dem_path, out_raster_path=opns_path,
-                                    out_raster_arr=dict_svf_asvf_opns["opns"].astype('float32'), no_data=np.nan)
+                        save_raster(
+                            src_raster_path=dem_path,
+                            out_raster_path=opns_path,
+                            out_raster_arr=dict_svf_asvf_opns["opns"].astype("float32"),
+                            no_data=np.nan,
+                        )
             if save_8bit:
                 if save_svf:
                     if os.path.isfile(svf_8bit_path) and not self.overwrite:  # file exists and overwrite=0
                         pass
                     else:  # svf_8bit_path, file doesn't exists or exists and overwrite=1
                         svf_8bit_arr = self.float_to_8bit(
-                            float_arr=dict_svf_asvf_opns["svf"], visualization=RVTVisualization.SKY_VIEW_FACTOR
+                            float_arr=dict_svf_asvf_opns["svf"],
+                            visualization=RVTVisualization.SKY_VIEW_FACTOR,
                         )
-                        save_raster(src_raster_path=dem_path, out_raster_path=svf_8bit_path,
-                                    out_raster_arr=svf_8bit_arr, e_type=1)
+                        save_raster(
+                            src_raster_path=dem_path,
+                            out_raster_path=svf_8bit_path,
+                            out_raster_arr=svf_8bit_arr,
+                            e_type=1,
+                        )
                 if save_asvf:
                     if os.path.isfile(asvf_8bit_path) and not self.overwrite:  # file exists and overwrite=0
                         pass
                     else:  # asvf_8bit_path, file doesn't exists or exists and overwrite=1
                         asvf_8bit_arr = self.float_to_8bit(
                             float_arr=dict_svf_asvf_opns["asvf"],
-                            visualization=RVTVisualization.ANISOTROPIC_SKY_VIEW_FACTOR
+                            visualization=RVTVisualization.ANISOTROPIC_SKY_VIEW_FACTOR,
                         )
-                        save_raster(src_raster_path=dem_path, out_raster_path=asvf_8bit_path,
-                                    out_raster_arr=asvf_8bit_arr, e_type=1)
+                        save_raster(
+                            src_raster_path=dem_path,
+                            out_raster_path=asvf_8bit_path,
+                            out_raster_arr=asvf_8bit_arr,
+                            e_type=1,
+                        )
                 if save_opns:
                     if os.path.isfile(opns_8bit_path) and not self.overwrite:  # file exists and overwrite=0
                         pass
                     else:  # opns_8bit_path, file doesn't exists or exists and overwrite=1
                         opns_8bit_arr = self.float_to_8bit(
-                            float_arr=dict_svf_asvf_opns["opns"], visualization=RVTVisualization.POSITIVE_OPENNESS
+                            float_arr=dict_svf_asvf_opns["opns"],
+                            visualization=RVTVisualization.POSITIVE_OPENNESS,
                         )
-                        save_raster(src_raster_path=dem_path, out_raster_path=opns_8bit_path,
-                                    out_raster_arr=opns_8bit_arr, e_type=1)
+                        save_raster(
+                            src_raster_path=dem_path,
+                            out_raster_path=opns_8bit_path,
+                            out_raster_arr=opns_8bit_arr,
+                            e_type=1,
+                        )
             return 1
 
     def get_neg_opns(self, dem_arr, resolution, no_data=None):
         dem_arr = -1 * dem_arr
-        dict_neg_opns = rvt.vis.sky_view_factor(dem=dem_arr, resolution=resolution, svf_n_dir=self.svf_n_dir,
-                                                svf_r_max=self.svf_r_max, svf_noise=self.svf_noise,
-                                                compute_svf=False, compute_asvf=False, compute_opns=True,
-                                                ve_factor=self.ve_factor, no_data=no_data)
+        dict_neg_opns = rvt.vis.sky_view_factor(
+            dem=dem_arr,
+            resolution=resolution,
+            svf_n_dir=self.svf_n_dir,
+            svf_r_max=self.svf_r_max,
+            svf_noise=self.svf_noise,
+            compute_svf=False,
+            compute_asvf=False,
+            compute_opns=True,
+            ve_factor=self.ve_factor,
+            no_data=no_data,
+        )
         neg_opns_arr = dict_neg_opns["opns"]
         return neg_opns_arr
 
@@ -1747,8 +2188,10 @@ class DefaultValues:
             save_8bit = self.neg_opns_save_8bit
 
         if not save_float and not save_8bit:
-            raise Exception("rvt.default.DefaultValues.save_neg_opns: Both save_float and save_8bit are False,"
-                            " at least one of them has to be True!")
+            raise Exception(
+                "rvt.default.DefaultValues.save_neg_opns: Both save_float and save_8bit are False,"
+                " at least one of them has to be True!"
+            )
         if not os.path.isfile(dem_path):
             raise Exception("rvt.default.DefaultValues.save_neg_opns: dem_path doesn't exist!")
 
@@ -1780,7 +2223,7 @@ class DefaultValues:
                 dem_path=Path(dem_path),
                 output_dir_path=Path(custom_dir),
                 save_float=save_float,
-                save_8bit=save_8bit
+                save_8bit=save_8bit,
             )
             return 1
         else:  # singleprocess
@@ -1790,13 +2233,19 @@ class DefaultValues:
             x_res = dict_arr_res["resolution"][0]
             y_res = dict_arr_res["resolution"][1]
 
-            neg_opns_arr = self.get_neg_opns(dem_arr=dem_arr, resolution=x_res, no_data=no_data).astype('float32')
+            neg_opns_arr = self.get_neg_opns(dem_arr=dem_arr, resolution=x_res, no_data=no_data).astype(
+                "float32"
+            )
             if save_float:
                 if os.path.isfile(neg_opns_path) and not self.overwrite:  # file exists and overwrite=0
                     pass
                 else:
-                    save_raster(src_raster_path=dem_path, out_raster_path=neg_opns_path, out_raster_arr=neg_opns_arr,
-                                no_data=np.nan)
+                    save_raster(
+                        src_raster_path=dem_path,
+                        out_raster_path=neg_opns_path,
+                        out_raster_arr=neg_opns_arr,
+                        no_data=np.nan,
+                    )
             if save_8bit:
                 if os.path.isfile(neg_opns_8bit_path) and not self.overwrite:  # file exists and overwrite=0
                     pass
@@ -1804,17 +2253,27 @@ class DefaultValues:
                     neg_opns_8bit_arr = self.float_to_8bit(
                         float_arr=neg_opns_arr, visualization=RVTVisualization.NEGATIVE_OPENNESS
                     )
-                    save_raster(src_raster_path=dem_path, out_raster_path=neg_opns_8bit_path,
-                                out_raster_arr=neg_opns_8bit_arr, e_type=1)
+                    save_raster(
+                        src_raster_path=dem_path,
+                        out_raster_path=neg_opns_8bit_path,
+                        out_raster_arr=neg_opns_8bit_arr,
+                        e_type=1,
+                    )
             return 1
 
     def get_sky_illumination(self, dem_arr, resolution, no_data=None):
-        sky_illumination_arr = rvt.vis.sky_illumination(dem=dem_arr, resolution=resolution, sky_model=self.sim_sky_mod,
-                                                        compute_shadow=bool(self.sim_compute_shadow),
-                                                        max_fine_radius=self.sim_shadow_dist,
-                                                        num_directions=self.sim_nr_dir, shadow_az=self.sim_shadow_az,
-                                                        shadow_el=self.sim_shadow_el, ve_factor=self.ve_factor,
-                                                        no_data=no_data)
+        sky_illumination_arr = rvt.vis.sky_illumination(
+            dem=dem_arr,
+            resolution=resolution,
+            sky_model=self.sim_sky_mod,
+            compute_shadow=bool(self.sim_compute_shadow),
+            max_fine_radius=self.sim_shadow_dist,
+            num_directions=self.sim_nr_dir,
+            shadow_az=self.sim_shadow_az,
+            shadow_el=self.sim_shadow_el,
+            ve_factor=self.ve_factor,
+            no_data=no_data,
+        )
         return sky_illumination_arr
 
     def save_sky_illumination(self, dem_path, custom_dir=None, save_float=None, save_8bit=None):
@@ -1831,8 +2290,10 @@ class DefaultValues:
             save_8bit = self.sim_save_8bit
 
         if not save_float and not save_8bit:
-            raise Exception("rvt.default.DefaultValues.save_sky_illumination: Both save_float and save_8bit are False,"
-                            " at least one of them has to be True!")
+            raise Exception(
+                "rvt.default.DefaultValues.save_sky_illumination: Both save_float and save_8bit are False,"
+                " at least one of them has to be True!"
+            )
         if not os.path.isfile(dem_path):
             raise Exception("rvt.default.DefaultValues.save_sky_illumination: dem_path doesn't exist!")
 
@@ -1841,13 +2302,17 @@ class DefaultValues:
             sky_illumination_8bit_path = self.get_sky_illumination_path(dem_path, bit8=True)
         else:
             sky_illumination_path = os.path.join(custom_dir, self.get_sky_illumination_file_name(dem_path))
-            sky_illumination_8bit_path = os.path.join(custom_dir, self.get_sky_illumination_file_name(dem_path,
-                                                                                                      bit8=True))
+            sky_illumination_8bit_path = os.path.join(
+                custom_dir, self.get_sky_illumination_file_name(dem_path, bit8=True)
+            )
 
         # if file already exists and overwrite=0
         if save_float and save_8bit:
-            if os.path.isfile(sky_illumination_8bit_path) and os.path.isfile(sky_illumination_path) \
-                    and not self.overwrite:
+            if (
+                os.path.isfile(sky_illumination_8bit_path)
+                and os.path.isfile(sky_illumination_path)
+                and not self.overwrite
+            ):
                 return 0
         elif save_float and not save_8bit:
             if os.path.isfile(sky_illumination_path) and not self.overwrite:
@@ -1866,7 +2331,7 @@ class DefaultValues:
                 dem_path=Path(dem_path),
                 output_dir_path=Path(custom_dir),
                 save_float=save_float,
-                save_8bit=save_8bit
+                save_8bit=save_8bit,
             )
             return 1
         else:  # singleprocess
@@ -1876,30 +2341,49 @@ class DefaultValues:
             x_res = dict_arr_res["resolution"][0]
             y_res = dict_arr_res["resolution"][1]
 
-            sky_illumination_arr = self.get_sky_illumination(dem_arr=dem_arr, resolution=x_res,
-                                                             no_data=no_data).astype('float32')
+            sky_illumination_arr = self.get_sky_illumination(
+                dem_arr=dem_arr, resolution=x_res, no_data=no_data
+            ).astype("float32")
             if save_float:
-                if os.path.isfile(sky_illumination_path) and not self.overwrite:  # file exists and overwrite=0
+                if (
+                    os.path.isfile(sky_illumination_path) and not self.overwrite
+                ):  # file exists and overwrite=0
                     pass
                 else:
-                    save_raster(src_raster_path=dem_path, out_raster_path=sky_illumination_path,
-                                out_raster_arr=sky_illumination_arr, no_data=np.nan)
+                    save_raster(
+                        src_raster_path=dem_path,
+                        out_raster_path=sky_illumination_path,
+                        out_raster_arr=sky_illumination_arr,
+                        no_data=np.nan,
+                    )
             if save_8bit:
-                if os.path.isfile(sky_illumination_8bit_path) and not self.overwrite:  # file exists and overwrite=0
+                if (
+                    os.path.isfile(sky_illumination_8bit_path) and not self.overwrite
+                ):  # file exists and overwrite=0
                     pass
                 else:
                     sky_illumination_8bit_arr = self.float_to_8bit(
                         float_arr=sky_illumination_arr, visualization=RVTVisualization.SKY_ILLUMINATION
                     )
-                    save_raster(src_raster_path=dem_path, out_raster_path=sky_illumination_8bit_path,
-                                out_raster_arr=sky_illumination_8bit_arr, e_type=1)
+                    save_raster(
+                        src_raster_path=dem_path,
+                        out_raster_path=sky_illumination_8bit_path,
+                        out_raster_arr=sky_illumination_8bit_arr,
+                        e_type=1,
+                    )
             return 1
 
     def get_local_dominance(self, dem_arr, no_data=None):
-        local_dominance_arr = rvt.vis.local_dominance(dem=dem_arr, min_rad=self.ld_min_rad, max_rad=self.ld_max_rad,
-                                                      rad_inc=self.ld_rad_inc, angular_res=self.ld_anglr_res,
-                                                      observer_height=self.ld_observer_h, ve_factor=self.ve_factor,
-                                                      no_data=no_data)
+        local_dominance_arr = rvt.vis.local_dominance(
+            dem=dem_arr,
+            min_rad=self.ld_min_rad,
+            max_rad=self.ld_max_rad,
+            rad_inc=self.ld_rad_inc,
+            angular_res=self.ld_anglr_res,
+            observer_height=self.ld_observer_h,
+            ve_factor=self.ve_factor,
+            no_data=no_data,
+        )
         return local_dominance_arr
 
     def save_local_dominance(self, dem_path, custom_dir=None, save_float=None, save_8bit=None):
@@ -1916,8 +2400,10 @@ class DefaultValues:
             save_8bit = self.ld_save_8bit
 
         if not save_float and not save_8bit:
-            raise Exception("rvt.default.DefaultValues.save_local_dominance: Both save_float and save_8bit are False,"
-                            " at least one of them has to be True!")
+            raise Exception(
+                "rvt.default.DefaultValues.save_local_dominance: Both save_float and save_8bit are False,"
+                " at least one of them has to be True!"
+            )
         if not os.path.isfile(dem_path):
             raise Exception("rvt.default.DefaultValues.save_local_dominance: dem_path doesn't exist!")
 
@@ -1926,13 +2412,17 @@ class DefaultValues:
             local_dominance_8bit_path = self.get_local_dominance_path(dem_path, bit8=True)
         else:
             local_dominance_path = os.path.join(custom_dir, self.get_local_dominance_file_name(dem_path))
-            local_dominance_8bit_path = os.path.join(custom_dir, self.get_local_dominance_file_name(dem_path,
-                                                                                                    bit8=True))
+            local_dominance_8bit_path = os.path.join(
+                custom_dir, self.get_local_dominance_file_name(dem_path, bit8=True)
+            )
 
         # if file already exists and overwrite=0
         if save_float and save_8bit:
-            if os.path.isfile(local_dominance_8bit_path) and os.path.isfile(
-                    local_dominance_path) and not self.overwrite:
+            if (
+                os.path.isfile(local_dominance_8bit_path)
+                and os.path.isfile(local_dominance_path)
+                and not self.overwrite
+            ):
                 return 0
         elif save_float and not save_8bit:
             if os.path.isfile(local_dominance_path) and not self.overwrite:
@@ -1951,35 +2441,51 @@ class DefaultValues:
                 dem_path=Path(dem_path),
                 output_dir_path=Path(custom_dir),
                 save_float=save_float,
-                save_8bit=save_8bit
+                save_8bit=save_8bit,
             )
             return 1
         else:  # singleprocess
             dict_arr_res = get_raster_arr(raster_path=dem_path)
             dem_arr = dict_arr_res["array"]
             no_data = dict_arr_res["no_data"]
-            local_dominance_arr = self.get_local_dominance(dem_arr=dem_arr, no_data=no_data).astype('float32')
+            local_dominance_arr = self.get_local_dominance(dem_arr=dem_arr, no_data=no_data).astype("float32")
             if save_float:
                 if os.path.isfile(local_dominance_path) and not self.overwrite:  # file exists and overwrite=0
                     pass
                 else:
-                    save_raster(src_raster_path=dem_path, out_raster_path=local_dominance_path,
-                                out_raster_arr=local_dominance_arr, no_data=np.nan)
+                    save_raster(
+                        src_raster_path=dem_path,
+                        out_raster_path=local_dominance_path,
+                        out_raster_arr=local_dominance_arr,
+                        no_data=np.nan,
+                    )
             if save_8bit:
-                if os.path.isfile(local_dominance_8bit_path) and not self.overwrite:  # file exists and overwrite=0
+                if (
+                    os.path.isfile(local_dominance_8bit_path) and not self.overwrite
+                ):  # file exists and overwrite=0
                     pass
                 else:
                     local_dominance_8bit_arr = self.float_to_8bit(
                         float_arr=local_dominance_arr, visualization=RVTVisualization.LOCAL_DOMINANCE
                     )
-                    save_raster(src_raster_path=dem_path, out_raster_path=local_dominance_8bit_path,
-                                out_raster_arr=local_dominance_8bit_arr, e_type=1)
+                    save_raster(
+                        src_raster_path=dem_path,
+                        out_raster_path=local_dominance_8bit_path,
+                        out_raster_arr=local_dominance_8bit_arr,
+                        e_type=1,
+                    )
             return 1
 
     def get_msrm(self, dem_arr, resolution, no_data=None):
-        msrm_arr = rvt.vis.msrm(dem=dem_arr, resolution=resolution, feature_min=self.msrm_feature_min,
-                                feature_max=self.msrm_feature_max, scaling_factor=self.msrm_scaling_factor,
-                                ve_factor=self.ve_factor, no_data=no_data)
+        msrm_arr = rvt.vis.msrm(
+            dem=dem_arr,
+            resolution=resolution,
+            feature_min=self.msrm_feature_min,
+            feature_max=self.msrm_feature_max,
+            scaling_factor=self.msrm_scaling_factor,
+            ve_factor=self.ve_factor,
+            no_data=no_data,
+        )
         return msrm_arr
 
     def save_msrm(self, dem_path, custom_dir=None, save_float=None, save_8bit=None):
@@ -1996,8 +2502,10 @@ class DefaultValues:
             save_8bit = self.msrm_save_8bit
 
         if not save_float and not save_8bit:
-            raise Exception("rvt.default.DefaultValues.save_msrm: Both save_float and save_8bit are False,"
-                            " at least one of them has to be True!")
+            raise Exception(
+                "rvt.default.DefaultValues.save_msrm: Both save_float and save_8bit are False,"
+                " at least one of them has to be True!"
+            )
         if not os.path.isfile(dem_path):
             raise Exception("rvt.default.DefaultValues.save_msrm: dem_path doesn't exist!")
 
@@ -2029,7 +2537,7 @@ class DefaultValues:
                 dem_path=Path(dem_path),
                 output_dir_path=Path(custom_dir),
                 save_float=save_float,
-                save_8bit=save_8bit
+                save_8bit=save_8bit,
             )
             return 1
         else:  # singleprocess
@@ -2039,13 +2547,17 @@ class DefaultValues:
             x_res = dict_arr_res["resolution"][0]
             y_res = dict_arr_res["resolution"][1]
 
-            msrm_arr = self.get_msrm(dem_arr=dem_arr, resolution=x_res, no_data=no_data).astype('float32')
+            msrm_arr = self.get_msrm(dem_arr=dem_arr, resolution=x_res, no_data=no_data).astype("float32")
             if save_float:
                 if os.path.isfile(msrm_path) and not self.overwrite:  # file exists and overwrite=0
                     pass
                 else:
-                    save_raster(src_raster_path=dem_path, out_raster_path=msrm_path, out_raster_arr=msrm_arr,
-                                no_data=np.nan)
+                    save_raster(
+                        src_raster_path=dem_path,
+                        out_raster_path=msrm_path,
+                        out_raster_arr=msrm_arr,
+                        no_data=np.nan,
+                    )
             if save_8bit:
                 if os.path.isfile(msrm_8bit_path) and not self.overwrite:  # file exists and overwrite=0
                     pass
@@ -2053,13 +2565,23 @@ class DefaultValues:
                     msrm_8bit_arr = self.float_to_8bit(
                         float_arr=msrm_arr, visualization=RVTVisualization.MULTI_SCALE_RELIEF_MODEL
                     )
-                    save_raster(src_raster_path=dem_path, out_raster_path=msrm_8bit_path, out_raster_arr=msrm_8bit_arr,
-                                e_type=1)
+                    save_raster(
+                        src_raster_path=dem_path,
+                        out_raster_path=msrm_8bit_path,
+                        out_raster_arr=msrm_8bit_arr,
+                        e_type=1,
+                    )
             return 1
 
     def get_mstp(self, dem_arr, no_data=None):
-        mstp_arr = rvt.vis.mstp(dem=dem_arr, local_scale=self.mstp_local_scale, meso_scale=self.mstp_meso_scale,
-                                broad_scale=self.mstp_broad_scale, lightness=self.mstp_lightness, no_data=no_data)
+        mstp_arr = rvt.vis.mstp(
+            dem=dem_arr,
+            local_scale=self.mstp_local_scale,
+            meso_scale=self.mstp_meso_scale,
+            broad_scale=self.mstp_broad_scale,
+            lightness=self.mstp_lightness,
+            no_data=no_data,
+        )
         return mstp_arr
 
     def save_mstp(self, dem_path, custom_dir=None, save_float=None, save_8bit=None):
@@ -2075,8 +2597,10 @@ class DefaultValues:
             save_8bit = self.mstp_save_8bit
 
         if not save_float and not save_8bit:
-            raise Exception("rvt.default.DefaultValues.save_mstp: Both save_float and save_8bit are False,"
-                            " at least one of them has to be True!")
+            raise Exception(
+                "rvt.default.DefaultValues.save_mstp: Both save_float and save_8bit are False,"
+                " at least one of them has to be True!"
+            )
 
         if not os.path.isfile(dem_path):
             raise Exception("rvt.default.DefaultValues.save_mstp: dem_path doesn't exist!")
@@ -2109,7 +2633,7 @@ class DefaultValues:
                 dem_path=Path(dem_path),
                 output_dir_path=Path(custom_dir),
                 save_float=save_float,
-                save_8bit=save_8bit
+                save_8bit=save_8bit,
             )
             return 1
         else:  # singleprocess
@@ -2128,29 +2652,29 @@ class DefaultValues:
                         out_raster_path=mstp_path,
                         out_raster_arr=mstp_arr,
                         no_data=np.nan,
-                        e_type=6
+                        e_type=6,
                     )
             if save_8bit:
                 if os.path.isfile(mstp_8bit_path) and not self.overwrite:  # file exists and overwrite=0
                     pass
                 else:
                     mstp_8bit_arr = self.float_to_8bit(
-                        float_arr=mstp_arr,
-                        visualization=RVTVisualization.MULTI_SCALE_TOPOGRAPHIC_POSITION
+                        float_arr=mstp_arr, visualization=RVTVisualization.MULTI_SCALE_TOPOGRAPHIC_POSITION
                     )
                     save_raster(
                         src_raster_path=dem_path,
                         out_raster_path=mstp_8bit_path,
                         out_raster_arr=mstp_8bit_arr,
                         no_data=np.nan,
-                        e_type=1
+                        e_type=1,
                     )
 
             return 1
 
     def save_visualizations(self, dem_path, custom_dir=None):
         """Save all visualizations where self.'visualization'_compute = True also saves float where self.'visualization'
-        _save_float = True and 8bit where self.'visualization'_save_8bit = True. In the end method creates log file."""
+        _save_float = True and 8bit where self.'visualization'_save_8bit = True. In the end method creates log file.
+        """
         start_time = time.time()
         if self.slp_compute:
             self.save_slope(dem_path, custom_dir=custom_dir)
@@ -2161,8 +2685,13 @@ class DefaultValues:
         if self.slrm_compute:
             self.save_slrm(dem_path, custom_dir=custom_dir)
         if self.svf_compute or self.asvf_compute or self.pos_opns_compute:
-            self.save_sky_view_factor(dem_path, save_svf=bool(self.svf_compute), save_asvf=bool(self.asvf_compute),
-                                      save_opns=bool(self.pos_opns_compute), custom_dir=custom_dir)
+            self.save_sky_view_factor(
+                dem_path,
+                save_svf=bool(self.svf_compute),
+                save_asvf=bool(self.asvf_compute),
+                save_opns=bool(self.pos_opns_compute),
+                custom_dir=custom_dir,
+            )
         if self.neg_opns_compute:
             self.save_neg_opns(dem_path, custom_dir=custom_dir)
         if self.sim_compute:
@@ -2178,14 +2707,14 @@ class DefaultValues:
         self.create_log_file(dem_path=dem_path, custom_dir=custom_dir, compute_time=compute_time)
 
     def calculate_visualization(
-            self,
-            visualization: RVTVisualization,
-            dem: np.array,
-            resolution_x: float,
-            resolution_y: float,
-            no_data: Optional[float] = None,
-            save_float: bool = True,
-            save_8bit: bool = False
+        self,
+        visualization: RVTVisualization,
+        dem: np.array,
+        resolution_x: float,
+        resolution_y: float,
+        no_data: Optional[float] = None,
+        save_float: bool = True,
+        save_8bit: bool = False,
     ) -> Optional[Tuple[np.array, np.array]]:  # tuple[vis_float_arr, vis_8bit_arr]
         vis_arr = None
         vis_float_arr = None
@@ -2195,9 +2724,7 @@ class DefaultValues:
                 dem_arr=dem, resolution_x=resolution_x, resolution_y=resolution_y, no_data=no_data
             )
         elif visualization == RVTVisualization.SHADOW:
-            vis_arr = self.get_shadow(
-                dem_arr=dem, resolution=resolution_x, no_data=no_data
-            )
+            vis_arr = self.get_shadow(dem_arr=dem, resolution=resolution_x, no_data=no_data)
         elif visualization == RVTVisualization.HILLSHADE:
             vis_arr = self.get_hillshade(
                 dem_arr=dem, resolution_x=resolution_x, resolution_y=resolution_y, no_data=no_data
@@ -2207,9 +2734,7 @@ class DefaultValues:
                 dem_arr=dem, resolution_x=resolution_x, resolution_y=resolution_y, no_data=no_data
             )
         elif visualization == RVTVisualization.SIMPLE_LOCAL_RELIEF_MODEL:
-            vis_arr = self.get_slrm(
-                dem_arr=dem, no_data=no_data
-            )
+            vis_arr = self.get_slrm(dem_arr=dem, no_data=no_data)
         elif visualization == RVTVisualization.SKY_VIEW_FACTOR:
             vis_arr = self.get_sky_view_factor(
                 dem_arr=dem,
@@ -2217,7 +2742,7 @@ class DefaultValues:
                 compute_svf=True,
                 compute_asvf=False,
                 compute_opns=False,
-                no_data=no_data
+                no_data=no_data,
             )["svf"]
         elif visualization == RVTVisualization.ANISOTROPIC_SKY_VIEW_FACTOR:
             vis_arr = self.get_sky_view_factor(
@@ -2226,7 +2751,7 @@ class DefaultValues:
                 compute_svf=False,
                 compute_asvf=True,
                 compute_opns=False,
-                no_data=no_data
+                no_data=no_data,
             )["asvf"]
         elif visualization == RVTVisualization.POSITIVE_OPENNESS:
             vis_arr = self.get_sky_view_factor(
@@ -2235,28 +2760,18 @@ class DefaultValues:
                 compute_svf=False,
                 compute_asvf=False,
                 compute_opns=True,
-                no_data=no_data
+                no_data=no_data,
             )["opns"]
         elif visualization == RVTVisualization.NEGATIVE_OPENNESS:
-            vis_arr = self.get_neg_opns(
-                dem_arr=dem, resolution=resolution_x, no_data=no_data
-            )
+            vis_arr = self.get_neg_opns(dem_arr=dem, resolution=resolution_x, no_data=no_data)
         elif visualization == RVTVisualization.SKY_ILLUMINATION:
-            vis_arr = self.get_sky_illumination(
-                dem_arr=dem, resolution=resolution_x, no_data=no_data
-            )
+            vis_arr = self.get_sky_illumination(dem_arr=dem, resolution=resolution_x, no_data=no_data)
         elif visualization == RVTVisualization.LOCAL_DOMINANCE:
-            vis_arr = self.get_local_dominance(
-                dem_arr=dem, no_data=no_data
-            )
+            vis_arr = self.get_local_dominance(dem_arr=dem, no_data=no_data)
         elif visualization == RVTVisualization.MULTI_SCALE_RELIEF_MODEL:
-            vis_arr = self.get_msrm(
-                dem_arr=dem, resolution=resolution_x, no_data=no_data
-            )
+            vis_arr = self.get_msrm(dem_arr=dem, resolution=resolution_x, no_data=no_data)
         elif visualization == RVTVisualization.MULTI_SCALE_TOPOGRAPHIC_POSITION:
-            vis_arr = self.get_mstp(
-                dem_arr=dem, no_data=no_data
-            )
+            vis_arr = self.get_mstp(dem_arr=dem, no_data=no_data)
         if save_float:
             vis_float_arr = vis_arr
         if save_8bit:
@@ -2266,13 +2781,10 @@ class DefaultValues:
                     visualization=visualization,
                     x_res=resolution_x,
                     y_res=resolution_y,
-                    no_data=no_data
+                    no_data=no_data,
                 )
             else:
-                vis_8bit_arr = self.float_to_8bit(
-                    float_arr=vis_arr,
-                    visualization=visualization
-                )
+                vis_8bit_arr = self.float_to_8bit(float_arr=vis_arr, visualization=visualization)
         return vis_float_arr, vis_8bit_arr
 
     def create_log_file(self, dem_path, custom_dir=None, compute_time=None):
@@ -2309,11 +2821,14 @@ class DefaultValues:
             "Copyright:\n"
             "\tResearch Centre of the Slovenian Academy of Sciences and Arts\n"
             "\tUniversity of Ljubljana, Faculty of Civil and Geodetic Engineering\n"
-            "===============================================================================================\n")
+            "===============================================================================================\n"
+        )
         dat.write("\n\n\n")
 
-        dat.write("Processing info about visualizations\n"
-                  "===============================================================================================\n\n")
+        dat.write(
+            "Processing info about visualizations\n"
+            "===============================================================================================\n\n"
+        )
         dat.write("# Metadata of the input file\n\n")
         dat.write("\tInput filename:\t\t{}\n".format(dem_path))
         dat.write("\tNumber of rows:\t\t{}\n".format(nr_rows))
@@ -2327,8 +2842,7 @@ class DefaultValues:
         dat.write("\tVertical exaggeration factor: {}\n".format(self.ve_factor))
         if nr_rows * nr_cols > self.tile_size_limit:
             dat.write("\tCalculating tile by tile: {}\n".format("ON"))
-            dat.write("\t\tTile block size: {}x{}\n".format(self.tile_size[0],
-                                                            self.tile_size[1]))
+            dat.write("\t\tTile block size: {}x{}\n".format(self.tile_size[0], self.tile_size[1]))
         else:
             dat.write("\tCalculating tile by tile: {}\n".format("OFF"))
 
@@ -2341,18 +2855,32 @@ class DefaultValues:
             dat.write("\t\ths_sun_azi=\t\t{}\n".format(self.hs_sun_azi))
             if self.hs_save_float:
                 dat.write("\t\t>> Output file:\n")
-                dat.write("\t\t\t{}\n".format(os.path.abspath(
-                    os.path.join(log_dir, self.get_hillshade_file_name(dem_path)))))
+                dat.write(
+                    "\t\t\t{}\n".format(
+                        os.path.abspath(os.path.join(log_dir, self.get_hillshade_file_name(dem_path)))
+                    )
+                )
             if self.hs_save_8bit:
                 dat.write("\t\t>> Output 8bit file:\n")
-                dat.write("\t\ths_bytscl=\t\t({}, {}, {})\n".format(self.hs_bytscl[0], self.hs_bytscl[1],
-                                                                    self.hs_bytscl[2]))
-                dat.write("\t\t\t{}\n".format(os.path.abspath(
-                    os.path.join(log_dir, self.get_hillshade_file_name(dem_path, bit8=True)))))
+                dat.write(
+                    "\t\ths_bytscl=\t\t({}, {}, {})\n".format(
+                        self.hs_bytscl[0], self.hs_bytscl[1], self.hs_bytscl[2]
+                    )
+                )
+                dat.write(
+                    "\t\t\t{}\n".format(
+                        os.path.abspath(
+                            os.path.join(log_dir, self.get_hillshade_file_name(dem_path, bit8=True))
+                        )
+                    )
+                )
             if self.hs_shadow:
                 dat.write("\t\t>> Output shadow file:\n")
-                dat.write("\t\t\t{}\n".format(os.path.abspath(
-                    os.path.join(log_dir, self.get_shadow_file_name(dem_path)))))
+                dat.write(
+                    "\t\t\t{}\n".format(
+                        os.path.abspath(os.path.join(log_dir, self.get_shadow_file_name(dem_path)))
+                    )
+                )
             dat.write("\n")
         if self.mhs_compute:
             dat.write("\tMultiple directions hillshade\n")
@@ -2360,42 +2888,71 @@ class DefaultValues:
             dat.write("\t\tmhs_nr_dir=\t\t{}\n".format(self.mhs_nr_dir))
             if self.mhs_save_float:
                 dat.write("\t\t>> Output file:\n")
-                dat.write("\t\t\t{}\n".format(os.path.abspath(
-                    os.path.join(log_dir, self.get_multi_hillshade_file_name(dem_path)))))
+                dat.write(
+                    "\t\t\t{}\n".format(
+                        os.path.abspath(os.path.join(log_dir, self.get_multi_hillshade_file_name(dem_path)))
+                    )
+                )
             if self.mhs_save_8bit:
                 dat.write("\t\t>> Output 8bit file:\n")
-                dat.write("\t\tmhs_bytscl=\t\t({}, {}, {})\n".format(self.mhs_bytscl[0], self.mhs_bytscl[1],
-                                                                     self.mhs_bytscl[2]))
-                dat.write("\t\t\t{}\n".format(os.path.abspath(
-                    os.path.join(log_dir, self.get_multi_hillshade_file_name(dem_path, bit8=True)))))
+                dat.write(
+                    "\t\tmhs_bytscl=\t\t({}, {}, {})\n".format(
+                        self.mhs_bytscl[0], self.mhs_bytscl[1], self.mhs_bytscl[2]
+                    )
+                )
+                dat.write(
+                    "\t\t\t{}\n".format(
+                        os.path.abspath(
+                            os.path.join(log_dir, self.get_multi_hillshade_file_name(dem_path, bit8=True))
+                        )
+                    )
+                )
             dat.write("\n")
         if self.slp_compute:
             dat.write("\tSlope gradient\n")
             dat.write("\t\tslp_output_units=\t\t{}\n".format(self.slp_output_units))
             if self.slp_save_float:
                 dat.write("\t\t>> Output file:\n")
-                dat.write("\t\t\t{}\n".format(os.path.abspath(
-                    os.path.join(log_dir, self.get_slope_file_name(dem_path)))))
+                dat.write(
+                    "\t\t\t{}\n".format(
+                        os.path.abspath(os.path.join(log_dir, self.get_slope_file_name(dem_path)))
+                    )
+                )
             if self.slp_save_8bit:
                 dat.write("\t\t>> Output 8bit file:\n")
-                dat.write("\t\tslp_bytscl=\t\t({}, {}, {})\n".format(self.slp_bytscl[0], self.slp_bytscl[1],
-                                                                     self.slp_bytscl[2]))
-                dat.write("\t\t\t{}\n".format(os.path.abspath(
-                    os.path.join(log_dir, self.get_slope_file_name(dem_path, bit8=True)))))
+                dat.write(
+                    "\t\tslp_bytscl=\t\t({}, {}, {})\n".format(
+                        self.slp_bytscl[0], self.slp_bytscl[1], self.slp_bytscl[2]
+                    )
+                )
+                dat.write(
+                    "\t\t\t{}\n".format(
+                        os.path.abspath(os.path.join(log_dir, self.get_slope_file_name(dem_path, bit8=True)))
+                    )
+                )
             dat.write("\n")
         if self.slrm_compute:
             dat.write("\tSimple local relief model\n")
             dat.write("\t\tslrm_rad_cell=\t\t{}\n".format(self.slrm_rad_cell))
             if self.slrm_save_float:
                 dat.write("\t\t>> Output file:\n")
-                dat.write("\t\t\t{}\n".format(os.path.abspath(
-                    os.path.join(log_dir, self.get_slrm_file_name(dem_path)))))
+                dat.write(
+                    "\t\t\t{}\n".format(
+                        os.path.abspath(os.path.join(log_dir, self.get_slrm_file_name(dem_path)))
+                    )
+                )
             if self.slrm_save_8bit:
                 dat.write("\t\t>> Output 8bit file:\n")
-                dat.write("\t\tslrm_bytscl=\t\t({}, {}, {})\n".format(self.slrm_bytscl[0], self.slrm_bytscl[1],
-                                                                      self.slrm_bytscl[2]))
-                dat.write("\t\t\t{}\n".format(os.path.abspath(
-                    os.path.join(log_dir, self.get_slrm_file_name(dem_path, bit8=True)))))
+                dat.write(
+                    "\t\tslrm_bytscl=\t\t({}, {}, {})\n".format(
+                        self.slrm_bytscl[0], self.slrm_bytscl[1], self.slrm_bytscl[2]
+                    )
+                )
+                dat.write(
+                    "\t\t\t{}\n".format(
+                        os.path.abspath(os.path.join(log_dir, self.get_slrm_file_name(dem_path, bit8=True)))
+                    )
+                )
             dat.write("\n")
         if self.msrm_compute:
             dat.write("\tMulti-scale relief model\n")
@@ -2405,14 +2962,23 @@ class DefaultValues:
             if self.msrm_save_float:
                 dat.write("\t\t>> Output file:\n")
                 dat.write("\t\t>> Output file:\n")
-                dat.write("\t\t\t{}\n".format(os.path.abspath(
-                    os.path.join(log_dir, self.get_msrm_file_name(dem_path)))))
+                dat.write(
+                    "\t\t\t{}\n".format(
+                        os.path.abspath(os.path.join(log_dir, self.get_msrm_file_name(dem_path)))
+                    )
+                )
             if self.msrm_save_8bit:
                 dat.write("\t\t>> Output 8bit file:\n")
-                dat.write("\t\tmsrm_bytscl=\t\t({}, {}, {})\n".format(self.msrm_bytscl[0], self.msrm_bytscl[1],
-                                                                      self.msrm_bytscl[2]))
-                dat.write("\t\t\t{}\n".format(os.path.abspath(
-                    os.path.join(log_dir, self.get_msrm_file_name(dem_path, bit8=True)))))
+                dat.write(
+                    "\t\tmsrm_bytscl=\t\t({}, {}, {})\n".format(
+                        self.msrm_bytscl[0], self.msrm_bytscl[1], self.msrm_bytscl[2]
+                    )
+                )
+                dat.write(
+                    "\t\t\t{}\n".format(
+                        os.path.abspath(os.path.join(log_dir, self.get_msrm_file_name(dem_path, bit8=True)))
+                    )
+                )
             dat.write("\n")
         if self.svf_compute:
             dat.write("\tSky-View Factor\n")
@@ -2421,13 +2987,23 @@ class DefaultValues:
             dat.write("\t\tsvf_r_max=\t\t{}\n".format(self.svf_r_max))
             if self.svf_save_float:
                 dat.write("\t\t>> Output file:\n")
-                dat.write("\t\t\t{}\n".format(os.path.abspath(os.path.join(log_dir, self.get_svf_file_name(dem_path)))))
+                dat.write(
+                    "\t\t\t{}\n".format(
+                        os.path.abspath(os.path.join(log_dir, self.get_svf_file_name(dem_path)))
+                    )
+                )
             if self.svf_save_8bit:
                 dat.write("\t\t>> Output 8bit file:\n")
-                dat.write("\t\tsvf_bytscl=\t\t({}, {}, {})\n".format(self.svf_bytscl[0], self.svf_bytscl[1],
-                                                                     self.svf_bytscl[2]))
-                dat.write("\t\t\t{}\n".format(os.path.abspath(
-                    os.path.join(log_dir, self.get_svf_file_name(dem_path, bit8=True)))))
+                dat.write(
+                    "\t\tsvf_bytscl=\t\t({}, {}, {})\n".format(
+                        self.svf_bytscl[0], self.svf_bytscl[1], self.svf_bytscl[2]
+                    )
+                )
+                dat.write(
+                    "\t\t\t{}\n".format(
+                        os.path.abspath(os.path.join(log_dir, self.get_svf_file_name(dem_path, bit8=True)))
+                    )
+                )
             dat.write("\n")
         if self.asvf_compute:
             dat.write("\tAnisotropic Sky-View Factor\n")
@@ -2438,14 +3014,23 @@ class DefaultValues:
             dat.write("\t\tasvf_dir=\t\t{}\n".format(self.asvf_dir))
             if self.svf_save_float:
                 dat.write("\t\t>> Output file:\n")
-                dat.write("\t\t\t{}\n".format(os.path.abspath(
-                    os.path.join(log_dir, self.get_asvf_file_name(dem_path)))))
+                dat.write(
+                    "\t\t\t{}\n".format(
+                        os.path.abspath(os.path.join(log_dir, self.get_asvf_file_name(dem_path)))
+                    )
+                )
             if self.svf_save_8bit:
                 dat.write("\t\t>> Output 8bit file:\n")
-                dat.write("\t\tasvf_bytscl=\t\t({}, {}, {})\n".format(self.asvf_bytscl[0], self.asvf_bytscl[1],
-                                                                      self.asvf_bytscl[2]))
-                dat.write("\t\t\t{}\n".format(os.path.abspath(
-                    os.path.join(log_dir, self.get_asvf_file_name(dem_path, bit8=True)))))
+                dat.write(
+                    "\t\tasvf_bytscl=\t\t({}, {}, {})\n".format(
+                        self.asvf_bytscl[0], self.asvf_bytscl[1], self.asvf_bytscl[2]
+                    )
+                )
+                dat.write(
+                    "\t\t\t{}\n".format(
+                        os.path.abspath(os.path.join(log_dir, self.get_asvf_file_name(dem_path, bit8=True)))
+                    )
+                )
             dat.write("\n")
         if self.pos_opns_compute:
             dat.write("\tOpenness - Positive\n")
@@ -2454,15 +3039,23 @@ class DefaultValues:
             dat.write("\t\tsvf_r_max=\t\t{}\n".format(self.svf_r_max))
             if self.svf_save_float:
                 dat.write("\t\t>> Output file:\n")
-                dat.write("\t\t\t{}\n".format(os.path.abspath(
-                    os.path.join(log_dir, self.get_opns_file_name(dem_path)))))
+                dat.write(
+                    "\t\t\t{}\n".format(
+                        os.path.abspath(os.path.join(log_dir, self.get_opns_file_name(dem_path)))
+                    )
+                )
             if self.svf_save_8bit:
                 dat.write("\t\t>> Output 8bit file:\n")
-                dat.write("\t\tpos_opns_bytscl=\t\t({}, {}, {})\n".format(self.pos_opns_bytscl[0],
-                                                                          self.pos_opns_bytscl[1],
-                                                                          self.pos_opns_bytscl[2]))
-                dat.write("\t\t\t{}\n".format(os.path.abspath(
-                    os.path.join(log_dir, self.get_opns_file_name(dem_path, bit8=True)))))
+                dat.write(
+                    "\t\tpos_opns_bytscl=\t\t({}, {}, {})\n".format(
+                        self.pos_opns_bytscl[0], self.pos_opns_bytscl[1], self.pos_opns_bytscl[2]
+                    )
+                )
+                dat.write(
+                    "\t\t\t{}\n".format(
+                        os.path.abspath(os.path.join(log_dir, self.get_opns_file_name(dem_path, bit8=True)))
+                    )
+                )
             dat.write("\n")
         if self.neg_opns_compute:
             dat.write("\tOpenness - Negative\n")
@@ -2471,15 +3064,25 @@ class DefaultValues:
             dat.write("\t\tsvf_r_max=\t\t{}\n".format(self.svf_r_max))
             if self.neg_opns_save_float:
                 dat.write("\t\t>> Output file:\n")
-                dat.write("\t\t\t{}\n".format(os.path.abspath(
-                    os.path.join(log_dir, self.get_neg_opns_file_name(dem_path)))))
+                dat.write(
+                    "\t\t\t{}\n".format(
+                        os.path.abspath(os.path.join(log_dir, self.get_neg_opns_file_name(dem_path)))
+                    )
+                )
             if self.neg_opns_save_8bit:
                 dat.write("\t\t>> Output 8bit file:\n")
-                dat.write("\t\tneg_opns_bytscl=\t\t({}, {}, {})\n".format(self.neg_opns_bytscl[0],
-                                                                          self.neg_opns_bytscl[1],
-                                                                          self.neg_opns_bytscl[2]))
-                dat.write("\t\t\t{}\n".format(os.path.abspath(
-                    os.path.join(log_dir, self.get_neg_opns_file_name(dem_path, bit8=True)))))
+                dat.write(
+                    "\t\tneg_opns_bytscl=\t\t({}, {}, {})\n".format(
+                        self.neg_opns_bytscl[0], self.neg_opns_bytscl[1], self.neg_opns_bytscl[2]
+                    )
+                )
+                dat.write(
+                    "\t\t\t{}\n".format(
+                        os.path.abspath(
+                            os.path.join(log_dir, self.get_neg_opns_file_name(dem_path, bit8=True))
+                        )
+                    )
+                )
             dat.write("\n")
         if self.sim_compute:
             dat.write("\tSky illumination\n")
@@ -2491,14 +3094,25 @@ class DefaultValues:
             dat.write("\t\tsim_shadow_dist=\t\t{}\n".format(self.sim_shadow_dist))
             if self.sim_save_float:
                 dat.write("\t\t>> Output file:\n")
-                dat.write("\t\t\t{}\n".format(os.path.abspath(
-                    os.path.join(log_dir, self.get_sky_illumination_file_name(dem_path)))))
+                dat.write(
+                    "\t\t\t{}\n".format(
+                        os.path.abspath(os.path.join(log_dir, self.get_sky_illumination_file_name(dem_path)))
+                    )
+                )
             if self.sim_save_8bit:
                 dat.write("\t\t>> Output 8bit file:\n")
-                dat.write("\t\tsim_bytscl=\t\t({}, {}, {})\n".format(self.sim_bytscl[0], self.sim_bytscl[1],
-                                                                     self.sim_bytscl[2]))
-                dat.write("\t\t\t{}\n".format(os.path.abspath(
-                    os.path.join(log_dir, self.get_sky_illumination_file_name(dem_path, bit8=True)))))
+                dat.write(
+                    "\t\tsim_bytscl=\t\t({}, {}, {})\n".format(
+                        self.sim_bytscl[0], self.sim_bytscl[1], self.sim_bytscl[2]
+                    )
+                )
+                dat.write(
+                    "\t\t\t{}\n".format(
+                        os.path.abspath(
+                            os.path.join(log_dir, self.get_sky_illumination_file_name(dem_path, bit8=True))
+                        )
+                    )
+                )
             dat.write("\n")
         if self.ld_compute:
             dat.write("\tLocal dominance\n")
@@ -2509,27 +3123,48 @@ class DefaultValues:
             dat.write("\t\tld_observer_h=\t\t{}\n".format(self.ld_observer_h))
             if self.ld_save_float:
                 dat.write("\t\t>> Output file:\n")
-                dat.write("\t\t\t{}\n".format(os.path.abspath(
-                    os.path.join(log_dir, self.get_local_dominance_file_name(dem_path)))))
+                dat.write(
+                    "\t\t\t{}\n".format(
+                        os.path.abspath(os.path.join(log_dir, self.get_local_dominance_file_name(dem_path)))
+                    )
+                )
             if self.ld_save_8bit:
                 dat.write("\t\t>> Output 8bit file:\n")
-                dat.write("\t\tld_bytscl=\t\t({}, {}, {})\n".format(self.ld_bytscl[0], self.ld_bytscl[1],
-                                                                    self.ld_bytscl[2]))
-                dat.write("\t\t\t{}\n".format(os.path.abspath(
-                    os.path.join(log_dir, self.get_local_dominance_file_name(dem_path, bit8=True)))))
+                dat.write(
+                    "\t\tld_bytscl=\t\t({}, {}, {})\n".format(
+                        self.ld_bytscl[0], self.ld_bytscl[1], self.ld_bytscl[2]
+                    )
+                )
+                dat.write(
+                    "\t\t\t{}\n".format(
+                        os.path.abspath(
+                            os.path.join(log_dir, self.get_local_dominance_file_name(dem_path, bit8=True))
+                        )
+                    )
+                )
             dat.write("\n")
         if self.mstp_compute:
             dat.write("\tMulti-scale topographic position\n")
-            dat.write("\t\tmstp_local_scale=\t({}, {}, {})\n".format(
-                self.mstp_local_scale[0], self.mstp_local_scale[1], self.mstp_local_scale[2]))
-            dat.write("\t\tmstp_meso_scale=\t({}, {}, {})\n".format(
-                self.mstp_meso_scale[0], self.mstp_meso_scale[1], self.mstp_meso_scale[2]))
-            dat.write("\t\tmstp_broad_scale=\t({}, {}, {})\n".format(
-                self.mstp_broad_scale[0], self.mstp_broad_scale[1], self.mstp_broad_scale[2]))
+            dat.write(
+                "\t\tmstp_local_scale=\t({}, {}, {})\n".format(
+                    self.mstp_local_scale[0], self.mstp_local_scale[1], self.mstp_local_scale[2]
+                )
+            )
+            dat.write(
+                "\t\tmstp_meso_scale=\t({}, {}, {})\n".format(
+                    self.mstp_meso_scale[0], self.mstp_meso_scale[1], self.mstp_meso_scale[2]
+                )
+            )
+            dat.write(
+                "\t\tmstp_broad_scale=\t({}, {}, {})\n".format(
+                    self.mstp_broad_scale[0], self.mstp_broad_scale[1], self.mstp_broad_scale[2]
+                )
+            )
             dat.write("\t\tmstp_lightness=\t\t{}\n".format(self.mstp_lightness))
             dat.write("\t\t>> Output file:\n")
-            dat.write("\t\t\t{}\n".format(os.path.abspath(
-                os.path.join(log_dir, self.get_mstp_file_name(dem_path)))))
+            dat.write(
+                "\t\t\t{}\n".format(os.path.abspath(os.path.join(log_dir, self.get_mstp_file_name(dem_path))))
+            )
             dat.write("\n")
 
         if compute_time is not None:
@@ -2618,11 +3253,14 @@ def save_raster(src_raster_path, out_raster_path, out_raster_arr: np.ndarray, no
     src_data_set = gdal.Open(src_raster_path)
     gtiff_driver = gdal.GetDriverByName("GTiff")
     if len(out_raster_arr.shape) == 2:  # 2D array, one band
-        out_data_set = gtiff_driver.Create(out_raster_path, xsize=out_raster_arr.shape[1],
-                                           ysize=out_raster_arr.shape[0],
-                                           bands=1,
-                                           eType=e_type,  # eType: 6 = GDT_Float32
-                                           options=['COMPRESS=LZW'])
+        out_data_set = gtiff_driver.Create(
+            out_raster_path,
+            xsize=out_raster_arr.shape[1],
+            ysize=out_raster_arr.shape[0],
+            bands=1,
+            eType=e_type,  # eType: 6 = GDT_Float32
+            options=["COMPRESS=LZW, BIGTIFF=IF_NEEDED"],
+        )
         out_data_set.SetProjection(src_data_set.GetProjection())
         out_data_set.SetGeoTransform(src_data_set.GetGeoTransform())
         out_data_set.GetRasterBand(1).WriteArray(out_raster_arr)
@@ -2630,11 +3268,14 @@ def save_raster(src_raster_path, out_raster_path, out_raster_arr: np.ndarray, no
             out_data_set.GetRasterBand(1).SetNoDataValue(no_data)
 
     elif len(out_raster_arr.shape) == 3:  # 3D array, more bands
-        out_data_set = gtiff_driver.Create(out_raster_path, xsize=out_raster_arr.shape[2],
-                                           ysize=out_raster_arr.shape[1],
-                                           bands=out_raster_arr.shape[0],
-                                           eType=e_type,  # eType: 6 = GDT_Float32
-                                           options=['COMPRESS=LZW'])
+        out_data_set = gtiff_driver.Create(
+            out_raster_path,
+            xsize=out_raster_arr.shape[2],
+            ysize=out_raster_arr.shape[1],
+            bands=out_raster_arr.shape[0],
+            eType=e_type,  # eType: 6 = GDT_Float32
+            options=["COMPRESS=LZW"],
+        )
         out_data_set.SetProjection(src_data_set.GetProjection())
         out_data_set.SetGeoTransform(src_data_set.GetGeoTransform())
         for i_band in range(out_raster_arr.shape[0]):

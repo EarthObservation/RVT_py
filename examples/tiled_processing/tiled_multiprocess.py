@@ -61,7 +61,9 @@ def run_main(list_tifs, vis_types, blend_types, save_float=False):
             # )
 
             # Add extents column: Extents are (L, B, R, T).
-            tiles_extents["extents"] = tiles_extents.bounds.apply(lambda x: (x.minx, x.miny, x.maxx, x.maxy), axis=1)
+            tiles_extents["extents"] = tiles_extents.bounds.apply(
+                lambda x: (x.minx, x.miny, x.maxx, x.maxy), axis=1
+            )
 
             # Extract list from GeoDataFrame
             tiles_list = tiles_extents["extents"].values.tolist()
@@ -74,7 +76,7 @@ def run_main(list_tifs, vis_types, blend_types, save_float=False):
             blend_types=blend_types,
             input_vrt_path=in_file,
             tiles_list=tiles_list,
-            save_float=save_float
+            save_float=save_float,
         )
 
 
@@ -103,7 +105,9 @@ def tiled_blending(vis_types, blend_types, input_vrt_path, tiles_list, save_floa
         # - one_tile in tiles_list  (variable)
         #
         # ----------------------------------
-        input_process_list = [(src_tif_path, ll_path, vis_types, blend_types, i, save_float) for i in tiles_list]
+        input_process_list = [
+            (src_tif_path, ll_path, vis_types, blend_types, i, save_float) for i in tiles_list
+        ]
         with mp.Pool(nr_processes) as p:
             realist = [p.apply_async(compute_save_blends, r) for r in input_process_list]
             for i, result in enumerate(realist):
@@ -147,7 +151,7 @@ def tiled_blending(vis_types, blend_types, input_vrt_path, tiles_list, save_floa
             crop_to_original_size(
                 mosaic_path=mosaic_path,  # ll_path / "test.tif",
                 output_cropped_path=ll_path / f"{result}.tif",
-                original_file=input_vrt_path
+                original_file=input_vrt_path,
             )
 
             # Delete temp files
@@ -205,13 +209,7 @@ def compute_save_blends(src_path, low_levels_path, vis_types, blend_types, one_e
     default_2.keep_original_no_data = 0
 
     # Only compute required visualizations
-    in_arrays = compute_low_levels(
-        default_1,
-        default_2,
-        src_path,
-        one_extent,
-        req_arrays
-    )
+    in_arrays = compute_low_levels(default_1, default_2, src_path, one_extent, req_arrays)
 
     # SKIP IF ALL-NANs ARE RETURNED
     if in_arrays["all_nan"]:
@@ -255,12 +253,7 @@ def compute_save_blends(src_path, low_levels_path, vis_types, blend_types, one_e
             # Adapt to visualization keywords used in in_arrays
             vis_1 = vis + "_1"
 
-            rasterio_save(
-                in_arrays[vis_1],
-                in_arrays["profile"],
-                save_path=spf,
-                nodata=np.nan
-            )
+            rasterio_save(in_arrays[vis_1], in_arrays["profile"], save_path=spf, nodata=np.nan)
 
         vis_bytscl_save(in_arrays, vis, default_1, save_path)
 
@@ -274,7 +267,7 @@ def compute_save_blends(src_path, low_levels_path, vis_types, blend_types, one_e
             save_filename="VAT_combined",
             save_dir=low_levels_path,
             source_filename=filename_rvt,
-            save_tile_name=one_tile_name
+            save_tile_name=one_tile_name,
         )
         # Add path to output dictionary
         out_path_dict[rvt_save_name] = save_path
@@ -290,7 +283,7 @@ def compute_save_blends(src_path, low_levels_path, vis_types, blend_types, one_e
             save_filename="VAT_general",
             save_dir=low_levels_path,
             source_filename=filename_rvt,
-            save_tile_name=one_tile_name
+            save_tile_name=one_tile_name,
         )
         # Add path to output dictionary
         out_path_dict[rvt_save_name] = save_path
@@ -306,7 +299,7 @@ def compute_save_blends(src_path, low_levels_path, vis_types, blend_types, one_e
             save_filename="VAT_flat",
             save_dir=low_levels_path,
             source_filename=filename_rvt,
-            save_tile_name=one_tile_name
+            save_tile_name=one_tile_name,
         )
         # Add path to output dictionary
         out_path_dict[rvt_save_name] = save_path
@@ -340,7 +333,7 @@ def compute_save_blends(src_path, low_levels_path, vis_types, blend_types, one_e
             save_filename="RRIM",
             save_dir=low_levels_path,
             source_filename=filename_rvt,
-            save_tile_name=one_tile_name
+            save_tile_name=one_tile_name,
         )
         # Add path to output dictionary
         out_path_dict[rvt_save_name] = save_path
@@ -359,7 +352,7 @@ def compute_save_blends(src_path, low_levels_path, vis_types, blend_types, one_e
             save_filename="e2MSTP",
             save_dir=low_levels_path,
             source_filename=filename_rvt,
-            save_tile_name=one_tile_name
+            save_tile_name=one_tile_name,
         )
         # Add path to output dictionary
         out_path_dict[rvt_save_name] = save_path
@@ -375,7 +368,7 @@ def compute_save_blends(src_path, low_levels_path, vis_types, blend_types, one_e
             save_filename="CRIM",
             save_dir=low_levels_path,
             source_filename=filename_rvt,
-            save_tile_name=one_tile_name
+            save_tile_name=one_tile_name,
         )
         # Add path to output dictionary
         out_path_dict[rvt_save_name] = save_path
@@ -394,7 +387,7 @@ def compute_save_blends(src_path, low_levels_path, vis_types, blend_types, one_e
             save_filename="e3MSTP",
             save_dir=low_levels_path,
             source_filename=filename_rvt,
-            save_tile_name=one_tile_name
+            save_tile_name=one_tile_name,
         )
         # Add path to output dictionary
         out_path_dict[rvt_save_name] = save_path
@@ -410,7 +403,7 @@ def compute_save_blends(src_path, low_levels_path, vis_types, blend_types, one_e
             save_filename="e4MSTP",
             save_dir=low_levels_path,
             source_filename=filename_rvt,
-            save_tile_name=one_tile_name
+            save_tile_name=one_tile_name,
         )
         # Add path to output dictionary
         out_path_dict[rvt_save_name] = save_path
@@ -433,7 +426,7 @@ def vat_general(dict_arrays, save_path=None, save_float=False):
         maximum=1.0,
         blend_mode="Multiply",
         opacity=25,
-        image=dict_arrays['svf_1'].squeeze()
+        image=dict_arrays["svf_1"].squeeze(),
     )
     vat_combination_general.create_layer(
         vis_method="Openness - Positive",
@@ -442,7 +435,7 @@ def vat_general(dict_arrays, save_path=None, save_float=False):
         maximum=93,
         blend_mode="Overlay",
         opacity=50,
-        image=dict_arrays['opns_1'].squeeze()
+        image=dict_arrays["opns_1"].squeeze(),
     )
     vat_combination_general.create_layer(
         vis_method="Slope gradient",
@@ -451,7 +444,7 @@ def vat_general(dict_arrays, save_path=None, save_float=False):
         maximum=50,
         blend_mode="Luminosity",
         opacity=50,
-        image=dict_arrays['slp_1'].squeeze()
+        image=dict_arrays["slp_1"].squeeze(),
     )
     vat_combination_general.create_layer(
         vis_method="Hillshade",
@@ -460,42 +453,26 @@ def vat_general(dict_arrays, save_path=None, save_float=False):
         maximum=1,
         blend_mode="Normal",
         opacity=100,
-        image=dict_arrays['hs_1'].squeeze()
+        image=dict_arrays["hs_1"].squeeze(),
     )
     vat_1 = vat_combination_general.render_all_images(
-        save_visualizations=False,
-        save_render_path=None,
-        no_data=np.nan
+        save_visualizations=False, save_render_path=None, no_data=np.nan
     )
     out_vat_general = vat_1.astype("float32")
 
     # Save GeoTIF
-    out_profile = dict_arrays['profile'].copy()
+    out_profile = dict_arrays["profile"].copy()
 
     if save_float:
         # out_profile.update(dtype='uint8')
-        rasterio_save(
-            out_vat_general,
-            out_profile,
-            save_path=save_path_float(save_path),
-            nodata=np.nan
-        )
+        rasterio_save(out_vat_general, out_profile, save_path=save_path_float(save_path), nodata=np.nan)
 
     if save_path:
         # Convert to 8bit image
-        out_vat_general_8bit = rvt.vis.byte_scale(
-            out_vat_general,
-            c_min=0,
-            c_max=1
-        )
+        out_vat_general_8bit = rvt.vis.byte_scale(out_vat_general, c_min=0, c_max=1)
 
-        out_profile.update(dtype='uint8')
-        rasterio_save(
-            out_vat_general_8bit,
-            out_profile,
-            save_path=save_path,
-            nodata=None
-        )
+        out_profile.update(dtype="uint8")
+        rasterio_save(out_vat_general_8bit, out_profile, save_path=save_path, nodata=None)
 
     return out_vat_general
 
@@ -510,7 +487,7 @@ def vat_flat(dict_arrays, save_path=None, save_float=False):
         maximum=1.0,
         blend_mode="Multiply",
         opacity=25,
-        image=dict_arrays['svf_2'].squeeze()
+        image=dict_arrays["svf_2"].squeeze(),
     )
     vat_combination_flat.create_layer(
         vis_method="Openness - Positive",
@@ -519,7 +496,7 @@ def vat_flat(dict_arrays, save_path=None, save_float=False):
         maximum=93,
         blend_mode="Overlay",
         opacity=50,
-        image=dict_arrays['opns_2'].squeeze()
+        image=dict_arrays["opns_2"].squeeze(),
     )
     vat_combination_flat.create_layer(
         vis_method="Slope gradient",
@@ -528,7 +505,7 @@ def vat_flat(dict_arrays, save_path=None, save_float=False):
         maximum=15,
         blend_mode="Luminosity",
         opacity=50,
-        image=dict_arrays['slp_1'].squeeze()
+        image=dict_arrays["slp_1"].squeeze(),
     )
     vat_combination_flat.create_layer(
         vis_method="Hillshade",
@@ -537,42 +514,26 @@ def vat_flat(dict_arrays, save_path=None, save_float=False):
         maximum=1,
         blend_mode="Normal",
         opacity=100,
-        image=dict_arrays['hs_2'].squeeze()
+        image=dict_arrays["hs_2"].squeeze(),
     )
     vat_2 = vat_combination_flat.render_all_images(
-        save_visualizations=False,
-        save_render_path=None,
-        no_data=np.nan
+        save_visualizations=False, save_render_path=None, no_data=np.nan
     )
     out_vat_flat = vat_2.astype("float32")
 
     # Save GeoTIF
-    out_profile = dict_arrays['profile'].copy()
+    out_profile = dict_arrays["profile"].copy()
 
     if save_float:
         # out_profile.update(dtype='uint8')
-        rasterio_save(
-            out_vat_flat,
-            out_profile,
-            save_path=save_path_float(save_path),
-            nodata=np.nan
-        )
+        rasterio_save(out_vat_flat, out_profile, save_path=save_path_float(save_path), nodata=np.nan)
 
     if save_path:
         # Convert to 8bit image
-        out_vat_flat_8bit = rvt.vis.byte_scale(
-            out_vat_flat,
-            c_min=0,
-            c_max=1
-        )
+        out_vat_flat_8bit = rvt.vis.byte_scale(out_vat_flat, c_min=0, c_max=1)
 
-        out_profile.update(dtype='uint8')
-        rasterio_save(
-            out_vat_flat_8bit,
-            out_profile,
-            save_path=save_path,
-            nodata=None
-        )
+        out_profile.update(dtype="uint8")
+        rasterio_save(out_vat_flat_8bit, out_profile, save_path=save_path, nodata=None)
 
     return out_vat_flat
 
@@ -590,49 +551,39 @@ def vat_combined(dict_arrays, save_path, save_float=False):
     # BLEND VAT COMBINED
     comb_vat_combined = rvt.blend.BlenderCombination()
     comb_vat_combined.create_layer(
-        vis_method="vat_general", normalization="value",
-        minimum=0, maximum=1,
-        blend_mode="normal", opacity=50,
-        image=vat_1
+        vis_method="vat_general",
+        normalization="value",
+        minimum=0,
+        maximum=1,
+        blend_mode="normal",
+        opacity=50,
+        image=vat_1,
     )
     comb_vat_combined.create_layer(
-        vis_method="vat_flat", normalization="value",
-        minimum=0, maximum=1,
-        blend_mode="normal", opacity=100,
-        image=vat_2
+        vis_method="vat_flat",
+        normalization="value",
+        minimum=0,
+        maximum=1,
+        blend_mode="normal",
+        opacity=100,
+        image=vat_2,
     )
     out_vat_combined = comb_vat_combined.render_all_images(
-        save_visualizations=False,
-        save_render_path=None,
-        no_data=np.nan
+        save_visualizations=False, save_render_path=None, no_data=np.nan
     )
 
     # Save GeoTIF
-    out_profile = dict_arrays['profile'].copy()
+    out_profile = dict_arrays["profile"].copy()
 
     if save_float:
         # out_profile.update(dtype='uint8')
-        rasterio_save(
-            out_vat_combined,
-            out_profile,
-            save_path=save_path_float(save_path),
-            nodata=np.nan
-        )
+        rasterio_save(out_vat_combined, out_profile, save_path=save_path_float(save_path), nodata=np.nan)
 
     # Convert to 8bit image
-    out_vat_combined_8bit = rvt.vis.byte_scale(
-        out_vat_combined,
-        c_min=0,
-        c_max=1
-    )
+    out_vat_combined_8bit = rvt.vis.byte_scale(out_vat_combined, c_min=0, c_max=1)
 
-    out_profile.update(dtype='uint8')
-    rasterio_save(
-        out_vat_combined_8bit,
-        out_profile,
-        save_path=save_path,
-        nodata=None
-    )
+    out_profile.update(dtype="uint8")
+    rasterio_save(out_vat_combined_8bit, out_profile, save_path=save_path, nodata=None)
 
     return out_vat_combined
 
@@ -649,34 +600,26 @@ def vat_flat_3bands(dict_arrays, save_path):
         image=dict_arrays["svf_2"].squeeze(),
         min_norm=0.9,
         max_norm=1,
-        normalization="value"
+        normalization="value",
     )
     opns = normalize_image(
         visualization="openness - positive",
         image=dict_arrays["opns_2"].squeeze(),
         min_norm=85,
         max_norm=93,
-        normalization="value"
+        normalization="value",
     )
     slope = normalize_image(
         visualization="slope gradient",
         image=dict_arrays["slp_1"].squeeze(),
         min_norm=0,
         max_norm=15,
-        normalization="value"
+        normalization="value",
     )
-    out_flat_vat3 = np.stack(
-        [slope, svf, opns],
-        axis=0, out=None
-    )
+    out_flat_vat3 = np.stack([slope, svf, opns], axis=0, out=None)
 
     # Save GeoTIF
-    rasterio_save(
-        out_flat_vat3,
-        dict_arrays['profile'],
-        save_path=save_path,
-        nodata=np.nan
-    )
+    rasterio_save(out_flat_vat3, dict_arrays["profile"], save_path=save_path, nodata=np.nan)
 
     return out_flat_vat3
 
@@ -693,34 +636,26 @@ def vat_3bands(dict_arrays, save_path):
         image=dict_arrays["svf_1"].squeeze(),
         min_norm=0.7,
         max_norm=1,
-        normalization="value"
+        normalization="value",
     )
     opns = normalize_image(
         visualization="openness - positive",
         image=dict_arrays["opns_1"].squeeze(),
         min_norm=68,
         max_norm=93,
-        normalization="value"
+        normalization="value",
     )
     slope = normalize_image(
         visualization="slope gradient",
         image=dict_arrays["slp_1"].squeeze(),
         min_norm=0,
         max_norm=50,
-        normalization="value"
+        normalization="value",
     )
-    out_vat3 = np.stack(
-        [slope, svf, opns],
-        axis=0, out=None
-    )
+    out_vat3 = np.stack([slope, svf, opns], axis=0, out=None)
 
     # Save GeoTIF
-    rasterio_save(
-        out_vat3,
-        dict_arrays['profile'],
-        save_path=save_path,
-        nodata=np.nan
-    )
+    rasterio_save(out_vat3, dict_arrays["profile"], save_path=save_path, nodata=np.nan)
 
     return out_vat3
 
@@ -730,30 +665,30 @@ def vat_combined_3bands(dict_arrays, save_path):
     for i in range(3):
         comb_vat_combined_3bands = rvt.blend.BlenderCombination()
         comb_vat_combined_3bands.create_layer(
-            vis_method="band1_vat_3bands", normalization="value",
-            minimum=0, maximum=1,
-            blend_mode="normal", opacity=50,
-            image=dict_arrays["vat_3bands"][i, :, :].squeeze()
+            vis_method="band1_vat_3bands",
+            normalization="value",
+            minimum=0,
+            maximum=1,
+            blend_mode="normal",
+            opacity=50,
+            image=dict_arrays["vat_3bands"][i, :, :].squeeze(),
         )
         comb_vat_combined_3bands.create_layer(
-            vis_method="band1_vat_flat_3bands", normalization="value",
-            minimum=0, maximum=1,
-            blend_mode="normal", opacity=100,
-            image=dict_arrays["vat_flat_3bands"][i, :, :].squeeze()
+            vis_method="band1_vat_flat_3bands",
+            normalization="value",
+            minimum=0,
+            maximum=1,
+            blend_mode="normal",
+            opacity=100,
+            image=dict_arrays["vat_flat_3bands"][i, :, :].squeeze(),
         )
         out_vat_combined_3bands[i, :, :] = comb_vat_combined_3bands.render_all_images(
-            save_visualizations=False,
-            save_render_path=None,
-            no_data=np.nan)
+            save_visualizations=False, save_render_path=None, no_data=np.nan
+        )
 
     out_vat_combined_3bands = out_vat_combined_3bands.astype("float32")
     # Save GeoTIF
-    rasterio_save(
-        out_vat_combined_3bands,
-        dict_arrays['profile'],
-        save_path=save_path,
-        nodata=np.nan
-    )
+    rasterio_save(out_vat_combined_3bands, dict_arrays["profile"], save_path=save_path, nodata=np.nan)
 
     return out_vat_combined_3bands
 
@@ -774,305 +709,280 @@ def vis_bytscl_save(image_arrays, visualization, defaults, save_path):
         image=image_arrays[vis_1].squeeze(),
         min_norm=bytscl_value[1],
         max_norm=bytscl_value[2],
-        normalization=bytscl_value[0]
+        normalization=bytscl_value[0],
     )
 
     # Use RVT function for bytscale
-    out_image = rvt.vis.byte_scale(
-        norm_image,
-        c_min=0,
-        c_max=1
-    )
+    out_image = rvt.vis.byte_scale(norm_image, c_min=0, c_max=1)
 
     # Save GeoTIF
-    out_profile = image_arrays['profile'].copy()
-    out_profile.update(dtype='uint8')
-    rasterio_save(
-        out_image,
-        out_profile,
-        save_path=save_path,
-        nodata=None
-    )
+    out_profile = image_arrays["profile"].copy()
+    out_profile.update(dtype="uint8")
+    rasterio_save(out_image, out_profile, save_path=save_path, nodata=None)
     return out_image
 
 
 def blend_rrim(dict_arrays, save_path=None, save_float=False):
     comb_rrim = rvt.blend.BlenderCombination()
-    comb_rrim.create_layer(vis_method="Slope gradient", normalization="Value",
-                           minimum=0, maximum=45,
-                           blend_mode="Normal", opacity=50,
-                           colormap="Reds_r", min_colormap_cut=0, max_colormap_cut=1,
-                           image=dict_arrays['slp_1'].squeeze()
-                           )
-    comb_rrim.create_layer(vis_method="Opns_Pos_Neg/2", normalization="Value",
-                           minimum=-25, maximum=25,
-                           blend_mode="Normal", opacity=100,
-                           colormap="Greys_r", min_colormap_cut=0, max_colormap_cut=1,
-                           image=((dict_arrays['opns_1'] - dict_arrays['neg_opns_1'])/2).squeeze()
-                           )
-    out_rrim = comb_rrim.render_all_images(save_visualizations=False,
-                                           save_render_path=None,
-                                           no_data=np.nan)
+    comb_rrim.create_layer(
+        vis_method="Slope gradient",
+        normalization="Value",
+        minimum=0,
+        maximum=45,
+        blend_mode="Normal",
+        opacity=50,
+        colormap="Reds_r",
+        min_colormap_cut=0,
+        max_colormap_cut=1,
+        image=dict_arrays["slp_1"].squeeze(),
+    )
+    comb_rrim.create_layer(
+        vis_method="Opns_Pos_Neg/2",
+        normalization="Value",
+        minimum=-25,
+        maximum=25,
+        blend_mode="Normal",
+        opacity=100,
+        colormap="Greys_r",
+        min_colormap_cut=0,
+        max_colormap_cut=1,
+        image=((dict_arrays["opns_1"] - dict_arrays["neg_opns_1"]) / 2).squeeze(),
+    )
+    out_rrim = comb_rrim.render_all_images(save_visualizations=False, save_render_path=None, no_data=np.nan)
     out_rrim = out_rrim.astype("float32")
 
     # Save GeoTIF
     if save_path:
-        out_profile = dict_arrays['profile'].copy()
+        out_profile = dict_arrays["profile"].copy()
 
         if save_float:
             # out_profile.update(dtype='uint8')
-            rasterio_save(
-                out_rrim,
-                out_profile,
-                save_path=save_path_float(save_path),
-                nodata=np.nan
-            )
+            rasterio_save(out_rrim, out_profile, save_path=save_path_float(save_path), nodata=np.nan)
 
         # Convert to 8bit image
-        out_rrim_8bit = rvt.vis.byte_scale(
-            out_rrim,
-            c_min=0,
-            c_max=1
-        )
+        out_rrim_8bit = rvt.vis.byte_scale(out_rrim, c_min=0, c_max=1)
 
-        out_profile.update(dtype='uint8')
-        rasterio_save(
-            out_rrim_8bit,
-            out_profile,
-            save_path=save_path,
-            nodata=None
-        )
+        out_profile.update(dtype="uint8")
+        rasterio_save(out_rrim_8bit, out_profile, save_path=save_path, nodata=None)
 
     return out_rrim
 
 
 def blend_e2mstp(dict_arrays, save_path, save_float=False):
     comb_e2mstp = rvt.blend.BlenderCombination()
-    comb_e2mstp.create_layer(vis_method="slrm", normalization="value",
-                             minimum=-0.5, maximum=0.5,
-                             blend_mode="screen", opacity=25,
-                             image=dict_arrays["slrm_1"].squeeze()
-                             )
-    comb_e2mstp.create_layer(vis_method="rrim", normalization="value",
-                             minimum=0, maximum=1,
-                             blend_mode="soft_light", opacity=70,
-                             image=dict_arrays["rrim"]
-                             )
-    comb_e2mstp.create_layer(vis_method="mstp", normalization="value",
-                             minimum=0, maximum=1,
-                             blend_mode="normal", opacity=100,
-                             image=dict_arrays["mstp_1"]
-                             )
-    out_e2mstp = comb_e2mstp.render_all_images(save_visualizations=False,
-                                               save_render_path=None,
-                                               no_data=np.nan)
+    comb_e2mstp.create_layer(
+        vis_method="slrm",
+        normalization="value",
+        minimum=-0.5,
+        maximum=0.5,
+        blend_mode="screen",
+        opacity=25,
+        image=dict_arrays["slrm_1"].squeeze(),
+    )
+    comb_e2mstp.create_layer(
+        vis_method="rrim",
+        normalization="value",
+        minimum=0,
+        maximum=1,
+        blend_mode="soft_light",
+        opacity=70,
+        image=dict_arrays["rrim"],
+    )
+    comb_e2mstp.create_layer(
+        vis_method="mstp",
+        normalization="value",
+        minimum=0,
+        maximum=1,
+        blend_mode="normal",
+        opacity=100,
+        image=dict_arrays["mstp_1"],
+    )
+    out_e2mstp = comb_e2mstp.render_all_images(
+        save_visualizations=False, save_render_path=None, no_data=np.nan
+    )
     out_e2mstp = out_e2mstp.astype("float32")
     out_e2mstp[np.isnan(dict_arrays["rrim"])] = np.nan
     out_e2mstp[out_e2mstp > 1] = 1
 
     # Save GeoTIF
-    out_profile = dict_arrays['profile'].copy()
+    out_profile = dict_arrays["profile"].copy()
 
     if save_float:
         # out_profile.update(dtype='uint8')
-        rasterio_save(
-            out_e2mstp,
-            out_profile,
-            save_path=save_path_float(save_path),
-            nodata=np.nan
-        )
+        rasterio_save(out_e2mstp, out_profile, save_path=save_path_float(save_path), nodata=np.nan)
 
     # Convert to 8bit image
-    out_8bit = rvt.vis.byte_scale(
-        out_e2mstp,
-        c_min=0,
-        c_max=1
-    )
+    out_8bit = rvt.vis.byte_scale(out_e2mstp, c_min=0, c_max=1)
 
-    out_profile.update(dtype='uint8')
-    rasterio_save(
-        out_8bit,
-        out_profile,
-        save_path=save_path,
-        nodata=None
-    )
+    out_profile.update(dtype="uint8")
+    rasterio_save(out_8bit, out_profile, save_path=save_path, nodata=None)
 
 
 def blend_crim(dict_arrays, save_path=None, save_float=False):
     comb_crim = rvt.blend.BlenderCombination()
-    comb_crim.create_layer(vis_method="Openness_Pos-Neg", normalization="Value",
-                           minimum=-28, maximum=28,
-                           blend_mode="overlay", opacity=50,
-                           image=(dict_arrays['opns_1'] - dict_arrays['neg_opns_1']).squeeze()
-                           )
-    comb_crim.create_layer(vis_method="Openness_Pos-Neg", normalization="Value",
-                           minimum=-28, maximum=28,
-                           blend_mode="luminosity", opacity=50,
-                           image=(dict_arrays['opns_1'] - dict_arrays['neg_opns_1']).squeeze()
-                           )
-    comb_crim.create_layer(vis_method="slope gradient red", normalization="Value",
-                           minimum=0, maximum=45,
-                           blend_mode="normal", opacity=100,
-                           colormap="OrRd", min_colormap_cut=0, max_colormap_cut=1,
-                           image=dict_arrays['slp_1'].squeeze()
-                           )
-    out_crim = comb_crim.render_all_images(save_visualizations=False,
-                                           save_render_path=None,
-                                           no_data=np.nan)
+    comb_crim.create_layer(
+        vis_method="Openness_Pos-Neg",
+        normalization="Value",
+        minimum=-28,
+        maximum=28,
+        blend_mode="overlay",
+        opacity=50,
+        image=(dict_arrays["opns_1"] - dict_arrays["neg_opns_1"]).squeeze(),
+    )
+    comb_crim.create_layer(
+        vis_method="Openness_Pos-Neg",
+        normalization="Value",
+        minimum=-28,
+        maximum=28,
+        blend_mode="luminosity",
+        opacity=50,
+        image=(dict_arrays["opns_1"] - dict_arrays["neg_opns_1"]).squeeze(),
+    )
+    comb_crim.create_layer(
+        vis_method="slope gradient red",
+        normalization="Value",
+        minimum=0,
+        maximum=45,
+        blend_mode="normal",
+        opacity=100,
+        colormap="OrRd",
+        min_colormap_cut=0,
+        max_colormap_cut=1,
+        image=dict_arrays["slp_1"].squeeze(),
+    )
+    out_crim = comb_crim.render_all_images(save_visualizations=False, save_render_path=None, no_data=np.nan)
     out_crim = out_crim.astype("float32")
 
     # Save GeoTIF
     if save_path:
-        out_profile = dict_arrays['profile'].copy()
+        out_profile = dict_arrays["profile"].copy()
 
         if save_float:
             # out_profile.update(dtype='uint8')
-            rasterio_save(
-                out_crim,
-                out_profile,
-                save_path=save_path_float(save_path),
-                nodata=np.nan
-            )
+            rasterio_save(out_crim, out_profile, save_path=save_path_float(save_path), nodata=np.nan)
 
         # Convert to 8bit image
-        out_crim_8bit = rvt.vis.byte_scale(
-            out_crim,
-            c_min=0,
-            c_max=1
-        )
+        out_crim_8bit = rvt.vis.byte_scale(out_crim, c_min=0, c_max=1)
 
         # Save GeoTIF
-        out_profile.update(dtype='uint8')
-        rasterio_save(
-            out_crim_8bit,
-            out_profile,
-            save_path=save_path,
-            nodata=None
-        )
+        out_profile.update(dtype="uint8")
+        rasterio_save(out_crim_8bit, out_profile, save_path=save_path, nodata=None)
 
     return out_crim
 
 
 def blend_e3mstp(dict_arrays, save_path, save_float=False):
     comb_e3mstp = rvt.blend.BlenderCombination()
-    comb_e3mstp.create_layer(vis_method="slrm", normalization="value",
-                             minimum=-0.5, maximum=0.5,
-                             blend_mode="screen", opacity=25,
-                             image=dict_arrays["slrm_1"].squeeze()
-                             )
-    comb_e3mstp.create_layer(vis_method="crim", normalization="value",
-                             minimum=0, maximum=1,
-                             blend_mode="soft_light", opacity=70,
-                             image=dict_arrays["crim"]
-                             )
-    comb_e3mstp.create_layer(vis_method="mstp", normalization="value",
-                             minimum=0, maximum=1,
-                             blend_mode="normal", opacity=100,
-                             image=dict_arrays["mstp_1"]
-                             )
-    out_e3mstp = comb_e3mstp.render_all_images(save_visualizations=False,
-                                               save_render_path=None,
-                                               no_data=np.nan)
+    comb_e3mstp.create_layer(
+        vis_method="slrm",
+        normalization="value",
+        minimum=-0.5,
+        maximum=0.5,
+        blend_mode="screen",
+        opacity=25,
+        image=dict_arrays["slrm_1"].squeeze(),
+    )
+    comb_e3mstp.create_layer(
+        vis_method="crim",
+        normalization="value",
+        minimum=0,
+        maximum=1,
+        blend_mode="soft_light",
+        opacity=70,
+        image=dict_arrays["crim"],
+    )
+    comb_e3mstp.create_layer(
+        vis_method="mstp",
+        normalization="value",
+        minimum=0,
+        maximum=1,
+        blend_mode="normal",
+        opacity=100,
+        image=dict_arrays["mstp_1"],
+    )
+    out_e3mstp = comb_e3mstp.render_all_images(
+        save_visualizations=False, save_render_path=None, no_data=np.nan
+    )
     out_e3mstp = out_e3mstp.astype("float32")
     out_e3mstp[np.isnan(dict_arrays["crim"])] = np.nan
     out_e3mstp[out_e3mstp > 1] = 1
 
     # Save GeoTIF
-    out_profile = dict_arrays['profile'].copy()
+    out_profile = dict_arrays["profile"].copy()
 
     if save_float:
         # out_profile.update(dtype='uint8')
-        rasterio_save(
-            out_e3mstp,
-            out_profile,
-            save_path=save_path_float(save_path),
-            nodata=np.nan
-        )
+        rasterio_save(out_e3mstp, out_profile, save_path=save_path_float(save_path), nodata=np.nan)
 
     # Convert to 8bit image
-    out_e3mstp = rvt.vis.byte_scale(
-        out_e3mstp,
-        c_min=0,
-        c_max=1
-    )
+    out_e3mstp = rvt.vis.byte_scale(out_e3mstp, c_min=0, c_max=1)
 
-    out_profile.update(dtype='uint8')
-    rasterio_save(
-        out_e3mstp,
-        out_profile,
-        save_path=save_path,
-        nodata=None
-    )
+    out_profile.update(dtype="uint8")
+    rasterio_save(out_e3mstp, out_profile, save_path=save_path, nodata=None)
 
 
 def blend_e4mstp(dict_arrays, save_path, save_float=False):
     # Get Coloured Slope
-    dict_arrays['cs'] = blend_coloured_slope(dict_arrays)
+    dict_arrays["cs"] = blend_coloured_slope(dict_arrays)
     # Get SVF combined
-    dict_arrays['svf_combined'] = blend_svf_combined(dict_arrays)
+    dict_arrays["svf_combined"] = blend_svf_combined(dict_arrays)
     # Get Openness + LD
-    dict_arrays['opns_ld'] = blend_opns_ld(dict_arrays)
+    dict_arrays["opns_ld"] = blend_opns_ld(dict_arrays)
 
     comb_nv = rvt.blend.BlenderCombination()
     comb_nv.create_layer(
         vis_method="mstp",
-        normalization="value", minimum=0, maximum=1,
-        blend_mode="overlay", opacity=90,
-        image=dict_arrays['mstp_1']
+        normalization="value",
+        minimum=0,
+        maximum=1,
+        blend_mode="overlay",
+        opacity=90,
+        image=dict_arrays["mstp_1"],
     )
     comb_nv.create_layer(
         vis_method="Comb svf",
-        normalization="value", minimum=-0.5, maximum=0.5,
-        blend_mode="multiply", opacity=25,
-        image=dict_arrays['svf_combined']
+        normalization="value",
+        minimum=-0.5,
+        maximum=0.5,
+        blend_mode="multiply",
+        opacity=25,
+        image=dict_arrays["svf_combined"],
     )
     comb_nv.create_layer(
         vis_method="Comb openness LD",
-        normalization="value", minimum=0, maximum=1,
-        blend_mode="multiply", opacity=100,
-        image=dict_arrays['opns_ld']
+        normalization="value",
+        minimum=0,
+        maximum=1,
+        blend_mode="multiply",
+        opacity=100,
+        image=dict_arrays["opns_ld"],
     )
     comb_nv.create_layer(
         vis_method="coloured slope",
-        normalization="value", minimum=0, maximum=1,
-        blend_mode="normal", opacity=100,
-        image=dict_arrays['cs']
+        normalization="value",
+        minimum=0,
+        maximum=1,
+        blend_mode="normal",
+        opacity=100,
+        image=dict_arrays["cs"],
     )
-    out_e4mstp = comb_nv.render_all_images(
-        save_visualizations=False,
-        save_render_path=None,
-        no_data=np.nan
-    )
+    out_e4mstp = comb_nv.render_all_images(save_visualizations=False, save_render_path=None, no_data=np.nan)
     out_e4mstp = out_e4mstp.astype("float32")
-    out_e4mstp[np.isnan(dict_arrays['mstp_1'])] = np.nan
+    out_e4mstp[np.isnan(dict_arrays["mstp_1"])] = np.nan
     out_e4mstp[out_e4mstp > 1] = 1
 
     # Save GeoTIF
-    out_profile = dict_arrays['profile'].copy()
+    out_profile = dict_arrays["profile"].copy()
 
     if save_float:
         # out_profile.update(dtype='uint8')
-        rasterio_save(
-            out_e4mstp,
-            out_profile,
-            save_path=save_path_float(save_path),
-            nodata=np.nan
-        )
+        rasterio_save(out_e4mstp, out_profile, save_path=save_path_float(save_path), nodata=np.nan)
 
     # Convert to 8bit image
-    out_e4mstp = rvt.vis.byte_scale(
-        out_e4mstp,
-        c_min=0,
-        c_max=1
-    )
+    out_e4mstp = rvt.vis.byte_scale(out_e4mstp, c_min=0, c_max=1)
 
-    out_profile.update(dtype='uint8')
-    rasterio_save(
-        out_e4mstp,
-        out_profile,
-        save_path=save_path,
-        nodata=None
-    )
+    out_profile.update(dtype="uint8")
+    rasterio_save(out_e4mstp, out_profile, save_path=save_path, nodata=None)
 
     return out_e4mstp
 
@@ -1081,27 +991,25 @@ def blend_coloured_slope(dict_arrays, save_path=None):
     # Coloured slope
     comb_cs = rvt.blend.BlenderCombination()
     comb_cs.create_layer(
-        vis_method="Slope gradient", normalization="Value",
-        minimum=0, maximum=55,
-        blend_mode="normal", opacity=100,
-        colormap="Reds_r", min_colormap_cut=0, max_colormap_cut=1,
-        image=dict_arrays['slp_1'].squeeze()
+        vis_method="Slope gradient",
+        normalization="Value",
+        minimum=0,
+        maximum=55,
+        blend_mode="normal",
+        opacity=100,
+        colormap="Reds_r",
+        min_colormap_cut=0,
+        max_colormap_cut=1,
+        image=dict_arrays["slp_1"].squeeze(),
     )
     coloured_slope = comb_cs.render_all_images(
-        save_visualizations=False,
-        save_render_path=None,
-        no_data=np.nan
+        save_visualizations=False, save_render_path=None, no_data=np.nan
     )
     coloured_slope = coloured_slope.astype("float32")
 
     if save_path:
         # Save GeoTIF
-        rasterio_save(
-            coloured_slope,
-            dict_arrays['profile'],
-            save_path=save_path,
-            nodata=np.nan
-        )
+        rasterio_save(coloured_slope, dict_arrays["profile"], save_path=save_path, nodata=np.nan)
 
     return coloured_slope
 
@@ -1114,32 +1022,29 @@ def blend_opns_ld(dict_arrays, save_path=None):
     """
     comb = rvt.blend.BlenderCombination()
     comb.create_layer(
-        vis_method="Openness difference", normalization="Value",
-        minimum=-15, maximum=15,
-        blend_mode="normal", opacity=50,
-        image=(dict_arrays['opns_1'] - dict_arrays['neg_opns_1']).squeeze()
+        vis_method="Openness difference",
+        normalization="Value",
+        minimum=-15,
+        maximum=15,
+        blend_mode="normal",
+        opacity=50,
+        image=(dict_arrays["opns_1"] - dict_arrays["neg_opns_1"]).squeeze(),
     )
     comb.create_layer(
-        vis_method="Local dominance", normalization="Value",
-        minimum=0.5, maximum=1.8,
-        blend_mode="normal", opacity=100,
-        image=dict_arrays['ld_1'].squeeze()
+        vis_method="Local dominance",
+        normalization="Value",
+        minimum=0.5,
+        maximum=1.8,
+        blend_mode="normal",
+        opacity=100,
+        image=dict_arrays["ld_1"].squeeze(),
     )
-    opns_ld = comb.render_all_images(
-        save_visualizations=False,
-        save_render_path=None,
-        no_data=np.nan
-    )
+    opns_ld = comb.render_all_images(save_visualizations=False, save_render_path=None, no_data=np.nan)
     opns_ld = opns_ld.astype("float32")
 
     if save_path:
         # Save GeoTIF
-        rasterio_save(
-            opns_ld,
-            dict_arrays['profile'],
-            save_path=save_path,
-            nodata=np.nan
-        )
+        rasterio_save(opns_ld, dict_arrays["profile"], save_path=save_path, nodata=np.nan)
 
     return opns_ld
 
@@ -1150,29 +1055,30 @@ def blend_svf_combined(dict_arrays, save_path=None):
     - svf_2
     """
     comb_svf = rvt.blend.BlenderCombination()
-    comb_svf.create_layer(vis_method="Sky-view factor", normalization="Value",
-                          minimum=0.7, maximum=1,
-                          blend_mode="normal", opacity=50,
-                          image=dict_arrays['svf_1'].squeeze()
-                          )
-    comb_svf.create_layer(vis_method="Sky-view factor", normalization="Value",
-                          minimum=0.9, maximum=1,
-                          blend_mode="normal", opacity=100,
-                          image=dict_arrays['svf_2'].squeeze()
-                          )
-    cs_svf = comb_svf.render_all_images(save_visualizations=False,
-                                        save_render_path=None,
-                                        no_data=np.nan)
+    comb_svf.create_layer(
+        vis_method="Sky-view factor",
+        normalization="Value",
+        minimum=0.7,
+        maximum=1,
+        blend_mode="normal",
+        opacity=50,
+        image=dict_arrays["svf_1"].squeeze(),
+    )
+    comb_svf.create_layer(
+        vis_method="Sky-view factor",
+        normalization="Value",
+        minimum=0.9,
+        maximum=1,
+        blend_mode="normal",
+        opacity=100,
+        image=dict_arrays["svf_2"].squeeze(),
+    )
+    cs_svf = comb_svf.render_all_images(save_visualizations=False, save_render_path=None, no_data=np.nan)
     cs_svf = cs_svf.astype("float32")
 
     if save_path:
         # Save GeoTIF
-        rasterio_save(
-            cs_svf,
-            dict_arrays['profile'],
-            save_path=save_path,
-            nodata=np.nan
-        )
+        rasterio_save(cs_svf, dict_arrays["profile"], save_path=save_path, nodata=np.nan)
 
     return cs_svf
 
@@ -1180,11 +1086,7 @@ def blend_svf_combined(dict_arrays, save_path=None):
 def rasterio_save(array, profile, save_path, nodata=None):
     if len(array.shape) == 2:
         array = np.expand_dims(array, axis=0)
-    profile.update(dtype=array.dtype,
-                   count=array.shape[0],
-                   nodata=nodata,
-                   compress="LZW",
-                   predictor=2)
+    profile.update(dtype=array.dtype, count=array.shape[0], nodata=nodata, compress="LZW", predictor=2)
     save_path.parent.mkdir(exist_ok=True)
     with rasterio.open(save_path, "w", **profile) as dst:
         dst.write(array)
@@ -1207,12 +1109,11 @@ def get_required_arrays(vis_types, blend_types):
         # "shadow_horizon_1": False,
         # "msrm_1": False,
         "mstp_1": False,
-
         # Flat terrain:
         "hs_2": False,
         "svf_2": False,  # large = FLAT = 10m
         "opns_2": False,
-        "neg_opns_2": False
+        "neg_opns_2": False,
     }
 
     # Update dictionary based on given visualizations:
@@ -1248,7 +1149,7 @@ def get_required_arrays(vis_types, blend_types):
 
     if "e4MSTP" in blend_types:
         req_arrays["ld_1"] = True
-        req_arrays["svf_1"] = True,
+        req_arrays["svf_1"] = (True,)
         req_arrays["mstp_1"] = True
         req_arrays["svf_2"] = True
         req_arrays["opns_2"] = True
@@ -1285,25 +1186,16 @@ def get_required_arrays(vis_types, blend_types):
     return req_arrays
 
 
-def compute_low_levels(
-        default_1,
-        default_2,
-        vrt_path,
-        input_dem_extents,
-        vis_types
-):
+def compute_low_levels(default_1, default_2, vrt_path, input_dem_extents, vis_types):
     # Read buffer values from defaults (already changed from meters to pixels!!!)!
     all_buffers = {
         "slp_1": 0,
         "slrm_1": default_1.slrm_rad_cell,
         "ld_1": default_1.ld_max_rad,
         "mstp_1": default_1.mstp_broad_scale[1],
-
         "hs_1": 1,
         "hs_2": 1,
-
         "svf_GEN": default_1.svf_r_max,  # SVF, OPNS+ and OPNS- for (GENERAL = SMALL = 5m)
-
         "svf_FLAT": default_2.svf_r_max,  # SVF, OPNS+ and OPNS- for (FLAT = LARGE = 10m)
     }
 
@@ -1329,7 +1221,7 @@ def compute_low_levels(
     dict_arrays["no_data"] = np.nan
 
     # Skip if all pixels are nodata (remove buffer when checking)
-    all_nan_check = np.all(np.isnan(dict_arrays["array"][buffer: -buffer, buffer: -buffer]))
+    all_nan_check = np.all(np.isnan(dict_arrays["array"][buffer:-buffer, buffer:-buffer]))
     # True means we have all-nan array and have to skip this tile
     if all_nan_check:
         # SKIP THIS TILE
@@ -1356,17 +1248,13 @@ def compute_low_levels(
                 vis_type: default_1.get_slope(
                     sliced_arr,
                     resolution_x=dict_arrays["resolution"][0],
-                    resolution_y=dict_arrays["resolution"][1]
+                    resolution_y=dict_arrays["resolution"][1],
                 )
             }
         elif vis_type == "slrm_1":
-            vis_out = {
-                vis_type: default_1.get_slrm(sliced_arr)
-            }
+            vis_out = {vis_type: default_1.get_slrm(sliced_arr)}
         elif vis_type == "ld_1":
-            vis_out = {
-                vis_type: default_1.get_local_dominance(sliced_arr)
-            }
+            vis_out = {vis_type: default_1.get_local_dominance(sliced_arr)}
         elif vis_type == "mstp_1":
             # test = default_1.get_slrm(sliced_arr)
             vis_out = {
@@ -1378,7 +1266,7 @@ def compute_low_levels(
                 vis_type: default_1.get_hillshade(
                     sliced_arr,
                     resolution_x=dict_arrays["resolution"][0],
-                    resolution_y=dict_arrays["resolution"][1]
+                    resolution_y=dict_arrays["resolution"][1],
                 )
             }
         elif vis_type == "hs_2":
@@ -1386,7 +1274,7 @@ def compute_low_levels(
                 vis_type: default_2.get_hillshade(
                     sliced_arr,
                     resolution_x=dict_arrays["resolution"][0],
-                    resolution_y=dict_arrays["resolution"][1]
+                    resolution_y=dict_arrays["resolution"][1],
                 )
             }
         elif vis_type == "svf_GEN":  # small, GENERAL, 5m
@@ -1402,17 +1290,14 @@ def compute_low_levels(
                     sliced_arr,
                     dict_arrays["resolution"][0],
                     compute_svf=compute_svf,
-                    compute_opns=compute_opns
+                    compute_opns=compute_opns,
                 )
                 # Rename to correct vis_type (which svf is this?)
                 for k in list(vis_out.keys()):
                     vis_out[f"{k}_1"] = vis_out.pop(k)
 
             if compute_neg_opns:
-                vis_out["neg_opns_1"] = default_1.get_neg_opns(
-                    sliced_arr,
-                    dict_arrays["resolution"][0]
-                )
+                vis_out["neg_opns_1"] = default_1.get_neg_opns(sliced_arr, dict_arrays["resolution"][0])
         elif vis_type == "svf_FLAT":  # large, FLAT, 10m
             # Check which of the 3 to be computed
             compute_svf = True if "svf_2" in req_visualizations else False
@@ -1426,17 +1311,14 @@ def compute_low_levels(
                     sliced_arr,
                     dict_arrays["resolution"][0],
                     compute_svf=compute_svf,
-                    compute_opns=compute_opns
+                    compute_opns=compute_opns,
                 )
                 # Rename to correct vis_type (which svf is this?)
                 for k in list(vis_out.keys()):
                     vis_out[f"{k}_2"] = vis_out.pop(k)
 
             if compute_neg_opns:
-                vis_out["neg_opns_2"] = default_2.get_neg_opns(
-                    sliced_arr,
-                    dict_arrays["resolution"][0]
-                )
+                vis_out["neg_opns_2"] = default_2.get_neg_opns(sliced_arr, dict_arrays["resolution"][0])
         else:
             raise ValueError("Wrong vis_type in the visualization for loop")
 
@@ -1495,7 +1377,7 @@ def get_raster_vrt(vrt_path, extents, buffer):
             extents[0] - buffer_m,
             extents[1] - buffer_m,
             extents[2] + buffer_m,
-            extents[3] + buffer_m
+            extents[3] + buffer_m,
         )
 
         # Pack extents into rasterio's Window object
@@ -1516,14 +1398,14 @@ def get_raster_vrt(vrt_path, extents, buffer):
 
     # Prepare output metadata profile
     out_profile = {
-        'driver': 'GTiff',
-        'nodata': None,
-        'width':  win_array.shape[1] - 2 * buffer,
-        'height':  win_array.shape[0] - 2 * buffer,
-        'count':  1,
-        'crs': vrt_crs,
-        'transform': orig_transform,
-        "compress": "lzw"
+        "driver": "GTiff",
+        "nodata": None,
+        "width": win_array.shape[1] - 2 * buffer,
+        "height": win_array.shape[0] - 2 * buffer,
+        "count": 1,
+        "crs": vrt_crs,
+        "transform": orig_transform,
+        "compress": "lzw",
     }
 
     output = {
@@ -1533,7 +1415,7 @@ def get_raster_vrt(vrt_path, extents, buffer):
         "buff_transform": buff_transform,
         "orig_transform": orig_transform,
         "crs": vrt_crs,
-        "profile": out_profile
+        "profile": out_profile,
     }
 
     return output
@@ -1624,15 +1506,18 @@ def create_mosaic(input_files_list, output_file):
     out_crs = src_files_to_mosaic[0].crs
 
     # Update the metadata with the new dimensions, transform, and CRS
-    out_meta.update({
-        "driver": "GTiff",
-        "height": mosaic.shape[1],
-        "width": mosaic.shape[2],
-        "transform": out_trans,
-        "crs": out_crs,
-        "compress": "LZW",
-        "predictor": 2
-    })
+    out_meta.update(
+        {
+            "driver": "GTiff",
+            "height": mosaic.shape[1],
+            "width": mosaic.shape[2],
+            "transform": out_trans,
+            "crs": out_crs,
+            "compress": "LZW",
+            "BIGTIFF": "yes",
+            "predictor": 2,
+        }
+    )
 
     # Write the mosaic to a new GeoTIFF file
     with rasterio.open(output_file, "w", **out_meta) as dest:
@@ -1669,7 +1554,7 @@ def crop_to_original_size(mosaic_path, output_cropped_path, original_file):
         bottom=original_transform[5] + original_height * original_transform[4],
         right=original_transform[2] + original_width * original_transform[0],
         top=original_transform[5],
-        transform=vrt_transform
+        transform=vrt_transform,
     )
     window = window.round_offsets().round_lengths()
 
@@ -1678,18 +1563,21 @@ def crop_to_original_size(mosaic_path, output_cropped_path, original_file):
         cropped_image = vrt.read(window=window)
 
     # Update metadata and store to file
-    out_meta.update({
-        'driver': 'GTiff',
-        "dtype": vrt_profile["dtype"],
-        "nodata": vrt_profile["nodata"],
-        "count": vrt_profile["count"],
-        # "transform": rasterio.windows.transform(window, src.transform),
-        "compress": "LZW",
-        "predictor": 2,
-        'tiled': True,
-        'blockxsize': 256,
-        'blockysize': 256,
-    })
+    out_meta.update(
+        {
+            "driver": "GTiff",
+            "dtype": vrt_profile["dtype"],
+            "nodata": vrt_profile["nodata"],
+            "count": vrt_profile["count"],
+            # "transform": rasterio.windows.transform(window, src.transform),
+            "compress": "LZW",
+            "predictor": 2,
+            "BIGTIFF": "yes",
+            "tiled": True,
+            "blockxsize": 256,
+            "blockysize": 256,
+        }
+    )
     with rasterio.open(output_cropped_path, "w", **out_meta) as dest:
         dest.write(cropped_image)
 
