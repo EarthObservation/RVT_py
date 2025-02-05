@@ -1689,6 +1689,7 @@ def crop_to_original_size(mosaic_path, output_cropped_path, original_file):
         'tiled': True,
         'blockxsize': 256,
         'blockysize': 256,
+        'BIGTIFF': 'IF_SAFER'
     })
     with rasterio.open(output_cropped_path, "w", **out_meta) as dest:
         dest.write(cropped_image)
