@@ -93,6 +93,7 @@ def tiled_blending(vis_types, blend_types, input_vrt_path, tiles_list, save_floa
         nr_processes = os.cpu_count() - 2
         if nr_processes < 1:
             nr_processes = 1
+        print('Threads running on:', nr_processes)
 
         results = []
         # # HERE MULTIPROCESSING STARTS
