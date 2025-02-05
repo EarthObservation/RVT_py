@@ -23,6 +23,8 @@ import rvt.default
 import rvt.vis
 from rvt.blend_func import normalize_image
 
+gdal.UseExceptions()
+
 
 def run_main(list_tifs, vis_types, blend_types, save_float=False):
     for in_file in list_tifs:
