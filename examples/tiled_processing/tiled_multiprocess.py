@@ -147,10 +147,9 @@ def tiled_blending(vis_types, blend_types, input_vrt_path, tiles_list, save_floa
             mosaic_path = build_vrt(result_paths, vrt_path, save_float=sf)
 
             # Create mosaic and crop to the original extents
-            crop_to_original_size(
-                mosaic_path=mosaic_path,  # ll_path / "test.tif",
-                output_cropped_path=ll_path / f"{result}.tif",
-                original_file=input_vrt_path
+            vrt_to_mosaic(
+                vrt_path=mosaic_path,  # ll_path / "test.tif",
+                output_mosaic_path=ll_path / f"{result}.tif",
             )
 
             # Delete temp files
@@ -1634,7 +1633,8 @@ def create_mosaic(input_files_list, output_file):
         "transform": out_trans,
         "crs": out_crs,
         "compress": "LZW",
-        "predictor": 2
+        "predictor": 2,
+        'BIGTIFF': 'IF_SAFER'
     })
 
     # Write the mosaic to a new GeoTIFF file
@@ -1653,40 +1653,15 @@ def create_mosaic(input_files_list, output_file):
     return output_file
 
 
-def crop_to_original_size(mosaic_path, output_cropped_path, original_file):
-    # Read metadata from original image
-    with rasterio.open(original_file) as src:
-        original_transform = src.transform
-        original_height = src.height
-        original_width = src.width
-        out_meta = src.profile.copy()
+def vrt_to_mosaic(vrt_path, output_mosaic_path):
 
-    # Read metadata from mosaic
-    with rasterio.open(mosaic_path) as vrt:
-        vrt_profile = vrt.profile.copy()
-        vrt_transform = vrt.transform
-
-    # Calculate crop window
-    window = from_bounds(
-        left=original_transform[2],
-        bottom=original_transform[5] + original_height * original_transform[4],
-        right=original_transform[2] + original_width * original_transform[0],
-        top=original_transform[5],
-        transform=vrt_transform
-    )
-    window = window.round_offsets().round_lengths()
-
-    # Crop mosaic to original size
-    with rasterio.open(mosaic_path) as vrt:
-        cropped_image = vrt.read(window=window)
+    with rasterio.open(vrt_path) as vrt:
+        mosaic = vrt.read()
+        out_meta = vrt.profile.copy()
 
     # Update metadata and store to file
     out_meta.update({
         'driver': 'GTiff',
-        "dtype": vrt_profile["dtype"],
-        "nodata": vrt_profile["nodata"],
-        "count": vrt_profile["count"],
-        # "transform": rasterio.windows.transform(window, src.transform),
         "compress": "LZW",
         "predictor": 2,
         'tiled': True,
@@ -1694,7 +1669,8 @@ def crop_to_original_size(mosaic_path, output_cropped_path, original_file):
         'blockysize': 256,
         'BIGTIFF': 'IF_SAFER'
     })
-    with rasterio.open(output_cropped_path, "w", **out_meta) as dest:
-        dest.write(cropped_image)
 
-    # print(f"Cropped mosaic saved as {output_cropped_path}")
+    with rasterio.open(output_mosaic_path, "w", **out_meta) as dest:
+        dest.write(mosaic)
+
+    # print(f"Mosaic saved as {output_mosaic_path}")
