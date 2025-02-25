@@ -21,8 +21,8 @@ Methods currently implemented are:
 * sky-view factor (as developed by our team),
 * anisotropic sky-view factor,
 * positive and negative openness,
-* local dominance,
-*	multi-scale topographic position.
+* local dominance, 
+* multi-scale topographic position.
 
 ## RVT for Python
 
@@ -71,14 +71,25 @@ Then open Command Prompt (Windows) or Terminal (MacOS) and run:
 
 ### Requirements
 
-Required libraries (specified versions have been tested, other versions may also work):
+*   python>=3.6,<3.12
 
-*   numpy 1.19.2
-*   scipy 1.5.2
-*   gdal 3.0.2
-*   rasterio 1.2.6
+> Code was tested on python version 3.11.11
 
-We recommend using Python 3.6 or higher and a Conda environment (this works best with ``gdal``).
+Dependencies for core functionality:
+
+*   gdal
+*   matplotlib
+*   numpy
+*   scipy
+
+Dependencies for extended use (running scripts in examples folder):
+
+*   pandas 
+*   geopandas
+*   jupyter
+*   rasterio
+
+> We recommend using `Anaconda` virtual environments and `conda-forge` channel for installing the required packages (this works best with ``gdal``).
 
 ## Documentation
 Documentation of the package and its use is available at [Relief Visualization Toolbox in Python documentation](https://rvt-py.readthedocs.io/).
@@ -93,7 +104,7 @@ Development of RVT Python scripts was part financed by the Slovenian Research Ag
 This project is licensed under the terms of the [Apache License](LICENSE).
 
 ## About
-RVT Python library by Žiga Kokalj, Žiga Maroh, Krištof Oštir, Klemen Zakšek and Nejc Čož, 2022.
+RVT Python library by Žiga Kokalj, Žiga Maroh, Krištof Oštir, Klemen Zakšek and Nejc Čož, 2024.
 
 It is developed in collaboration between ZRC SAZU and University of Ljubljana. 
 

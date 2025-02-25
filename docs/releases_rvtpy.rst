@@ -5,6 +5,9 @@ Python package release history
 
 UNRELEASED
 ----------
+*   Replace np.cast with np.asarray .
+*   Added BIGTIFF=IF_SAFER to tiff creation properties in default.py.
+*   Added dependencies: pandas, geopandas, rasterio, jupyter.
 
 
 2.2.1
