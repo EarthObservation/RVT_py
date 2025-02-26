@@ -1,18 +1,40 @@
-Change version in setup.py
+Before starting, don't forget to add changes to changelog (docs/releases.rst)!
 
-*upgrade setuptools:
+Upload checklist:
+
+0. Update README.md (this file is used as long_description for PyPI)
+
+1. Change version in setup.py
+
+2. Check if any other changes in setup.py are needed
+
+3. Install or upgrade setuptools & twine:
 "python -m pip install --user --upgrade setuptools wheel"
-
-prepare files for the upload to pypi:
-"python setup.py sdist bdist_wheel"
-
-*upgrade twin:
 "python -m pip install --user --upgrade twine"
 
-upload to pypi:
-	*for test: "python -m twine upload --repository testpypi dist/*"
+4. Build package (creates dist folder, with *.whl and *.tar.gz files)
+"python setup.py sdist bdist_wheel"
+
+5. Test upload to TestPyPI:
+"python -m twine upload --repository testpypi dist/*"
+
+    - username: "__token__", password: TestPyPI token (https://pypi.org/help/#apitoken)
+
+6. Follow the URL of the test upload
+    - check if README was rendered correctly
+    - check if pip install works > create new venv and run
+"pip install -i https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple rvt-py==2.2.2"
+
+   [ --extra-index-url https://pypi.org/simple  ..... is needed to install dependencies ]
+
+7. If test upload works fine, proceed with actual upload
 "python -m twine upload dist/*"
 
-when uploading for user name use: "__token__", for password use your token (https://pypi.org/help/#apitoken)
+    - username: "__token__", password: TestPyPI token (https://pypi.org/help/#apitoken)
 
-Don't forget to add changes to changelog (docs/releases.rst).
+
+FYI:
+* TestPyPI and PyPI are completely separate websites, you need to register on both!
+
+
+pip install -i https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple rvt-py==2.2.2
