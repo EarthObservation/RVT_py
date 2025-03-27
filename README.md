@@ -1,6 +1,6 @@
 [![PyPI](https://img.shields.io/pypi/v/RVT_py?style=flat-square)](https://pypi.org/project/rvt-py/)
-[![Anaconda-Server Badge](https://anaconda.org/zmigyyy/rvt_py/badges/version.svg)](https://anaconda.org/zmigyyy/rvt_py)
-[![Anaconda-Server Badge](https://anaconda.org/zmigyyy/rvt_py/badges/latest_release_date.svg)](https://anaconda.org/zmigyyy/rvt_py)
+[![Anaconda-Server Badge](https://anaconda.org/rvtpy/rvt_py/badges/version.svg)](https://anaconda.org/rvtpy/rvt_py)
+[![Anaconda-Server Badge](https://anaconda.org/rvtpy/rvt_py/badges/latest_release_date.svg)](https://anaconda.org/rvtpy/rvt_py)
 
 # Relief Visualization Toolbox Python library
 
@@ -43,11 +43,10 @@ When using the tools, please cite:
 
 ## Installation
 
-The RVT Python package can be installed using Conda or PyPI, and can be used in Python scripts, Jupyter Notebooks and ArcGIS Pro.
+The RVT Python package can be installed using Conda or PyPI, and can be used in Python scripts, Jupyter Notebooks, QGIS and ArcGIS Pro.
 
-RVT can also be installed as [a set of custom raster functions for ArcGIS](https://rvt-py.readthedocs.io/en/latest/install_arcgis.html "ArcGIS installation"), and [a plugin for QGIS](https://rvt-py.readthedocs.io/en/latest/install_qgis.html "QGIS installation").
+RVT can also be installed as [a set of custom raster functions for ArcGIS](https://rvt-py.readthedocs.io/en/latest/install_arcgis.html "ArcGIS installation") and [a plugin for QGIS](https://rvt-py.readthedocs.io/en/latest/install_qgis.html "QGIS installation").
 
-You can also clone the repository.
 
 ### Conda
 
@@ -71,7 +70,7 @@ Then open Command Prompt (Windows) or Terminal (MacOS) and run:
 
 ### Requirements
 
-*   python>=3.6,<3.12
+*   Python 3.8+
 
 > Code was tested on python version 3.11.11
 
