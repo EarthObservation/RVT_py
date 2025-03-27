@@ -5,7 +5,7 @@ with open("README.md", "r", encoding="utf-8") as fh:
 
 setuptools.setup(
     name="rvt_py",
-    version="2.2.1",
+    version="2.2.2",
     author="ZRC SAZU and University of Ljubljana (UL FGG)",
     author_email="ziga.kokalj@zrc-sazu.si",
     description="Relief Visualization Toolbox Python library. "
@@ -21,7 +21,7 @@ setuptools.setup(
         "Operating System :: OS Independent"
     ],
     keywords="relief_visualization_toolbox relief_visualization relief rvt raster raster_visualization visualization",
-    python_requires='>=3.6',
+    python_requires='>=3.6, <3.12',
     project_urls={
         'Documentation': 'https://rvt-py.readthedocs.io/en/latest/',
         'Source': 'https://github.com/EarthObservation/RVT_py',
@@ -29,5 +29,5 @@ setuptools.setup(
         'ArcGIS Pro': 'https://github.com/EarthObservation/rvt-arcgis-pro',
         "QGIS plugin": 'https://github.com/EarthObservation/rvt-qgis'''
     },
-    install_requires=['numpy', 'scipy', 'gdal', 'matplotlib']
+    install_requires=['numpy', 'scipy', 'gdal', 'matplotlib', 'pandas', 'geopandas', 'jupyter', 'rasterio']
 )

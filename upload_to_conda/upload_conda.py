@@ -10,11 +10,11 @@ Then from win-64 version we create versions for other platforms (for each python
 
 BUILDS_DIR = "./rvt-py_builds"  # Builds for each python version
 PLATFORM_BUILDS_DIR = "./rvt-py_platforms"  # Builds for each python version and platform
-PYTHON_VERSIONS_TO_BUILD = [3.7, 3.8]
+PYTHON_VERSIONS_TO_BUILD = [3.8, 3.9, 3.10, 3.11]
 CONDA_CLOUD_USERNAME = "rvtpy"
-CONDA_CLOUD_PASSWORD = "EXAMPLE"  # do not commit real password!
+CONDA_CLOUD_PASSWORD = "MY_PASSWORD"  # do not commit real password!
 
-subprocess.run("activate base", shell=True, check=True)
+# subprocess.run("activate base", shell=True, check=True)
 
 shutil.rmtree(BUILDS_DIR, ignore_errors=True)
 shutil.rmtree(PLATFORM_BUILDS_DIR, ignore_errors=True)
@@ -25,7 +25,7 @@ for python_version in PYTHON_VERSIONS_TO_BUILD:
     subprocess.run(f"conda build rvt-py --python {python_version} --output-folder {BUILDS_DIR}", shell=True, check=True)
 
 
-builds = [f"{BUILDS_DIR}/win-64/{file}" for file in os.listdir(BUILDS_DIR + "/win-64") if file.endswith(".tar.bz2")]
+builds = [f"{BUILDS_DIR}/win-64/{file}" for file in os.listdir(BUILDS_DIR + "/win-64") if file.endswith(".conda")]
 
 for build in builds:
     subprocess.run(

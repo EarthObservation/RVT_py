@@ -7,6 +7,17 @@ UNRELEASED
 ----------
 
 
+2.2.2
+-----
+*   Replace np.cast with np.asarray .
+*   Added BIGTIFF=IF_SAFER to tiff creation properties in default.py.
+*   Added dependencies: pandas, geopandas, rasterio, jupyter.
+
+RELEASE
+
+Feb 26, 2025
+
+
 2.2.1
 -----
 *   Fixed bug in blending.
