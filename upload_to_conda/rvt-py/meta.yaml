@@ -1,5 +1,5 @@
 {% set name = "rvt_py" %}
-{% set version = "2.1.0" %}
+{% set version = "2.2.2" %}
 
 package:
   name: "{{ name|lower }}"
@@ -7,26 +7,28 @@ package:
 
 source:
   url: https://pypi.io/packages/source/{{ name[0] }}/{{ name }}/{{ name }}-{{ version }}.tar.gz
-  sha256: 7ba47ebfdaa22efbf8957a16c1875a593f8daeb7f10b92bd34b7028731308548
+  sha256: 21089afb9bb22fd88d4cd8a7a32e7ddb23632d455e5759400ef9fd920d40245a
 
 build:
+  noarch: python
   number: 0
   script: "{{ PYTHON }} -m pip install . --no-deps --ignore-installed -vv "
 
 requirements:
   host:
-    - gdal
-    - matplotlib
-    - numpy
+    - python
     - pip
-    - python
-    - scipy
-  run:
     - gdal
-    - matplotlib
-    - numpy
+  run:
     - python
+    - gdal
+    - numpy >=1.23,<=2.2.3
     - scipy
+    - matplotlib
+    - pandas
+    - geopandas
+    - rasterio
+    - jupyter
 
 test:
   imports:
@@ -36,11 +38,12 @@ about:
   home: https://github.com/EarthObservation/RVT_py
   license: Apache Software
   license_family: APACHE
-  license_file: 
+  license_file: LICENSE
   summary: Relief Visualization Toolbox python library. It helps scientist visualize raster elevation model datasets.
   doc_url: https://rvt-py.readthedocs.io/en/latest/
-  dev_url: 
+  dev_url: https://github.com/EarthObservation/RVT_py
 
 extra:
   recipe-maintainers:
     - zmigyyy
+    - NejcCoz # Github ID
