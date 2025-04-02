@@ -422,7 +422,80 @@ def compute_save_blends(src_path, low_levels_path, vis_types, blend_types, one_e
         # Run e4MSTP blend
         blend_e4mstp(in_arrays, save_path, save_float)
 
+    if "new_blend" in blend_types:
+        # Determine save path
+        save_path, rvt_save_name = save_path_for_blend(
+            save_filename="NEW_BLEND",
+            save_dir=low_levels_path,
+            source_filename=filename_rvt,
+            save_tile_name=one_tile_name
+        )
+        # Add path to output dictionary
+        out_path_dict[rvt_save_name] = save_path
+        if save_float:
+            rvt_save_name_float = rvt_save_name[:-4] + "_float.tif"
+            out_path_dict[rvt_save_name_float] = save_path_float(save_path)
+        # Run VAT general blend
+        in_arrays["new_vis"] = new_blend(in_arrays, save_path, save_float)
+
     return out_path_dict
+
+
+def new_blend(dict_arrays, save_path=None, save_float=False):
+    """
+    This function is used for testing potential new blends for MULTIPROCESS ROUTINE.
+
+    If the visualisation preforms as expected, refactor the name of the function to the desired name, and crreate a
+    new "new_blend" function.
+    """
+    new_blend_combination = rvt.blend.BlenderCombination()
+    new_blend_combination.create_layer(
+        vis_method="SLRM",
+        normalization="Value",
+        minimum=-3,
+        maximum=3,
+        blend_mode="Normal",
+        opacity=100,
+        colormap="Reds_r", min_colormap_cut=0, max_colormap_cut=1,
+        image=dict_arrays['slrm'].squeeze()
+    )
+
+    new_vis = new_blend_combination.render_all_images(
+        save_visualizations=False,
+        save_render_path=None,
+        no_data=np.nan
+    )
+    # out_vat_general = vat_1.astype("float32")
+
+    # Save GeoTIF
+    out_profile = dict_arrays['profile'].copy()
+
+    # if save_float:
+    #     # out_profile.update(dtype='uint8')
+    #     rasterio_save(
+    #         out_vat_general,
+    #         out_profile,
+    #         save_path=save_path_float(save_path),
+    #         nodata=np.nan
+    #     )
+
+    if save_path:
+        # # Convert to 8bit image
+        # out_vat_general_8bit = rvt.vis.byte_scale(
+        #     out_vat_general,
+        #     c_min=0,
+        #     c_max=1
+        # )
+
+        out_profile.update(dtype='uint8')
+        rasterio_save(
+            new_vis,
+            out_profile,
+            save_path=save_path,
+            nodata=None
+        )
+
+    return new_vis
 
 
 def vat_general(dict_arrays, save_path=None, save_float=False):
@@ -1283,6 +1356,9 @@ def get_required_arrays(vis_types, blend_types):
         req_arrays["slp_1"] = True
         req_arrays["opns_1"] = True
         req_arrays["neg_opns_1"] = True
+
+    if "new_blend" in blend_types:
+        req_arrays["slrm_1"] = True
 
     return req_arrays
 
