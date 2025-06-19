@@ -5,6 +5,7 @@
             "description": "When saving visualisation functions and file already exists, if 0 it doesn't compute it, if 1 it overwrites it."
         },
         "ve_factor": {
+            "_comment": "Use 0.000008983 for decimal degrees.",
             "value": 1,
             "description": "Vertical exaggeration."
         },
