@@ -26,7 +26,7 @@ from rvt.blend_func import normalize_image
 gdal.UseExceptions()
 
 
-def run_main(list_tifs, vis_types, blend_types, save_float=False):
+def run_main(list_tifs, vis_types, blend_types, save_float=False, save_vrt=False):
     for in_file in list_tifs:
         in_file = Path(in_file)
 
@@ -76,11 +76,12 @@ def run_main(list_tifs, vis_types, blend_types, save_float=False):
             blend_types=blend_types,
             input_vrt_path=in_file,
             tiles_list=tiles_list,
-            save_float=save_float
+            save_float=save_float,
+            save_vrt=save_vrt
         )
 
 
-def tiled_blending(vis_types, blend_types, input_vrt_path, tiles_list, save_float):
+def tiled_blending(vis_types, blend_types, input_vrt_path, tiles_list, save_float, save_vrt):
     t0 = time.time()
 
     # Prepare paths
@@ -146,15 +147,17 @@ def tiled_blending(vis_types, blend_types, input_vrt_path, tiles_list, save_floa
                 sf = False
             mosaic_path = build_vrt(result_paths, vrt_path, save_float=sf)
 
-            # Create mosaic and crop to the original extents
-            vrt_to_mosaic(
-                vrt_path=mosaic_path,  # ll_path / "test.tif",
-                output_mosaic_path=ll_path / f"{result}.tif",
-            )
+            # Build a mosaic from VRT if selected #todo: before app starts give warning about size if VRT is not ON
+            if not save_vrt:
+                # Create mosaic and crop to the original extents
+                vrt_to_mosaic(
+                    vrt_path=mosaic_path,  # ll_path / "test.tif",
+                    output_mosaic_path=ll_path / f"{result}.tif",
+                )
 
-            # Delete temp files
-            vrt_path.unlink()
-            shutil.rmtree(result_parent)
+                # Delete VRT files
+                vrt_path.unlink()
+                shutil.rmtree(result_parent)
 
             # print(results)
 
