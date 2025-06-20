@@ -1,6 +1,6 @@
 [![PyPI](https://img.shields.io/pypi/v/RVT_py?style=flat-square)](https://pypi.org/project/rvt-py/)
-[![Anaconda-Server Badge](https://anaconda.org/rvtpy/rvt_py/badges/version.svg)](https://anaconda.org/rvtpy/rvt_py)
-[![Anaconda-Server Badge](https://anaconda.org/rvtpy/rvt_py/badges/latest_release_date.svg)](https://anaconda.org/rvtpy/rvt_py)
+[![Anaconda-Server Badge](https://anaconda.org/zmigyyy/rvt_py/badges/version.svg)](https://anaconda.org/zmigyyy/rvt_py)
+[![Anaconda-Server Badge](https://anaconda.org/zmigyyy/rvt_py/badges/latest_release_date.svg)](https://anaconda.org/zmigyyy/rvt_py)
 
 # Relief Visualization Toolbox Python library
 
@@ -21,7 +21,7 @@ Methods currently implemented are:
 * sky-view factor (as developed by our team),
 * anisotropic sky-view factor,
 * positive and negative openness,
-* local dominance, 
+* local dominance,
 * multi-scale topographic position.
 
 ## RVT for Python
@@ -43,10 +43,11 @@ When using the tools, please cite:
 
 ## Installation
 
-The RVT Python package can be installed using Conda or PyPI, and can be used in Python scripts, Jupyter Notebooks, QGIS and ArcGIS Pro.
+The RVT Python package can be installed using Conda or PyPI, and can be used in Python scripts, Jupyter Notebooks and ArcGIS Pro.
 
-RVT can also be installed as [a set of custom raster functions for ArcGIS](https://rvt-py.readthedocs.io/en/latest/install_arcgis.html "ArcGIS installation") and [a plugin for QGIS](https://rvt-py.readthedocs.io/en/latest/install_qgis.html "QGIS installation").
+RVT can also be installed as [a set of custom raster functions for ArcGIS](https://rvt-py.readthedocs.io/en/latest/install_arcgis.html "ArcGIS installation"), and [a plugin for QGIS](https://rvt-py.readthedocs.io/en/latest/install_qgis.html "QGIS installation").
 
+You can also clone the repository.
 
 ### Conda
 
@@ -70,25 +71,14 @@ Then open Command Prompt (Windows) or Terminal (MacOS) and run:
 
 ### Requirements
 
-*   Python 3.8+
+Required libraries (specified versions have been tested, other versions may also work):
 
-> Code was tested on python version 3.11.11
+*   numpy 1.19.2
+*   scipy 1.5.2
+*   gdal 3.0.2
+*   rasterio 1.2.6
 
-Dependencies for core functionality:
-
-*   gdal
-*   matplotlib
-*   numpy
-*   scipy
-
-Dependencies for extended use (running scripts in examples folder):
-
-*   pandas 
-*   geopandas
-*   jupyter
-*   rasterio
-
-> We recommend using `Anaconda` virtual environments and `conda-forge` channel for installing the required packages (this works best with ``gdal``).
+We recommend using Python 3.6 or higher and a Conda environment (this works best with ``gdal``).
 
 ## Documentation
 Documentation of the package and its use is available at [Relief Visualization Toolbox in Python documentation](https://rvt-py.readthedocs.io/).
@@ -103,7 +93,7 @@ Development of RVT Python scripts was part financed by the Slovenian Research Ag
 This project is licensed under the terms of the [Apache License](LICENSE).
 
 ## About
-RVT Python library by Žiga Kokalj, Žiga Maroh, Krištof Oštir, Klemen Zakšek and Nejc Čož, 2024.
+RVT Python library by Žiga Kokalj, Žiga Maroh, Krištof Oštir, Klemen Zakšek and Nejc Čož, 2022.
 
 It is developed in collaboration between ZRC SAZU and University of Ljubljana. 
 
