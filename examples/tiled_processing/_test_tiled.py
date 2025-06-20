@@ -17,4 +17,4 @@ if __name__ == "__main__":
     ]
 
     # save_vrt (if True saves VRT, if False saves as TIF mosaic), only used when tiling
-    run_main(list_tifs, vis_types, blend_types, save_float=False, save_vrt=True)
+    run_main(list_tifs, vis_types, blend_types, save_float=False, save_vrt=False)
