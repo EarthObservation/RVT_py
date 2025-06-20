@@ -126,6 +126,7 @@ def on_button_clicked(b):
         # print(str(save_float_checkbox.value))
 
         run_main(list_tifs, vis_types, blend_types, save_float)
+        # todo: add save_vrt=True to arguments and create a checkbox for this
 
     button_run_adaf.disabled = False
 

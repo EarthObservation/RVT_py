@@ -13,9 +13,11 @@ from pathlib import Path
 
 import numpy as np
 import rasterio
+from geopandas import GeoDataFrame
 from osgeo import gdal
 from rasterio.merge import merge
 from rasterio.windows import from_bounds
+from shapely.geometry import box
 
 import grid_tools as gt
 import rvt.blend
@@ -26,7 +28,7 @@ from rvt.blend_func import normalize_image
 gdal.UseExceptions()
 
 
-def run_main(list_tifs, vis_types, blend_types, save_float=False):
+def run_main(list_tifs, vis_types, blend_types, save_float=False, save_vrt=False):
     for in_file in list_tifs:
         in_file = Path(in_file)
 
@@ -44,6 +46,7 @@ def run_main(list_tifs, vis_types, blend_types, save_float=False):
                 tile_size = 2000
             else:
                 tile_size = None
+            raster_bounds = src.bounds
 
         if tile_size:
             # # (3) To filter we need polygon covering valid data
@@ -62,6 +65,10 @@ def run_main(list_tifs, vis_types, blend_types, save_float=False):
             #     save_gpkg=False
             # )
 
+            # Crop outer tiles to the extents of raster (IMPORTANT so output size is same as input when tiling!)
+            raster_bbox = box(*raster_bounds)
+            tiles_extents = GeoDataFrame(geometry=tiles_extents.geometry.intersection(raster_bbox), crs=tiles_extents.crs)
+
             # Add extents column: Extents are (L, B, R, T).
             tiles_extents["extents"] = tiles_extents.bounds.apply(lambda x: (x.minx, x.miny, x.maxx, x.maxy), axis=1)
 
@@ -76,11 +83,12 @@ def run_main(list_tifs, vis_types, blend_types, save_float=False):
             blend_types=blend_types,
             input_vrt_path=in_file,
             tiles_list=tiles_list,
-            save_float=save_float
+            save_float=save_float,
+            save_vrt=save_vrt
         )
 
 
-def tiled_blending(vis_types, blend_types, input_vrt_path, tiles_list, save_float):
+def tiled_blending(vis_types, blend_types, input_vrt_path, tiles_list, save_float, save_vrt):
     t0 = time.time()
 
     # Prepare paths
@@ -146,15 +154,17 @@ def tiled_blending(vis_types, blend_types, input_vrt_path, tiles_list, save_floa
                 sf = False
             mosaic_path = build_vrt(result_paths, vrt_path, save_float=sf)
 
-            # Create mosaic and crop to the original extents
-            vrt_to_mosaic(
-                vrt_path=mosaic_path,  # ll_path / "test.tif",
-                output_mosaic_path=ll_path / f"{result}.tif",
-            )
+            # Build a mosaic from VRT if selected #todo: before app starts give warning about size if VRT is not ON
+            if not save_vrt:
+                # Create mosaic and crop to the original extents
+                vrt_to_mosaic(
+                    vrt_path=mosaic_path,  # ll_path / "test.tif",
+                    output_mosaic_path=ll_path / f"{result}.tif",
+                )
 
-            # Delete temp files
-            vrt_path.unlink()
-            shutil.rmtree(result_parent)
+                # Delete VRT files
+                vrt_path.unlink()
+                shutil.rmtree(result_parent)
 
             # print(results)
 
@@ -1284,6 +1294,9 @@ def get_required_arrays(vis_types, blend_types):
         req_arrays["opns_1"] = True
         req_arrays["neg_opns_1"] = True
 
+    if "new_blend" in blend_types:
+        req_arrays["slrm_1"] = True
+
     return req_arrays
 
 
@@ -1490,6 +1503,7 @@ def get_raster_vrt(vrt_path, extents, buffer):
         vrt_nodata = vrt.nodata
         vrt_transform = vrt.transform
         vrt_crs = vrt.crs
+        nodata_val = vrt.nodata
 
         # ADD BUFFER TO EXTENTS (LBRT) - transform pixels to meters!
         buffer_m = buffer * vrt_res[0]
@@ -1508,8 +1522,13 @@ def get_raster_vrt(vrt_path, extents, buffer):
         # boundless - if window falls out of bounds, read it and fill with NaNs
         win_array = vrt.read(window=buff_window, boundless=True)
 
+        # Deal with nodata
+        if nodata_val is not None and not np.isnan(nodata_val):
+            # Ensure array is float to support np.nan
+            win_array = win_array.astype("float32", copy=False)
+            win_array[win_array == nodata_val] = np.nan
+
         # Save transform object of both extents (original and buffered)
-        buff_transform = vrt.window_transform(buff_window)
         orig_transform = vrt.window_transform(orig_window)
 
     # For raster with only one band, remove first axis from the array (RVT requirement)
@@ -1519,7 +1538,7 @@ def get_raster_vrt(vrt_path, extents, buffer):
     # Prepare output metadata profile
     out_profile = {
         'driver': 'GTiff',
-        'nodata': None,
+        'nodata': np.nan,
         'width':  win_array.shape[1] - 2 * buffer,
         'height':  win_array.shape[0] - 2 * buffer,
         'count':  1,
@@ -1532,7 +1551,6 @@ def get_raster_vrt(vrt_path, extents, buffer):
         "array": win_array,
         "resolution": vrt_res,
         "no_data": vrt_nodata,
-        "buff_transform": buff_transform,
         "orig_transform": orig_transform,
         "crs": vrt_crs,
         "profile": out_profile
