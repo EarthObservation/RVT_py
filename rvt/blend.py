@@ -1408,7 +1408,7 @@ def e4mstp(dem, resolution, default: rvt.default.DefaultValues = rvt.default.Def
     svf_arr = svf_temp["svf"].squeeze()
     neg_opns_arr = default.get_neg_opns(dem, resolution).squeeze()
 
-    # For SVF 2 (FLAT)
+    # For SVF 2 (FLAT) # TODO: svf_r_max is in pixels, take into account the resolution
     default_2 = rvt.default.DefaultValues()
     default_2.svf_r_max = 20
     default_2.svf_noise = 3
@@ -1437,14 +1437,14 @@ def e4mstp(dem, resolution, default: rvt.default.DefaultValues = rvt.default.Def
     # 3) Comb openness LD
     comb_ol = rvt.blend.BlenderCombination()
     comb_ol.create_layer(
-        vis_method="Openness difference", normalization="Value",
-        minimum=-15, maximum=15,
+        vis_method="Openness difference",
+        normalization="Value", minimum=-15, maximum=15,
         blend_mode="normal", opacity=50,
         image=(opns_arr - neg_opns_arr)
     )
     comb_ol.create_layer(
-        vis_method="Local dominance", normalization="Value",
-        minimum=0.5, maximum=1.8,
+        vis_method="Local dominance",
+        normalization="Value", minimum=0.5, maximum=1.8,
         blend_mode="normal", opacity=100,
         image=ld_arr
     )
@@ -1456,11 +1456,7 @@ def e4mstp(dem, resolution, default: rvt.default.DefaultValues = rvt.default.Def
     comb_opns_ld_arr = comb_opns_ld_arr.astype("float32")
 
     # 4) Coloured slope
-    slope_arr = rvt.vis.slope_aspect(
-        dem=dem,
-        resolution_x=resolution,
-        resolution_y=resolution,
-    )["slope"]
+    slope_arr = rvt.vis.slope_aspect(dem=dem, resolution_x=resolution, resolution_y=resolution)["slope"]
     # ------------------------------------------------------------------------------------------------------------------
 
     # Prepare layers for blending
@@ -1484,8 +1480,8 @@ def e4mstp(dem, resolution, default: rvt.default.DefaultValues = rvt.default.Def
         image=comb_opns_ld_arr
     )
     blend_combination.create_layer(
-        vis_method="coloured slope",
-        normalization="value", minimum=0, maximum=1,
+        vis_method="Slope gradient",
+        normalization="value", minimum=0, maximum=55,
         blend_mode="normal", opacity=100,
         colormap="Reds_r", min_colormap_cut=0, max_colormap_cut=1,
         image=slope_arr
