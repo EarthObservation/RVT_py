@@ -1401,23 +1401,47 @@ def e4mstp(dem, resolution, default: rvt.default.DefaultValues = rvt.default.Def
         dem[dem == no_data] = np.nan
 
     # Calculate intermediate visualisations:
-    # MSTP
+    # ------------------------------------------------------------------------------------------------------------------
+    ld_arr = default.get_local_dominance(dem).squeeze()
+    svf_temp = default.get_sky_view_factor(dem, resolution, compute_svf=True, compute_opns=True)
+    opns_arr = svf_temp["opns"].squeeze()
+    svf_arr = svf_temp["svf"].squeeze()
+    neg_opns_arr = default.get_neg_opns(dem, resolution).squeeze()
+
+    # 1) MSTP
     mstp_arr = default.get_mstp(dem_arr=dem) # todo: check values in tiled
-    # Comb svf
+
+    # 2) Comb svf
     comb_svf_arr = None # todo: Write function
-    # Comb openness LD
-    comb_opns_ld_arr = None # todo: Write function
-    # coloured slope
+
+    # 3) Comb openness LD
+    comb_ol = rvt.blend.BlenderCombination()
+    comb_ol.create_layer(
+        vis_method="Openness difference", normalization="Value",
+        minimum=-15, maximum=15,
+        blend_mode="normal", opacity=50,
+        image=(opns_arr - neg_opns_arr)
+    )
+    comb_ol.create_layer(
+        vis_method="Local dominance", normalization="Value",
+        minimum=0.5, maximum=1.8,
+        blend_mode="normal", opacity=100,
+        image=ld_arr
+    )
+    comb_opns_ld_arr = comb_ol.render_all_images(
+        save_visualizations=False,
+        save_render_path=None,
+        no_data=np.nan
+    )
+    comb_opns_ld_arr = comb_opns_ld_arr.astype("float32")
+
+    # 4) Coloured slope
     slope_arr = rvt.vis.slope_aspect(
         dem=dem,
         resolution_x=resolution,
         resolution_y=resolution,
     )["slope"]
-
-    # slrm_arr = default.get_slrm(dem_arr=dem)
-    # crim_red_arr = color_relief_image_map(dem=dem, resolution=resolution, default=default,
-    #                                       colormap="OrRd", min_colormap_cut=0, max_colormap_cut=1)
-    # mstp_arr = default.get_mstp(dem_arr=dem)
+    # ------------------------------------------------------------------------------------------------------------------
 
     # Prepare layers for blending
     blend_combination = rvt.blend.BlenderCombination()
@@ -1450,7 +1474,7 @@ def e4mstp(dem, resolution, default: rvt.default.DefaultValues = rvt.default.Def
     # Run blend
     e4mstp_out = blend_combination.render_all_images()
 
-    # Some quick post processing
+    # Postprocessing
     e4mstp_out = e4mstp_out.astype("float32")
     e4mstp_out[np.isnan(dem['mstp_1'])] = np.nan
     e4mstp_out[e4mstp_out > 1] = 1
