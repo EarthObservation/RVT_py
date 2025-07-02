@@ -1408,7 +1408,11 @@ def e4mstp(dem, resolution, default: rvt.default.DefaultValues = rvt.default.Def
     # Comb openness LD
     comb_opns_ld_arr = None # todo: Write function
     # coloured slope
-    colored_slope_arr = None # todo: Write function
+    slope_arr = rvt.vis.slope_aspect(
+        dem=dem,
+        resolution_x=resolution,
+        resolution_y=resolution,
+    )["slope"]
 
     # slrm_arr = default.get_slrm(dem_arr=dem)
     # crim_red_arr = color_relief_image_map(dem=dem, resolution=resolution, default=default,
@@ -1439,7 +1443,8 @@ def e4mstp(dem, resolution, default: rvt.default.DefaultValues = rvt.default.Def
         vis_method="coloured slope",
         normalization="value", minimum=0, maximum=1,
         blend_mode="normal", opacity=100,
-        image=colored_slope_arr
+        colormap="Reds_r", min_colormap_cut=0, max_colormap_cut=1,
+        image=slope_arr
     )
 
     # Run blend
