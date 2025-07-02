@@ -1408,11 +1408,31 @@ def e4mstp(dem, resolution, default: rvt.default.DefaultValues = rvt.default.Def
     svf_arr = svf_temp["svf"].squeeze()
     neg_opns_arr = default.get_neg_opns(dem, resolution).squeeze()
 
+    # For SVF 2 (FLAT)
+    default_2 = rvt.default.DefaultValues()
+    default_2.svf_r_max = 20
+    default_2.svf_noise = 3
+    svf_flat = default.get_sky_view_factor(dem, resolution, compute_svf=True, compute_opns=False)["svf"].squeeze()
+
     # 1) MSTP
     mstp_arr = default.get_mstp(dem_arr=dem) # todo: check values in tiled
 
     # 2) Comb svf
-    comb_svf_arr = None # todo: Write function
+    comb_svf = rvt.blend.BlenderCombination()
+    comb_svf.create_layer(vis_method="Sky-view factor", normalization="Value",
+                          minimum=0.7, maximum=1,
+                          blend_mode="normal", opacity=50,
+                          image=svf_arr
+                          )
+    comb_svf.create_layer(vis_method="Sky-view factor", normalization="Value",
+                          minimum=0.9, maximum=1,
+                          blend_mode="normal", opacity=100,
+                          image=svf_flat
+                          )
+    cs_svf = comb_svf.render_all_images(save_visualizations=False,
+                                        save_render_path=None,
+                                        no_data=np.nan)
+    comb_svf_arr = cs_svf.astype("float32")
 
     # 3) Comb openness LD
     comb_ol = rvt.blend.BlenderCombination()
