@@ -135,9 +135,9 @@ def slope_aspect(dem,
     ----------
     dem : numpy.ndarray
         Input digital elevation model as 2D numpy array.
-    resolution_x : int
+    resolution_x : float
         DEM resolution in X direction.
-    resolution_y : int
+    resolution_y : float
         DEM resolution in Y direction.
     output_units : str
         Output units, you can choose between: percent, degree, radian. Default value is radian.

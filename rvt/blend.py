@@ -1339,7 +1339,7 @@ def e3mstp(dem, resolution, default: rvt.default.DefaultValues = rvt.default.Def
 
     Returns
     -------
-    crim_out : numpy.ndarray
+    e3mstp_out : numpy.ndarray
         2D numpy result array of Color relief image map.
     """
     if no_data is not None:
@@ -1364,3 +1364,135 @@ def e3mstp(dem, resolution, default: rvt.default.DefaultValues = rvt.default.Def
                                    image=mstp_arr)
     e3mstp_out = blend_combination.render_all_images()
     return e3mstp_out
+
+
+def e4mstp(dem, resolution, default: rvt.default.DefaultValues = rvt.default.DefaultValues(), no_data=None):
+    """
+    RVT enhanced version 4 Multi-scale topographic position (e4MSTP)
+    Blending combination where layers are:
+    1st: Multi-scale topographic position (MSTP), overlay, 90% opacity
+    2nd: Combined SFV, multiply, opacity=25
+            * Sky-view factor(0.7 - 1), normal, opacity=50
+            * Sky-view factor(0.9 - 1), normal, opacity=100
+    3rd: Combined Openness and Local Dominance, multiply, opacity=100
+            * [Openness(-15 - 15) - Neg. Openness(-15 - 15)], normal, opacity=50
+            * Local Dominance(0.5 - 1.8), normal, opacity=100
+    4th: Colored slope (0-55), cmap=Reds_r(0-1), normal, opacity=100
+
+    Parameters
+    ----------
+    dem : numpy.ndarray
+        Input digital elevation model as 2D numpy array.
+    resolution : float
+        DEM pixel size.
+    default : rvt.default.DefaultValues
+        Default values for visualization functions.
+    no_data : int or float
+        Value that represents no_data, all pixels with this value are changed to np.nan .
+
+    Returns
+    -------
+    e4mstp_out : numpy.ndarray
+        2D numpy result array of Color relief image map.
+    """
+
+    # Nodata check
+    if no_data is not None:
+        dem[dem == no_data] = np.nan
+
+    # Calculate intermediate visualisations:
+    # ------------------------------------------------------------------------------------------------------------------
+    ld_arr = default.get_local_dominance(dem).squeeze()
+    svf_temp = default.get_sky_view_factor(dem, resolution, compute_svf=True, compute_opns=True)
+    opns_arr = svf_temp["opns"].squeeze()
+    svf_arr = svf_temp["svf"].squeeze()
+    neg_opns_arr = default.get_neg_opns(dem, resolution).squeeze()
+
+    # For SVF 2 (FLAT) # TODO: svf_r_max is in pixels, take into account the resolution
+    default_2 = rvt.default.DefaultValues()
+    default_2.svf_r_max = 20
+    default_2.svf_noise = 3
+    svf_flat = default.get_sky_view_factor(dem, resolution, compute_svf=True, compute_opns=False)["svf"].squeeze()
+
+    # 1) MSTP
+    mstp_arr = default.get_mstp(dem_arr=dem) # todo: check values in tiled
+
+    # 2) Comb svf
+    comb_svf = rvt.blend.BlenderCombination()
+    comb_svf.create_layer(vis_method="Sky-view factor", normalization="Value",
+                          minimum=0.7, maximum=1,
+                          blend_mode="normal", opacity=50,
+                          image=svf_arr
+                          )
+    comb_svf.create_layer(vis_method="Sky-view factor", normalization="Value",
+                          minimum=0.9, maximum=1,
+                          blend_mode="normal", opacity=100,
+                          image=svf_flat
+                          )
+    cs_svf = comb_svf.render_all_images(save_visualizations=False,
+                                        save_render_path=None,
+                                        no_data=np.nan)
+    comb_svf_arr = cs_svf.astype("float32")
+
+    # 3) Comb openness LD
+    comb_ol = rvt.blend.BlenderCombination()
+    comb_ol.create_layer(
+        vis_method="Openness difference",
+        normalization="Value", minimum=-15, maximum=15,
+        blend_mode="normal", opacity=50,
+        image=(opns_arr - neg_opns_arr)
+    )
+    comb_ol.create_layer(
+        vis_method="Local dominance",
+        normalization="Value", minimum=0.5, maximum=1.8,
+        blend_mode="normal", opacity=100,
+        image=ld_arr
+    )
+    comb_opns_ld_arr = comb_ol.render_all_images(
+        save_visualizations=False,
+        save_render_path=None,
+        no_data=np.nan
+    )
+    comb_opns_ld_arr = comb_opns_ld_arr.astype("float32")
+
+    # 4) Coloured slope
+    slope_arr = rvt.vis.slope_aspect(dem=dem, resolution_x=resolution, resolution_y=resolution)["slope"]
+    # ------------------------------------------------------------------------------------------------------------------
+
+    # Prepare layers for blending
+    blend_combination = rvt.blend.BlenderCombination()
+    blend_combination.create_layer(
+        vis_method="mstp",
+        normalization="value", minimum=0, maximum=1,
+        blend_mode="overlay", opacity=90,
+        image=mstp_arr
+    )
+    blend_combination.create_layer(
+        vis_method="Comb svf",
+        normalization="value", minimum=-0.5, maximum=0.5,
+        blend_mode="multiply", opacity=25,
+        image=comb_svf_arr
+    )
+    blend_combination.create_layer(
+        vis_method="Comb openness LD",
+        normalization="value", minimum=0, maximum=1,
+        blend_mode="multiply", opacity=100,
+        image=comb_opns_ld_arr
+    )
+    blend_combination.create_layer(
+        vis_method="Slope gradient",
+        normalization="value", minimum=0, maximum=55,
+        blend_mode="normal", opacity=100,
+        colormap="Reds_r", min_colormap_cut=0, max_colormap_cut=1,
+        image=slope_arr
+    )
+
+    # Run blend
+    e4mstp_out = blend_combination.render_all_images()
+
+    # Postprocessing
+    e4mstp_out = e4mstp_out.astype("float32")
+    e4mstp_out[np.isnan(dem['mstp_1'])] = np.nan
+    e4mstp_out[e4mstp_out > 1] = 1
+
+    return e4mstp_out

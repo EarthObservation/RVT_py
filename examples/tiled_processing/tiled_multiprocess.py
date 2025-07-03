@@ -1018,8 +1018,6 @@ def blend_e3mstp(dict_arrays, save_path, save_float=False):
 
 
 def blend_e4mstp(dict_arrays, save_path, save_float=False):
-    # Get Coloured Slope
-    dict_arrays['cs'] = blend_coloured_slope(dict_arrays)
     # Get SVF combined
     dict_arrays['svf_combined'] = blend_svf_combined(dict_arrays)
     # Get Openness + LD
@@ -1045,10 +1043,11 @@ def blend_e4mstp(dict_arrays, save_path, save_float=False):
         image=dict_arrays['opns_ld']
     )
     comb_nv.create_layer(
-        vis_method="coloured slope",
-        normalization="value", minimum=0, maximum=1,
+        vis_method="Slope gradient",
+        normalization="value", minimum=0, maximum=55,
         blend_mode="normal", opacity=100,
-        image=dict_arrays['cs']
+        colormap="Reds_r", min_colormap_cut=0, max_colormap_cut=1,
+        image=dict_arrays['slp_1'].squeeze()
     )
     out_e4mstp = comb_nv.render_all_images(
         save_visualizations=False,
@@ -1087,35 +1086,6 @@ def blend_e4mstp(dict_arrays, save_path, save_float=False):
     )
 
     return out_e4mstp
-
-
-def blend_coloured_slope(dict_arrays, save_path=None):
-    # Coloured slope
-    comb_cs = rvt.blend.BlenderCombination()
-    comb_cs.create_layer(
-        vis_method="Slope gradient", normalization="Value",
-        minimum=0, maximum=55,
-        blend_mode="normal", opacity=100,
-        colormap="Reds_r", min_colormap_cut=0, max_colormap_cut=1,
-        image=dict_arrays['slp_1'].squeeze()
-    )
-    coloured_slope = comb_cs.render_all_images(
-        save_visualizations=False,
-        save_render_path=None,
-        no_data=np.nan
-    )
-    coloured_slope = coloured_slope.astype("float32")
-
-    if save_path:
-        # Save GeoTIF
-        rasterio_save(
-            coloured_slope,
-            dict_arrays['profile'],
-            save_path=save_path,
-            nodata=np.nan
-        )
-
-    return coloured_slope
 
 
 def blend_opns_ld(dict_arrays, save_path=None):
