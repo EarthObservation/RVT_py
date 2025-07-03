@@ -6,6 +6,11 @@ Python package release history
 UNRELEASED
 ----------
 
+2.2.3
+-----
+*   Added enhance Multi-Scale Topographic Position (e4MSTP) blending combination visualization.
+
+
 
 2.2.2
 -----
