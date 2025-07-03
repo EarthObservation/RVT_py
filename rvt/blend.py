@@ -14,8 +14,8 @@ Credits:
     Nejc Čož
 
 Copyright:
-    2010-2020 Research Centre of the Slovenian Academy of Sciences and Arts
-    2016-2020 University of Ljubljana, Faculty of Civil and Geodetic Engineering
+    2010-2025 Research Centre of the Slovenian Academy of Sciences and Arts
+    2016-2025 University of Ljubljana, Faculty of Civil and Geodetic Engineering
 """
 
 # TODO: more testing, find and fix bugs if they exists
