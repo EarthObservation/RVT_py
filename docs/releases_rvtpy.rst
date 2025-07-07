@@ -10,6 +10,9 @@ UNRELEASED
 -----
 *   Added enhance Multi-Scale Topographic Position (e4MSTP) blending combination visualization.
 
+RELEASE
+
+Jul 4, 2025
 
 
 2.2.2
