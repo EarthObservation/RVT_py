@@ -1,5 +1,5 @@
 {% set name = "rvt_py" %}
-{% set version = "2.2.2" %}
+{% set version = "2.2.3" %}
 
 package:
   name: "{{ name|lower }}"
@@ -7,10 +7,10 @@ package:
 
 source:
   url: https://pypi.io/packages/source/{{ name[0] }}/{{ name }}/{{ name }}-{{ version }}.tar.gz
-  sha256: 21089afb9bb22fd88d4cd8a7a32e7ddb23632d455e5759400ef9fd920d40245a
+  sha256: fc35a6f18f37b24f59202587b28db34cf06e633edb6d7068fa2484d96bab4102
 
 build:
-  noarch: python
+  # noarch: python
   number: 0
   script: "{{ PYTHON }} -m pip install . --no-deps --ignore-installed -vv "
 
