@@ -22,7 +22,10 @@ Methods currently implemented are:
 * anisotropic sky-view factor,
 * positive and negative openness,
 * local dominance,
-* multi-scale topographic position.
+* multi-scale topographic position,
+* visualizaion for archaeological topography (VAT),
+* combined visualization for archaeological topography (Combined VAT).
+* multi-scale topographic position enhanced version 4 (e^4^MSTP).
 
 ## RVT for Python
 
