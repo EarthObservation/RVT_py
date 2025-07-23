@@ -1544,16 +1544,14 @@ def build_vrt(tif_list, vrt_path, save_float=False):
     # Different nodata for different dtypes
     if save_float:
         vrt_nodata = "nan"  # TODO: Check if this is correct way to set Nan
-        hide_nodata = False
     else:
         vrt_nodata = 255
-        hide_nodata = True
 
     # Change paths in tif list to strings
     tif_list = [a.as_posix() for a in tif_list]
 
     # Create VRT
-    vrt_options = gdal.BuildVRTOptions(VRTNodata=vrt_nodata, hideNodata=hide_nodata)
+    vrt_options = gdal.BuildVRTOptions(VRTNodata=vrt_nodata)
     my_vrt = gdal.BuildVRT(vrt_path.as_posix(), tif_list, options=vrt_options)
     my_vrt = None
 
