@@ -20,11 +20,17 @@ Methods currently implemented are:
 *   slope gradient
 *   simple local relief model
 *   multi-scale relief model
+*   multi-scale topographic position
 *   sky illumination
 *   sky-view factor (as developed by our team)
 *   anisotropic sky-view factor
 *   positive and negative openness
 *   local dominance
+*   visualisation for archaeological topography (VAT)
+*   visualisation for archaeological topography (VAT flat)
+*   combined visualisation for archaeological topography (combined VAT)
+*   multi-scale topographic position enhanced version 3 (e3MSTP)
+*   multi-scale topographic position enhanced version 4 (e4MSTP)
 
 .. image:: ./figures/RVT_visualisations.jpg
 
