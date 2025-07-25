@@ -30,8 +30,8 @@ Methods currently implemented are:
 *   visualisation for archaeological topography (VAT)
 *   visualisation for archaeological topography (VAT flat)
 *   combined visualisation for archaeological topography (combined VAT)
-*   multi-scale topographic position enhanced version 3 (e3MSTP)
-*   multi-scale topographic position enhanced version 4 (e4MSTP)
+*   enhanced multi-scale topographic position version 3 (e3MSTP)
+*   enhanced multi-scale topographic position version 4 (e4MSTP)
 
 
 
