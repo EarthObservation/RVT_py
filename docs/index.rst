@@ -24,13 +24,16 @@ Methods currently implemented are:
 *   sky illumination
 *   sky-view factor (as developed by our team)
 *   anisotropic sky-view factor
-*   positive and negative openness
 *   local dominance
+*   positive and negative openness
+*   enhanced prismatic openness
 *   visualisation for archaeological topography (VAT)
 *   visualisation for archaeological topography (VAT flat)
 *   combined visualisation for archaeological topography (combined VAT)
 *   multi-scale topographic position enhanced version 3 (e3MSTP)
 *   multi-scale topographic position enhanced version 4 (e4MSTP)
+
+
 
 .. image:: ./figures/RVT_visualisations.jpg
 
