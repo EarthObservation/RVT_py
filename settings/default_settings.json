@@ -322,25 +322,25 @@
                 "description": "If compute Multi-scale topographic position. Parameter for GUIs."
             },
             "mstp_local_scale": {
-                "min": 3,
-                "max": 21,
-                "step": 2,
+                "min": 1,
+                "max": 5,
+                "step": 1,
                 "description": "Local scale minimum radius, maximum radius and step in pixels to calculate maximum mean deviation from elevation. All have to be integers!"
             },
             "mstp_meso_scale": {
-                "min": 23,
-                "max": 203,
-                "step": 18,
+                "min": 5,
+                "max": 50,
+                "step": 5,
                 "description": "Meso scale minimum radius, maximum radius and step in pixels to calculate maximum mean deviation from elevation. All have to be integers!"
             },
             "mstp_broad_scale": {
-                "min": 223,
-                "max": 2023,
-                "step": 180,
+                "min": 50,
+                "max": 500,
+                "step": 50,
                 "description": "Broad scale minimum radius, maximum radius and step in pixels to calculate maximum mean deviation from elevation. All have to be integers!"
             },
             "mstp_lightness": {
-                "value": 1.2,
+                "value": 0.9,
                 "description": "Lightness factor to adjust MSTP visibility."
             },
             "mstp_save_float": {
