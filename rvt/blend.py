@@ -1379,6 +1379,12 @@ def e4mstp(dem, resolution, default: rvt.default.DefaultValues = rvt.default.Def
             * Local Dominance(0.5 - 1.8), normal, opacity=100
     4th: Colored slope (0-55), cmap=Reds_r(0-1), normal, opacity=100
 
+    Note
+    ----
+    Two different "defaults" settings are used. The first one, for general terrain is assigned at the function input
+    (which reads the defaults.json file), the second one for flat terrain is called inside the function (can not be
+    assigned by the user).
+
     Parameters
     ----------
     dem : numpy.ndarray
@@ -1415,7 +1421,7 @@ def e4mstp(dem, resolution, default: rvt.default.DefaultValues = rvt.default.Def
     svf_flat = default_2.get_sky_view_factor(dem, resolution, compute_svf=True, compute_opns=False)["svf"].squeeze()
 
     # 1) MSTP
-    mstp_arr = default.get_mstp(dem_arr=dem) # todo: check values in tiled
+    mstp_arr = default.get_mstp(dem_arr=dem)
 
     # 2) Comb svf
     comb_svf = rvt.blend.BlenderCombination()
