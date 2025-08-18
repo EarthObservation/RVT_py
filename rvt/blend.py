@@ -1408,11 +1408,11 @@ def e4mstp(dem, resolution, default: rvt.default.DefaultValues = rvt.default.Def
     svf_arr = svf_temp["svf"].squeeze()
     neg_opns_arr = default.get_neg_opns(dem, resolution).squeeze()
 
-    # For SVF 2 (FLAT) # TODO: svf_r_max is in pixels, take into account the resolution
+    # SVF for flat terrain (settings hardcoded, instead of importing second defaults.json)
     default_2 = rvt.default.DefaultValues()
-    default_2.svf_r_max = 20
+    default_2.svf_r_max = 10 / resolution  # i.e. 10 meters for flat terrain
     default_2.svf_noise = 3
-    svf_flat = default.get_sky_view_factor(dem, resolution, compute_svf=True, compute_opns=False)["svf"].squeeze()
+    svf_flat = default_2.get_sky_view_factor(dem, resolution, compute_svf=True, compute_opns=False)["svf"].squeeze()
 
     # 1) MSTP
     mstp_arr = default.get_mstp(dem_arr=dem) # todo: check values in tiled
@@ -1491,8 +1491,7 @@ def e4mstp(dem, resolution, default: rvt.default.DefaultValues = rvt.default.Def
     e4mstp_out = blend_combination.render_all_images()
 
     # Postprocessing
-    e4mstp_out = e4mstp_out.astype("float32")
-    e4mstp_out[np.isnan(dem['mstp_1'])] = np.nan
-    e4mstp_out[e4mstp_out > 1] = 1
+    if no_data is not None:
+        e4mstp_out[np.isnan(dem)] = no_data
 
     return e4mstp_out
