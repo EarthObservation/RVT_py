@@ -61,6 +61,11 @@ exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
 # BibTeX files
 bibtex_bibfiles = ['RVT.bib']
 
+# Do not execute notebooks
+nbsphinx_execute = "never"
+# optional: keep the build green even if a notebook would fail
+# nbsphinx_allow_errors = True
+
 # -- Options for HTML output -------------------------------------------------
 
 # The theme to use for HTML and HTML Help pages.  See the documentation for
