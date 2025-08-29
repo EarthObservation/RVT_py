@@ -19,11 +19,17 @@ import sphinx.ext.autodoc
 
 sys.path.insert(0, os.path.abspath('..'))  # Source code dir relative to this file
 
+# Dynamic date
+from datetime import datetime
+year = datetime.now().year
+rst_epilog = f"""
+.. |year| replace:: {year}
+"""
+
+
 # -- Project information -----------------------------------------------------
 
 project = 'Relief Visualization Toolbox in Python'
-from datetime import datetime
-year = datetime.now().year
 copyright = f"2010-{year}, ZRC SAZU and University of Ljubljana (UL FGG)"
 author = 'ZRC SAZU and University of Ljubljana (UL FGG)'
 
