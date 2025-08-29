@@ -22,8 +22,10 @@ sys.path.insert(0, os.path.abspath('..'))  # Source code dir relative to this fi
 # -- Project information -----------------------------------------------------
 
 project = 'Relief Visualization Toolbox in Python'
-copyright = '2010-2021, ZRC SAZU and University of Ljubljana'
-author = 'ZRC SAZU and University of Ljubljana'
+from datetime import datetime
+year = datetime.now().year
+copyright = f"2010-{year}, ZRC SAZU and University of Ljubljana (UL FGG)"
+author = 'ZRC SAZU and University of Ljubljana (UL FGG)'
 
 # -- General configuration ---------------------------------------------------
 
