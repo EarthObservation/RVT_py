@@ -1366,7 +1366,7 @@ def e3mstp(dem, resolution, default: rvt.default.DefaultValues = rvt.default.Def
     return e3mstp_out
 
 
-def e4mstp(dem, resolution, default: rvt.default.DefaultValues = rvt.default.DefaultValues(), no_data=None):
+def e4mstp(dem, resolution, default: rvt.default.DefaultValues=rvt.default.DefaultValues(), no_data=None):
     """
     RVT enhanced version 4 Multi-scale topographic position (e4MSTP)
     Blending combination where layers are:
@@ -1416,7 +1416,7 @@ def e4mstp(dem, resolution, default: rvt.default.DefaultValues = rvt.default.Def
 
     # SVF for flat terrain (settings hardcoded, instead of importing second defaults.json)
     default_2 = rvt.default.DefaultValues()
-    default_2.svf_r_max = 10 / resolution  # i.e. 10 meters for flat terrain
+    default_2.svf_r_max = int(10 / resolution)  # i.e. 10 meters for flat terrain
     default_2.svf_noise = 3
     svf_flat = default_2.get_sky_view_factor(dem, resolution, compute_svf=True, compute_opns=False)["svf"].squeeze()
 
@@ -1425,19 +1425,23 @@ def e4mstp(dem, resolution, default: rvt.default.DefaultValues = rvt.default.Def
 
     # 2) Comb svf
     comb_svf = rvt.blend.BlenderCombination()
-    comb_svf.create_layer(vis_method="Sky-view factor", normalization="Value",
-                          minimum=0.7, maximum=1,
-                          blend_mode="normal", opacity=50,
-                          image=svf_arr
-                          )
-    comb_svf.create_layer(vis_method="Sky-view factor", normalization="Value",
-                          minimum=0.9, maximum=1,
-                          blend_mode="normal", opacity=100,
-                          image=svf_flat
-                          )
-    cs_svf = comb_svf.render_all_images(save_visualizations=False,
-                                        save_render_path=None,
-                                        no_data=np.nan)
+    comb_svf.create_layer(
+        vis_method="Sky-view factor",
+        normalization="Value", minimum=0.7, maximum=1,
+        blend_mode="normal", opacity=50,
+        image=svf_arr
+    )
+    comb_svf.create_layer(
+        vis_method="Sky-view factor",
+        normalization="Value", minimum=0.9, maximum=1,
+        blend_mode="normal", opacity=100,
+        image=svf_flat
+    )
+    cs_svf = comb_svf.render_all_images(
+        save_visualizations=False,
+        save_render_path=None,
+        no_data=np.nan
+    )
     comb_svf_arr = cs_svf.astype("float32")
 
     # 3) Comb openness LD
@@ -1494,10 +1498,14 @@ def e4mstp(dem, resolution, default: rvt.default.DefaultValues = rvt.default.Def
     )
 
     # Run blend
-    e4mstp_out = blend_combination.render_all_images()
+    e4mstp_out = blend_combination.render_all_images(
+        save_visualizations=False,
+        save_render_path=None,
+        no_data=np.nan
+    )
 
     # Postprocessing
     if no_data is not None:
-        e4mstp_out[np.isnan(dem)] = no_data
+        e4mstp_out[:, np.isnan(dem)] = no_data
 
     return e4mstp_out
