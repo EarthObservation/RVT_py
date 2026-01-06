@@ -20,6 +20,7 @@ Unless otherwise referenced, the descriptions are simplified versions of the inf
    listofvis_slrm
    listofvis_svf
    listofvis_openness
+   listofvis_openness_prismatic
    listofvis_localdom
    listofvis_skyillum
    listofvis_msrm
