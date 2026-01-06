@@ -37,6 +37,12 @@ Methods currently implemented are:
 
 .. image:: ./figures/RVT_visualisations.jpg
    :width: 700px
+RVT visualisations
+
+.. image:: ./figures/RVT_visualisations_combinations.jpg
+   :width: 700px
+RVT combined visualisations
+
 
 References
 ----------
