@@ -1,16 +1,12 @@
 .. _listofvis_msrm:
 
-Multi-scale topographic position
+Multi-scale topographic position (MSTP)
 ================================
 
 .. image:: ./figures/rvtvis_mstp.png
 
-A multi-scale topographic position (MSTP) visualization is an effective means of visualising and interpreting the multi-scale topographic character of a landscape. 
+A multi-scale topographic position (MSTP) is generated from a hyperscale datacube of the topographic metric deviation from mean elevation (SLRM) computed with various search radius parameters and reduced to three dimensions by extracting the absolute maximum value from micro-, meso-, and macro-scale ranges, written as a three band (RGB) raster.
 
-MSTP simultaneously summarizes the relative topographic position of sites across three defined ranges of spatial scales (local, meso, and broad). 
-
-The density of topographic information in an MSTP visualization is very high; on par with or exceeding that of commonly used methods such as hillshading. 
-
-Some practice is required to train the eye to recognize colors as the summation of relative topographic position across three scale ranges, rather than, for example, as the raw elevation observed in a DEM.
+Some practice is required to train the eye to recognize colors as the summation of relative topographic position across three scale ranges, rather than, for example, as the raw elevation observed in a DEM. Colours do not have a unique meaning – the same color range can represent a slightly raised embankment or a very shallow dip. Therefore, additional information is needed to distinguish between concave and convex features.
 
 Source: `Lindsay, Cockburn & Russell (2015), An integral image approach to performing multi-scale topographic position analysis <https://www.sciencedirect.com/science/article/pii/S0169555X15300076?via%3Dihub>`_
