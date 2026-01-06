@@ -1,4 +1,4 @@
-.. _listofvis_openness:
+.. _listofvis_openness_prismatic:
 
 Prismatic openness
 ========
