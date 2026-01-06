@@ -22,6 +22,7 @@ Unless otherwise referenced, the descriptions are simplified versions of the inf
    listofvis_openness
    listofvis_localdom
    listofvis_skyillum
+   listofvis_msrm
    listofvis_mstp
    listofvis_VAT
    listofvis_VAT_combined
