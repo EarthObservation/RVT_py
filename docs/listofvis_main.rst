@@ -23,3 +23,7 @@ Unless otherwise referenced, the descriptions are simplified versions of the inf
    listofvis_localdom
    listofvis_skyillum
    listofvis_mstp
+   listofvis_VAT
+   listofvis_VAT_combined
+   listofvis_e3MSTP
+   listofvis_e3MSTP
