@@ -36,6 +36,7 @@ Methods currently implemented are:
 
 
 .. image:: ./figures/RVT_visualisations.jpg
+   :width: 700px
 
 References
 ----------
