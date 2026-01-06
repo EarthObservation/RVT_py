@@ -3,8 +3,6 @@
 Prismatic openness
 ========
 
-ToDo CHANGE FIGURE!
-
 .. image:: ./figures/rvtvis_open_pos.png
 
 Prismatic openness was developed to facilitate detection of small structures by Canuto et al. (2018) and modifed by Verbovšek et al. (2019) by replacing the three-times vertical exaggeration of terrain to compute hillshading from three directions with an overlay fusion technique (blend mode) for positive and negative openness. This improves the effectiveness of conveying information because colors are more pronounced and the general topography is well-defined.
