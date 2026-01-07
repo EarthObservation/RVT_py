@@ -3,7 +3,8 @@
 Sky illumination
 ================
 
-.. image:: ./figures/rvtvis_skyillum.png
+.. image:: ./figures/rvtvis_IDL_Pivola_05m_SIM_overcast_250sp_100px_8bit.jpg
+   :width: 650px
 
 Sky illumination models quantitatively represent natural luminance of the sky under various atmospheric conditions. 
 
