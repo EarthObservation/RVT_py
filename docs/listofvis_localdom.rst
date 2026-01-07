@@ -3,7 +3,8 @@
 Local dominance
 ===============
 
-.. image:: ./figures/rvtvis_localdom.png
+.. image:: ./figures/rvt_qgis_Pivola_dem_05m_LD_R_M10-20_DI1_A15_OH1.7_8bit.jpg
+   :width: 650px
 
 Local dominance is based on computing how dominant an observer standing on each pixel would be for a local surrounding area. 
 
