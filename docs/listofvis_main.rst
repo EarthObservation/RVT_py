@@ -15,8 +15,9 @@ Unless otherwise referenced, the descriptions are simplified versions of the inf
 
 .. toctree::
 
-   listofvis_slope
+   listofvis_VAT
    listofvis_hillshade
+   listofvis_slope
    listofvis_slrm
    listofvis_svf
    listofvis_openness
@@ -25,5 +26,4 @@ Unless otherwise referenced, the descriptions are simplified versions of the inf
    listofvis_skyillum
    listofvis_msrm
    listofvis_mstp
-   listofvis_VAT
    listofvis_emstp
