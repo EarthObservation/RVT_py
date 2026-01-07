@@ -3,7 +3,7 @@
 Prismatic openness
 ========
 
-.. image:: ./figures/rvt_qgis_Pivola_dem_05m_Prismatic_openness_8bit.jpg
+.. image:: ./figures/rvtvis_qgis_Pivola_dem_05m_Prismatic_openness_8bit.jpg
    :width: 650px
 Enhanced prismatic openness as implemented in RVT QGIS plugin.
 
