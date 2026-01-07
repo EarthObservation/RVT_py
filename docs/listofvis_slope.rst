@@ -3,7 +3,8 @@
 Slope
 =====
 
-.. image:: ./figures/rvtvis_slope.png
+.. image:: ./figures/rvtvis_qgis_Pivola_dem_05m_SLOPE_8bit.jpg
+   :width: 650px
 
 Slope (gradient) represents the maximum rate of change between each cell and its neighbours. It can be calculated either as percentage of slope or degree of slope. It is the first derivative of a DEM and is aspect independent.
 
