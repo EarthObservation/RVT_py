@@ -3,7 +3,8 @@
 Sky-view factor
 ===============
 
-.. image:: ./figures/rvtvis_svf.png
+.. image:: ./figures/rvtvis_qgis_Pivola_dem_05m_SVF_R10_D16_8bit.jpg
+   :width: 650px
 
 Sky-view factor (SVF) can be used as an alternative method of relief shading in order to overcome the directional problems of hillshading (see also: openness).
 
@@ -16,7 +17,8 @@ In areas with flat or very gentle topography, sky-view factor is generally limit
 Anisotropic sky-view factor
 ---------------------------
 
-.. image:: ./figures/rvtvis_asvf.png
+.. image:: ./figures/rvtvis_qgis_Pivola_dem_05m_SVF-A_R10_D16_A315_AIstrong_8bit.jpg
+   :width: 650px
 
 Anisotropic (directional) SVF assumes that the sky is brighter in some directions than in others. The brightness can depend on the azimuth and solar distance from the imaginary light source. This brings back some of the ‘plasticity’ of hill shading and gives better details on very flat areas.
 
