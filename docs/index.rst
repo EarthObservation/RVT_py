@@ -13,7 +13,7 @@ Sky-view factor, for example, can be efficiently used in numerous studies where 
 RVT visualization methods
 -------------------------
 
-Methods currently implemented are:
+:ref:`listofvis_main` currently implemented are:
 
 *   hillshading
 *   hillshading from multiple directions
