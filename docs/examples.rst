@@ -10,7 +10,7 @@ Both notebooks are available in the `examples folder in the repository <https://
 
 Tiled processing
 ++++++++++++++++
-We have prepared two Jupyter Notebooks for processing of large datasets (to large to fit in RAM).
+We have prepared two Jupyter Notebooks for processing of large datasets (too large to fit in RAM).
 The notebooks can also be used for processing large number of GeoTIFF files with one click.
 
 The underlying Python code splits large datasets into tiles and uses multiprocessing to speed up the computation.
