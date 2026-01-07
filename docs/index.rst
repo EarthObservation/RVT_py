@@ -1,4 +1,4 @@
-.. # Relief Visualization Toolbox in Python documentation master file, created by
+ds.. # Relief Visualization Toolbox in Python documentation master file, created by
    sphinx-quickstart on Mon Oct 12 08:11:32 2020.
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
@@ -13,7 +13,7 @@ Sky-view factor, for example, can be efficiently used in numerous studies where 
 RVT visualization methods
 -------------------------
 
-:ref:`listofvis_main` currently implemented are:
+Methods currently implemented are (see also :ref:`listofvis_main`):
 
 *   hillshading
 *   hillshading from multiple directions
