@@ -3,6 +3,12 @@
 QGIS plugin release history
 ===========================
 
+v0.10.0
+------
+* Updated to RVT version 2.2.3
+* Added e4MSTP to Blender combinations
+* Fixed minor bugs
+
 v0.9.6
 ------
 *   Use rvt-py v2.2.1.
