@@ -3,7 +3,7 @@
 Visualisation for Archaeological Topography (VAT)
 ========
 
-.. image:: ./figures/rvt_qgis_Pivola_dem_05m_VAT_8bit.jpg
+.. image:: ./figures/rvtvis_qgis_Pivola_dem_05m_VAT_8bit.jpg
    :width: 650px
 Visualisation for archaeological topography (VAT) computed with settings for general terrain.
 
@@ -20,7 +20,7 @@ The default (general) computation settings are used to visualise a diverse lands
 Combined visualisation for archaeological topography
 --------
 
-.. image:: ./figures/rvt_qgis_Pivola_dem_05m_VAT_combined_8bit.jpg
+.. image:: ./figures/rvtvis_qgis_Pivola_dem_05m_VAT_combined_8bit.jpg
    :width: 650px
 
 Combined visualisation for archaeological topography (combined VAT or CVAT) blends results computed with settings for general and flat terrain. Combined VAT is a very suitable ‘base’ visualisation that can be fused with other techniques to add additional information in the form of colors. It is comparable across diverse areas and is a suitable technique for archaeological mapping using lidar data derivatives.
