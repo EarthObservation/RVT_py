@@ -3,7 +3,8 @@
 Multi-scale topographic position (MSTP)
 ================================
 
-.. image:: ./figures/rvtvis_mstp.png
+.. image:: ./figures/rvt_qgis_Pivola_dem_05m_MSTP_5_50_500_L0.9_8bit.jpg
+   :width: 650px
 
 A multi-scale topographic position (MSTP) is generated from a hyperscale datacube of the topographic metric deviation from mean elevation (SLRM) computed with various search radius parameters and reduced to three dimensions by extracting the absolute maximum value from micro-, meso-, and macro-scale ranges, written as a three band (RGB) raster.
 
