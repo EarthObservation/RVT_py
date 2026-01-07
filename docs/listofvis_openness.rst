@@ -6,7 +6,8 @@ Openness
 Positive openness
 -----------------
 
-.. image:: ./figures/rvtvis_open_pos.png
+.. image:: ./figures/rvt_qgis_Pivola_dem_05m_OPEN-POS_R10_D16_8bit.jpg
+   :width: 650px
 
 Openness is another proxy for relief shading (see also: sky-view factor). The method is based on estimating the mean horizon elevation angle within a defined search radius. The mean value of all zenith angles gives positive openness, while the mean nadir value gives negative openness. 
 
@@ -17,7 +18,8 @@ However, openness has big advantage for automatic feature detection because ‘s
 Negative openness
 -----------------
 
-.. image:: ./figures/rvtvis_open_neg.png
+.. image:: ./figures/rvt_qgis_Pivola_dem_05m_OPEN-NEG_R10_D16_8bit.jpg
+   :width: 650px
 
 Negative openness is not the inverse of positive openness and it provides additional information. While positive openness highlights topographic convexities (e.g. ridges between hollow ways and rims of bomb craters), negative openness emphasizes the lowest parts of concavities, (e.g. the actual hollow ways, the lowest parts of gorges and the lower edges of cliffs). 
 
