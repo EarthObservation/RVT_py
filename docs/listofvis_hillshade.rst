@@ -3,7 +3,7 @@
 Hillshading
 ===========
 
-.. image:: ./figures/rvt_qgis_Pivola_dem_05m_HS_A315_H35_8bit.jpg
+.. image:: ./figures/rvtvis_qgis_Pivola_dem_05m_HS_A315_H35_8bit.jpg
    :width: 650px
 
 Hillshading (also known as relief shading or shaded relief) provides the most ‘natural’, i.e. intuitively readable, visual impression of all techniques. 
@@ -19,7 +19,7 @@ To investigate features on moderate to steep slopes, shaded relief should be use
 Hillshading from multiple directions
 ------------------------------
 
-.. image:: ./figures/rvt_qgis_Pivola_dem_05m_MULTI-HS_D16_H35_8bit.jpg
+.. image:: ./figures/rvtvis_qgis_Pivola_dem_05m_MULTI-HS_D16_H35_8bit.jpg
    :width: 650px
 
 Producing multiple hillshading outputs by illuminating a surface from multiple directions enhances the visualization of topography. 
