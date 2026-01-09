@@ -19,6 +19,7 @@ Setting up
 #. Start ArcGIS Pro, open a project, and add a DEM layer.
 
    .. image:: ./figures/ArcGISPro_dem.png
+      :width: 650px
 
 #. Select ``Imagery → Raster Functions``.
 
@@ -37,10 +38,12 @@ Computing visualizations
 #. Select the appropriate function, e.g. ``svf``, specify the processing parameters and select ``Create new layer`` (or ``Save As``).
 
    .. image:: ./figures/ArcGISPro_svf_parameters.png
+      :width: 60%
 
 #. The visualization is computed and displayed as a layer in the main window.
 
    .. image:: ./figures/ArcGISPro_result_svf.jpg
+      :width: 650px
 
 ----
 
