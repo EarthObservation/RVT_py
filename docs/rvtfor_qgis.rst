@@ -15,11 +15,12 @@ Setting up
 #. Open a DEM file to be visualized.
 
    .. image:: ./figures/rvt_qgis_dem.png
+      :width: 650px
 
 #. Select ``Raster → Relief Visualization Toolbox`` or the RVT icon in the toolbar.
 
    .. image:: ./figures/rvt_qgis_menu.png
-   
+      :width: 650px
 ----
 
 Computing visualizations
@@ -28,6 +29,7 @@ Computing visualizations
 #. Select the DEM in ``List of currently selected files:``, then select the ``Visualizations`` tab. In the ``Visualization`` tab select ``preferred visualizations`` and set their parameters (options).
 
    .. image:: ./figures/rvt_qgis_toolbox.png
+      :width: 60%
 
 #. Select ``Start`` to calculate the visualizations.
 
@@ -36,6 +38,8 @@ The visualizations are stored as GeoTIFFs in the same folder as the input file, 
 Visualizations are also added to the main window of QGIS  if the ``Add to QGIS`` check box is checked. If the ``Overwrite`` check box is checked, the program overwrites any existing visualization files.
 
    .. image:: ./figures/rvt_qgis_svf.png
+      :width: 650px
+
 
 .. seealso:: Find out more about visualizations and their parameters in :ref:`rvt.vis`.
 
@@ -55,10 +59,13 @@ Saved JSON combinations can be added by selecting the ``Load ...`` button (selec
 If you check the ``Use preset values for terrain type`` it applies the selected terrain type settings (this changes the normalization min and max, and visualizations parameters). If you check ``Save visualizations``, all the visualization parameters used in the blender combination will be saved.
 
    .. image:: ./figures/rvt_qgis_blender.png
+      :width: 60%
+
 
 #. Select ``Blend images`` to calculate the blended (fused, combined) image.
 
-   .. image:: ./figures/rvt_qgis_vat.png
+   .. image:: ./figures/rvt_qgis_cvat.png
+      :width: 650px
 
 The blended image is stored as a GeoTIFF in the same folder as the input file or to a custom location (if ``Save to raster location`` check box is unchecked and a directory is set in the text field next to it).
 
@@ -70,3 +77,4 @@ Using the processing functions
 #. Go to the ``Processing Toolbox → Relief visualization toolbox`` to access all the RVT visualization functions.
 
    .. image:: ./figures/rvt_qgis_processing_toolbox.png
+      :width: 30%
