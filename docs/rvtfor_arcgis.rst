@@ -24,6 +24,7 @@ Setting up
 #. Select ``Imagery → Raster Functions``.
 
    .. image:: ./figures/ArcGISPro_ribbon_raster_functions.png
+      :width: 650px
 
 #. Select ``Custom`` and open the group ``rvt-arcgis-pro``.
 
@@ -38,7 +39,7 @@ Computing visualizations
 #. Select the appropriate function, e.g. ``svf``, specify the processing parameters and select ``Create new layer`` (or ``Save As``).
 
    .. image:: ./figures/ArcGISPro_svf_parameters.png
-      :width: 60%
+      :width: 300px
 
 #. The visualization is computed and displayed as a layer in the main window.
 
