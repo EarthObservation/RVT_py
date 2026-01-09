@@ -27,6 +27,7 @@ Setting up
 #. Select ``Custom`` and open the group ``rvt-arcgis-pro``.
 
    .. image:: ./figures/ArcGISPro_raster_functions.png
+       :width: 450px
 
 ----
 
