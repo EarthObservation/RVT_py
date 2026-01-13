@@ -7,7 +7,7 @@ Visualisation for Archaeological Topography (VAT)
    :width: 650px
 Visualisation for archaeological topography (VAT) computed with settings for general terrain.
 
-.. image:: ./figures/rvt_qgis_Pivola_dem_05m_VAT_flat_8bit.jpg
+.. image:: ./figures/rvtvis_qgis_Pivola_dem_05m_VAT_flat_8bit.jpg
    :width: 650px
 Visualisation for archaeological topography (VAT) computed with settings for flat terrain.
 
