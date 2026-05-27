@@ -337,7 +337,7 @@
             "mstp_broad_scale": {
                 "min": 50,
                 "max": 500,
-                "step": 500,
+                "step": 50,
                 "description": "Broad scale minimum radius, maximum radius and step in pixels to calculate maximum mean deviation from elevation. All have to be integers!"
             },
             "mstp_lightness": {
