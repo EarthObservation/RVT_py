@@ -62,7 +62,7 @@ Let's say we wanted to use a DEM stored in ``dem_path`` to compute a hillshade  
     # call the function rvt.default.save_raster() and define the function parameters:
     #   src_raster_path: source raster path (dem_path) to copy metadata, 
     #   out_raster_path: path to new file (visualization tif), 
-    #   out_raster_arr: vizualization numpy array, 
+    #   out_raster_arr: visualization numpy array, 
     #   no_data: value of no_data (visualizations return no data as np.nan)
     rvt.default.save_raster(
         src_raster_path=dem_path, 
