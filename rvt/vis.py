@@ -21,7 +21,7 @@ Copyright:
 # python libraries
 import numpy as np
 from scipy.interpolate import griddata, RectBivariateSpline
-from scipy.ndimage.morphology import distance_transform_edt
+from scipy.ndimage import distance_transform_edt
 from scipy.spatial import cKDTree
 
 
