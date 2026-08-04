@@ -29,7 +29,13 @@ import numpy as np
 
 import rvt.default
 import rvt.vis
-from rvt.blend_func import *
+from rvt.blend_func import (
+    blend_images,
+    gray_scale_to_color_ramp,
+    normalize_image,
+    render_images,
+    scale_0_to_1,
+)
 
 
 def create_blender_file_example(file_path=None):
@@ -258,20 +264,20 @@ class BlenderCombination:
                 colormap = str(layer["colormap"])
                 if colormap.lower() == "null" or colormap.lower() == "none":
                     colormap = None
-            except:
+            except KeyError:
                 colormap = None
             if colormap is not None:
                 try:
                     min_colormap_cut = str(layer["min_colormap_cut"])
                     if min_colormap_cut.lower() == "null" or min_colormap_cut.lower() == "none":
                         min_colormap_cut = None
-                except:
+                except KeyError:
                     min_colormap_cut = None
                 try:
                     max_colormap_cut = str(layer["max_colormap_cut"])
                     if max_colormap_cut.lower() == "null" or max_colormap_cut.lower() == "none":
                         max_colormap_cut = None
-                except:
+                except KeyError:
                     max_colormap_cut = None
 
             self.add_layer(BlenderLayer(vis_method=vis_method, normalization=norm, minimum=norm_min, maximum=norm_max,
