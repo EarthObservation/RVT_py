@@ -73,7 +73,7 @@ class DefaultValues:
     hs_sun_el : int
         Hillshade. Solar vertical angle (above the horizon) in degrees.
     hs_shadow : bool
-        Hillshade. If 1 (Ture) computes binary shadow raster, if 0 (False) it doesn't.
+        Hillshade. If 1 (True) computes binary shadow raster, if 0 (False) it doesn't.
     mhs_compute : bool
         If compute Multi directional hillshade. Parameter for GUIs.
     mhs_nr_dir : int
@@ -2334,7 +2334,7 @@ class DefaultValues:
 
         dat.write("\n")
 
-        dat.write("# The following visualizations have been preformed:\n\n")
+        dat.write("# The following visualizations have been performed:\n\n")
         if self.hs_compute:
             dat.write("\tHillshade\n")
             dat.write("\t\ths_sun_el=\t\t{}\n".format(self.hs_sun_el))

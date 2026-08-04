@@ -136,7 +136,7 @@ def normalize_perc(image, minimum, maximum):
 def advanced_normalization(image, minimum, maximum, normalization):
     """Runs normalization based on the selected normalization type: value or percent."""
 
-    # Preform checks if correct values were given
+    # Perform checks if correct values were given
     if minimum == maximum and normalization == "value":
         raise Exception("rvt.blend_func.advanced_normalization: If normalization == value, min and max cannot be the"
                         " same!")
@@ -427,7 +427,7 @@ def apply_opacity(active, background, opacity):
 
 
 def normalize_image(visualization, image, min_norm, max_norm, normalization):
-    """Main function for normalization. Runs advanced normalization on the array and preforms special operations for
+    """Main function for normalization. Runs advanced normalization on the array and performs special operations for
     some visualization types (e.g. invert scale for slope, scale for mhs, etc.).
     """
     if visualization is None:
@@ -463,7 +463,7 @@ def cut_off_normalize(image, mode, cutoff_min=None, cutoff_max=None, bool_norm=T
     One band image cut-off or normalization or both. Image is 2D np.ndarray of raster, mode is perc or value
     (min and max units), min and max are minimum value to cutoff and maximum value to cutoff.
     (e.x. percent min=2 and max=3 -> cutoff lower 2% values and higher 3% values;
-     e.x. value min=10 and max=60 -> cutoff bellow 10 and above 60, image values will be 10-60)
+     e.x. value min=10 and max=60 -> cutoff below 10 and above 60, image values will be 10-60)
     """
     if cutoff_min is not None and cutoff_max is not None:
         if cutoff_min == cutoff_max and mode == "value":

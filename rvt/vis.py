@@ -1638,7 +1638,7 @@ def fill_where_nan(dem, method="idw"):
             if np.all(np.isnan(nan_surrounding_arr)):  # whole surrounding array is nan
                 dem_out[i_row, i_column] = np.nan
             else:
-                # calculate distance array (wight matrix)
+                # calculate distance array (weight matrix)
                 dist_arr = np.ones(nan_surrounding_arr.shape)  # all ones
                 # center pixel is 0 to calc distance matrix around 0 pixel with distance_transform_edt
                 dist_arr[i_row_center, i_column_center] = 0
