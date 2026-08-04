@@ -23,7 +23,7 @@ Copyright:
 import warnings
 
 import numpy as np
-from matplotlib.cm import get_cmap
+from matplotlib import colormaps
 from matplotlib.colors import LinearSegmentedColormap
 
 
@@ -55,7 +55,7 @@ def gray_scale_to_color_ramp(gray_scale, colormap, min_colormap_cut=None, max_co
     rgba_out : np.array (3D: red 0-255, green 0-255, blue 0-255)
             If alpha False: np.array (4D: red 0-255, green 0-255, blue 0-255, alpha 0-255)
     """
-    cm = get_cmap(colormap)
+    cm = colormaps.get_cmap(colormap)
 
     # Truncate colormap if required
     if min_colormap_cut is not None or max_colormap_cut is not None:
