@@ -7,8 +7,6 @@ Copyright:
 """
 import rvt.default
 import rvt.blend
-import rvt.vis
-
 
 # Prepare input data for test
 dem_path = r"c:\test_data\test_small\test_small.tif"

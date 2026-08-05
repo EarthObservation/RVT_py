@@ -985,6 +985,7 @@ def horizon_generate_pyramids(dem,
             last_radius = np.round(max_fine_radius / pyramid_scale ** pyramid_levels, decimals=0)
 
     # fill out the pyramid dict with the metadata required for horizon searching.
+    dem_coarse = None
     for level in np.arange(pyramid_levels + 1):
         # the level 0 contains the other min_radius as the rest of levels
         if level == 0:
