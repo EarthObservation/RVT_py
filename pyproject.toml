@@ -32,10 +32,28 @@ dependencies = [
     "scipy",
     "GDAL",
     "matplotlib",
+]
+
+[project.optional-dependencies]
+examples = [
     "pandas",
     "geopandas",
-    "jupyter",
     "rasterio",
+    "shapely",
+    "jupyter",
+    "ipython",
+    "ipywidgets",
+    "traitlets",
+]
+test = [
+    "pytest",
+    "rasterio",
+]
+docs = [
+    "sphinx",
+    "nbsphinx",
+    "sphinxcontrib-bibtex",
+    "furo",
 ]
 
 [project.urls]
