@@ -1,0 +1,50 @@
+[build-system]
+requires = ["setuptools>=77.0.3"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "rvt-py"
+version = "2.2.3"
+description = "Relief Visualization Toolbox Python library. It helps scientist visualize raster elevation model datasets."
+readme = "README.md"
+requires-python = ">=3.11"
+license = "Apache-2.0"
+license-files = ["LICENSE"]
+authors = [
+    { name = "ZRC SAZU and University of Ljubljana (UL FGG)", email = "ziga.kokalj@zrc-sazu.si" },
+]
+keywords = [
+    "relief-visualization-toolbox",
+    "relief-visualization",
+    "relief",
+    "rvt",
+    "raster",
+    "raster-visualization",
+    "visualization",
+]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Programming Language :: Python :: 3",
+    "Operating System :: OS Independent",
+]
+dependencies = [
+    "numpy",
+    "scipy",
+    "GDAL",
+    "matplotlib",
+    "pandas",
+    "geopandas",
+    "jupyter",
+    "rasterio",
+]
+
+[project.urls]
+Documentation = "https://rvt-py.readthedocs.io/en/latest/"
+Source = "https://github.com/EarthObservation/RVT_py"
+Issues = "https://github.com/EarthObservation/RVT_py/issues"
+"Old RVT" = "https://iaps.zrc-sazu.si/en/rvt#v"
+"ArcGIS Pro" = "https://github.com/EarthObservation/rvt-arcgis-pro"
+"QGIS plugin" = "https://github.com/EarthObservation/rvt-qgis"
+
+[tool.setuptools]
+packages = ["rvt"]
