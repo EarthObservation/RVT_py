@@ -48,42 +48,50 @@ When using the tools, please cite the following:
 
 ## Installation
 
-The RVT Python package can be installed using Conda or PyPI, and can be used in Python scripts, Jupyter Notebooks and ArcGIS Pro.
+RVT requires Python 3.11 or newer. Its runtime dependencies are NumPy, SciPy, GDAL and Matplotlib. GDAL includes native libraries, so Conda is the recommended installation method for most users.
 
-RVT can also be installed as [a set of custom raster functions for ArcGIS](https://rvt-py.readthedocs.io/en/latest/install_arcgis.html "ArcGIS installation"), and [a plugin for QGIS](https://rvt-py.readthedocs.io/en/latest/install_qgis.html "QGIS installation").
-
-You can also clone the repository.
+RVT is also available as [custom raster functions for ArcGIS Pro](https://rvt-py.readthedocs.io/en/latest/install_arcgis.html "ArcGIS installation") and as [a QGIS plugin](https://rvt-py.readthedocs.io/en/latest/install_qgis.html "QGIS installation").
 
 ### Conda
 
-The ``rvt`` package is [available from the Anaconda Cloud repository](https://anaconda.org/rvtpy/rvt_py "rvt_py on Anaconda Cloud"). Using Conda to install the ``rvt`` package will include all required libraries.
+The current Conda package is published on the [rvtpy channel](https://anaconda.org/rvtpy/rvt_py "rvt_py on Anaconda Cloud"). Create an environment using the RVT channel and conda-forge:
 
-To use this method, first [install Anaconda and Conda](https://docs.conda.io/projects/conda/en/latest/user-guide/getting-started.html "Getting started with conda").
-
-Then open Anaconda Prompt (Windows) or Terminal (MacOS) and run:
-
-``conda install -c rvtpy rvt_py``
+```bash
+conda create --name rvt --override-channels --channel conda-forge --channel rvtpy python=3.11 rvt_py
+conda activate rvt
+```
 
 ### PyPI
 
-Another option is to install the ``rvt-py`` package and required libraries [using the Python Package Index (PyPI)](https://pypi.org/project/rvt-py "rvt-py on PyPI").
+A standard PyPI installation works when a compatible GDAL native library and its Python bindings are already available:
 
-PyPI usually has problems installing ``gdal``, so [install ``gdal`` first](https://pypi.org/project/GDAL/ "GDAL on PyPI") to use this method.
+```bash
+python -m pip install rvt-py
+```
 
-Then open Command Prompt (Windows) or Terminal (MacOS) and run:
+If GDAL is not already installed, use the Conda method above. You can also let Conda supply the runtime dependencies and install RVT itself from PyPI:
 
-``pip install rvt-py``
+```bash
+conda create --name rvt-pip --channel conda-forge python=3.11 gdal numpy scipy matplotlib pip
+conda activate rvt-pip
+python -m pip install --no-deps rvt-py
+```
 
-### Requirements
+The `--no-deps` option prevents pip from replacing the packages supplied by Conda.
 
-Required libraries (specified versions have been tested, other versions may also work):
+To run the notebooks and repository examples in a pip-managed environment, install the optional example dependencies:
 
-*   numpy 1.19.2
-*   scipy 1.5.2
-*   gdal 3.0.2
-*   rasterio 1.2.6
+```bash
+python -m pip install "rvt-py[examples]"
+```
 
-We recommend using Python 3.6 or higher and a Conda environment (this works best with ``gdal``).
+Verify the installation with:
+
+```bash
+python -c "from osgeo import gdal; import rvt; import rvt.vis; import rvt.blend"
+```
+
+See the [installation documentation](https://rvt-py.readthedocs.io/en/latest/install_main.html) for more information.
 
 ## Documentation
 Documentation of the package and its use is available at [Relief Visualization Toolbox in Python documentation](https://rvt-py.readthedocs.io/).
