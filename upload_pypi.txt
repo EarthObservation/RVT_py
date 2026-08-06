@@ -1,3 +1,12 @@
+===============================================================================
+WARNING: OBSOLETE HISTORICAL RELEASE CHECKLIST — DO NOT USE FOR THE NEXT RELEASE
+===============================================================================
+
+This file is retained only as a historical release checklist. Its commands are
+obsolete and must not be used for the next release because they rely on the old
+setup.py build process. A replacement publishing procedure will be prepared in
+a later roadmap task.
+
 Before starting, don't forget to add changes to changelog (docs/releases.rst)!
 
 Upload checklist:
