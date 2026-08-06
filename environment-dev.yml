@@ -1,0 +1,15 @@
+name: rvt-dev
+channels:
+  - conda-forge
+dependencies:
+  - python=3.11
+  - gdal
+  - numpy
+  - scipy
+  - matplotlib
+  - pytest
+  - pytest-cov
+  - ruff
+  - pre-commit
+  - build
+  - twine

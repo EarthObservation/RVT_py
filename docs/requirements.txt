@@ -1,7 +1,2 @@
-matplotlib
-numpy
-scipy
-rasterio
-nbsphinx
-sphinxcontrib-bibtex
-furo
+# Documentation and runtime dependencies are declared in pyproject.toml.
+.[docs]
