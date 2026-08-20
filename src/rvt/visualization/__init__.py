@@ -6,6 +6,7 @@ Visualization configs: one frozen dataclass per visualization, each with a
 from rvt.visualization.hillshade import Hillshade
 from rvt.visualization.local_dominance import LocalDominance
 from rvt.visualization.msrm import MultiScaleReliefModel
+from rvt.visualization.mstp import MultiScaleTopographicPosition
 from rvt.visualization.multi_hillshade import MultiHillshade
 from rvt.visualization.sky_view_factor import (
     NegativeOpenness,
@@ -21,6 +22,7 @@ __all__ = [
     "LocalDominance",
     "MultiHillshade",
     "MultiScaleReliefModel",
+    "MultiScaleTopographicPosition",
     "NegativeOpenness",
     "NoiseRemoval",
     "SimpleLocalReliefModel",
