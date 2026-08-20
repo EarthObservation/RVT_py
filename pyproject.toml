@@ -9,6 +9,7 @@ readme = "README.md"
 license = { file = "LICENSE" }
 requires-python = ">=3.12,<3.13"
 dependencies = [
+    "affine>=2.4.0,<3.0.0",
     "matplotlib>=3.11.0,<4.0.0",
     "numpy>=2.0.0,<3.0.0",
     "rasterio>=1.5.0,<2.0.0",
@@ -58,7 +59,7 @@ docstring-code-format = true
 docstring-code-line-length = 72
 
 [tool.pytest.ini_options]
-pythonpath = ["src"]
+pythonpath = ["src", "."]
 testpaths = ["tests"]
 
 [tool.pyrefly]
