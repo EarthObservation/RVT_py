@@ -8,6 +8,8 @@ from rvt.visualization.local_dominance import LocalDominance
 from rvt.visualization.msrm import MultiScaleReliefModel
 from rvt.visualization.mstp import MultiScaleTopographicPosition
 from rvt.visualization.multi_hillshade import MultiHillshade
+from rvt.visualization.shadow import ShadowHorizon, ShadowHorizonResult
+from rvt.visualization.sky_illumination import SkyIllumination, SkyModel
 from rvt.visualization.sky_view_factor import (
     NegativeOpenness,
     NoiseRemoval,
@@ -25,7 +27,11 @@ __all__ = [
     "MultiScaleTopographicPosition",
     "NegativeOpenness",
     "NoiseRemoval",
+    "ShadowHorizon",
+    "ShadowHorizonResult",
     "SimpleLocalReliefModel",
+    "SkyIllumination",
+    "SkyModel",
     "SkyViewFactor",
     "SkyViewFactorResult",
     "SlopeAspect",
