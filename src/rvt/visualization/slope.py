@@ -115,6 +115,24 @@ class SlopeAspect:
     def __post_init__(self) -> None:
         validate_vertical_exaggeration(self.vertical_exaggeration)
 
+    def slope_output_stem(self, dem_name: str) -> str:
+        """
+        Return the output file stem for the slope member, e.g. ``dem_SLOPE``.
+
+        :param dem_name: Stem of the DEM file name.
+        :returns: The output file stem, without extension.
+        """
+        return f"{dem_name}_SLOPE"
+
+    def aspect_output_stem(self, dem_name: str) -> str:
+        """
+        Return the output file stem for the aspect member, e.g. ``dem_ASPECT``.
+
+        :param dem_name: Stem of the DEM file name.
+        :returns: The output file stem, without extension.
+        """
+        return f"{dem_name}_ASPECT"
+
     def compute(
         self, dem: NDArray[np.float32], resolution: Resolution
     ) -> SlopeAspectResult:

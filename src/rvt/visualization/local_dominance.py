@@ -5,15 +5,18 @@ Local dominance.
 from __future__ import annotations
 
 from dataclasses import dataclass
+from typing import ClassVar
 
 import numpy as np
 from numpy.typing import NDArray
 
 from rvt.core import (
     Resolution,
+    format_parameter,
     validate_dem_and_resolution,
     validate_vertical_exaggeration,
 )
+from rvt.stretch import Stretch, StretchMode
 
 
 @dataclass(frozen=True)
@@ -36,6 +39,8 @@ class LocalDominance:
     :param vertical_exaggeration: Factor the DEM heights are multiplied by.
     """
 
+    EIGHT_BIT_STRETCH: ClassVar[Stretch] = Stretch(StretchMode.VALUE, 0.5, 1.8)
+
     minimum_radius: int = 10
     maximum_radius: int = 20
     radius_increment: int = 1
@@ -45,6 +50,20 @@ class LocalDominance:
 
     def __post_init__(self) -> None:
         validate_vertical_exaggeration(self.vertical_exaggeration)
+
+    def output_stem(self, dem_name: str) -> str:
+        """
+        Return the parameter-encoded output file stem, e.g.
+        ``dem_LD_R_M10-20_DI1_A15_OH1.7``.
+
+        :param dem_name: Stem of the DEM file name.
+        :returns: The output file stem, without extension.
+        """
+        return (
+            f"{dem_name}_LD_R_M{self.minimum_radius}-{self.maximum_radius}"
+            f"_DI{self.radius_increment}_A{self.angular_resolution}"
+            f"_OH{format_parameter(self.observer_height)}"
+        )
 
     def compute(
         self, dem: NDArray[np.float32], resolution: Resolution

@@ -11,6 +11,8 @@ from numpy.typing import NDArray
 
 from rvt.core import Resolution
 from rvt.io import Raster
+from rvt.session import Session as Session
+from rvt.session import SessionTask as SessionTask
 
 __version__ = "3.0.0.dev0"
 

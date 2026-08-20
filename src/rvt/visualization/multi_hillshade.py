@@ -11,6 +11,7 @@ from numpy.typing import NDArray
 
 from rvt.core import (
     Resolution,
+    format_parameter,
     validate_dem_and_resolution,
     validate_vertical_exaggeration,
 )
@@ -45,6 +46,18 @@ class MultiHillshade:
             raise ValueError(
                 f"sun_elevation must be between 0 and 90, got '{self.sun_elevation}'!"
             )
+
+    def output_stem(self, dem_name: str) -> str:
+        """
+        Return the parameter-encoded output file stem, e.g. ``dem_MULTI-HS_D16_H35``.
+
+        :param dem_name: Stem of the DEM file name.
+        :returns: The output file stem, without extension.
+        """
+        return (
+            f"{dem_name}_MULTI-HS_D{self.directions}"
+            f"_H{format_parameter(self.sun_elevation)}"
+        )
 
     def compute(
         self, dem: NDArray[np.float32], resolution: Resolution

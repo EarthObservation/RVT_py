@@ -12,6 +12,7 @@ from numpy.typing import NDArray
 
 from rvt.core import (
     Resolution,
+    format_parameter,
     validate_dem_and_resolution,
     validate_vertical_exaggeration,
 )
@@ -58,6 +59,32 @@ class ShadowHorizon:
             raise ValueError(
                 f"elevation must be between 0 and 90, got '{self.elevation}'!"
             )
+
+    def shadow_output_stem(self, dem_name: str) -> str:
+        """
+        Return the output file stem for the shadow member, e.g.
+        ``dem_shadow_A315_H35`` (lowercase code, matching the legacy scheme).
+
+        :param dem_name: Stem of the DEM file name.
+        :returns: The output file stem, without extension.
+        """
+        return (
+            f"{dem_name}_shadow_A{format_parameter(self.azimuth)}"
+            f"_H{format_parameter(self.elevation)}"
+        )
+
+    def horizon_output_stem(self, dem_name: str) -> str:
+        """
+        Return the output file stem for the horizon member, e.g.
+        ``dem_horizon_A315_H35``.
+
+        :param dem_name: Stem of the DEM file name.
+        :returns: The output file stem, without extension.
+        """
+        return (
+            f"{dem_name}_horizon_A{format_parameter(self.azimuth)}"
+            f"_H{format_parameter(self.elevation)}"
+        )
 
     def compute(
         self, dem: NDArray[np.float32], resolution: Resolution

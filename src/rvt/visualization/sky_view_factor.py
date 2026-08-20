@@ -6,16 +6,18 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from enum import StrEnum, auto
-from typing import NamedTuple
+from typing import ClassVar, NamedTuple
 
 import numpy as np
 from numpy.typing import NDArray
 
 from rvt.core import (
     Resolution,
+    format_parameter,
     validate_dem_and_resolution,
     validate_vertical_exaggeration,
 )
+from rvt.stretch import Stretch, StretchMode
 
 
 class NoiseRemoval(StrEnum):
@@ -28,6 +30,12 @@ class NoiseRemoval(StrEnum):
     LOW = auto()
     MEDIUM = auto()
     HIGH = auto()
+
+    def _file_name_suffix(self) -> str:
+        """Return the file name suffix encoding this level, empty for ``NONE``."""
+        if self == NoiseRemoval.NONE:
+            return ""
+        return f"_NR{self.value}"
 
     def _minimum_radius_percent(self) -> float:
         """Return the percent of the maximal search radius ignored near the pixel."""
@@ -280,6 +288,14 @@ class SkyViewFactor:
     :param vertical_exaggeration: Factor the DEM heights are multiplied by.
     """
 
+    EIGHT_BIT_STRETCH: ClassVar[Stretch] = Stretch(StretchMode.VALUE, 0.6375, 1.0)
+    ANISOTROPIC_EIGHT_BIT_STRETCH: ClassVar[Stretch] = Stretch(
+        StretchMode.VALUE, 0.7, 0.9
+    )
+    POSITIVE_OPENNESS_EIGHT_BIT_STRETCH: ClassVar[Stretch] = Stretch(
+        StretchMode.VALUE, 60.0, 95.0
+    )
+
     directions: int = 16
     max_radius: int = 10
     noise_removal: NoiseRemoval = NoiseRemoval.NONE
@@ -293,6 +309,48 @@ class SkyViewFactor:
         validate_vertical_exaggeration(self.vertical_exaggeration)
         _validate_search_parameters(self.directions, self.max_radius)
         _anisotropy_parameters(self.anisotropy_level)
+
+    def sky_view_factor_output_stem(self, dem_name: str) -> str:
+        """
+        Return the output file stem for the sky-view factor member, e.g.
+        ``dem_SVF_R10_D16`` (a noise-removal suffix such as ``_NRhigh`` is
+        appended when noise removal is enabled).
+
+        :param dem_name: Stem of the DEM file name.
+        :returns: The output file stem, without extension.
+        """
+        return (
+            f"{dem_name}_SVF_R{self.max_radius}_D{self.directions}"
+            f"{self.noise_removal._file_name_suffix()}"
+        )
+
+    def anisotropic_output_stem(self, dem_name: str) -> str:
+        """
+        Return the output file stem for the anisotropic member, e.g.
+        ``dem_SVF-A_R10_D16_A315_ALlow``.
+
+        :param dem_name: Stem of the DEM file name.
+        :returns: The output file stem, without extension.
+        """
+        anisotropy_level = "low" if self.anisotropy_level == 1 else "high"
+        return (
+            f"{dem_name}_SVF-A_R{self.max_radius}_D{self.directions}"
+            f"_A{format_parameter(self.anisotropy_direction)}_AL{anisotropy_level}"
+            f"{self.noise_removal._file_name_suffix()}"
+        )
+
+    def positive_openness_output_stem(self, dem_name: str) -> str:
+        """
+        Return the output file stem for the positive-openness member, e.g.
+        ``dem_OPEN-POS_R10_D16``.
+
+        :param dem_name: Stem of the DEM file name.
+        :returns: The output file stem, without extension.
+        """
+        return (
+            f"{dem_name}_OPEN-POS_R{self.max_radius}_D{self.directions}"
+            f"{self.noise_removal._file_name_suffix()}"
+        )
 
     def compute(
         self, dem: NDArray[np.float32], resolution: Resolution
@@ -342,6 +400,11 @@ class NegativeOpenness:
     :param vertical_exaggeration: Factor the DEM heights are multiplied by.
     """
 
+    # Legacy 8-bit negative openness is inverted (deep is dark).
+    EIGHT_BIT_STRETCH: ClassVar[Stretch] = Stretch(
+        StretchMode.VALUE, 60.0, 95.0, invert=True
+    )
+
     directions: int = 16
     max_radius: int = 10
     noise_removal: NoiseRemoval = NoiseRemoval.NONE
@@ -350,6 +413,20 @@ class NegativeOpenness:
     def __post_init__(self) -> None:
         validate_vertical_exaggeration(self.vertical_exaggeration)
         _validate_search_parameters(self.directions, self.max_radius)
+
+    def output_stem(self, dem_name: str) -> str:
+        """
+        Return the parameter-encoded output file stem, e.g. ``dem_OPEN-NEG_R10_D16``
+        (the noise-removal suffix for level 3 is ``_NRhigh``, consistently with the
+        other sky-view visualizations, where legacy used ``_NRstrong`` here).
+
+        :param dem_name: Stem of the DEM file name.
+        :returns: The output file stem, without extension.
+        """
+        return (
+            f"{dem_name}_OPEN-NEG_R{self.max_radius}_D{self.directions}"
+            f"{self.noise_removal._file_name_suffix()}"
+        )
 
     def compute(
         self, dem: NDArray[np.float32], resolution: Resolution

@@ -97,6 +97,15 @@ class SimpleLocalReliefModel:
                 f" {MAXIMUM_RADIUS_CELLS}, got '{self.radius_cells}'!"
             )
 
+    def output_stem(self, dem_name: str) -> str:
+        """
+        Return the parameter-encoded output file stem, e.g. ``dem_SLRM_R20``.
+
+        :param dem_name: Stem of the DEM file name.
+        :returns: The output file stem, without extension.
+        """
+        return f"{dem_name}_SLRM_R{self.radius_cells}"
+
     def compute(
         self, dem: NDArray[np.float32], resolution: Resolution
     ) -> NDArray[np.float32]:

@@ -12,6 +12,7 @@ from numpy.typing import NDArray
 
 from rvt.core import (
     Resolution,
+    format_parameter,
     validate_dem_and_resolution,
     validate_vertical_exaggeration,
 )
@@ -171,6 +172,19 @@ class MultiScaleTopographicPosition:
         _validate_scale("local_scale", self.local_scale)
         _validate_scale("meso_scale", self.meso_scale)
         _validate_scale("broad_scale", self.broad_scale)
+
+    def output_stem(self, dem_name: str) -> str:
+        """
+        Return the parameter-encoded output file stem — the maximum radius of
+        each scale plus the lightness, e.g. ``dem_MSTP_5_50_500_L1.2``.
+
+        :param dem_name: Stem of the DEM file name.
+        :returns: The output file stem, without extension.
+        """
+        return (
+            f"{dem_name}_MSTP_{self.local_scale[1]}_{self.meso_scale[1]}"
+            f"_{self.broad_scale[1]}_L{format_parameter(self.lightness)}"
+        )
 
     def compute(
         self, dem: NDArray[np.float32], resolution: Resolution

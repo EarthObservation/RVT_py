@@ -439,6 +439,19 @@ class SkyIllumination:
                 f"maximum_fine_radius must be positive, got '{self.maximum_fine_radius}'!"
             )
 
+    def output_stem(self, dem_name: str) -> str:
+        """
+        Return the parameter-encoded output file stem, e.g.
+        ``dem_SIM_overcast_D32_100px``.
+
+        :param dem_name: Stem of the DEM file name.
+        :returns: The output file stem, without extension.
+        """
+        return (
+            f"{dem_name}_SIM_{self.sky_model}_D{self.directions}"
+            f"_{self.maximum_fine_radius}px"
+        )
+
     def compute(
         self, dem: NDArray[np.float32], resolution: Resolution
     ) -> NDArray[np.float32]:

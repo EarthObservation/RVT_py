@@ -21,6 +21,19 @@ class Resolution(NamedTuple):
     y: float
 
 
+def format_parameter(value: float) -> str:
+    """
+    Format a numeric parameter for a file name: integral values render without
+    a decimal part (``315.0`` becomes ``315``), others as-is (``22.5``).
+
+    :param value: The parameter value to encode.
+    :returns: The compact string form of the value.
+    """
+    if value == int(value):
+        return str(int(value))
+    return str(value)
+
+
 def validate_vertical_exaggeration(vertical_exaggeration: float) -> None:
     """
     Raise ``ValueError`` when the exaggeration factor is outside ±10000.
