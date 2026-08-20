@@ -405,6 +405,36 @@ class BlendCombination:
         """
         return _byte_scale_0_to_1(self.render(dem, resolution))
 
+    def to_json(self) -> str:
+        """
+        Serialize the combination to its ``rvt-blend/1`` JSON document (see
+        :func:`rvt.blending.serialization.combination_to_json`).
+
+        :returns: The JSON text.
+        :raises ValueError: If any layer uses :class:`ImageSource`, whose raw
+            array cannot be serialized.
+        """
+        # Imported here: serialization imports this module.
+        from rvt.blending.serialization import combination_to_json
+
+        return combination_to_json(self)
+
+    @classmethod
+    def from_json(cls, text: str) -> BlendCombination:
+        """
+        Deserialize a combination from its ``rvt-blend/1`` JSON document (see
+        :func:`rvt.blending.serialization.combination_from_json`).
+
+        :param text: JSON text produced by :meth:`to_json`.
+        :returns: The combination, equal to the one serialized.
+        :raises ValueError: If the schema version, a layer source kind, an
+            enum value, or any field is unknown, or the document is malformed.
+        """
+        # Imported here: serialization imports this module.
+        from rvt.blending.serialization import combination_from_json
+
+        return combination_from_json(text)
+
 
 def _apply_opacity(
     active: NDArray[np.floating], background: NDArray[np.floating], opacity: float

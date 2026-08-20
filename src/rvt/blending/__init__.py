@@ -22,6 +22,7 @@ from rvt.blending.combination import (
     VisualizationSource,
 )
 from rvt.blending.normalization import Normalization, NormalizationMode
+from rvt.blending.serialization import combination_from_json, combination_to_json
 
 __all__ = [
     "BlendCombination",
@@ -41,5 +42,7 @@ __all__ = [
     "SkyViewFactorSource",
     "SlopeGradientSource",
     "VisualizationSource",
+    "combination_from_json",
+    "combination_to_json",
     "presets",
 ]
