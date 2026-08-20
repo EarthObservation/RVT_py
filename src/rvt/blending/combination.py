@@ -7,15 +7,22 @@ from __future__ import annotations
 
 import warnings
 from dataclasses import dataclass, field
-from typing import Protocol
+from typing import ClassVar, Protocol
 
 import numpy as np
 from numpy.typing import NDArray
 
 from rvt.blending.blend_modes import BlendMode, blend_images_inplace
+from rvt.blending.colormap import ColorRamp
 from rvt.blending.normalization import Normalization, normalize_image, scale_0_to_1
 from rvt.core import Resolution
-from rvt.visualization import NegativeOpenness, SkyViewFactor, SlopeAspect, SlopeUnits
+from rvt.visualization import (
+    Hillshade,
+    NegativeOpenness,
+    SkyViewFactor,
+    SlopeAspect,
+    SlopeUnits,
+)
 
 
 class _ImageVisualization(Protocol):
@@ -159,6 +166,131 @@ class NegativeOpennessSource:
         return self.config.compute(dem, resolution)
 
 
+@dataclass(frozen=True)
+class OpennessDifferenceSource:
+    """
+    Positive minus negative openness as a blend layer (the difference layers
+    of the legacy CRIM and e4MSTP blends).
+
+    :param positive_config: The sky-view factor config providing positive
+        openness; must request positive openness.
+    :param negative_config: The negative-openness config.
+    :param inverts_normalization: Invert the normalized image.
+    """
+
+    positive_config: SkyViewFactor = field(
+        default=SkyViewFactor(include_positive_openness=True)
+    )
+    negative_config: NegativeOpenness = field(default=NegativeOpenness())
+    inverts_normalization: bool = False
+
+    def __post_init__(self) -> None:
+        if not self.positive_config.include_positive_openness:
+            raise ValueError(
+                "OpennessDifferenceSource requires a positive_config with"
+                " include_positive_openness=True!"
+            )
+
+    def compute_image(
+        self, dem: NDArray[np.float32], resolution: Resolution
+    ) -> NDArray[np.floating]:
+        """Compute positive openness minus negative openness from the DEM."""
+        positive = self.positive_config.compute(dem, resolution).positive_openness
+        assert positive is not None  # guaranteed by __post_init__
+        return positive - self.negative_config.compute(dem, resolution)
+
+
+@dataclass(frozen=True)
+class MultiDirectionalHillshadeRgbSource:
+    """
+    The legacy blender's in-memory "multiple directions hillshade" layer: a
+    bands-first RGB stack of hillshades at azimuths 315, 22.5, and 90 degrees.
+
+    :param sun_elevation: Solar vertical angle above the horizon in degrees
+        (legacy ``mhs_sun_el``).
+    :param vertical_exaggeration: Factor the DEM heights are multiplied by.
+    :param inverts_normalization: Invert the normalized image.
+    """
+
+    RGB_AZIMUTHS: ClassVar[tuple[float, float, float]] = (315.0, 22.5, 90.0)
+
+    sun_elevation: float = 35.0
+    vertical_exaggeration: float = 1.0
+    inverts_normalization: bool = False
+
+    def compute_image(
+        self, dem: NDArray[np.float32], resolution: Resolution
+    ) -> NDArray[np.floating]:
+        """Compute the three-azimuth hillshade RGB stack from the DEM."""
+        return np.array(
+            [
+                Hillshade(
+                    sun_azimuth=azimuth,
+                    sun_elevation=self.sun_elevation,
+                    vertical_exaggeration=self.vertical_exaggeration,
+                ).compute(dem, resolution)
+                for azimuth in self.RGB_AZIMUTHS
+            ]
+        )
+
+
+@dataclass(frozen=True)
+class ColormappedSource:
+    """
+    A single-band layer colored with a matplotlib color ramp.
+
+    Mirrors the legacy blender's dataflow: the wrapped source's image is
+    normalized (and inverted when the source requires it) before the ramp is
+    applied, so the enclosing :class:`BlendLayer` should use the identity
+    ``Normalization(NormalizationMode.VALUE, 0.0, 1.0)``.
+
+    :param source: The single-band layer source to color.
+    :param normalization: How the source image is normalized to 0-1 before
+        the ramp is applied.
+    :param color_ramp: The color ramp.
+    :param inverts_normalization: Invert the enclosing layer's normalization
+        of the RGB result (the legacy blender never did).
+    """
+
+    source: LayerSource
+    normalization: Normalization
+    color_ramp: ColorRamp
+    inverts_normalization: bool = False
+
+    def compute_image(
+        self, dem: NDArray[np.float32], resolution: Resolution
+    ) -> NDArray[np.floating]:
+        """Compute, normalize, and color the wrapped source's image."""
+        image = self.source.compute_image(dem, resolution)
+        if image.ndim == 3:
+            raise ValueError("ColormappedSource requires a single-band source image!")
+        normalized = normalize_image(
+            image, self.normalization, invert=self.source.inverts_normalization
+        )
+        return self.color_ramp.apply(normalized)
+
+
+@dataclass(frozen=True)
+class BlendedSource:
+    """
+    A nested blend combination rendered as a layer image (the legacy e3MSTP
+    CRIM layer and the e4MSTP sub-blends). The rendered image is cast to
+    float32, mirroring the legacy e4MSTP sub-blend handling.
+
+    :param combination: The combination rendered as this layer's image.
+    :param inverts_normalization: Invert the normalized image.
+    """
+
+    combination: BlendCombination
+    inverts_normalization: bool = False
+
+    def compute_image(
+        self, dem: NDArray[np.float32], resolution: Resolution
+    ) -> NDArray[np.floating]:
+        """Render the nested combination from the DEM."""
+        return self.combination.render(dem, resolution).astype(np.float32)
+
+
 type LayerSource = (
     ImageSource
     | VisualizationSource
@@ -166,6 +298,10 @@ type LayerSource = (
     | SkyViewFactorSource
     | PositiveOpennessSource
     | NegativeOpennessSource
+    | OpennessDifferenceSource
+    | MultiDirectionalHillshadeRgbSource
+    | ColormappedSource
+    | BlendedSource
 )
 
 
