@@ -36,6 +36,10 @@ def compute(config: SingleImageVisualization, raster: Raster) -> Raster:
     :param config: A visualization config producing a single image.
     :param raster: The DEM as read by :func:`rvt.io.read`.
     :returns: The visualization as a raster with the DEM's transform and CRS.
+    :raises ValueError: If the raster is not a float DEM.
     """
-    array = config.compute(raster.array, raster.resolution)
+    dem = raster.array
+    if not np.issubdtype(dem.dtype, np.floating):
+        raise ValueError(f"expected a float DEM raster, got dtype '{dem.dtype}'!")
+    array = config.compute(dem.astype(np.float32, copy=False), raster.resolution)
     return Raster(array=array, transform=raster.transform, crs=raster.crs)
