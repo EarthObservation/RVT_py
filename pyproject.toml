@@ -1,0 +1,72 @@
+[project]
+name = "rvt-py"
+version = "3.0.0.dev0"
+description = "Relief Visualization Toolbox — DEM visualizations and blends"
+authors = [
+    { name = "EarthObservation" }
+]
+readme = "README.md"
+license = { file = "LICENSE" }
+requires-python = ">=3.12,<3.13"
+dependencies = [
+    "matplotlib>=3.11.0,<4.0.0",
+    "numpy>=2.0.0,<3.0.0",
+    "rasterio>=1.5.0,<2.0.0",
+    "scipy>=1.14.0,<2.0.0",
+]
+
+[dependency-groups]
+dev = [
+    "pyrefly>=1.1.1",
+    "pytest>=9.0.0",
+    "pytest-xdist>=3.6.1",
+    "ruff>=0.14.0",
+    "types-rasterio>=1.5.0.20260728",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/rvt"]
+
+[tool.hatch.build.targets.sdist]
+only-include = [
+    "src/rvt",
+    "README.md",
+]
+
+[tool.ruff]
+fix = true
+# The legacy library stays browsable on this branch until parity is proven;
+# it predates these conventions and is never linted.
+extend-exclude = ["legacy"]
+
+[tool.ruff.lint]
+select = [
+    "F", # Pyflakes
+    "I", # isort
+    "D213", # Multi-line docstring summary should start on the second line
+]
+
+[tool.ruff.lint.isort]
+known-first-party = ["rvt"]
+
+[tool.ruff.format]
+docstring-code-format = true
+docstring-code-line-length = 72
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+testpaths = ["tests"]
+
+[tool.pyrefly]
+search-path = ["src", "."]
+preset = "legacy"
+project-includes = ["src", "tests"]
+project-excludes = ["legacy"]
+
+[tool.pyrefly.errors]
+implicit-any-parameter = "error"
+implicit-any-empty-container = "error"
