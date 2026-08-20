@@ -6,7 +6,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from enum import StrEnum, auto
-from typing import NamedTuple
+from typing import ClassVar, NamedTuple
 
 import numpy as np
 from numpy.typing import NDArray
@@ -16,6 +16,7 @@ from rvt.core import (
     validate_dem_and_resolution,
     validate_vertical_exaggeration,
 )
+from rvt.stretch import Stretch, StretchMode
 
 
 class SlopeUnits(StrEnum):
@@ -102,6 +103,11 @@ class SlopeAspect:
     :param units: Output units for slope (aspect converts only for degrees).
     :param vertical_exaggeration: Factor the DEM heights are multiplied by.
     """
+
+    # Legacy 8-bit slope is stretched over degrees 0-51 and inverted (steep is dark).
+    EIGHT_BIT_STRETCH: ClassVar[Stretch] = Stretch(
+        StretchMode.VALUE, 0.0, 51.0, invert=True
+    )
 
     units: SlopeUnits = SlopeUnits.RADIAN
     vertical_exaggeration: float = 1.0

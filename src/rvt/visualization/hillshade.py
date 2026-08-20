@@ -5,6 +5,7 @@ Hillshade.
 from __future__ import annotations
 
 from dataclasses import dataclass
+from typing import ClassVar
 
 import numpy as np
 from numpy.typing import NDArray
@@ -14,6 +15,7 @@ from rvt.core import (
     validate_dem_and_resolution,
     validate_vertical_exaggeration,
 )
+from rvt.stretch import Stretch, StretchMode
 from rvt.visualization.slope import SlopeUnits, _slope_aspect
 
 
@@ -26,6 +28,8 @@ class Hillshade:
     :param sun_elevation: Solar elevation angle above the horizon in degrees, 0–90.
     :param vertical_exaggeration: Factor the DEM heights are multiplied by.
     """
+
+    EIGHT_BIT_STRETCH: ClassVar[Stretch] = Stretch(StretchMode.VALUE, 0.0, 1.0)
 
     sun_azimuth: float = 315.0
     sun_elevation: float = 35.0

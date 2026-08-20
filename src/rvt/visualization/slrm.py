@@ -5,6 +5,7 @@ Simple local relief model.
 from __future__ import annotations
 
 from dataclasses import dataclass
+from typing import ClassVar
 
 import numpy as np
 from numpy.typing import NDArray
@@ -14,6 +15,7 @@ from rvt.core import (
     validate_dem_and_resolution,
     validate_vertical_exaggeration,
 )
+from rvt.stretch import Stretch, StretchMode
 
 MINIMUM_RADIUS_CELLS = 10
 MAXIMUM_RADIUS_CELLS = 50
@@ -81,6 +83,8 @@ class SimpleLocalReliefModel:
     :param radius_cells: Radius for trend assessment in pixels, 10-50.
     :param vertical_exaggeration: Factor the DEM heights are multiplied by.
     """
+
+    EIGHT_BIT_STRETCH: ClassVar[Stretch] = Stretch(StretchMode.VALUE, -2.0, 2.0)
 
     radius_cells: int = 20
     vertical_exaggeration: float = 1.0
