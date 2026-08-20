@@ -1,0 +1,1138 @@
+{
+  "fixtures": {
+    "blend/crim.tif": {
+      "function": "rvt.blend.color_relief_image_map",
+      "input": "inputs/TM1_564_146_crop.tif",
+      "kwargs": {
+        "colormap": "OrRd",
+        "default": "fresh DefaultValues() (function's shared mutable default avoided)",
+        "max_colormap_cut": 1,
+        "min_colormap_cut": 0,
+        "no_data": null,
+        "resolution": 1.0
+      }
+    },
+    "blend/custom.tif": {
+      "function": "rvt.blend.BlenderCombination.render_all_images",
+      "input": "inputs/TM1_564_146_crop.tif",
+      "kwargs": {
+        "default": "fresh DefaultValues()",
+        "dem_resolution": 1.0,
+        "layers": [
+          {
+            "blend_mode": "multiply",
+            "max": 3,
+            "min": 2,
+            "normalization": "perc",
+            "opacity": 60,
+            "vis": "hillshade"
+          },
+          {
+            "blend_mode": "overlay",
+            "max": 50,
+            "min": 0,
+            "normalization": "value",
+            "opacity": 50,
+            "vis": "slope gradient"
+          },
+          {
+            "blend_mode": "normal",
+            "max": 1.0,
+            "min": 0.7,
+            "normalization": "value",
+            "opacity": 100,
+            "vis": "sky-view factor"
+          }
+        ],
+        "no_data": null,
+        "save_8bit": true,
+        "save_float": true
+      }
+    },
+    "blend/custom_8bit.tif": {
+      "function": "rvt.blend.BlenderCombination.render_all_images (8bit path)",
+      "input": "inputs/TM1_564_146_crop.tif",
+      "kwargs": {
+        "byte_scale": "c_min=0, c_max=1",
+        "dem_resolution": 1.0,
+        "layers": [
+          {
+            "blend_mode": "multiply",
+            "max": 3,
+            "min": 2,
+            "normalization": "perc",
+            "opacity": 60,
+            "vis": "hillshade"
+          },
+          {
+            "blend_mode": "overlay",
+            "max": 50,
+            "min": 0,
+            "normalization": "value",
+            "opacity": 50,
+            "vis": "slope gradient"
+          },
+          {
+            "blend_mode": "normal",
+            "max": 1.0,
+            "min": 0.7,
+            "normalization": "value",
+            "opacity": 100,
+            "vis": "sky-view factor"
+          }
+        ],
+        "no_data": null
+      }
+    },
+    "blend/e3mstp.tif": {
+      "function": "rvt.blend.e3mstp",
+      "input": "inputs/TM1_564_146_crop.tif",
+      "kwargs": {
+        "default": "fresh DefaultValues()",
+        "no_data": null,
+        "resolution": 1.0
+      }
+    },
+    "blend/e4mstp.tif": {
+      "function": "rvt.blend.e4mstp",
+      "input": "inputs/TM1_564_146_crop.tif",
+      "kwargs": {
+        "default": "fresh DefaultValues()",
+        "no_data": null,
+        "resolution": 1.0
+      },
+      "notes": "uses a hardcoded second flat-terrain DefaultValues internally (svf_r_max=int(10/resolution), svf_noise=3)"
+    },
+    "blend/vat.tif": {
+      "function": "rvt.blend.BlenderCombination.render_all_images",
+      "input": "inputs/TM1_564_146_crop.tif",
+      "kwargs": {
+        "combination_file": "settings/blender_VAT.json",
+        "default": "fresh DefaultValues()",
+        "dem_resolution": 1.0,
+        "no_data": null,
+        "save_8bit": true,
+        "save_float": true
+      }
+    },
+    "blend/vat_8bit.tif": {
+      "function": "rvt.blend.BlenderCombination.render_all_images (8bit path)",
+      "input": "inputs/TM1_564_146_crop.tif",
+      "kwargs": {
+        "byte_scale": "c_min=0, c_max=1",
+        "combination_file": "settings/blender_VAT.json",
+        "dem_resolution": 1.0,
+        "no_data": null
+      }
+    },
+    "blend_nodata/vat.tif": {
+      "function": "rvt.blend.BlenderCombination.render_all_images",
+      "input": "inputs/TM1_564_146_nodata_crop.tif",
+      "kwargs": {
+        "combination_file": "settings/blender_VAT.json",
+        "default": "fresh DefaultValues()",
+        "dem_resolution": 1.0,
+        "no_data": "nan",
+        "save_8bit": true,
+        "save_float": true
+      }
+    },
+    "blend_nodata/vat_8bit.tif": {
+      "function": "rvt.blend.BlenderCombination.render_all_images (8bit path)",
+      "input": "inputs/TM1_564_146_nodata_crop.tif",
+      "kwargs": {
+        "byte_scale": "c_min=0, c_max=1",
+        "combination_file": "settings/blender_VAT.json",
+        "dem_resolution": 1.0,
+        "no_data": "nan"
+      }
+    },
+    "inputs/TM1_564_146_crop.tif": {
+      "function": "crop",
+      "input": "test_data/TM1_564_146.tif",
+      "kwargs": {
+        "window_row_col_h_w": [
+          0,
+          0,
+          500,
+          500
+        ]
+      }
+    },
+    "inputs/TM1_564_146_nodata_crop.tif": {
+      "function": "crop",
+      "input": "test_data/TM1_564_146_nodata.tif",
+      "kwargs": {
+        "window_row_col_h_w": [
+          0,
+          0,
+          500,
+          500
+        ]
+      },
+      "notes": "window contains 140 scattered single-pixel NaN nodata holes; band nodata value is NaN"
+    },
+    "vis/hillshade/az90_el10_ve2__float.tif": {
+      "function": "rvt.vis.hillshade",
+      "input": "inputs/TM1_564_146_crop.tif",
+      "kwargs": {
+        "no_data": null,
+        "resolution_x": 1.0,
+        "resolution_y": 1.0,
+        "sun_azimuth": 90,
+        "sun_elevation": 10,
+        "ve_factor": 2
+      }
+    },
+    "vis/hillshade/defaults__8bit.tif": {
+      "function": "DefaultValues().float_to_8bit(HILLSHADE)",
+      "input": "inputs/TM1_564_146_crop.tif",
+      "kwargs": {
+        "no_data": null,
+        "resolution_x": 1.0,
+        "resolution_y": 1.0,
+        "sun_azimuth": 315,
+        "sun_elevation": 35,
+        "ve_factor": 1
+      }
+    },
+    "vis/hillshade/defaults__float.tif": {
+      "function": "rvt.vis.hillshade",
+      "input": "inputs/TM1_564_146_crop.tif",
+      "kwargs": {
+        "no_data": null,
+        "resolution_x": 1.0,
+        "resolution_y": 1.0,
+        "sun_azimuth": 315,
+        "sun_elevation": 35,
+        "ve_factor": 1
+      }
+    },
+    "vis/local_dominance/defaults__8bit.tif": {
+      "function": "DefaultValues().float_to_8bit(LOCAL_DOMINANCE)",
+      "input": "inputs/TM1_564_146_crop.tif",
+      "kwargs": {
+        "angular_res": 15,
+        "max_rad": 20,
+        "min_rad": 10,
+        "no_data": null,
+        "observer_height": 1.7,
+        "rad_inc": 1,
+        "ve_factor": 1
+      }
+    },
+    "vis/local_dominance/defaults__float.tif": {
+      "function": "rvt.vis.local_dominance",
+      "input": "inputs/TM1_564_146_crop.tif",
+      "kwargs": {
+        "angular_res": 15,
+        "max_rad": 20,
+        "min_rad": 10,
+        "no_data": null,
+        "observer_height": 1.7,
+        "rad_inc": 1,
+        "ve_factor": 1
+      }
+    },
+    "vis/local_dominance/minrad5_maxrad50_inc2_ang30_oh3__float.tif": {
+      "function": "rvt.vis.local_dominance",
+      "input": "inputs/TM1_564_146_crop.tif",
+      "kwargs": {
+        "angular_res": 30,
+        "max_rad": 50,
+        "min_rad": 5,
+        "no_data": null,
+        "observer_height": 3,
+        "rad_inc": 2,
+        "ve_factor": 1
+      }
+    },
+    "vis/msrm/defaults__8bit.tif": {
+      "function": "DefaultValues().float_to_8bit(MULTI_SCALE_RELIEF_MODEL)",
+      "input": "inputs/TM1_564_146_crop.tif",
+      "kwargs": {
+        "feature_max": 20,
+        "feature_min": 0,
+        "no_data": null,
+        "resolution": 1.0,
+        "scaling_factor": 2,
+        "ve_factor": 1
+      }
+    },
+    "vis/msrm/defaults__float.tif": {
+      "function": "rvt.vis.msrm",
+      "input": "inputs/TM1_564_146_crop.tif",
+      "kwargs": {
+        "feature_max": 20,
+        "feature_min": 0,
+        "no_data": null,
+        "resolution": 1.0,
+        "scaling_factor": 2,
+        "ve_factor": 1
+      },
+      "notes": "params = old DefaultValues msrm defaults"
+    },
+    "vis/msrm/fmin1_fmax50_sf3__float.tif": {
+      "function": "rvt.vis.msrm",
+      "input": "inputs/TM1_564_146_crop.tif",
+      "kwargs": {
+        "feature_max": 50,
+        "feature_min": 1,
+        "no_data": null,
+        "resolution": 1.0,
+        "scaling_factor": 3,
+        "ve_factor": 1
+      }
+    },
+    "vis/mstp/defaults__8bit.tif": {
+      "function": "DefaultValues().float_to_8bit(MULTI_SCALE_TOPOGRAPHIC_POSITION)",
+      "input": "inputs/TM1_564_146_crop.tif",
+      "kwargs": {
+        "broad_scale": [
+          50,
+          500,
+          50
+        ],
+        "lightness": 1.2,
+        "local_scale": [
+          1,
+          5,
+          1
+        ],
+        "meso_scale": [
+          5,
+          50,
+          5
+        ],
+        "no_data": null,
+        "ve_factor": 1
+      }
+    },
+    "vis/mstp/defaults__float.tif": {
+      "function": "rvt.vis.mstp",
+      "input": "inputs/TM1_564_146_crop.tif",
+      "kwargs": {
+        "broad_scale": [
+          50,
+          500,
+          50
+        ],
+        "lightness": 1.2,
+        "local_scale": [
+          1,
+          5,
+          1
+        ],
+        "meso_scale": [
+          5,
+          50,
+          5
+        ],
+        "no_data": null,
+        "ve_factor": 1
+      },
+      "notes": "function defaults (lightness=1.2, differs from DefaultValues.mstp_lightness=0.9); broad_scale max 500 px on a 500x500 crop is edge-dominated by design"
+    },
+    "vis/mstp/scales_var_light09__float.tif": {
+      "function": "rvt.vis.mstp",
+      "input": "inputs/TM1_564_146_crop.tif",
+      "kwargs": {
+        "broad_scale": [
+          100,
+          500,
+          100
+        ],
+        "lightness": 0.9,
+        "local_scale": [
+          1,
+          10,
+          2
+        ],
+        "meso_scale": [
+          10,
+          100,
+          10
+        ],
+        "no_data": null,
+        "ve_factor": 1
+      }
+    },
+    "vis/multi_hillshade/defaults__8bit.tif": {
+      "function": "DefaultValues().float_to_8bit(MULTI_HILLSHADE)",
+      "input": "inputs/TM1_564_146_crop.tif",
+      "kwargs": {
+        "float_arr": "<dem array>",
+        "no_data": null,
+        "x_res": 1.0,
+        "y_res": 1.0
+      },
+      "notes": "MULTI_HILLSHADE 8bit takes the DEM and renders 3-band RGB at azimuths 315/22.5/90"
+    },
+    "vis/multi_hillshade/defaults__float.tif": {
+      "function": "rvt.vis.multi_hillshade",
+      "input": "inputs/TM1_564_146_crop.tif",
+      "kwargs": {
+        "no_data": null,
+        "nr_directions": 16,
+        "resolution_x": 1.0,
+        "resolution_y": 1.0,
+        "sun_elevation": 35,
+        "ve_factor": 1
+      }
+    },
+    "vis/multi_hillshade/dir8_el10__float.tif": {
+      "function": "rvt.vis.multi_hillshade",
+      "input": "inputs/TM1_564_146_crop.tif",
+      "kwargs": {
+        "no_data": null,
+        "nr_directions": 8,
+        "resolution_x": 1.0,
+        "resolution_y": 1.0,
+        "sun_elevation": 10,
+        "ve_factor": 1
+      }
+    },
+    "vis/shadow_horizon/az90_el10_horizon__float.tif": {
+      "function": "rvt.vis.shadow_horizon[horizon]",
+      "input": "inputs/TM1_564_146_crop.tif",
+      "kwargs": {
+        "no_data": null,
+        "resolution": 1.0,
+        "shadow_az": 90,
+        "shadow_el": 10,
+        "ve_factor": 1
+      }
+    },
+    "vis/shadow_horizon/az90_el10_shadow__float.tif": {
+      "function": "rvt.vis.shadow_horizon[shadow]",
+      "input": "inputs/TM1_564_146_crop.tif",
+      "kwargs": {
+        "no_data": null,
+        "resolution": 1.0,
+        "shadow_az": 90,
+        "shadow_el": 10,
+        "ve_factor": 1
+      }
+    },
+    "vis/shadow_horizon/defaults_horizon__float.tif": {
+      "function": "rvt.vis.shadow_horizon[horizon]",
+      "input": "inputs/TM1_564_146_crop.tif",
+      "kwargs": {
+        "no_data": null,
+        "resolution": 1.0,
+        "shadow_az": 315,
+        "shadow_el": 35,
+        "ve_factor": 1
+      }
+    },
+    "vis/shadow_horizon/defaults_shadow__float.tif": {
+      "function": "rvt.vis.shadow_horizon[shadow]",
+      "input": "inputs/TM1_564_146_crop.tif",
+      "kwargs": {
+        "no_data": null,
+        "resolution": 1.0,
+        "shadow_az": 315,
+        "shadow_el": 35,
+        "ve_factor": 1
+      }
+    },
+    "vis/sky_illumination/defaults__8bit.tif": {
+      "function": "DefaultValues().float_to_8bit(SKY_ILLUMINATION)",
+      "input": "inputs/TM1_564_146_crop.tif",
+      "kwargs": {
+        "compute_shadow": false,
+        "max_fine_radius": 100,
+        "no_data": null,
+        "num_directions": 32,
+        "resolution": 1.0,
+        "shadow_az": 315,
+        "shadow_el": 35,
+        "sky_model": "overcast",
+        "ve_factor": 1
+      },
+      "notes": "sim_bytscl is percent mode (percentile cutoff 0.25/0.00) - data-dependent"
+    },
+    "vis/sky_illumination/defaults__float.tif": {
+      "function": "rvt.vis.sky_illumination",
+      "input": "inputs/TM1_564_146_crop.tif",
+      "kwargs": {
+        "compute_shadow": false,
+        "max_fine_radius": 100,
+        "no_data": null,
+        "num_directions": 32,
+        "resolution": 1.0,
+        "shadow_az": 315,
+        "shadow_el": 35,
+        "sky_model": "overcast",
+        "ve_factor": 1
+      },
+      "notes": "overcast output is divided by its own max (data-dependent scaling in old code)"
+    },
+    "vis/sky_illumination/uniform_shadow__float.tif": {
+      "function": "rvt.vis.sky_illumination",
+      "input": "inputs/TM1_564_146_crop.tif",
+      "kwargs": {
+        "compute_shadow": true,
+        "max_fine_radius": 100,
+        "no_data": null,
+        "num_directions": 32,
+        "resolution": 1.0,
+        "shadow_az": 315,
+        "shadow_el": 35,
+        "sky_model": "uniform",
+        "ve_factor": 1
+      }
+    },
+    "vis/sky_view_factor/defaults_asvf__8bit.tif": {
+      "function": "DefaultValues().float_to_8bit(ANISOTROPIC_SKY_VIEW_FACTOR)",
+      "input": "inputs/TM1_564_146_crop.tif",
+      "kwargs": {
+        "asvf_dir": 315,
+        "asvf_level": 1,
+        "compute_asvf": true,
+        "compute_opns": true,
+        "compute_svf": true,
+        "no_data": null,
+        "resolution": 1.0,
+        "svf_n_dir": 16,
+        "svf_noise": 0,
+        "svf_r_max": 10,
+        "ve_factor": 1
+      }
+    },
+    "vis/sky_view_factor/defaults_asvf__float.tif": {
+      "function": "rvt.vis.sky_view_factor[asvf]",
+      "input": "inputs/TM1_564_146_crop.tif",
+      "kwargs": {
+        "asvf_dir": 315,
+        "asvf_level": 1,
+        "compute_asvf": true,
+        "compute_opns": true,
+        "compute_svf": true,
+        "no_data": null,
+        "resolution": 1.0,
+        "svf_n_dir": 16,
+        "svf_noise": 0,
+        "svf_r_max": 10,
+        "ve_factor": 1
+      }
+    },
+    "vis/sky_view_factor/defaults_opns__8bit.tif": {
+      "function": "DefaultValues().float_to_8bit(POSITIVE_OPENNESS)",
+      "input": "inputs/TM1_564_146_crop.tif",
+      "kwargs": {
+        "asvf_dir": 315,
+        "asvf_level": 1,
+        "compute_asvf": true,
+        "compute_opns": true,
+        "compute_svf": true,
+        "no_data": null,
+        "resolution": 1.0,
+        "svf_n_dir": 16,
+        "svf_noise": 0,
+        "svf_r_max": 10,
+        "ve_factor": 1
+      }
+    },
+    "vis/sky_view_factor/defaults_opns__float.tif": {
+      "function": "rvt.vis.sky_view_factor[opns]",
+      "input": "inputs/TM1_564_146_crop.tif",
+      "kwargs": {
+        "asvf_dir": 315,
+        "asvf_level": 1,
+        "compute_asvf": true,
+        "compute_opns": true,
+        "compute_svf": true,
+        "no_data": null,
+        "resolution": 1.0,
+        "svf_n_dir": 16,
+        "svf_noise": 0,
+        "svf_r_max": 10,
+        "ve_factor": 1
+      }
+    },
+    "vis/sky_view_factor/defaults_svf__8bit.tif": {
+      "function": "DefaultValues().float_to_8bit(SKY_VIEW_FACTOR)",
+      "input": "inputs/TM1_564_146_crop.tif",
+      "kwargs": {
+        "asvf_dir": 315,
+        "asvf_level": 1,
+        "compute_asvf": true,
+        "compute_opns": true,
+        "compute_svf": true,
+        "no_data": null,
+        "resolution": 1.0,
+        "svf_n_dir": 16,
+        "svf_noise": 0,
+        "svf_r_max": 10,
+        "ve_factor": 1
+      }
+    },
+    "vis/sky_view_factor/defaults_svf__float.tif": {
+      "function": "rvt.vis.sky_view_factor[svf]",
+      "input": "inputs/TM1_564_146_crop.tif",
+      "kwargs": {
+        "asvf_dir": 315,
+        "asvf_level": 1,
+        "compute_asvf": true,
+        "compute_opns": true,
+        "compute_svf": true,
+        "no_data": null,
+        "resolution": 1.0,
+        "svf_n_dir": 16,
+        "svf_noise": 0,
+        "svf_r_max": 10,
+        "ve_factor": 1
+      }
+    },
+    "vis/sky_view_factor/ndir8_rmax20_noise2_dir90_lvl2_asvf__float.tif": {
+      "function": "rvt.vis.sky_view_factor[asvf]",
+      "input": "inputs/TM1_564_146_crop.tif",
+      "kwargs": {
+        "asvf_dir": 90,
+        "asvf_level": 2,
+        "compute_asvf": true,
+        "compute_opns": true,
+        "compute_svf": true,
+        "no_data": null,
+        "resolution": 1.0,
+        "svf_n_dir": 8,
+        "svf_noise": 2,
+        "svf_r_max": 20,
+        "ve_factor": 1
+      }
+    },
+    "vis/sky_view_factor/ndir8_rmax20_noise2_dir90_lvl2_opns__float.tif": {
+      "function": "rvt.vis.sky_view_factor[opns]",
+      "input": "inputs/TM1_564_146_crop.tif",
+      "kwargs": {
+        "asvf_dir": 90,
+        "asvf_level": 2,
+        "compute_asvf": true,
+        "compute_opns": true,
+        "compute_svf": true,
+        "no_data": null,
+        "resolution": 1.0,
+        "svf_n_dir": 8,
+        "svf_noise": 2,
+        "svf_r_max": 20,
+        "ve_factor": 1
+      }
+    },
+    "vis/sky_view_factor/ndir8_rmax20_noise2_dir90_lvl2_svf__float.tif": {
+      "function": "rvt.vis.sky_view_factor[svf]",
+      "input": "inputs/TM1_564_146_crop.tif",
+      "kwargs": {
+        "asvf_dir": 90,
+        "asvf_level": 2,
+        "compute_asvf": true,
+        "compute_opns": true,
+        "compute_svf": true,
+        "no_data": null,
+        "resolution": 1.0,
+        "svf_n_dir": 8,
+        "svf_noise": 2,
+        "svf_r_max": 20,
+        "ve_factor": 1
+      }
+    },
+    "vis/sky_view_factor/neg_opns_defaults__8bit.tif": {
+      "function": "DefaultValues().float_to_8bit(NEGATIVE_OPENNESS)",
+      "input": "inputs/TM1_564_146_crop.tif",
+      "kwargs": {
+        "no_data": null,
+        "resolution": 1.0
+      }
+    },
+    "vis/sky_view_factor/neg_opns_defaults__float.tif": {
+      "function": "rvt.default.DefaultValues().get_neg_opns",
+      "input": "inputs/TM1_564_146_crop.tif",
+      "kwargs": {
+        "no_data": null,
+        "resolution": 1.0
+      },
+      "notes": "negative openness = sky_view_factor(compute_opns=True) on -dem, default params"
+    },
+    "vis/slope_aspect/defaults_aspect__float.tif": {
+      "function": "rvt.vis.slope_aspect[aspect]",
+      "input": "inputs/TM1_564_146_crop.tif",
+      "kwargs": {
+        "no_data": null,
+        "output_units": "radian",
+        "resolution_x": 1.0,
+        "resolution_y": 1.0,
+        "ve_factor": 1
+      }
+    },
+    "vis/slope_aspect/defaults_slope__8bit.tif": {
+      "function": "DefaultValues().float_to_8bit(SLOPE)",
+      "input": "inputs/TM1_564_146_crop.tif",
+      "kwargs": {
+        "no_data": null,
+        "output_units": "degree",
+        "resolution_x": 1.0,
+        "resolution_y": 1.0,
+        "ve_factor": 1
+      },
+      "notes": "float input is the DEGREE slope, as in the old save_slope pipeline (DefaultValues.slp_output_units='degree'), not the radian defaults case"
+    },
+    "vis/slope_aspect/defaults_slope__float.tif": {
+      "function": "rvt.vis.slope_aspect[slope]",
+      "input": "inputs/TM1_564_146_crop.tif",
+      "kwargs": {
+        "no_data": null,
+        "output_units": "radian",
+        "resolution_x": 1.0,
+        "resolution_y": 1.0,
+        "ve_factor": 1
+      }
+    },
+    "vis/slope_aspect/degree_ve2_aspect__float.tif": {
+      "function": "rvt.vis.slope_aspect[aspect]",
+      "input": "inputs/TM1_564_146_crop.tif",
+      "kwargs": {
+        "no_data": null,
+        "output_units": "degree",
+        "resolution_x": 1.0,
+        "resolution_y": 1.0,
+        "ve_factor": 2
+      }
+    },
+    "vis/slope_aspect/degree_ve2_slope__float.tif": {
+      "function": "rvt.vis.slope_aspect[slope]",
+      "input": "inputs/TM1_564_146_crop.tif",
+      "kwargs": {
+        "no_data": null,
+        "output_units": "degree",
+        "resolution_x": 1.0,
+        "resolution_y": 1.0,
+        "ve_factor": 2
+      }
+    },
+    "vis/slrm/defaults__8bit.tif": {
+      "function": "DefaultValues().float_to_8bit(SIMPLE_LOCAL_RELIEF_MODEL)",
+      "input": "inputs/TM1_564_146_crop.tif",
+      "kwargs": {
+        "no_data": null,
+        "radius_cell": 20,
+        "ve_factor": 1
+      }
+    },
+    "vis/slrm/defaults__float.tif": {
+      "function": "rvt.vis.slrm",
+      "input": "inputs/TM1_564_146_crop.tif",
+      "kwargs": {
+        "no_data": null,
+        "radius_cell": 20,
+        "ve_factor": 1
+      }
+    },
+    "vis/slrm/rad50__float.tif": {
+      "function": "rvt.vis.slrm",
+      "input": "inputs/TM1_564_146_crop.tif",
+      "kwargs": {
+        "no_data": null,
+        "radius_cell": 50,
+        "ve_factor": 1
+      }
+    },
+    "vis_nodata/hillshade/defaults__8bit.tif": {
+      "function": "DefaultValues().float_to_8bit(HILLSHADE)",
+      "input": "inputs/TM1_564_146_nodata_crop.tif",
+      "kwargs": {
+        "no_data": "nan",
+        "resolution_x": 1.0,
+        "resolution_y": 1.0,
+        "sun_azimuth": 315,
+        "sun_elevation": 35,
+        "ve_factor": 1
+      }
+    },
+    "vis_nodata/hillshade/defaults__float.tif": {
+      "function": "rvt.vis.hillshade",
+      "input": "inputs/TM1_564_146_nodata_crop.tif",
+      "kwargs": {
+        "no_data": "nan",
+        "resolution_x": 1.0,
+        "resolution_y": 1.0,
+        "sun_azimuth": 315,
+        "sun_elevation": 35,
+        "ve_factor": 1
+      }
+    },
+    "vis_nodata/local_dominance/defaults__8bit.tif": {
+      "function": "DefaultValues().float_to_8bit(LOCAL_DOMINANCE)",
+      "input": "inputs/TM1_564_146_nodata_crop.tif",
+      "kwargs": {
+        "angular_res": 15,
+        "max_rad": 20,
+        "min_rad": 10,
+        "no_data": "nan",
+        "observer_height": 1.7,
+        "rad_inc": 1,
+        "ve_factor": 1
+      }
+    },
+    "vis_nodata/local_dominance/defaults__float.tif": {
+      "function": "rvt.vis.local_dominance",
+      "input": "inputs/TM1_564_146_nodata_crop.tif",
+      "kwargs": {
+        "angular_res": 15,
+        "max_rad": 20,
+        "min_rad": 10,
+        "no_data": "nan",
+        "observer_height": 1.7,
+        "rad_inc": 1,
+        "ve_factor": 1
+      }
+    },
+    "vis_nodata/msrm/defaults__8bit.tif": {
+      "function": "DefaultValues().float_to_8bit(MULTI_SCALE_RELIEF_MODEL)",
+      "input": "inputs/TM1_564_146_nodata_crop.tif",
+      "kwargs": {
+        "feature_max": 20,
+        "feature_min": 0,
+        "no_data": "nan",
+        "resolution": 1.0,
+        "scaling_factor": 2,
+        "ve_factor": 1
+      }
+    },
+    "vis_nodata/msrm/defaults__float.tif": {
+      "function": "rvt.vis.msrm",
+      "input": "inputs/TM1_564_146_nodata_crop.tif",
+      "kwargs": {
+        "feature_max": 20,
+        "feature_min": 0,
+        "no_data": "nan",
+        "resolution": 1.0,
+        "scaling_factor": 2,
+        "ve_factor": 1
+      },
+      "notes": "params = old DefaultValues msrm defaults"
+    },
+    "vis_nodata/mstp/defaults__8bit.tif": {
+      "function": "DefaultValues().float_to_8bit(MULTI_SCALE_TOPOGRAPHIC_POSITION)",
+      "input": "inputs/TM1_564_146_nodata_crop.tif",
+      "kwargs": {
+        "broad_scale": [
+          50,
+          500,
+          50
+        ],
+        "lightness": 1.2,
+        "local_scale": [
+          1,
+          5,
+          1
+        ],
+        "meso_scale": [
+          5,
+          50,
+          5
+        ],
+        "no_data": "nan",
+        "ve_factor": 1
+      }
+    },
+    "vis_nodata/mstp/defaults__float.tif": {
+      "function": "rvt.vis.mstp",
+      "input": "inputs/TM1_564_146_nodata_crop.tif",
+      "kwargs": {
+        "broad_scale": [
+          50,
+          500,
+          50
+        ],
+        "lightness": 1.2,
+        "local_scale": [
+          1,
+          5,
+          1
+        ],
+        "meso_scale": [
+          5,
+          50,
+          5
+        ],
+        "no_data": "nan",
+        "ve_factor": 1
+      },
+      "notes": "function defaults (lightness=1.2, differs from DefaultValues.mstp_lightness=0.9); broad_scale max 500 px on a 500x500 crop is edge-dominated by design"
+    },
+    "vis_nodata/multi_hillshade/defaults__8bit.tif": {
+      "function": "DefaultValues().float_to_8bit(MULTI_HILLSHADE)",
+      "input": "inputs/TM1_564_146_nodata_crop.tif",
+      "kwargs": {
+        "float_arr": "<dem array>",
+        "no_data": "nan",
+        "x_res": 1.0,
+        "y_res": 1.0
+      },
+      "notes": "MULTI_HILLSHADE 8bit takes the DEM and renders 3-band RGB at azimuths 315/22.5/90"
+    },
+    "vis_nodata/multi_hillshade/defaults__float.tif": {
+      "function": "rvt.vis.multi_hillshade",
+      "input": "inputs/TM1_564_146_nodata_crop.tif",
+      "kwargs": {
+        "no_data": "nan",
+        "nr_directions": 16,
+        "resolution_x": 1.0,
+        "resolution_y": 1.0,
+        "sun_elevation": 35,
+        "ve_factor": 1
+      }
+    },
+    "vis_nodata/shadow_horizon/defaults_horizon__float.tif": {
+      "function": "rvt.vis.shadow_horizon[horizon]",
+      "input": "inputs/TM1_564_146_nodata_crop.tif",
+      "kwargs": {
+        "no_data": "nan",
+        "resolution": 1.0,
+        "shadow_az": 315,
+        "shadow_el": 35,
+        "ve_factor": 1
+      }
+    },
+    "vis_nodata/shadow_horizon/defaults_shadow__float.tif": {
+      "function": "rvt.vis.shadow_horizon[shadow]",
+      "input": "inputs/TM1_564_146_nodata_crop.tif",
+      "kwargs": {
+        "no_data": "nan",
+        "resolution": 1.0,
+        "shadow_az": 315,
+        "shadow_el": 35,
+        "ve_factor": 1
+      }
+    },
+    "vis_nodata/sky_illumination/defaults__8bit.tif": {
+      "function": "DefaultValues().float_to_8bit(SKY_ILLUMINATION)",
+      "input": "inputs/TM1_564_146_nodata_crop.tif",
+      "kwargs": {
+        "compute_shadow": false,
+        "max_fine_radius": 100,
+        "no_data": "nan",
+        "num_directions": 32,
+        "resolution": 1.0,
+        "shadow_az": 315,
+        "shadow_el": 35,
+        "sky_model": "overcast",
+        "ve_factor": 1
+      },
+      "notes": "sim_bytscl is percent mode (percentile cutoff 0.25/0.00) - data-dependent"
+    },
+    "vis_nodata/sky_illumination/defaults__float.tif": {
+      "function": "rvt.vis.sky_illumination",
+      "input": "inputs/TM1_564_146_nodata_crop.tif",
+      "kwargs": {
+        "compute_shadow": false,
+        "max_fine_radius": 100,
+        "no_data": "nan",
+        "num_directions": 32,
+        "resolution": 1.0,
+        "shadow_az": 315,
+        "shadow_el": 35,
+        "sky_model": "overcast",
+        "ve_factor": 1
+      },
+      "notes": "overcast output is divided by its own max (data-dependent scaling in old code)"
+    },
+    "vis_nodata/sky_view_factor/defaults_asvf__8bit.tif": {
+      "function": "DefaultValues().float_to_8bit(ANISOTROPIC_SKY_VIEW_FACTOR)",
+      "input": "inputs/TM1_564_146_nodata_crop.tif",
+      "kwargs": {
+        "asvf_dir": 315,
+        "asvf_level": 1,
+        "compute_asvf": true,
+        "compute_opns": true,
+        "compute_svf": true,
+        "no_data": "nan",
+        "resolution": 1.0,
+        "svf_n_dir": 16,
+        "svf_noise": 0,
+        "svf_r_max": 10,
+        "ve_factor": 1
+      }
+    },
+    "vis_nodata/sky_view_factor/defaults_asvf__float.tif": {
+      "function": "rvt.vis.sky_view_factor[asvf]",
+      "input": "inputs/TM1_564_146_nodata_crop.tif",
+      "kwargs": {
+        "asvf_dir": 315,
+        "asvf_level": 1,
+        "compute_asvf": true,
+        "compute_opns": true,
+        "compute_svf": true,
+        "no_data": "nan",
+        "resolution": 1.0,
+        "svf_n_dir": 16,
+        "svf_noise": 0,
+        "svf_r_max": 10,
+        "ve_factor": 1
+      }
+    },
+    "vis_nodata/sky_view_factor/defaults_opns__8bit.tif": {
+      "function": "DefaultValues().float_to_8bit(POSITIVE_OPENNESS)",
+      "input": "inputs/TM1_564_146_nodata_crop.tif",
+      "kwargs": {
+        "asvf_dir": 315,
+        "asvf_level": 1,
+        "compute_asvf": true,
+        "compute_opns": true,
+        "compute_svf": true,
+        "no_data": "nan",
+        "resolution": 1.0,
+        "svf_n_dir": 16,
+        "svf_noise": 0,
+        "svf_r_max": 10,
+        "ve_factor": 1
+      }
+    },
+    "vis_nodata/sky_view_factor/defaults_opns__float.tif": {
+      "function": "rvt.vis.sky_view_factor[opns]",
+      "input": "inputs/TM1_564_146_nodata_crop.tif",
+      "kwargs": {
+        "asvf_dir": 315,
+        "asvf_level": 1,
+        "compute_asvf": true,
+        "compute_opns": true,
+        "compute_svf": true,
+        "no_data": "nan",
+        "resolution": 1.0,
+        "svf_n_dir": 16,
+        "svf_noise": 0,
+        "svf_r_max": 10,
+        "ve_factor": 1
+      }
+    },
+    "vis_nodata/sky_view_factor/defaults_svf__8bit.tif": {
+      "function": "DefaultValues().float_to_8bit(SKY_VIEW_FACTOR)",
+      "input": "inputs/TM1_564_146_nodata_crop.tif",
+      "kwargs": {
+        "asvf_dir": 315,
+        "asvf_level": 1,
+        "compute_asvf": true,
+        "compute_opns": true,
+        "compute_svf": true,
+        "no_data": "nan",
+        "resolution": 1.0,
+        "svf_n_dir": 16,
+        "svf_noise": 0,
+        "svf_r_max": 10,
+        "ve_factor": 1
+      }
+    },
+    "vis_nodata/sky_view_factor/defaults_svf__float.tif": {
+      "function": "rvt.vis.sky_view_factor[svf]",
+      "input": "inputs/TM1_564_146_nodata_crop.tif",
+      "kwargs": {
+        "asvf_dir": 315,
+        "asvf_level": 1,
+        "compute_asvf": true,
+        "compute_opns": true,
+        "compute_svf": true,
+        "no_data": "nan",
+        "resolution": 1.0,
+        "svf_n_dir": 16,
+        "svf_noise": 0,
+        "svf_r_max": 10,
+        "ve_factor": 1
+      }
+    },
+    "vis_nodata/sky_view_factor/neg_opns_defaults__8bit.tif": {
+      "function": "DefaultValues().float_to_8bit(NEGATIVE_OPENNESS)",
+      "input": "inputs/TM1_564_146_nodata_crop.tif",
+      "kwargs": {
+        "no_data": "nan",
+        "resolution": 1.0
+      }
+    },
+    "vis_nodata/sky_view_factor/neg_opns_defaults__float.tif": {
+      "function": "rvt.default.DefaultValues().get_neg_opns",
+      "input": "inputs/TM1_564_146_nodata_crop.tif",
+      "kwargs": {
+        "no_data": "nan",
+        "resolution": 1.0
+      },
+      "notes": "negative openness = sky_view_factor(compute_opns=True) on -dem, default params"
+    },
+    "vis_nodata/slope_aspect/defaults_aspect__float.tif": {
+      "function": "rvt.vis.slope_aspect[aspect]",
+      "input": "inputs/TM1_564_146_nodata_crop.tif",
+      "kwargs": {
+        "no_data": "nan",
+        "output_units": "radian",
+        "resolution_x": 1.0,
+        "resolution_y": 1.0,
+        "ve_factor": 1
+      }
+    },
+    "vis_nodata/slope_aspect/defaults_slope__8bit.tif": {
+      "function": "DefaultValues().float_to_8bit(SLOPE)",
+      "input": "inputs/TM1_564_146_nodata_crop.tif",
+      "kwargs": {
+        "no_data": "nan",
+        "output_units": "degree",
+        "resolution_x": 1.0,
+        "resolution_y": 1.0,
+        "ve_factor": 1
+      },
+      "notes": "float input is the DEGREE slope, as in the old save_slope pipeline (DefaultValues.slp_output_units='degree'), not the radian defaults case"
+    },
+    "vis_nodata/slope_aspect/defaults_slope__float.tif": {
+      "function": "rvt.vis.slope_aspect[slope]",
+      "input": "inputs/TM1_564_146_nodata_crop.tif",
+      "kwargs": {
+        "no_data": "nan",
+        "output_units": "radian",
+        "resolution_x": 1.0,
+        "resolution_y": 1.0,
+        "ve_factor": 1
+      }
+    },
+    "vis_nodata/slrm/defaults__8bit.tif": {
+      "function": "DefaultValues().float_to_8bit(SIMPLE_LOCAL_RELIEF_MODEL)",
+      "input": "inputs/TM1_564_146_nodata_crop.tif",
+      "kwargs": {
+        "no_data": "nan",
+        "radius_cell": 20,
+        "ve_factor": 1
+      }
+    },
+    "vis_nodata/slrm/defaults__float.tif": {
+      "function": "rvt.vis.slrm",
+      "input": "inputs/TM1_564_146_nodata_crop.tif",
+      "kwargs": {
+        "no_data": "nan",
+        "radius_cell": 20,
+        "ve_factor": 1
+      }
+    }
+  },
+  "metadata": {
+    "8bit_nodata": "none set; byte_scale maps NaN to 255",
+    "crop_window_row_col_h_w": [
+      0,
+      0,
+      500,
+      500
+    ],
+    "float_nodata": "NaN (all float fixtures saved with no_data=np.nan, e_type=6)",
+    "gdal": "3.13.1",
+    "generated": "2026-08-20T20:34:25.943575",
+    "matplotlib": "3.11.1",
+    "notes": [
+      "All vis calls pass a copy of the DEM because old rvt.vis functions mutate the caller's array when replacing no_data.",
+      "Blend presets are called with an explicit fresh DefaultValues() to avoid the shared mutable-default-argument instance in old rvt.blend.",
+      "shadow_horizon has no 8-bit fixture (float_to_8bit SHADOW is an identity pass-through).",
+      "mstp defaults use the rvt.vis.mstp function defaults (lightness=1.2), not DefaultValues.mstp_lightness=0.9; the variant case uses 0.9.",
+      "mstp broad_scale reaching 500 px on a 500x500 crop is edge-padding dominated - expected.",
+      "DEGENERATE (genuine old-code behavior, kept on purpose): on the nodata crop, sky_illumination output is ALL-NaN and shadow_horizon horizon is ALL-NaN / shadow all-zero - NaN holes poison the horizon pyramid (constant padding uses dem.min(), which is NaN); the sim 8bit is consequently all 255."
+    ],
+    "numpy": "2.5.2",
+    "old_code_commit": "bab109c409fedf77ccec7de5fd84c48b791df3d2",
+    "old_code_repo": "/Users/zigamaroh/PyCharmProjects/RVT_py",
+    "python": "3.12.11",
+    "scipy": "1.18.0"
+  }
+}
