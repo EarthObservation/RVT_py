@@ -7,6 +7,12 @@ from rvt.visualization.hillshade import Hillshade
 from rvt.visualization.local_dominance import LocalDominance
 from rvt.visualization.msrm import MultiScaleReliefModel
 from rvt.visualization.multi_hillshade import MultiHillshade
+from rvt.visualization.sky_view_factor import (
+    NegativeOpenness,
+    NoiseRemoval,
+    SkyViewFactor,
+    SkyViewFactorResult,
+)
 from rvt.visualization.slope import SlopeAspect, SlopeAspectResult, SlopeUnits
 from rvt.visualization.slrm import SimpleLocalReliefModel
 
@@ -15,7 +21,11 @@ __all__ = [
     "LocalDominance",
     "MultiHillshade",
     "MultiScaleReliefModel",
+    "NegativeOpenness",
+    "NoiseRemoval",
     "SimpleLocalReliefModel",
+    "SkyViewFactor",
+    "SkyViewFactorResult",
     "SlopeAspect",
     "SlopeAspectResult",
     "SlopeUnits",

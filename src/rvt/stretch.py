@@ -72,7 +72,7 @@ def _normalize_linear(
     image = (image - minimum) / (maximum - minimum)
     image[image > 1] = 1
     image[image < 0] = 0
-    return np.float32(image)
+    return image.astype(np.float32)
 
 
 def _normalize_percent(
