@@ -85,6 +85,7 @@ class SimpleLocalReliefModel:
     """
 
     EIGHT_BIT_STRETCH: ClassVar[Stretch] = Stretch(StretchMode.VALUE, -2.0, 2.0)
+    TILEABLE: ClassVar[bool] = True
 
     radius_cells: int = 20
     vertical_exaggeration: float = 1.0
@@ -105,6 +106,17 @@ class SimpleLocalReliefModel:
         :returns: The output file stem, without extension.
         """
         return f"{dem_name}_SLRM_R{self.radius_cells}"
+
+    def required_overlap(self, resolution: Resolution) -> int:
+        """
+        Return the tiling overlap in pixels: ``radius_cells + 1`` — the legacy
+        integral-image window is shifted one pixel up-left of the kernel
+        centre, so the neighbourhood extends one pixel past the radius.
+
+        :param resolution: Cell size of the DEM (unused; the radius is in cells).
+        :returns: The neighbourhood radius in pixels.
+        """
+        return self.radius_cells + 1
 
     def compute(
         self, dem: NDArray[np.float32], resolution: Resolution

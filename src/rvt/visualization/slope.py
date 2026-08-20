@@ -108,6 +108,7 @@ class SlopeAspect:
     EIGHT_BIT_STRETCH: ClassVar[Stretch] = Stretch(
         StretchMode.VALUE, 0.0, 51.0, invert=True
     )
+    TILEABLE: ClassVar[bool] = True
 
     units: SlopeUnits = SlopeUnits.RADIAN
     vertical_exaggeration: float = 1.0
@@ -132,6 +133,16 @@ class SlopeAspect:
         :returns: The output file stem, without extension.
         """
         return f"{dem_name}_ASPECT"
+
+    def required_overlap(self, resolution: Resolution) -> int:
+        """
+        Return the tiling overlap in pixels: 1, the 3x3 derivative kernel's
+        radius.
+
+        :param resolution: Cell size of the DEM (unused; the kernel is fixed).
+        :returns: The neighbourhood radius in pixels.
+        """
+        return 1
 
     def compute(
         self, dem: NDArray[np.float32], resolution: Resolution

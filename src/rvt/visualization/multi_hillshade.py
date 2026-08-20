@@ -5,6 +5,7 @@ Multi-direction hillshade.
 from __future__ import annotations
 
 from dataclasses import dataclass
+from typing import ClassVar
 
 import numpy as np
 from numpy.typing import NDArray
@@ -32,6 +33,11 @@ class MultiHillshade:
     :param vertical_exaggeration: Factor the DEM heights are multiplied by.
     """
 
+    # Not tileable: the legacy pipeline trims a 1-pixel border, so the output
+    # shape is (directions, rows - 2, cols - 2) — it cannot be written back
+    # into fixed windows of an input-shaped raster.
+    TILEABLE: ClassVar[bool] = False
+
     directions: int = 16
     sun_elevation: float = 35.0
     vertical_exaggeration: float = 1.0
@@ -58,6 +64,16 @@ class MultiHillshade:
             f"{dem_name}_MULTI-HS_D{self.directions}"
             f"_H{format_parameter(self.sun_elevation)}"
         )
+
+    def required_overlap(self, resolution: Resolution) -> int:
+        """
+        Return the tiling overlap in pixels: 1, the 3x3 derivative kernel's
+        radius (informational — the config is not tileable, see ``TILEABLE``).
+
+        :param resolution: Cell size of the DEM (unused; the kernel is fixed).
+        :returns: The neighbourhood radius in pixels.
+        """
+        return 1
 
     def compute(
         self, dem: NDArray[np.float32], resolution: Resolution

@@ -31,6 +31,7 @@ class Hillshade:
     """
 
     EIGHT_BIT_STRETCH: ClassVar[Stretch] = Stretch(StretchMode.VALUE, 0.0, 1.0)
+    TILEABLE: ClassVar[bool] = True
 
     sun_azimuth: float = 315.0
     sun_elevation: float = 35.0
@@ -58,6 +59,16 @@ class Hillshade:
             f"{dem_name}_HS_A{format_parameter(self.sun_azimuth)}"
             f"_H{format_parameter(self.sun_elevation)}"
         )
+
+    def required_overlap(self, resolution: Resolution) -> int:
+        """
+        Return the tiling overlap in pixels: 1, the 3x3 derivative kernel's
+        radius.
+
+        :param resolution: Cell size of the DEM (unused; the kernel is fixed).
+        :returns: The neighbourhood radius in pixels.
+        """
+        return 1
 
     def compute(
         self, dem: NDArray[np.float32], resolution: Resolution

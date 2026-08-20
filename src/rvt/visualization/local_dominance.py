@@ -40,6 +40,7 @@ class LocalDominance:
     """
 
     EIGHT_BIT_STRETCH: ClassVar[Stretch] = Stretch(StretchMode.VALUE, 0.5, 1.8)
+    TILEABLE: ClassVar[bool] = True
 
     minimum_radius: int = 10
     maximum_radius: int = 20
@@ -64,6 +65,16 @@ class LocalDominance:
             f"_DI{self.radius_increment}_A{self.angular_resolution}"
             f"_OH{format_parameter(self.observer_height)}"
         )
+
+    def required_overlap(self, resolution: Resolution) -> int:
+        """
+        Return the tiling overlap in pixels: ``maximum_radius``, the farthest
+        observer shift searched.
+
+        :param resolution: Cell size of the DEM (unused; the radius is in pixels).
+        :returns: The neighbourhood radius in pixels.
+        """
+        return self.maximum_radius
 
     def compute(
         self, dem: NDArray[np.float32], resolution: Resolution
