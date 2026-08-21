@@ -103,4 +103,7 @@ class Hillshade:
             sun_zenith_radians
         ) * np.sin(slope) * np.cos(aspect - sun_azimuth_radians)
         hillshade[hillshade < 0] = 0
-        return hillshade[1:-1, 1:-1]
+        # The solar-position scalars promote the arithmetic to float64; the cast
+        # back matches the float32 the legacy pipeline wrote to disk, and keeps
+        # the compute layer's float32 contract (so tiled equals untiled).
+        return hillshade[1:-1, 1:-1].astype(np.float32)

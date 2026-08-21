@@ -413,6 +413,10 @@ class SkyIllumination:
     """
 
     EIGHT_BIT_STRETCH: ClassVar[Stretch] = Stretch(StretchMode.PERCENT, 0.25, 0.0)
+    # Two reasons this cannot be tiled: the overcast model divides the result by
+    # the array's own maximum, and the horizon pyramid pads with the array's own
+    # minimum elevation — both differ between a tile and the whole raster.
+    TILEABLE: ClassVar[bool] = False
 
     sky_model: SkyModel = SkyModel.OVERCAST
     compute_shadow: bool = False
@@ -451,6 +455,16 @@ class SkyIllumination:
             f"{dem_name}_SIM_{self.sky_model}_D{self.directions}"
             f"_{self.maximum_fine_radius}px"
         )
+
+    def required_overlap(self, resolution: Resolution) -> int:
+        """
+        Return the shadow-modelling distance in pixels (informational — the
+        config is not tileable, see ``TILEABLE``).
+
+        :param resolution: Cell size of the DEM (unused; the distance is in pixels).
+        :returns: The neighbourhood radius in pixels.
+        """
+        return self.maximum_fine_radius
 
     def compute(
         self, dem: NDArray[np.float32], resolution: Resolution

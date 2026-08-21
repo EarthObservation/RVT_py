@@ -37,6 +37,7 @@ class MultiScaleReliefModel:
     """
 
     EIGHT_BIT_STRETCH: ClassVar[Stretch] = Stretch(StretchMode.VALUE, -2.5, 2.5)
+    TILEABLE: ClassVar[bool] = True
 
     feature_minimum: float
     feature_maximum: float
@@ -57,6 +58,30 @@ class MultiScaleReliefModel:
             f"{dem_name}_MSRM_F_M{format_parameter(self.feature_minimum)}"
             f"-{format_parameter(self.feature_maximum)}_S{self.scaling_factor}"
         )
+
+    def required_overlap(self, resolution: Resolution) -> int:
+        """
+        Return the tiling overlap in pixels: the largest mean-filter kernel
+        radius plus one (the integral-image window sits one pixel up-left of
+        the kernel centre).
+
+        Legacy tiling used ``int(feature_maximum)`` here, treating a distance in
+        map units as a pixel count; below one-metre cells that buffer is too
+        small and seams appear. The radius is derived from the cell size
+        instead, so tiled output matches untiled output at any resolution.
+
+        :param resolution: Cell size of the DEM; the X cell size is used, as in
+            the computation itself.
+        :returns: The neighbourhood radius in pixels.
+        """
+        cell_size = resolution.x
+        maximum_step = int(
+            np.ceil(
+                ((self.feature_maximum - cell_size) / (2 * cell_size))
+                ** (1 / int(self.scaling_factor))
+            )
+        )
+        return maximum_step ** int(self.scaling_factor) + 1
 
     def compute(
         self, dem: NDArray[np.float32], resolution: Resolution

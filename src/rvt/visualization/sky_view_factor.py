@@ -295,6 +295,7 @@ class SkyViewFactor:
     POSITIVE_OPENNESS_EIGHT_BIT_STRETCH: ClassVar[Stretch] = Stretch(
         StretchMode.VALUE, 60.0, 95.0
     )
+    TILEABLE: ClassVar[bool] = True
 
     directions: int = 16
     max_radius: int = 10
@@ -352,6 +353,15 @@ class SkyViewFactor:
             f"{self.noise_removal._file_name_suffix()}"
         )
 
+    def required_overlap(self, resolution: Resolution) -> int:
+        """
+        Return the tiling overlap in pixels: the horizon search radius.
+
+        :param resolution: Cell size of the DEM (unused; the radius is in pixels).
+        :returns: The neighbourhood radius in pixels.
+        """
+        return self.max_radius
+
     def compute(
         self, dem: NDArray[np.float32], resolution: Resolution
     ) -> SkyViewFactorResult:
@@ -404,6 +414,7 @@ class NegativeOpenness:
     EIGHT_BIT_STRETCH: ClassVar[Stretch] = Stretch(
         StretchMode.VALUE, 60.0, 95.0, invert=True
     )
+    TILEABLE: ClassVar[bool] = True
 
     directions: int = 16
     max_radius: int = 10
@@ -427,6 +438,15 @@ class NegativeOpenness:
             f"{dem_name}_OPEN-NEG_R{self.max_radius}_D{self.directions}"
             f"{self.noise_removal._file_name_suffix()}"
         )
+
+    def required_overlap(self, resolution: Resolution) -> int:
+        """
+        Return the tiling overlap in pixels: the horizon search radius.
+
+        :param resolution: Cell size of the DEM (unused; the radius is in pixels).
+        :returns: The neighbourhood radius in pixels.
+        """
+        return self.max_radius
 
     def compute(
         self, dem: NDArray[np.float32], resolution: Resolution

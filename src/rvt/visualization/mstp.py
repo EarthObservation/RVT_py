@@ -160,6 +160,7 @@ class MultiScaleTopographicPosition:
     """
 
     EIGHT_BIT_STRETCH: ClassVar[Stretch] = Stretch(StretchMode.VALUE, 0.0, 1.0)
+    TILEABLE: ClassVar[bool] = True
 
     local_scale: tuple[int, int, int] = (1, 5, 1)
     meso_scale: tuple[int, int, int] = (5, 50, 5)
@@ -185,6 +186,21 @@ class MultiScaleTopographicPosition:
             f"{dem_name}_MSTP_{self.local_scale[1]}_{self.meso_scale[1]}"
             f"_{self.broad_scale[1]}_L{format_parameter(self.lightness)}"
         )
+
+    def required_overlap(self, resolution: Resolution) -> int:
+        """
+        Return the tiling overlap in pixels: the broad scale's maximum radius
+        plus one (the integral-image window sits one pixel up-left of the
+        kernel centre).
+
+        With the default broad scale this is 501 pixels, so tiles smaller than
+        that read most of the raster anyway — tiling pays off only for rasters
+        much larger than the overlap.
+
+        :param resolution: Cell size of the DEM (unused; the scales are in pixels).
+        :returns: The neighbourhood radius in pixels.
+        """
+        return self.broad_scale[1] + 1
 
     def compute(
         self, dem: NDArray[np.float32], resolution: Resolution

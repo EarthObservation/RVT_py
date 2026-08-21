@@ -13,7 +13,7 @@ import rvt
 from rvt.core import Resolution
 from rvt.io import read
 from rvt.session import Session, SessionTask
-from rvt.tiling import compute_tiled
+from rvt.tiling import TileableVisualization, compute_tiled
 from rvt.visualization import (
     Hillshade,
     LocalDominance,
@@ -60,7 +60,7 @@ class _Output:
     ids=lambda config: type(config).__name__,
 )
 def test_tiled_equals_untiled(
-    config: rvt.SingleImageVisualization,
+    config: TileableVisualization,
     tile_size: tuple[int, int],
     tmp_path: Path,
 ) -> None:
@@ -97,7 +97,7 @@ def test_mstp_overlap_exceeding_raster_equals_untiled(tmp_path: Path) -> None:
     ids=lambda config: type(config).__name__,
 )
 def test_tiled_equals_untiled_with_nodata(
-    config: rvt.SingleImageVisualization, tmp_path: Path
+    config: TileableVisualization, tmp_path: Path
 ) -> None:
     untiled = rvt.compute(config, read(NODATA_DEM_PATH))
     output_path = tmp_path / "tiled.tif"
@@ -112,9 +112,7 @@ def test_workers_produce_identical_output(tmp_path: Path) -> None:
     parallel_path = tmp_path / "parallel.tif"
 
     compute_tiled(Hillshade(), DEM_PATH, serial_path, tile_size=(190, 190))
-    compute_tiled(
-        Hillshade(), DEM_PATH, parallel_path, tile_size=(190, 190), workers=2
-    )
+    compute_tiled(Hillshade(), DEM_PATH, parallel_path, tile_size=(190, 190), workers=2)
 
     np.testing.assert_array_equal(
         _Output(parallel_path).array, _Output(serial_path).array
@@ -176,9 +174,7 @@ ONE_METRE = Resolution(1.0, 1.0)
     ],
     ids=lambda value: type(value).__name__ if hasattr(value, "compute") else None,
 )
-def test_required_overlap(
-    config: Any, resolution: Resolution, expected: int
-) -> None:
+def test_required_overlap(config: Any, resolution: Resolution, expected: int) -> None:
     assert config.required_overlap(resolution) == expected
 
 
@@ -207,9 +203,7 @@ def test_session_switches_to_tiled_processing(tmp_path: Path) -> None:
         tile_size=(190, 190),
     )
 
-    assert [path.name for path in tiled_paths] == [
-        path.name for path in untiled_paths
-    ]
+    assert [path.name for path in tiled_paths] == [path.name for path in untiled_paths]
     for tiled_path, untiled_path in zip(tiled_paths, untiled_paths, strict=True):
         tiled, untiled = _Output(tiled_path), _Output(untiled_path)
         np.testing.assert_array_equal(tiled.array, untiled.array)

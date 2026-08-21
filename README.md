@@ -52,7 +52,9 @@ dem = rvt.io.read("dem.tif")
 hillshade = rvt.compute(Hillshade(sun_azimuth=315, sun_elevation=35), dem)
 rvt.io.write(hillshade, "dem_hillshade.tif")
 
-result = SkyViewFactor(include_positive_openness=True).compute(dem.array, dem.resolution)
+result = SkyViewFactor(include_positive_openness=True).compute(
+    dem.array, dem.resolution
+)
 ```
 
 ### Batch processing

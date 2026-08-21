@@ -19,6 +19,9 @@ from rvt.core import (
 from rvt.stretch import Stretch, StretchMode
 from rvt.visualization.sky_illumination import _compute_sky_illumination
 
+# The legacy shadow_horizon wrapper hardcodes the shadow-modelling distance.
+MAXIMUM_FINE_RADIUS = 100
+
 
 class ShadowHorizonResult(NamedTuple):
     """
@@ -44,6 +47,9 @@ class ShadowHorizon:
     """
 
     EIGHT_BIT_STRETCH: ClassVar[Stretch] = Stretch(StretchMode.VALUE, 0.0, 1.0)
+    # The horizon pyramid pads with the tile's own minimum elevation, so a tile
+    # and the whole raster do not agree on the padding value.
+    TILEABLE: ClassVar[bool] = False
 
     azimuth: float = 315.0
     elevation: float = 35.0
@@ -86,6 +92,16 @@ class ShadowHorizon:
             f"_H{format_parameter(self.elevation)}"
         )
 
+    def required_overlap(self, resolution: Resolution) -> int:
+        """
+        Return the horizon search distance in pixels (informational — the
+        config is not tileable, see ``TILEABLE``).
+
+        :param resolution: Cell size of the DEM (unused; the distance is in pixels).
+        :returns: The neighbourhood radius in pixels.
+        """
+        return MAXIMUM_FINE_RADIUS
+
     def compute(
         self, dem: NDArray[np.float32], resolution: Resolution
     ) -> ShadowHorizonResult:
@@ -111,7 +127,7 @@ class ShadowHorizon:
             compute_overcast=True,
             compute_shadow=True,
             shadow_and_horizon_only=True,
-            maximum_fine_radius=100,
+            maximum_fine_radius=MAXIMUM_FINE_RADIUS,
             directions=32,
             shadow_azimuth=self.azimuth,
             shadow_elevation=self.elevation,

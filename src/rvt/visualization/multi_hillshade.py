@@ -114,4 +114,7 @@ class MultiHillshade:
             hillshade[hillshade < 0] = 0
             hillshades.append(hillshade[1:-1, 1:-1])
 
-        return np.asarray(hillshades)
+        # The solar-position scalars promote the arithmetic to float64; the cast
+        # back matches the float32 the legacy pipeline wrote to disk, and keeps
+        # the compute layer's float32 contract.
+        return np.asarray(hillshades, dtype=np.float32)

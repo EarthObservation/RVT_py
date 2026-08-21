@@ -214,7 +214,9 @@ def compute_tiled(
         if workers == 1:
             for task in tasks[1:]:
                 _write_tile(
-                    destination, task, _compute_tile(config, str(input_path), task, overlap)
+                    destination,
+                    task,
+                    _compute_tile(config, str(input_path), task, overlap),
                 )
         else:
             with ProcessPoolExecutor(max_workers=workers) as pool:
