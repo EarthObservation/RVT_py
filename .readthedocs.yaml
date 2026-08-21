@@ -1,0 +1,21 @@
+# Read the Docs configuration file
+# See https://docs.readthedocs.io/en/stable/config-file/v2.html for details
+
+version: 2
+
+build:
+  os: ubuntu-24.04
+  tools:
+    python: "3.12"
+  jobs:
+    # The docs dependencies live in the "docs" dependency group of
+    # pyproject.toml (the project is managed with uv), so they are installed
+    # with pip's --group flag together with the package itself; autodoc needs
+    # rvt importable, and conf.py reads the version from it.
+    install:
+      - python -m pip install --upgrade "pip>=25.1"
+      - python -m pip install --group docs .
+
+sphinx:
+  configuration: docs/conf.py
+  fail_on_warning: true
