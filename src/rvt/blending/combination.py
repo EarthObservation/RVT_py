@@ -19,6 +19,7 @@ from rvt.core import Resolution
 from rvt.visualization import (
     Hillshade,
     NegativeOpenness,
+    ShadowHorizon,
     SkyViewFactor,
     SlopeAspect,
     SlopeUnits,
@@ -95,6 +96,26 @@ class SlopeGradientSource:
     ) -> NDArray[np.floating]:
         """Compute the slope image from the DEM."""
         return self.config.compute(dem, resolution).slope
+
+
+@dataclass(frozen=True)
+class ShadowSource:
+    """
+    The binary cast-shadow band of :class:`rvt.visualization.ShadowHorizon` as
+    a blend layer (the legacy blender's "Shadow" layer).
+
+    :param config: The shadow/horizon config.
+    :param inverts_normalization: Invert the normalized image.
+    """
+
+    config: ShadowHorizon = field(default=ShadowHorizon())
+    inverts_normalization: bool = False
+
+    def compute_image(
+        self, dem: NDArray[np.float32], resolution: Resolution
+    ) -> NDArray[np.floating]:
+        """Compute the cast-shadow image from the DEM."""
+        return self.config.compute(dem, resolution).shadow
 
 
 @dataclass(frozen=True)
@@ -295,6 +316,7 @@ type LayerSource = (
     ImageSource
     | VisualizationSource
     | SlopeGradientSource
+    | ShadowSource
     | SkyViewFactorSource
     | PositiveOpennessSource
     | NegativeOpennessSource

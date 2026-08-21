@@ -11,8 +11,10 @@ from rvt.blending.combination import (
     BlendedSource,
     BlendLayer,
     ColormappedSource,
+    NegativeOpennessSource,
     OpennessDifferenceSource,
     PositiveOpennessSource,
+    ShadowSource,
     SkyViewFactorSource,
     SlopeGradientSource,
     VisualizationSource,
@@ -25,6 +27,7 @@ from rvt.visualization import (
     MultiScaleTopographicPosition,
     NoiseRemoval,
     SimpleLocalReliefModel,
+    SkyIllumination,
     SkyViewFactor,
     SlopeAspect,
     SlopeUnits,
@@ -63,6 +66,71 @@ def vat() -> BlendCombination:
             BlendLayer(
                 source=VisualizationSource(Hillshade()),
                 normalization=Normalization(NormalizationMode.VALUE, 0.0, 1.0),
+                blend_mode=BlendMode.NORMAL,
+                opacity=100.0,
+            ),
+        ),
+    )
+
+
+def prismatic_openness() -> BlendCombination:
+    """
+    The prismatic openness combination: positive openness over negative
+    openness over a slope gradient base, each at 50% opacity (legacy
+    ``default_blender_combinations.json``, "Prismatic openness").
+
+    :returns: The combination, ready to render.
+    """
+    return BlendCombination(
+        name="Prismatic openness",
+        layers=(
+            BlendLayer(
+                source=PositiveOpennessSource(),
+                normalization=Normalization(NormalizationMode.VALUE, 68.0, 93.0),
+                blend_mode=BlendMode.NORMAL,
+                opacity=50.0,
+            ),
+            BlendLayer(
+                source=NegativeOpennessSource(),
+                normalization=Normalization(NormalizationMode.VALUE, 68.0, 95.0),
+                blend_mode=BlendMode.NORMAL,
+                opacity=50.0,
+            ),
+            BlendLayer(
+                source=SlopeGradientSource(),
+                normalization=Normalization(NormalizationMode.VALUE, 0.0, 50.0),
+                blend_mode=BlendMode.LUMINOSITY,
+                opacity=50.0,
+            ),
+        ),
+    )
+
+
+def city() -> BlendCombination:
+    """
+    The city combination: cast shadow over sky-view factor over a sky
+    illumination base (legacy ``default_blender_combinations.json``, "City").
+
+    :returns: The combination, ready to render.
+    """
+    return BlendCombination(
+        name="City",
+        layers=(
+            BlendLayer(
+                source=ShadowSource(),
+                normalization=Normalization(NormalizationMode.VALUE, 0.0, 1.0),
+                blend_mode=BlendMode.NORMAL,
+                opacity=70.0,
+            ),
+            BlendLayer(
+                source=SkyViewFactorSource(),
+                normalization=Normalization(NormalizationMode.VALUE, 0.1, 1.0),
+                blend_mode=BlendMode.NORMAL,
+                opacity=10.0,
+            ),
+            BlendLayer(
+                source=VisualizationSource(SkyIllumination()),
+                normalization=Normalization(NormalizationMode.PERCENT, 1.0, 0.0),
                 blend_mode=BlendMode.NORMAL,
                 opacity=100.0,
             ),

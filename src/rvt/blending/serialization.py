@@ -27,6 +27,7 @@ from rvt.blending.combination import (
     NegativeOpennessSource,
     OpennessDifferenceSource,
     PositiveOpennessSource,
+    ShadowSource,
     SkyViewFactorSource,
     SlopeGradientSource,
     VisualizationSource,
@@ -71,6 +72,7 @@ class _SourceKind(StrEnum):
 
     VISUALIZATION = auto()
     SLOPE_GRADIENT = auto()
+    SHADOW = auto()
     SKY_VIEW_FACTOR = auto()
     POSITIVE_OPENNESS = auto()
     NEGATIVE_OPENNESS = auto()
@@ -189,6 +191,12 @@ def _source_to_dict(source: LayerSource, layer_label: str) -> dict[str, Any]:
                 "config": _config_to_dict(source.config, layer_label),
                 **inverts,
             }
+        case ShadowSource():
+            return {
+                "kind": _SourceKind.SHADOW.value,
+                "config": _config_to_dict(source.config, layer_label),
+                **inverts,
+            }
         case SkyViewFactorSource():
             return {
                 "kind": _SourceKind.SKY_VIEW_FACTOR.value,
@@ -260,6 +268,12 @@ def _source_from_dict(data: dict[str, Any], context: str) -> LayerSource:
             _check_keys(data, config_keys, context)
             return SlopeGradientSource(
                 config=_typed_config_from_dict(data, "config", SlopeAspect, context),
+                inverts_normalization=inverts,
+            )
+        case _SourceKind.SHADOW:
+            _check_keys(data, config_keys, context)
+            return ShadowSource(
+                config=_typed_config_from_dict(data, "config", ShadowHorizon, context),
                 inverts_normalization=inverts,
             )
         case _SourceKind.SKY_VIEW_FACTOR:

@@ -92,6 +92,10 @@ presets need no extra configuration.
    :members:
    :no-index:
 
+.. autoclass:: rvt.blending.ShadowSource
+   :members:
+   :no-index:
+
 .. autoclass:: rvt.blending.SkyViewFactorSource
    :members:
    :no-index:
@@ -223,6 +227,33 @@ Source:
 *   Kokalj, Ž. 2025. `Standardizing visualization in ancient Maya lidar research: Techniques, challenges and recommendations <https://doi.org/10.1002/arp.70002>`_. Archaeological Prospection 32(4): 967-988.
 
 .. autofunction:: rvt.blending.presets.e4mstp
+   :no-index:
+
+Prismatic openness
+``````````````````
+
+.. image:: ./figures/rvtvis_qgis_Pivola_dem_05m_Prismatic_openness_8bit.jpg
+   :width: 650px
+
+Enhanced prismatic openness as implemented in RVT QGIS plugin.
+
+Prismatic openness was developed to facilitate detection of small structures by Canuto et al. (2018) and modified by Verbovšek et al. (2019) by replacing the three-times vertical exaggeration of terrain to compute hillshading from three directions with an overlay fusion technique (blend mode) for positive and negative openness. This improves the effectiveness of conveying information because colors are more pronounced and the general topography is well-defined.
+
+Source:
+
+*   Verbovšek, T., Popit, T., Kokalj, Ž. 2019. VAT Method for Visualization of Mass Movement Features: An Alternative to Hillshaded DEM. `Remote Sensing 11 (24): 2946. <https://doi.org/10.3390/rs11242946.>`_
+*   Marcello, A. C., Estrada-Belli, F., Garrison, T. G., et al. 2018. Ancient Lowland Maya Complexity as Revealed by Airborne Laser Scanning of Northern Guatemala. `Science 361(6409): eaau0137. <https://doi.org/10.1126/science.aau0137>`_
+
+.. autofunction:: rvt.blending.presets.prismatic_openness
+   :no-index:
+
+City
+````
+
+The city combination fuses cast shadow and sky-view factor over a sky
+illumination base.
+
+.. autofunction:: rvt.blending.presets.city
    :no-index:
 
 JSON serialization
