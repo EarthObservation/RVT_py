@@ -1,8 +1,0 @@
-gdal
-numpy
-scipy
-matplotlib
-pandas
-geopandas
-rasterio
-jupyter

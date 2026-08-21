@@ -44,9 +44,6 @@ only-include = [
 
 [tool.ruff]
 fix = true
-# The legacy library stays browsable on this branch until parity is proven;
-# it predates these conventions and is never linted.
-extend-exclude = ["legacy"]
 
 [tool.ruff.lint]
 select = [
@@ -70,7 +67,6 @@ testpaths = ["tests"]
 search-path = ["src", "."]
 preset = "legacy"
 project-includes = ["src", "tests"]
-project-excludes = ["legacy"]
 
 [tool.pyrefly.errors]
 implicit-any-parameter = "error"
