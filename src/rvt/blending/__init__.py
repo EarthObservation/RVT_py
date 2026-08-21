@@ -24,6 +24,7 @@ from rvt.blending.combination import (
 )
 from rvt.blending.normalization import Normalization, NormalizationMode
 from rvt.blending.serialization import combination_from_json, combination_to_json
+from rvt.blending.terrain import Terrain, TerrainSettings
 
 __all__ = [
     "BlendCombination",
@@ -43,6 +44,8 @@ __all__ = [
     "ShadowSource",
     "SkyViewFactorSource",
     "SlopeGradientSource",
+    "Terrain",
+    "TerrainSettings",
     "VisualizationSource",
     "combination_from_json",
     "combination_to_json",

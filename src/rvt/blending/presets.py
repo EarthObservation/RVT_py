@@ -20,6 +20,7 @@ from rvt.blending.combination import (
     VisualizationSource,
 )
 from rvt.blending.normalization import Normalization, NormalizationMode
+from rvt.blending.terrain import Terrain
 from rvt.core import Resolution
 from rvt.visualization import (
     Hillshade,
@@ -32,6 +33,8 @@ from rvt.visualization import (
     SlopeAspect,
     SlopeUnits,
 )
+
+_IDENTITY_NORMALIZATION = Normalization(NormalizationMode.VALUE, 0.0, 1.0)
 
 
 def vat() -> BlendCombination:
@@ -66,6 +69,42 @@ def vat() -> BlendCombination:
             BlendLayer(
                 source=VisualizationSource(Hillshade()),
                 normalization=Normalization(NormalizationMode.VALUE, 0.0, 1.0),
+                blend_mode=BlendMode.NORMAL,
+                opacity=100.0,
+            ),
+        ),
+    )
+
+
+def vat_combined(
+    *,
+    general_opacity: float = 50.0,
+    general_terrain: Terrain = Terrain.GENERAL,
+    flat_terrain: Terrain = Terrain.FLAT,
+) -> BlendCombination:
+    """
+    The combined VAT (CVAT) combination: :func:`vat` computed with the general
+    terrain settings, at normal blend mode and 50% opacity, over :func:`vat`
+    computed with the flat terrain settings (legacy ``VAT_combined.py``).
+
+    :param general_opacity: Opacity in percent of the general-terrain VAT on
+        top of the flat-terrain VAT.
+    :param general_terrain: Terrain type of the top layer.
+    :param flat_terrain: Terrain type of the base layer.
+    :returns: The combination, ready to render.
+    """
+    return BlendCombination(
+        name="VAT combined - Archaeological",
+        layers=(
+            BlendLayer(
+                source=BlendedSource(general_terrain.settings().apply(vat())),
+                normalization=_IDENTITY_NORMALIZATION,
+                blend_mode=BlendMode.NORMAL,
+                opacity=general_opacity,
+            ),
+            BlendLayer(
+                source=BlendedSource(flat_terrain.settings().apply(vat())),
+                normalization=_IDENTITY_NORMALIZATION,
                 blend_mode=BlendMode.NORMAL,
                 opacity=100.0,
             ),
@@ -137,8 +176,6 @@ def city() -> BlendCombination:
         ),
     )
 
-
-_IDENTITY_NORMALIZATION = Normalization(NormalizationMode.VALUE, 0.0, 1.0)
 
 # The legacy blends went through DefaultValues, whose mstp_lightness (0.9)
 # differs from the rvt.vis.mstp function default (1.2).

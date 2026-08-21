@@ -160,6 +160,43 @@ to a sub-range, by wrapping its source in
    :members:
    :no-index:
 
+Terrain settings
+----------------
+
+The parameters and the histogram stretches that work best depend on the terrain
+type, so RVT ships recommended settings for a general, a flat and a steep
+terrain, which can be applied to any combination.
+
+:class:`rvt.blending.TerrainSettings` carries the optional per-visualization
+parameter overrides and normalization bounds of one terrain type, and
+``apply`` returns a new combination with them applied to every layer whose
+visualization kind the terrain has settings for. The three shipped terrains are
+the values of the version 2 ``default_terrains_settings.json``, reached through
+the :class:`rvt.blending.Terrain` enum:
+
+.. code-block:: python
+
+   import rvt.io
+   from rvt.blending import Terrain, presets
+
+   flat_vat = Terrain.FLAT.settings().apply(presets.vat())
+
+   dem = rvt.io.read("dem.tif")
+   image = flat_vat.render(dem.array, dem.resolution)
+
+In version 2 the "Sky illumination" and "Local dominance" stretches were both
+read into the negative openness field, so neither of them was ever applied.
+Here every visualization's bounds have their own field, so both are applied —
+a deliberate deviation from version 2.
+
+.. autoclass:: rvt.blending.Terrain
+   :members:
+   :no-index:
+
+.. autoclass:: rvt.blending.TerrainSettings
+   :members:
+   :no-index:
+
 Presets
 -------
 
@@ -190,6 +227,26 @@ Source:
 *   Kokalj, Ž. 2025. `Standardizing visualization in ancient Maya lidar research: Techniques, challenges and recommendations <https://doi.org/10.1002/arp.70002>`_. Archaeological Prospection 32(4): 967-988.
 
 .. autofunction:: rvt.blending.presets.vat
+   :no-index:
+
+VAT combined
+````````````
+
+.. image:: ./figures/rvtvis_qgis_Pivola_dem_05m_VAT_combined_8bit.jpg
+   :width: 650px
+
+The default (general) computation settings are used to visualise a diverse landscape with high mountains and plains. However, the result fails to portray the broader, subtle features of flat terrain. On the other hand, VAT computed with settings for flat terrain makes such structures very distinct but can become oversaturated in areas with very steep slopes.
+
+Combined visualisation for archaeological topography (combined VAT or CVAT) blends results computed with settings for general and flat terrain. Combined VAT is a very suitable ‘base’ visualisation that can be fused with other techniques to add additional information in the form of colors. It is comparable across diverse areas and is a suitable technique for archaeological mapping using lidar data derivatives.
+
+We recommend replacing hillshading and many other techniques in scientific and technical literature with combined VAT because it offers all the benefits – it is easy to understand and works well as a background – but provides much more detail. When less contrast is desired, e.g., when combined with very detailed vector layers showing a high density of features, VAT computed with a setting for general terrain is a good choice for a base map (`Kokalj 2025 <https://doi.org/10.1002/arp.70002>`_).
+
+Source:
+
+*   Kokalj, Ž. in M. Somrak. 2019. `Why not a single image? Combining visualizations to facilitate fieldwork and on-Screen mapping <https://doi.org/10.3390/rs11070747>`_. Remote Sensing 11 (7): 747.
+*   Kokalj, Ž. 2025. `Standardizing visualization in ancient Maya lidar research: Techniques, challenges and recommendations <https://doi.org/10.1002/arp.70002>`_. Archaeological Prospection 32(4): 967-988.
+
+.. autofunction:: rvt.blending.presets.vat_combined
    :no-index:
 
 CRIM

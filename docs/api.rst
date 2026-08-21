@@ -78,3 +78,11 @@ rvt.blending.serialization
    :members:
    :show-inheritance:
    :exclude-members: combination_from_json, combination_to_json
+
+rvt.blending.terrain
+````````````````````
+
+.. automodule:: rvt.blending.terrain
+   :members:
+   :show-inheritance:
+   :exclude-members: Terrain, TerrainSettings
