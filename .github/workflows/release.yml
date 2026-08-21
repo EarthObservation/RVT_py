@@ -1,0 +1,101 @@
+name: Release
+
+# Pushing a v* tag releases that version: the full CI gate runs, the
+# distributions are built once and published to PyPI via trusted publishing,
+# and the same sdist is repackaged for the rvtpy Anaconda channel.
+#
+# One-time setup outside this repository:
+#   * PyPI: add a trusted publisher for this repository, workflow
+#     `release.yml`, environment `pypi` (no API token needed).
+#   * GitHub: create the `pypi` and `conda` environments, and add the
+#     `ANACONDA_TOKEN` secret (an anaconda.org token with upload rights to the
+#     rvtpy channel) to the `conda` environment.
+
+on:
+  push:
+    tags: ["v*"]
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          python-version: "3.12"
+      - name: Install dependencies
+        run: uv sync --frozen
+      - name: Ruff lint
+        run: uv run ruff check --no-fix .
+      - name: Ruff format check
+        run: uv run ruff format --check .
+      - name: Type check
+        run: uv run pyrefly check
+      - name: Tests
+        run: uv run pytest -n auto
+
+  build:
+    needs: validate
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          python-version: "3.12"
+      - name: Check the tag matches the project version
+        run: |
+          tag_version="${GITHUB_REF_NAME#v}"
+          project_version="$(uv version --short)"
+          if [ "$tag_version" != "$project_version" ]; then
+            echo "Tag '$GITHUB_REF_NAME' does not match project version '$project_version'." >&2
+            exit 1
+          fi
+      - name: Build the distributions
+        run: uv build
+      - uses: actions/upload-artifact@v4
+        with:
+          name: distributions
+          path: dist/
+
+  pypi:
+    needs: build
+    runs-on: ubuntu-latest
+    environment: pypi
+    permissions:
+      id-token: write # trusted publishing
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: distributions
+          path: dist/
+      - uses: pypa/gh-action-pypi-publish@release/v1
+
+  conda:
+    needs: pypi
+    runs-on: ubuntu-latest
+    environment: conda
+    defaults:
+      run:
+        shell: bash -el {0}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: distributions
+          path: dist/
+      - uses: conda-incubator/setup-miniconda@v3
+        with:
+          python-version: "3.12"
+      - name: Install the packaging tools
+        run: conda install -y conda-build anaconda-client
+      - name: Build the conda package
+        run: |
+          sdist="$(ls dist/*.tar.gz)"
+          RVT_VERSION="${GITHUB_REF_NAME#v}" \
+          RVT_SDIST="$(realpath "$sdist")" \
+          RVT_SHA256="$(sha256sum "$sdist" | cut -d' ' -f1)" \
+          conda build conda/ --no-anaconda-upload --output-folder build/
+      - name: Upload to the rvtpy channel
+        env:
+          ANACONDA_API_TOKEN: ${{ secrets.ANACONDA_TOKEN }}
+        run: anaconda upload --user rvtpy $(find build -name 'rvt-py-*.conda')

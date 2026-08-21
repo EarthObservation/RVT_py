@@ -1,0 +1,50 @@
+{% set version = environ.get('RVT_VERSION', '0.0.0') %}
+
+package:
+  name: rvt-py
+  version: "{{ version }}"
+
+# The release workflow builds the sdist once, publishes it to PyPI, and points
+# this recipe at that exact file, so the conda package is built from the same
+# artifact rather than a re-download.
+source:
+  url: file://{{ environ.get('RVT_SDIST') }}
+  sha256: {{ environ.get('RVT_SHA256') }}
+
+build:
+  noarch: python
+  number: 0
+  script: "{{ PYTHON }} -m pip install . --no-deps --ignore-installed -vv"
+
+requirements:
+  host:
+    - python 3.12
+    - pip
+    - hatchling
+  run:
+    - python 3.12
+    - affine >=2.4.0,<3.0.0
+    - matplotlib-base >=3.11.0
+    - numpy >=2.0.0,<3.0.0
+    - rasterio >=1.5.0,<2.0.0
+    - scipy >=1.14.0,<2.0.0
+
+test:
+  imports:
+    - rvt
+    - rvt.blending
+    - rvt.visualization
+
+about:
+  home: https://github.com/EarthObservation/RVT_py
+  license: Apache-2.0
+  license_family: APACHE
+  license_file: ../LICENSE
+  summary: Relief Visualization Toolbox python library. It helps scientist visualize raster elevation model datasets.
+  doc_url: https://rvt-py.readthedocs.io/en/latest/
+  dev_url: https://github.com/EarthObservation/RVT_py
+
+extra:
+  recipe-maintainers:
+    - zmigyyy
+    - NejcCoz # Github ID
