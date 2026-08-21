@@ -16,23 +16,9 @@ on:
     tags: ["v*"]
 
 jobs:
+  # The same checks that gate a pull request gate a release.
   validate:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: astral-sh/setup-uv@v6
-        with:
-          python-version: "3.12"
-      - name: Install dependencies
-        run: uv sync --frozen
-      - name: Ruff lint
-        run: uv run ruff check --no-fix .
-      - name: Ruff format check
-        run: uv run ruff format --check .
-      - name: Type check
-        run: uv run pyrefly check
-      - name: Tests
-        run: uv run pytest -n auto
+    uses: ./.github/workflows/ci.yml
 
   build:
     needs: validate

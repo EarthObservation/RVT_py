@@ -1,18 +1,28 @@
-name: CI
+name: Checks
 
 on:
   pull_request:
   push:
     branches: [master]
+  # Called by release.yml so a release runs exactly these checks.
+  workflow_call:
+
+# A newer commit on a pull request supersedes the run in progress; pushes to
+# master are always run to completion.
+concurrency:
+  group: checks-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   validate:
+    name: Lint, type check, test, docs
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v6
         with:
           python-version: "3.12"
+          enable-cache: true
       - name: Install dependencies
         run: uv sync --frozen
       - name: Ruff lint
@@ -22,4 +32,6 @@ jobs:
       - name: Type check
         run: uv run pyrefly check
       - name: Tests
-        run: uv run pytest -n auto
+        run: uv run pytest -n auto --cov=rvt --cov-report=term-missing --cov-fail-under=95
+      - name: Documentation build
+        run: uv run --group docs sphinx-build -W -b html docs docs/_build/html
