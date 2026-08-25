@@ -18,8 +18,9 @@ from typing import NamedTuple, Sequence, cast
 import numpy as np
 import rasterio
 
+from rvt.core import VisualizationOutput
 from rvt.io import Raster, read, write
-from rvt.stretch import Stretch, to_8bit
+from rvt.stretch import to_8bit
 from rvt.tiling import DEFAULT_TILE_SIZE, TileableVisualization, compute_tiled
 from rvt.visualization import (
     Hillshade,
@@ -80,71 +81,9 @@ class SessionTask:
             )
 
 
-class _PlannedOutput(NamedTuple):
-    """One file-producing member of a task: where it goes and how to render it."""
-
-    member: str | None
-    stem: str
-    stretch: Stretch | None
-
-
-def _planned_outputs(task: SessionTask, dem_name: str) -> list[_PlannedOutput]:
+def _planned_outputs(task: SessionTask, dem_name: str) -> list[VisualizationOutput]:
     """Return the outputs a task produces, honouring its name override."""
-    config = task.config
-    match config:
-        case SlopeAspect():
-            outputs = [
-                _PlannedOutput(
-                    "slope",
-                    config.slope_output_stem(dem_name),
-                    SlopeAspect.EIGHT_BIT_STRETCH,
-                ),
-                _PlannedOutput("aspect", config.aspect_output_stem(dem_name), None),
-            ]
-        case SkyViewFactor():
-            outputs = [
-                _PlannedOutput(
-                    "sky_view_factor",
-                    config.sky_view_factor_output_stem(dem_name),
-                    SkyViewFactor.EIGHT_BIT_STRETCH,
-                )
-            ]
-            if config.include_anisotropic:
-                outputs.append(
-                    _PlannedOutput(
-                        "anisotropic",
-                        config.anisotropic_output_stem(dem_name),
-                        SkyViewFactor.ANISOTROPIC_EIGHT_BIT_STRETCH,
-                    )
-                )
-            if config.include_positive_openness:
-                outputs.append(
-                    _PlannedOutput(
-                        "positive_openness",
-                        config.positive_openness_output_stem(dem_name),
-                        SkyViewFactor.POSITIVE_OPENNESS_EIGHT_BIT_STRETCH,
-                    )
-                )
-        case ShadowHorizon():
-            outputs = [
-                _PlannedOutput(
-                    "shadow",
-                    config.shadow_output_stem(dem_name),
-                    ShadowHorizon.EIGHT_BIT_STRETCH,
-                ),
-                _PlannedOutput("horizon", config.horizon_output_stem(dem_name), None),
-            ]
-        case MultiHillshade():
-            # The legacy 8-bit multi-hillshade is a special 3-band RGB rendering
-            # from the DEM, not a stretch of the float stack; not implemented yet.
-            outputs = [_PlannedOutput(None, config.output_stem(dem_name), None)]
-        case _:
-            outputs = [
-                _PlannedOutput(
-                    None, config.output_stem(dem_name), config.EIGHT_BIT_STRETCH
-                )
-            ]
-
+    outputs = list(task.config.outputs(dem_name))
     if task.name is None:
         return outputs
     return [
@@ -159,7 +98,7 @@ class _Target(NamedTuple):
     """One file to write: its path, source output, and rendering kind."""
 
     path: Path
-    output: _PlannedOutput
+    output: VisualizationOutput
     is_8bit: bool
 
 
@@ -245,7 +184,7 @@ class Session:
                 targets.append(
                     _Target(self.output_directory / f"{output.stem}.tif", output, False)
                 )
-            if task.save_8bit and output.stretch is not None:
+            if task.save_8bit and output.eight_bit_stretch is not None:
                 targets.append(
                     _Target(
                         self.output_directory / f"{output.stem}_8bit.tif", output, True
@@ -274,7 +213,7 @@ class Session:
         Return whether a task's float output is computed tile by tile: only a
         tileable, single-output config qualifies.
         """
-        if not getattr(task.config, "TILEABLE", False):
+        if not task.config.TILEABLE:
             return False
         return all(
             output.member is None
@@ -288,10 +227,10 @@ class Session:
         written = []
         array = np.asarray(float_raster.array).astype(np.float32)
         for target in targets:
-            assert target.output.stretch is not None
+            assert target.output.eight_bit_stretch is not None
             write(
                 Raster(
-                    array=to_8bit(array, target.output.stretch),
+                    array=to_8bit(array, target.output.eight_bit_stretch),
                     transform=float_raster.transform,
                     crs=float_raster.crs,
                 ),

@@ -12,6 +12,8 @@ from numpy.typing import NDArray
 
 from rvt.core import (
     Resolution,
+    Visualization,
+    VisualizationOutput,
     format_parameter,
     validate_dem_and_resolution,
     validate_vertical_exaggeration,
@@ -22,7 +24,7 @@ FULL_CIRCLE_DEGREES = 360
 
 
 @dataclass(frozen=True)
-class MultiHillshade:
+class MultiHillshade(Visualization[NDArray[np.float32]]):
     """
     Hillshading from multiple evenly spaced sun azimuths.
 
@@ -64,6 +66,18 @@ class MultiHillshade:
             f"{dem_name}_MULTI-HS_D{self.directions}"
             f"_H{format_parameter(self.sun_elevation)}"
         )
+
+    def outputs(self, dem_name: str) -> tuple[VisualizationOutput, ...]:
+        """
+        Return the single output this config produces, float-only: the legacy
+        8-bit multi-hillshade is a special 3-band RGB rendering computed from
+        the DEM, not a stretch of the float stack, and is not implemented yet.
+
+        :param dem_name: Stem of the DEM file name.
+        :returns: One output: the band stack under :meth:`output_stem`, with no
+            8-bit stretch.
+        """
+        return (VisualizationOutput(None, self.output_stem(dem_name), None),)
 
     def required_overlap(self, resolution: Resolution) -> int:
         """

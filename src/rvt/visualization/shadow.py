@@ -12,6 +12,8 @@ from numpy.typing import NDArray
 
 from rvt.core import (
     Resolution,
+    Visualization,
+    VisualizationOutput,
     format_parameter,
     validate_dem_and_resolution,
     validate_vertical_exaggeration,
@@ -37,7 +39,7 @@ class ShadowHorizonResult(NamedTuple):
 
 
 @dataclass(frozen=True)
-class ShadowHorizon:
+class ShadowHorizon(Visualization[ShadowHorizonResult]):
     """
     Binary cast shadow and horizon elevation angle for a single sun position.
 
@@ -66,30 +68,24 @@ class ShadowHorizon:
                 f"elevation must be between 0 and 90, got '{self.elevation}'!"
             )
 
-    def shadow_output_stem(self, dem_name: str) -> str:
+    def outputs(self, dem_name: str) -> tuple[VisualizationOutput, ...]:
         """
-        Return the output file stem for the shadow member, e.g.
-        ``dem_shadow_A315_H35`` (lowercase code, matching the legacy scheme).
+        Return the two outputs this config produces, e.g.
+        ``dem_shadow_A315_H35`` and ``dem_horizon_A315_H35`` (lowercase codes,
+        matching the legacy scheme). Horizon has no legacy 8-bit form, so it is
+        float-only.
 
         :param dem_name: Stem of the DEM file name.
-        :returns: The output file stem, without extension.
+        :returns: The shadow and horizon outputs, in that order.
         """
-        return (
-            f"{dem_name}_shadow_A{format_parameter(self.azimuth)}"
-            f"_H{format_parameter(self.elevation)}"
+        position = (
+            f"_A{format_parameter(self.azimuth)}_H{format_parameter(self.elevation)}"
         )
-
-    def horizon_output_stem(self, dem_name: str) -> str:
-        """
-        Return the output file stem for the horizon member, e.g.
-        ``dem_horizon_A315_H35``.
-
-        :param dem_name: Stem of the DEM file name.
-        :returns: The output file stem, without extension.
-        """
         return (
-            f"{dem_name}_horizon_A{format_parameter(self.azimuth)}"
-            f"_H{format_parameter(self.elevation)}"
+            VisualizationOutput(
+                "shadow", f"{dem_name}_shadow{position}", self.EIGHT_BIT_STRETCH
+            ),
+            VisualizationOutput("horizon", f"{dem_name}_horizon{position}", None),
         )
 
     def required_overlap(self, resolution: Resolution) -> int:

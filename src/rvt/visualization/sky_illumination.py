@@ -16,6 +16,8 @@ from scipy.interpolate import RectBivariateSpline
 
 from rvt.core import (
     Resolution,
+    Visualization,
+    VisualizationOutput,
     validate_dem_and_resolution,
     validate_vertical_exaggeration,
 )
@@ -397,7 +399,7 @@ def _compute_sky_illumination(
 
 
 @dataclass(frozen=True)
-class SkyIllumination:
+class SkyIllumination(Visualization[NDArray[np.float32]]):
     """
     Topographic correction for illumination under a uniform or overcast sky.
 
@@ -454,6 +456,20 @@ class SkyIllumination:
         return (
             f"{dem_name}_SIM_{self.sky_model}_D{self.directions}"
             f"_{self.maximum_fine_radius}px"
+        )
+
+    def outputs(self, dem_name: str) -> tuple[VisualizationOutput, ...]:
+        """
+        Return the single output this config produces.
+
+        :param dem_name: Stem of the DEM file name.
+        :returns: One output: the computed array, under
+            :meth:`output_stem`, rendered with ``EIGHT_BIT_STRETCH``.
+        """
+        return (
+            VisualizationOutput(
+                None, self.output_stem(dem_name), self.EIGHT_BIT_STRETCH
+            ),
         )
 
     def required_overlap(self, resolution: Resolution) -> int:

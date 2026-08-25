@@ -13,6 +13,8 @@ from numpy.typing import NDArray
 
 from rvt.core import (
     Resolution,
+    Visualization,
+    VisualizationOutput,
     validate_dem_and_resolution,
     validate_vertical_exaggeration,
 )
@@ -96,7 +98,7 @@ def _slope_aspect(
 
 
 @dataclass(frozen=True)
-class SlopeAspect:
+class SlopeAspect(Visualization[SlopeAspectResult]):
     """
     Terrain slope gradient and aspect via finite differences.
 
@@ -116,23 +118,18 @@ class SlopeAspect:
     def __post_init__(self) -> None:
         validate_vertical_exaggeration(self.vertical_exaggeration)
 
-    def slope_output_stem(self, dem_name: str) -> str:
+    def outputs(self, dem_name: str) -> tuple[VisualizationOutput, ...]:
         """
-        Return the output file stem for the slope member, e.g. ``dem_SLOPE``.
+        Return the two outputs this config produces: ``dem_SLOPE`` and
+        ``dem_ASPECT``. Aspect has no legacy 8-bit form, so it is float-only.
 
         :param dem_name: Stem of the DEM file name.
-        :returns: The output file stem, without extension.
+        :returns: The slope and aspect outputs, in that order.
         """
-        return f"{dem_name}_SLOPE"
-
-    def aspect_output_stem(self, dem_name: str) -> str:
-        """
-        Return the output file stem for the aspect member, e.g. ``dem_ASPECT``.
-
-        :param dem_name: Stem of the DEM file name.
-        :returns: The output file stem, without extension.
-        """
-        return f"{dem_name}_ASPECT"
+        return (
+            VisualizationOutput("slope", f"{dem_name}_SLOPE", self.EIGHT_BIT_STRETCH),
+            VisualizationOutput("aspect", f"{dem_name}_ASPECT", None),
+        )
 
     def required_overlap(self, resolution: Resolution) -> int:
         """

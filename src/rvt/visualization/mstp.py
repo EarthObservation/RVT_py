@@ -12,6 +12,8 @@ from numpy.typing import NDArray
 
 from rvt.core import (
     Resolution,
+    Visualization,
+    VisualizationOutput,
     format_parameter,
     validate_dem_and_resolution,
     validate_vertical_exaggeration,
@@ -147,7 +149,7 @@ def _validate_scale(name: str, scale: tuple[int, int, int]) -> None:
 
 
 @dataclass(frozen=True)
-class MultiScaleTopographicPosition:
+class MultiScaleTopographicPosition(Visualization[NDArray[np.float32]]):
     """
     Multi-scale topographic position: an RGB composite of the maximum deviation
     from mean elevation at broad (red), meso (green) and local (blue) scales.
@@ -185,6 +187,20 @@ class MultiScaleTopographicPosition:
         return (
             f"{dem_name}_MSTP_{self.local_scale[1]}_{self.meso_scale[1]}"
             f"_{self.broad_scale[1]}_L{format_parameter(self.lightness)}"
+        )
+
+    def outputs(self, dem_name: str) -> tuple[VisualizationOutput, ...]:
+        """
+        Return the single output this config produces.
+
+        :param dem_name: Stem of the DEM file name.
+        :returns: One output: the computed array, under
+            :meth:`output_stem`, rendered with ``EIGHT_BIT_STRETCH``.
+        """
+        return (
+            VisualizationOutput(
+                None, self.output_stem(dem_name), self.EIGHT_BIT_STRETCH
+            ),
         )
 
     def required_overlap(self, resolution: Resolution) -> int:

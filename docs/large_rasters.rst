@@ -64,9 +64,10 @@ Config                                             File name
 ``ShadowHorizon()``                                ``dem_shadow_A315_H35.tif``, ``dem_horizon_A315_H35.tif``
 =================================================  =========================================================
 
-The naming lives on the configs themselves (``output_stem``, or one method per
-member for the multi-output configs), so a name can be predicted without a
-session.
+The naming lives on the configs themselves: every config's ``outputs(dem_name)``
+returns one :class:`rvt.VisualizationOutput` per file it produces, so a name can
+be predicted without a session. Single-output configs also keep a plain
+``output_stem(dem_name)``.
 
 .. autoclass:: rvt.Session
    :members:

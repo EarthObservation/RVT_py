@@ -12,6 +12,8 @@ from numpy.typing import NDArray
 
 from rvt.core import (
     Resolution,
+    Visualization,
+    VisualizationOutput,
     format_parameter,
     validate_dem_and_resolution,
     validate_vertical_exaggeration,
@@ -21,7 +23,7 @@ from rvt.visualization.slrm import _mean_filter
 
 
 @dataclass(frozen=True)
-class MultiScaleReliefModel:
+class MultiScaleReliefModel(Visualization[NDArray[np.float32]]):
     """
     Multi-scale relief model (MSRM): the mean of differences between
     consecutive mean-filtered surfaces over a range of feature sizes.
@@ -57,6 +59,20 @@ class MultiScaleReliefModel:
         return (
             f"{dem_name}_MSRM_F_M{format_parameter(self.feature_minimum)}"
             f"-{format_parameter(self.feature_maximum)}_S{self.scaling_factor}"
+        )
+
+    def outputs(self, dem_name: str) -> tuple[VisualizationOutput, ...]:
+        """
+        Return the single output this config produces.
+
+        :param dem_name: Stem of the DEM file name.
+        :returns: One output: the computed array, under
+            :meth:`output_stem`, rendered with ``EIGHT_BIT_STRETCH``.
+        """
+        return (
+            VisualizationOutput(
+                None, self.output_stem(dem_name), self.EIGHT_BIT_STRETCH
+            ),
         )
 
     def required_overlap(self, resolution: Resolution) -> int:

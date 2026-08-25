@@ -23,7 +23,7 @@ from __future__ import annotations
 
 from concurrent.futures import ProcessPoolExecutor
 from pathlib import Path
-from typing import ClassVar, NamedTuple, Protocol
+from typing import NamedTuple
 
 import numpy as np
 import rasterio
@@ -32,7 +32,7 @@ from numpy.typing import NDArray
 from rasterio.io import DatasetWriter
 from rasterio.windows import Window
 
-from rvt.core import Resolution
+from rvt.core import Resolution, Visualization
 from rvt.visualization import ShadowHorizon, SkyViewFactor, SlopeAspect
 
 DEFAULT_TILE_SIZE = (4000, 4000)
@@ -40,24 +40,11 @@ DEFAULT_TILE_SIZE = (4000, 4000)
 _MULTI_OUTPUT_CONFIGS = (ShadowHorizon, SkyViewFactor, SlopeAspect)
 
 
-class TileableVisualization(Protocol):
-    """
-    A visualization config :func:`compute_tiled` can run: it yields a single
-    image (2D, or a fixed band stack of the DEM's shape), declares whether its
-    result is independent of the tiling, and knows its neighbourhood radius.
-    """
-
-    TILEABLE: ClassVar[bool]
-
-    def required_overlap(self, resolution: Resolution) -> int:
-        """Return the neighbourhood radius in pixels a tile must be expanded by."""
-        ...
-
-    def compute(
-        self, dem: NDArray[np.float32], resolution: Resolution
-    ) -> NDArray[np.float32]:
-        """Compute the visualization of a DEM tile."""
-        ...
+#: A visualization config :func:`compute_tiled` can run: the shared
+#: :class:`rvt.core.Visualization` contract, specialized to configs whose
+#: ``compute`` yields a single image (2D, or a fixed band stack of the DEM's
+#: shape) rather than a multi-output result object.
+TileableVisualization = Visualization[NDArray[np.float32]]
 
 
 class _TileTask(NamedTuple):

@@ -117,7 +117,7 @@ Version 2                                          Version 3
 ``DefaultValues.*_save_float`` / ``*_save_8bit``   ``SessionTask(save_float=..., save_8bit=...)``
 ``DefaultValues.*_bytscl``                         ``Config.EIGHT_BIT_STRETCH``
 ``DefaultValues.float_to_8bit(...)``               :func:`rvt.stretch.to_8bit`
-``DefaultValues.get_<vis>_file_name(dem_path)``    ``config.output_stem(dem_name)``
+``DefaultValues.get_<vis>_file_name(dem_path)``    ``config.outputs(dem_name)``, or ``config.output_stem(dem_name)``
 ``DefaultValues.overwrite``                        ``Session(overwrite=...)``
 ``DefaultValues.tile_size_limit`` / ``tile_size``  ``Session(automatic_tiling_threshold=..., tile_size=...)``
 ``DefaultValues.create_log_file(...)``             *not ported*

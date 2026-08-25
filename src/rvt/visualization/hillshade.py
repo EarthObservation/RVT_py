@@ -12,6 +12,8 @@ from numpy.typing import NDArray
 
 from rvt.core import (
     Resolution,
+    Visualization,
+    VisualizationOutput,
     format_parameter,
     validate_dem_and_resolution,
     validate_vertical_exaggeration,
@@ -21,7 +23,7 @@ from rvt.visualization.slope import SlopeUnits, _slope_aspect
 
 
 @dataclass(frozen=True)
-class Hillshade:
+class Hillshade(Visualization[NDArray[np.float32]]):
     """
     Analytical hillshading from a single sun position.
 
@@ -58,6 +60,20 @@ class Hillshade:
         return (
             f"{dem_name}_HS_A{format_parameter(self.sun_azimuth)}"
             f"_H{format_parameter(self.sun_elevation)}"
+        )
+
+    def outputs(self, dem_name: str) -> tuple[VisualizationOutput, ...]:
+        """
+        Return the single output this config produces.
+
+        :param dem_name: Stem of the DEM file name.
+        :returns: One output: the computed array, under
+            :meth:`output_stem`, rendered with ``EIGHT_BIT_STRETCH``.
+        """
+        return (
+            VisualizationOutput(
+                None, self.output_stem(dem_name), self.EIGHT_BIT_STRETCH
+            ),
         )
 
     def required_overlap(self, resolution: Resolution) -> int:

@@ -10,6 +10,8 @@ import numpy as np
 from numpy.typing import NDArray
 
 from rvt.core import Resolution
+from rvt.core import Visualization as Visualization
+from rvt.core import VisualizationOutput as VisualizationOutput
 from rvt.io import Raster
 from rvt.session import Session as Session
 from rvt.session import SessionTask as SessionTask
@@ -19,7 +21,12 @@ __version__ = "3.0.0.dev0"
 
 class SingleImageVisualization(Protocol):
     """
-    A visualization config whose ``compute`` yields one array (2D, or a band stack).
+    A visualization config whose ``compute`` yields one array (2D, or a band
+    stack).
+
+    Deliberately narrower than :class:`rvt.core.Visualization`: :func:`compute`
+    only ever calls ``compute``, so anything array-producing qualifies, without
+    having to name files or declare tileability.
     """
 
     def compute(

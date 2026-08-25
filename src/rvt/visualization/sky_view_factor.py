@@ -13,6 +13,8 @@ from numpy.typing import NDArray
 
 from rvt.core import (
     Resolution,
+    Visualization,
+    VisualizationOutput,
     format_parameter,
     validate_dem_and_resolution,
     validate_vertical_exaggeration,
@@ -269,7 +271,7 @@ def _validate_search_parameters(directions: int, max_radius: int) -> None:
 
 
 @dataclass(frozen=True)
-class SkyViewFactor:
+class SkyViewFactor(Visualization[SkyViewFactorResult]):
     """
     Sky-view factor with optional anisotropic variant and positive openness.
 
@@ -311,47 +313,46 @@ class SkyViewFactor:
         _validate_search_parameters(self.directions, self.max_radius)
         _anisotropy_parameters(self.anisotropy_level)
 
-    def sky_view_factor_output_stem(self, dem_name: str) -> str:
+    def outputs(self, dem_name: str) -> tuple[VisualizationOutput, ...]:
         """
-        Return the output file stem for the sky-view factor member, e.g.
-        ``dem_SVF_R10_D16`` (a noise-removal suffix such as ``_NRhigh`` is
-        appended when noise removal is enabled).
+        Return the outputs this config produces: the sky-view factor
+        (``dem_SVF_R10_D16``), plus the anisotropic variant
+        (``dem_SVF-A_R10_D16_A315_ALlow``) and positive openness
+        (``dem_OPEN-POS_R10_D16``) when requested. A noise-removal suffix such
+        as ``_NRhigh`` is appended to every stem when noise removal is enabled.
 
         :param dem_name: Stem of the DEM file name.
-        :returns: The output file stem, without extension.
+        :returns: The requested outputs, sky-view factor first.
         """
-        return (
-            f"{dem_name}_SVF_R{self.max_radius}_D{self.directions}"
-            f"{self.noise_removal._file_name_suffix()}"
-        )
-
-    def anisotropic_output_stem(self, dem_name: str) -> str:
-        """
-        Return the output file stem for the anisotropic member, e.g.
-        ``dem_SVF-A_R10_D16_A315_ALlow``.
-
-        :param dem_name: Stem of the DEM file name.
-        :returns: The output file stem, without extension.
-        """
-        anisotropy_level = "low" if self.anisotropy_level == 1 else "high"
-        return (
-            f"{dem_name}_SVF-A_R{self.max_radius}_D{self.directions}"
-            f"_A{format_parameter(self.anisotropy_direction)}_AL{anisotropy_level}"
-            f"{self.noise_removal._file_name_suffix()}"
-        )
-
-    def positive_openness_output_stem(self, dem_name: str) -> str:
-        """
-        Return the output file stem for the positive-openness member, e.g.
-        ``dem_OPEN-POS_R10_D16``.
-
-        :param dem_name: Stem of the DEM file name.
-        :returns: The output file stem, without extension.
-        """
-        return (
-            f"{dem_name}_OPEN-POS_R{self.max_radius}_D{self.directions}"
-            f"{self.noise_removal._file_name_suffix()}"
-        )
+        search = f"_R{self.max_radius}_D{self.directions}"
+        noise = self.noise_removal._file_name_suffix()
+        outputs = [
+            VisualizationOutput(
+                "sky_view_factor",
+                f"{dem_name}_SVF{search}{noise}",
+                self.EIGHT_BIT_STRETCH,
+            )
+        ]
+        if self.include_anisotropic:
+            anisotropy_level = "low" if self.anisotropy_level == 1 else "high"
+            outputs.append(
+                VisualizationOutput(
+                    "anisotropic",
+                    f"{dem_name}_SVF-A{search}"
+                    f"_A{format_parameter(self.anisotropy_direction)}"
+                    f"_AL{anisotropy_level}{noise}",
+                    self.ANISOTROPIC_EIGHT_BIT_STRETCH,
+                )
+            )
+        if self.include_positive_openness:
+            outputs.append(
+                VisualizationOutput(
+                    "positive_openness",
+                    f"{dem_name}_OPEN-POS{search}{noise}",
+                    self.POSITIVE_OPENNESS_EIGHT_BIT_STRETCH,
+                )
+            )
+        return tuple(outputs)
 
     def required_overlap(self, resolution: Resolution) -> int:
         """
@@ -398,7 +399,7 @@ class SkyViewFactor:
 
 
 @dataclass(frozen=True)
-class NegativeOpenness:
+class NegativeOpenness(Visualization[NDArray[np.float32]]):
     """
     Negative openness: positive openness of the negated DEM (mean horizon
     depression angle in degrees).
@@ -437,6 +438,20 @@ class NegativeOpenness:
         return (
             f"{dem_name}_OPEN-NEG_R{self.max_radius}_D{self.directions}"
             f"{self.noise_removal._file_name_suffix()}"
+        )
+
+    def outputs(self, dem_name: str) -> tuple[VisualizationOutput, ...]:
+        """
+        Return the single output this config produces.
+
+        :param dem_name: Stem of the DEM file name.
+        :returns: One output: the computed array, under
+            :meth:`output_stem`, rendered with ``EIGHT_BIT_STRETCH``.
+        """
+        return (
+            VisualizationOutput(
+                None, self.output_stem(dem_name), self.EIGHT_BIT_STRETCH
+            ),
         )
 
     def required_overlap(self, resolution: Resolution) -> int:

@@ -12,6 +12,8 @@ from numpy.typing import NDArray
 
 from rvt.core import (
     Resolution,
+    Visualization,
+    VisualizationOutput,
     format_parameter,
     validate_dem_and_resolution,
     validate_vertical_exaggeration,
@@ -20,7 +22,7 @@ from rvt.stretch import Stretch, StretchMode
 
 
 @dataclass(frozen=True)
-class LocalDominance:
+class LocalDominance(Visualization[NDArray[np.float32]]):
     """
     Local dominance: how much a pixel dominates the terrain around it.
 
@@ -64,6 +66,20 @@ class LocalDominance:
             f"{dem_name}_LD_R_M{self.minimum_radius}-{self.maximum_radius}"
             f"_DI{self.radius_increment}_A{self.angular_resolution}"
             f"_OH{format_parameter(self.observer_height)}"
+        )
+
+    def outputs(self, dem_name: str) -> tuple[VisualizationOutput, ...]:
+        """
+        Return the single output this config produces.
+
+        :param dem_name: Stem of the DEM file name.
+        :returns: One output: the computed array, under
+            :meth:`output_stem`, rendered with ``EIGHT_BIT_STRETCH``.
+        """
+        return (
+            VisualizationOutput(
+                None, self.output_stem(dem_name), self.EIGHT_BIT_STRETCH
+            ),
         )
 
     def required_overlap(self, resolution: Resolution) -> int:

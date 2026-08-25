@@ -12,6 +12,8 @@ from numpy.typing import NDArray
 
 from rvt.core import (
     Resolution,
+    Visualization,
+    VisualizationOutput,
     validate_dem_and_resolution,
     validate_vertical_exaggeration,
 )
@@ -76,7 +78,7 @@ def _mean_filter(dem: NDArray[np.float32], kernel_radius: int) -> NDArray[np.flo
 
 
 @dataclass(frozen=True)
-class SimpleLocalReliefModel:
+class SimpleLocalReliefModel(Visualization[NDArray[np.float32]]):
     """
     Simple local relief model: the DEM minus its mean-filtered trend surface.
 
@@ -106,6 +108,20 @@ class SimpleLocalReliefModel:
         :returns: The output file stem, without extension.
         """
         return f"{dem_name}_SLRM_R{self.radius_cells}"
+
+    def outputs(self, dem_name: str) -> tuple[VisualizationOutput, ...]:
+        """
+        Return the single output this config produces.
+
+        :param dem_name: Stem of the DEM file name.
+        :returns: One output: the computed array, under
+            :meth:`output_stem`, rendered with ``EIGHT_BIT_STRETCH``.
+        """
+        return (
+            VisualizationOutput(
+                None, self.output_stem(dem_name), self.EIGHT_BIT_STRETCH
+            ),
+        )
 
     def required_overlap(self, resolution: Resolution) -> int:
         """
