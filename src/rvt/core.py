@@ -124,12 +124,20 @@ class Visualization[ResultT](ABC):
         """Return the factor the DEM heights are multiplied by."""
 
     def __init_subclass__(cls, **kwargs: object) -> None:
-        """Reject a concrete subclass that forgot to declare ``TILEABLE``."""
+        """
+        Reject a subclass that forgot to declare ``TILEABLE``, or that is
+        tileable while deriving its 8-bit rendering from the DEM.
+        """
         super().__init_subclass__(**kwargs)
         if not isinstance(getattr(cls, "TILEABLE", None), bool):
             raise TypeError(
                 f"{cls.__name__} must declare TILEABLE: ClassVar[bool] —"
                 " whether its result is independent of the tiling."
+            )
+        if cls.TILEABLE and cls.eight_bit_image is not Visualization.eight_bit_image:
+            raise TypeError(
+                f"{cls.__name__} overrides eight_bit_image, so it cannot be"
+                " TILEABLE: a tiled run stretches the finished float raster."
             )
 
     @abstractmethod
@@ -143,3 +151,25 @@ class Visualization[ResultT](ABC):
     @abstractmethod
     def compute(self, dem: NDArray[np.float32], resolution: Resolution) -> ResultT:
         """Compute the visualization of a DEM."""
+
+    def eight_bit_image(
+        self,
+        image: NDArray[np.float32],
+        dem: NDArray[np.float32],
+        resolution: Resolution,
+    ) -> NDArray[np.float32]:
+        """
+        Return the float image an output's ``eight_bit_stretch`` is applied
+        to, band by band.
+
+        By default that is the computed output itself. Override it for a
+        visualization whose 8-bit rendering is a different image derived from
+        the DEM; such a config must not be ``TILEABLE``, because a tiled run
+        stretches the finished float raster without the DEM at hand.
+
+        :param image: The computed float output (2D, or a band stack).
+        :param dem: The DEM it was computed from.
+        :param resolution: Cell size of the DEM.
+        :returns: The float image to stretch to 8-bit.
+        """
+        return image

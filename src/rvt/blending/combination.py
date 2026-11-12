@@ -17,7 +17,7 @@ from rvt.blending.colormap import ColorRamp
 from rvt.blending.normalization import Normalization, normalize_image, scale_0_to_1
 from rvt.core import Resolution
 from rvt.visualization import (
-    Hillshade,
+    MultiHillshade,
     NegativeOpenness,
     ShadowHorizon,
     SkyViewFactor,
@@ -233,7 +233,7 @@ class MultiDirectionalHillshadeRgbSource:
     :param inverts_normalization: Invert the normalized image.
     """
 
-    RGB_AZIMUTHS: ClassVar[tuple[float, float, float]] = (315.0, 22.5, 90.0)
+    RGB_AZIMUTHS: ClassVar[tuple[float, float, float]] = MultiHillshade.RGB_AZIMUTHS
 
     sun_elevation: float = 35.0
     vertical_exaggeration: float = 1.0
@@ -243,16 +243,10 @@ class MultiDirectionalHillshadeRgbSource:
         self, dem: NDArray[np.float32], resolution: Resolution
     ) -> NDArray[np.floating]:
         """Compute the three-azimuth hillshade RGB stack from the DEM."""
-        return np.array(
-            [
-                Hillshade(
-                    sun_azimuth=azimuth,
-                    sun_elevation=self.sun_elevation,
-                    vertical_exaggeration=self.vertical_exaggeration,
-                ).compute(dem, resolution)
-                for azimuth in self.RGB_AZIMUTHS
-            ]
-        )
+        return MultiHillshade(
+            sun_elevation=self.sun_elevation,
+            vertical_exaggeration=self.vertical_exaggeration,
+        ).rgb_image(dem, resolution)
 
 
 @dataclass(frozen=True)

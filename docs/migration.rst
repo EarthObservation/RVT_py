@@ -190,12 +190,11 @@ Deliberate behaviour changes
     one output.
 *   **GPU support is dropped.** The experimental ``cupy`` code paths are not
     part of version 3.
-*   **The 8-bit multi-hillshade is not implemented in a session yet.** Version 2
-    rendered a special three-band RGB image from the DEM (azimuths 315, 22.5 and
-    90) rather than stretching the float stack; a
-    :class:`rvt.SessionTask` requesting it raises ``NotImplementedError``. The
-    float stack saves normally, and the RGB image is available for blends as
-    :class:`rvt.blending.MultiDirectionalHillshadeRgbSource`.
+*   **The 8-bit multi-hillshade is an RGB image, as in version 2.** It is not
+    a stretch of the float stack but three hillshades of the DEM at azimuths
+    315, 22.5 and 90 degrees, each stretched to 0-255. Unlike version 2, it
+    honours ``vertical_exaggeration``. The same image is available for blends
+    as :class:`rvt.blending.MultiDirectionalHillshadeRgbSource`.
 *   **Blend rendering is pure.** The in-place mutation of inputs is gone. The
     version 2 formulas are kept as they are, including the quirk that overlay
     and soft light effectively ignore the layer opacity, so results stay

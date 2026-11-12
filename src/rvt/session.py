@@ -130,8 +130,6 @@ class Session:
     :param tile_size: Tile size as ``(rows, columns)`` for tiled processing.
     :param workers: Number of worker processes for tiled processing.
     :raises ValueError: If a task requests no output at all.
-    :raises NotImplementedError: If a task requests the 8-bit multi-hillshade
-        (the legacy 3-band RGB rendering), which is not implemented yet.
     """
 
     def __init__(
@@ -167,14 +165,6 @@ class Session:
             else self.dem_path.parent
         )
         self.overwrite = overwrite
-        for task in self.tasks:
-            if task.save_8bit and isinstance(task.config, MultiHillshade):
-                raise NotImplementedError(
-                    "The 8-bit multi-hillshade is a special legacy rendering"
-                    " (3-band RGB computed from the DEM, not a stretch of the"
-                    " float stack) and is not implemented yet; save the float"
-                    " stack instead."
-                )
 
     def _task_targets(self, task: SessionTask) -> list[_Target]:
         """Return the files a task would write, ignoring skip-if-exists."""
@@ -223,14 +213,23 @@ class Session:
     def _write_8bit(
         self, float_raster: Raster, targets: Sequence[_Target]
     ) -> list[Path]:
-        """Stretch a computed float result to 8-bit and write it."""
+        """
+        Stretch a computed float result to 8-bit, band by band (as version 2
+        did, which matters for a percent stretch), and write it.
+        """
         written = []
         array = np.asarray(float_raster.array).astype(np.float32)
         for target in targets:
-            assert target.output.eight_bit_stretch is not None
+            stretch = target.output.eight_bit_stretch
+            assert stretch is not None
+            eight_bit = (
+                to_8bit(array, stretch)
+                if array.ndim == 2
+                else np.stack([to_8bit(band, stretch) for band in array])
+            )
             write(
                 Raster(
-                    array=to_8bit(array, target.output.eight_bit_stretch),
+                    array=eight_bit,
                     transform=float_raster.transform,
                     crs=float_raster.crs,
                 ),
@@ -298,7 +297,15 @@ class Session:
                 crs=raster.crs,
             )
             if target.is_8bit:
-                written.extend(self._write_8bit(member, [target]))
+                eight_bit_source = replace(
+                    member,
+                    array=task.config.eight_bit_image(
+                        np.asarray(member.array, dtype=np.float32),
+                        dem,
+                        raster.resolution,
+                    ),
+                )
+                written.extend(self._write_8bit(eight_bit_source, [target]))
             else:
                 write(member, target.path)
                 written.append(target.path)

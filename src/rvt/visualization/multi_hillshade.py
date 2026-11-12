@@ -18,6 +18,8 @@ from rvt.core import (
     validate_dem_and_resolution,
     validate_vertical_exaggeration,
 )
+from rvt.stretch import Stretch, StretchMode
+from rvt.visualization.hillshade import Hillshade
 from rvt.visualization.slope import SlopeUnits, _slope_aspect
 
 FULL_CIRCLE_DEGREES = 360
@@ -33,8 +35,14 @@ class MultiHillshade(Visualization[NDArray[np.float32]]):
     :param directions: Number of solar azimuth angles, at least 1.
     :param sun_elevation: Solar elevation angle above the horizon in degrees, 0-90.
     :param vertical_exaggeration: Factor the DEM heights are multiplied by.
+
+    The 8-bit rendering is not a stretch of the float stack: like version 2,
+    it is a 3-band RGB of single hillshades at ``RGB_AZIMUTHS``, each band
+    stretched with ``EIGHT_BIT_STRETCH``.
     """
 
+    RGB_AZIMUTHS: ClassVar[tuple[float, float, float]] = (315.0, 22.5, 90.0)
+    EIGHT_BIT_STRETCH: ClassVar[Stretch] = Stretch(StretchMode.VALUE, 0.0, 1.0)
     # Not tileable: the legacy pipeline trims a 1-pixel border, so the output
     # shape is (directions, rows - 2, cols - 2) — it cannot be written back
     # into fixed windows of an input-shaped raster.
@@ -69,15 +77,55 @@ class MultiHillshade(Visualization[NDArray[np.float32]]):
 
     def outputs(self, dem_name: str) -> tuple[VisualizationOutput, ...]:
         """
-        Return the single output this config produces, float-only: the legacy
-        8-bit multi-hillshade is a special 3-band RGB rendering computed from
-        the DEM, not a stretch of the float stack, and is not implemented yet.
+        Return the single output this config produces.
 
         :param dem_name: Stem of the DEM file name.
-        :returns: One output: the band stack under :meth:`output_stem`, with no
-            8-bit stretch.
+        :returns: One output: the band stack under :meth:`output_stem`, whose
+            8-bit form is the RGB rendering of :meth:`eight_bit_image`.
         """
-        return (VisualizationOutput(None, self.output_stem(dem_name), None),)
+        return (
+            VisualizationOutput(
+                None, self.output_stem(dem_name), self.EIGHT_BIT_STRETCH
+            ),
+        )
+
+    def rgb_image(
+        self, dem: NDArray[np.float32], resolution: Resolution
+    ) -> NDArray[np.float32]:
+        """
+        Compute the bands-first RGB stack of hillshades at ``RGB_AZIMUTHS``.
+
+        :param dem: 2D float32 DEM with NaN as nodata. Not modified.
+        :param resolution: Cell size of the DEM.
+        :returns: A ``(3, rows, cols)`` stack of hillshades, values 0-1.
+        """
+        return np.array(
+            [
+                Hillshade(
+                    sun_azimuth=azimuth,
+                    sun_elevation=self.sun_elevation,
+                    vertical_exaggeration=self.vertical_exaggeration,
+                ).compute(dem, resolution)
+                for azimuth in self.RGB_AZIMUTHS
+            ]
+        )
+
+    def eight_bit_image(
+        self,
+        image: NDArray[np.float32],
+        dem: NDArray[np.float32],
+        resolution: Resolution,
+    ) -> NDArray[np.float32]:
+        """
+        Return the RGB hillshade stack from :meth:`rgb_image`, which the 8-bit
+        rendering stretches instead of the float stack.
+
+        :param image: The computed float stack (unused).
+        :param dem: The DEM it was computed from.
+        :param resolution: Cell size of the DEM.
+        :returns: The ``(3, rows, cols)`` RGB hillshade stack.
+        """
+        return self.rgb_image(dem, resolution)
 
     def required_overlap(self, resolution: Resolution) -> int:
         """

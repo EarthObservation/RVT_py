@@ -253,9 +253,36 @@ def test_missing_output_directory_is_created(tmp_path: Path) -> None:
     assert written == [output_directory / f"{DEM_NAME}_HS_A315_H35.tif"]
 
 
-def test_multi_hillshade_8bit_is_not_implemented() -> None:
-    with pytest.raises(NotImplementedError, match="[Mm]ulti-hillshade"):
-        Session(DEM_PATH, tasks=[SessionTask(MultiHillshade(), save_8bit=True)])
+def test_multi_hillshade_8bit_matches_golden(tmp_path: Path) -> None:
+    session = Session(
+        DEM_PATH,
+        tasks=[SessionTask(MultiHillshade(), save_float=False, save_8bit=True)],
+        output_directory=tmp_path,
+    )
+
+    written = session.run()
+
+    # The legacy 8-bit file is a 3-band RGB of hillshades at azimuths
+    # 315/22.5/90, not a stretch of the 16-direction float stack.
+    assert [path.name for path in written] == [f"{DEM_NAME}_MULTI-HS_D16_H35_8bit.tif"]
+    raster = read(written[0])
+    assert raster.array.shape[0] == 3
+    np.testing.assert_array_equal(
+        raster.array.astype(np.uint8),
+        read_golden_array("vis/multi_hillshade/defaults__8bit.tif"),
+    )
+
+
+def test_multi_hillshade_writes_float_stack_and_rgb_8bit(tmp_path: Path) -> None:
+    written = Session(
+        DEM_PATH,
+        tasks=[SessionTask(MultiHillshade(), save_float=True, save_8bit=True)],
+        output_directory=tmp_path,
+    ).run()
+
+    float_raster, eight_bit_raster = (read(path) for path in written)
+    assert float_raster.array.shape[0] == 16
+    assert eight_bit_raster.array.shape[0] == 3
 
 
 def test_task_without_any_output_raises() -> None:

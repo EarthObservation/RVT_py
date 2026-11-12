@@ -43,13 +43,8 @@ ALL_CONFIGS: list[Visualization] = [
     SlopeAspect(),
 ]
 
-# Members with no legacy 8-bit form, plus the not-yet-implemented 3-band RGB
-# multi-hillshade rendering.
-FLOAT_ONLY = {
-    ("SlopeAspect", "aspect"),
-    ("ShadowHorizon", "horizon"),
-    ("MultiHillshade", None),
-}
+# Members with no legacy 8-bit form.
+FLOAT_ONLY = {("SlopeAspect", "aspect"), ("ShadowHorizon", "horizon")}
 
 
 def _identify(config: Visualization) -> str:
@@ -69,6 +64,19 @@ def test_subclass_must_declare_tileable() -> None:
 
         class _NoTileable(Visualization[np.ndarray]):
             vertical_exaggeration: float = 1.0
+
+
+def test_tileable_subclass_cannot_override_eight_bit_image() -> None:
+    with pytest.raises(TypeError, match="eight_bit_image"):
+
+        class _TileableRgb(Visualization[np.ndarray]):
+            TILEABLE = True
+            vertical_exaggeration: float = 1.0
+
+            def eight_bit_image(
+                self, image: np.ndarray, dem: np.ndarray, resolution: Resolution
+            ) -> np.ndarray:
+                return image
 
 
 def test_incomplete_subclass_cannot_be_instantiated() -> None:
