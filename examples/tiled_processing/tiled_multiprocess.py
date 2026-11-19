@@ -145,13 +145,15 @@ def tiled_blending(vis_types, blend_types, input_vrt_path, tiles_list, save_floa
             result = result[:-4]
             # Now: Use VRT instead of saving another file to disk
             result_parent = result_paths[0].parent.as_posix()
-            # Create path for VRT file
-            vrt_path = ll_path / f"{result}.vrt"
-            # Create VRT from list of files
             if result[-6:] == "_float":
                 sf = True
             else:
                 sf = False
+                # 8-bit outputs end with _8bit (float outputs end with _float)
+                result = result + "_8bit"
+            # Create path for VRT file
+            vrt_path = ll_path / f"{result}.vrt"
+            # Create VRT from list of files
             mosaic_path = build_vrt(result_paths, vrt_path, save_float=sf)
 
             # Build a mosaic from VRT if selected #todo: before app starts give warning about size if VRT is not ON
@@ -245,8 +247,8 @@ def compute_save_blends(src_path, low_levels_path, vis_types, blend_types, one_e
         # Determine save path
         rvt_save_name = getattr(default_1, "get_" + vis_name + "_path")(filename_rvt)
         if not one_tile_name:
-            # Use RVT naming if this is a single image
-            save_path = low_levels_path / rvt_save_name
+            # Use RVT naming if this is a single image (8-bit file ends with _8bit)
+            save_path = low_levels_path / (rvt_save_name[:-4] + "_8bit.tif")
         else:
             # Use tile naming if this is only one tile
             save_path = low_levels_path / vis / f"{one_tile_name}_rvt_{vis}.tif"
@@ -1575,8 +1577,8 @@ def save_path_for_blend(save_filename: str, save_dir, source_filename, save_tile
     rvt_save_name = f"{source_filename.stem}_{save_filename}.tif"
     # Determine save path
     if not save_tile_name:
-        # Use RVT naming if this is a single image
-        save_path = save_dir / rvt_save_name
+        # Use RVT naming if this is a single image (8-bit file ends with _8bit)
+        save_path = save_dir / f"{source_filename.stem}_{save_filename}_8bit.tif"
     else:
         # Use tile naming if this is only one tile
         save_path = save_dir / save_filename / f"{save_tile_name}_rvt_{save_filename}.tif"
@@ -1589,7 +1591,10 @@ def save_path_float(save_path):
     save_path = Path(save_path)
 
     parent_folder = Path(save_path.parent.as_posix() + "_float")
-    file_name = save_path.stem + "_float" + save_path.suffix
+    stem = save_path.stem
+    if stem.endswith("_8bit"):
+        stem = stem[:-len("_8bit")]
+    file_name = stem + "_float" + save_path.suffix
 
     spf = parent_folder / file_name
 
