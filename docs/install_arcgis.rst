@@ -17,3 +17,16 @@ In the ``Raster Functions`` pane, select the ``Custom`` tab to access the ``rvt-
 
 .. image:: ./figures/ArcGISPro_raster_functions.png
    :width: 450px
+
+Importing from a Local Folder (No Admin Rights Required)
+--------------------------------------------------------
+
+1. Download the `RVT ArcGIS Pro repository <https://github.com/EarthObservation/rvt-arcgis-pro>`_ from GitHub by selecting **Code → Download ZIP**.
+2. Extract the ZIP file to a folder on your computer.
+3. Open ArcGIS Pro and select **Imagery → Raster Functions**.
+4. In the **Raster Functions** pane, open the menu (three horizontal bars) and select **Add New Sub-Category**.
+5. In the newly created subcategory, click the orange **Import Functions** icon (downward arrow).
+6. Browse to the extracted ``rvt-arcgis-pro`` folder.
+7. Select the desired RVT raster functions (``.rft.xml`` files) and import them.
+
+The imported functions will appear in your custom subcategory.
