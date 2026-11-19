@@ -919,7 +919,7 @@ def horizon_generate_coarse_dem(dem_fine,
     dem_convolve = np.zeros(dem_fine.shape)
     for i in np.arange(pyramid_scale) + conv_from:
         for j in np.arange(pyramid_scale) + conv_from:
-            dem_convolve = np.maximum(dem_convolve, np.roll(dem_fine, (i, j), axis=(0, 1)))
+            dem_convolve = np.fmax(dem_convolve, np.roll(dem_fine, (i, j), axis=(0, 1)))
     # Divide by pyramid_scale to account for the change of resolution
     # (important for the angle computation later on)
     dem_convolve = dem_convolve / pyramid_scale
@@ -934,7 +934,7 @@ def horizon_generate_coarse_dem(dem_fine,
     # use constant-mode set to the minimal height, so it doesn't 
     # affect the horizon estimation.
     dem_coarse = np.pad(dem_coarse, ((max_radius, max_radius), (max_radius, max_radius)), mode="constant",
-                        constant_values=dem_coarse.min())
+                        constant_values=np.nanmin(dem_coarse))
 
     return dem_coarse
 
@@ -990,7 +990,7 @@ def horizon_generate_pyramids(dem,
         # the level 0 contains the other min_radius as the rest of levels
         if level == 0:
             min_radius = 1
-            dem_fine = np.copy(np.pad(dem, max_pyramid_radius, mode="constant", constant_values=dem.min()))
+            dem_fine = np.copy(np.pad(dem, max_pyramid_radius, mode="constant", constant_values=np.nanmin(dem)))
         else:
             min_radius = min_pyramid_radius - 1
             dem_fine = np.copy(dem_coarse)
@@ -1082,6 +1082,7 @@ def sky_illumination(dem,
 
     dem = dem.astype(np.float32)
     dem = dem * ve_factor
+    nan_dem = np.isnan(dem)
 
     if sky_model.lower() == "overcast":
         compute_overcast = True
@@ -1165,9 +1166,10 @@ def sky_illumination(dem,
                 # get shift index from move dictionary
                 shift_indx = move[direction]["shift"][i_rad]
                 # estimate the slope
-                _ = np.maximum((np.roll(height, shift_indx, axis=(0, 1)) - height) / radius, 0.)
+                # np.fmax ignores NaN (no_data), so it doesn't spread through the horizon search
+                _ = np.fmax((np.roll(height, shift_indx, axis=(0, 1)) - height) / radius, 0.)
                 # compare to the previous max slope and keep the larges
-                max_slope = np.maximum(max_slope, _)
+                max_slope = np.fmax(max_slope, _)
 
             # resample the max_slope to a lower pyramid level
             if i_level > 0:
@@ -1191,7 +1193,8 @@ def sky_illumination(dem,
             overcast_d = overcast_d + np.maximum(_d_aspect * (2. / 3. - np.cos(_) + _cos3 / 3.), 0)
         if compute_shadow and (direction == shadow_az):
             horizon_out = np.degrees(_[max_pyramid_radius:-max_pyramid_radius, max_pyramid_radius:-max_pyramid_radius])
-            shadow_out = (horizon_out < shadow_el) * 1
+            horizon_out[nan_dem] = np.nan
+            shadow_out = np.where(nan_dem, np.nan, (horizon_out < shadow_el) * 1)
             if shadow_horizon_only:
                 return {"shadow": shadow_out, "horizon": horizon_out}
 
@@ -1203,7 +1206,7 @@ def sky_illumination(dem,
         overcast_out = (2. * da / 3.) * np.cos(slope) * overcast_c + np.sin(slope) * overcast_d
         overcast_out = overcast_out[max_pyramid_radius:-max_pyramid_radius, max_pyramid_radius:-max_pyramid_radius]
         overcast_out = 0.33 * uniform_out + 0.67 * overcast_out
-        overcast_out = overcast_out / overcast_out.max()
+        overcast_out = overcast_out / np.nanmax(overcast_out)
     if compute_shadow:
         uniform_sh_out = (0.8 * uniform_out + 0.2 * shadow_out)
         if compute_overcast:
